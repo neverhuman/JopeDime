@@ -26,7 +26,11 @@ pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
 pub const CARBON_PUBLISHED_INSTALLER_TAG: &str = env!("CARBON_PUBLISHED_INSTALLER_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
+/// Honors `DO_NOT_TRACK=1` / `CARBON_NO_TELEMETRY=1` by omitting OS, architecture, and git SHA metadata.
 pub fn carbon_user_agent() -> String {
+    if observability::telemetry_minimized() {
+        return format!("carbon/{CARBON_PKG_VERSION}");
+    }
     let sha12: String = CARBON_GIT_SHA.chars().take(12).collect();
     format!(
         "carbon/{} ({}; tag/{}; sha/{})",
@@ -40,6 +44,7 @@ pub mod cli;
 pub mod error;
 mod home_path;
 pub mod modes;
+pub mod observability;
 pub mod role;
 pub mod security;
 pub mod storage;
@@ -74,10 +79,10 @@ pub use cli::deploy::{
     execute_carbon_rollback, execute_carbon_rollback_multi, expand_region_targets,
     generate_public_clouds_manifest, mint_capability_token_from_vault, resolve_cell_stack_endpoint,
     resolve_cell_stack_public_endpoint, synthesize_cell_template_for_release,
-    try_external_stream_compress, verify_arm64_lambda_binary, CarbonDeployOptions,
-    CarbonDeployReport, CarbonLiveAliasVersions, CarbonPackageOptions, CarbonRegionDeployReceipt,
-    CarbonReleaseManifest, CarbonRollbackOptions, CarbonRollbackReceipt, CarbonZipEntry,
-    CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,
+    try_external_stream_compress, verify_arm64_lambda_binary, verify_static_linux_elf,
+    CarbonDeployOptions, CarbonDeployReport, CarbonLiveAliasVersions, CarbonPackageOptions,
+    CarbonRegionDeployReceipt, CarbonReleaseManifest, CarbonRollbackOptions, CarbonRollbackReceipt,
+    CarbonZipEntry, CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,
 };
 #[cfg(all(feature = "cli", feature = "emu"))]
 pub use cli::spec_report::{
@@ -102,8 +107,9 @@ pub use cli::{
         FALLBACK_PUBLIC_CLOUDS_URL,
     },
     model_store::{
-        compute_residual_quantiles, execute_predict_csv_with_handle, execute_self_upgrade,
-        list_saved_model_handles, load_model_handle_by_spec, persist_model_handle,
+        build_client_for_handle, compute_residual_quantiles, execute_predict_csv_with_handle,
+        execute_self_upgrade, execute_self_upgrade_with_options, list_saved_model_handles,
+        load_model_handle_by_spec, persist_model_handle, persist_model_handle_with_options,
         query_handle_status, shred_handle_and_local_keys, CarbonFeatureImportanceEntry,
         CarbonPredictCsvReceipt, CarbonResidualQuantiles, CarbonRunRegistryEntry,
         CarbonSavedModelHandle, CarbonUpgradeReceipt, CARBON_MODEL_HANDLE_SCHEMA,
@@ -116,14 +122,16 @@ pub use cli::{
         execute_carbon_cli_benchmark, execute_carbon_cli_benchmark_with_token,
         execute_carbon_cli_run, execute_carbon_cli_run_with_ux, generate_nonlinear_benchmark_rows,
         load_numeric_csv, render_benchmark_markdown, render_pretty_run_scorecard,
-        CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport, CarbonCliRunOptions,
-        CarbonCliRunReceipt, CarbonCliRunUxConfig,
+        resolve_objective_argument, CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport,
+        CarbonCliRunOptions, CarbonCliRunReceipt, CarbonCliRunUxConfig,
     },
     tabular::{
         inspect_tabular_file, inspect_tabular_file_with_tier, load_delimited_table,
-        parse_delimited_str, prepare_encoded_training_set, resolve_target_column,
-        CarbonColumnProfile, CarbonEffortCostPreview, CarbonEncodedTrainingSet,
-        CarbonFeatureTransform, CarbonRawTable, CarbonTabularEncoder, CarbonTabularInspectReport,
+        load_delimited_table_with_options, parse_delimited_str, parse_delimited_str_with_options,
+        parse_flexible_numeric_f64, prepare_encoded_training_set,
+        prepare_encoded_training_set_with_options, resolve_target_column, CarbonColumnProfile,
+        CarbonEffortCostPreview, CarbonEncodedTrainingSet, CarbonFeatureTransform, CarbonRawTable,
+        CarbonTabularEncoder, CarbonTabularInspectReport, CarbonTrainingPrepOptions,
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};
@@ -158,7 +166,8 @@ pub use security::{
     seal::{CarbonSealDomain, CarbonSealKey, SealedCheckpointEnvelope},
     secrets_vault::{
         fetch_secretsmanager_secret_string, load_cached_runtime_secrets, parse_secret_bundle_json,
-        resolve_edge_secrets, resolve_engine_secrets, CarbonRuntimeSecrets,
+        parse_secret_bundle_json_for_role, resolve_edge_secrets, resolve_engine_secrets,
+        CarbonRuntimeSecrets,
     },
     sigv4::{
         compute_backoff_with_jitter_ms, format_amz_timestamp_utc, sign_aws_v4_headers,

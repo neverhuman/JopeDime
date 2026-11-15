@@ -19,7 +19,7 @@ fn redteam_16_vectors_pass_against_isolated_lambda_emulator() {
     let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start redteam emulator");
 
     let report =
-        execute_carbon_redteam_suite(&emu.base_url()).expect("run 16-vector redteam suite");
+        execute_carbon_redteam_suite(&emu.base_url()).expect("run 17-vector redteam suite");
     for v in &report.vectors {
         assert!(
             v.passed,
@@ -27,8 +27,8 @@ fn redteam_16_vectors_pass_against_isolated_lambda_emulator() {
             v.vector_id, v.title, v.observed_http_status, v.evidence
         );
     }
-    assert_eq!(report.total_vectors, 16);
-    assert_eq!(report.passed_vectors, 16);
+    assert_eq!(report.total_vectors, 17);
+    assert_eq!(report.passed_vectors, 17);
     assert!(report.all_passed);
 
     emu.shutdown();

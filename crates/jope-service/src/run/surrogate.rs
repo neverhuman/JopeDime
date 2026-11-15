@@ -20,6 +20,9 @@ struct FoldSpec {
     target: String,
     features: Vec<String>,
     folds: Vec<Fold>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    calibration_mode: Option<String>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -87,6 +90,30 @@ fn surrogate_numeric_rows<B: AsRef<[u8]>>(
     Ok((x, y))
 }
 
+fn surrogate_aux_columns<B: AsRef<[u8]>>(
+    matrix: &Matrix<B>,
+    aux_names: &[String],
+    rows: &[usize],
+) -> Result<jope_runtime::fitness::Columns> {
+    let mut out = jope_runtime::fitness::Columns::new();
+    for name in aux_names {
+        let col_idx = matrix
+            .columns()
+            .iter()
+            .position(|c| &c.name == name)
+            .with_context(|| format!("unknown surrogate auxiliary column '{name}'"))?;
+        let mut vals = Vec::with_capacity(rows.len());
+        for &row in rows {
+            match matrix.cell(row, col_idx) {
+                Some(JmatCell::Numeric(v)) if v.is_finite() => vals.push(v),
+                _ => anyhow::bail!("invalid surrogate auxiliary column '{name}' in row {row}"),
+            }
+        }
+        out.insert(name.clone(), vals);
+    }
+    Ok(out)
+}
+
 fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Scores> {
     let spec: FoldSpec = serde_json::from_value(request.fold_spec.clone())?;
     ensure!(
@@ -103,6 +130,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
             .as_str()
             .context("objective must be a specification string")?,
     )?;
+    let aux_names = user_objective.columns();
     let mut logs = Vec::new();
     let mut losses = Vec::new();
     let mut user_losses = Vec::new();
@@ -128,6 +156,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         let mean = y.iter().sum::<f64>() / y.len() as f64;
         let (vx, vy) =
             surrogate_numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
+        let val_aux = surrogate_aux_columns(matrix, &aux_names, &fold.validation)?;
         let prediction = predict_s1(&request.dsl, &x, &y, &vx)?;
         let rmse = objective.evaluate(&vy, &prediction)?.loss;
         let baseline = objective.evaluate(&vy, &vec![mean; vy.len()])?.loss;
@@ -139,7 +168,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         logs.push(feat_math::portable_math::frozen_s1::ln(ratio));
         wins += usize::from(ratio <= 1.0);
         losses.push(rmse);
-        let user_score = user_objective.evaluate(&vy, &prediction)?;
+        let user_score = user_objective.evaluate_with(&vy, &prediction, &val_aux)?;
         user_losses.push(user_score.loss);
         user_values.push(user_score.value);
         for (y, p) in vy.iter().zip(prediction) {

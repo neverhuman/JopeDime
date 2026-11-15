@@ -9,7 +9,10 @@ use std::io::Read;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use jope_api::carbon::{CarbonCreateRunRequest, CarbonPredictRequest, CarbonResumeRunRequest};
+use jope_api::carbon::{
+    CarbonCreateRunRequest, CarbonExplainRequest, CarbonExportRequest, CarbonPredictRequest,
+    CarbonResumeRunRequest,
+};
 use serde::{Deserialize, Serialize};
 
 /// Return current UNIX epoch timestamp in milliseconds.
@@ -36,6 +39,14 @@ pub enum CarbonEngineWireCommand {
     Predict {
         run_id: String,
         predict: CarbonPredictRequest,
+    },
+    Explain {
+        run_id: String,
+        explain: CarbonExplainRequest,
+    },
+    Export {
+        run_id: String,
+        export: CarbonExportRequest,
     },
 }
 

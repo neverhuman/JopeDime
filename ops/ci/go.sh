@@ -7,6 +7,7 @@ case "${1:-}" in
     cargo fmt --all --check
     git diff --check
     cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
+    cargo check --locked -p jope-prep --target wasm32-unknown-unknown
     ;;
   sanitizer)
     cargo test --locked -p feat-math --lib runtime_c_abi_is_sanitizer_clean_and_fail_closed -- --nocapture
@@ -27,6 +28,10 @@ case "${1:-}" in
     rustup target add wasm32-unknown-unknown
     cargo test --locked -p feat-math --no-default-features --lib go::tests:: -- --nocapture --test-threads=1
     bash deploy/ci/go/contracts.sh
+    if [[ "${OS:-}" == "Windows_NT" ]] && ! command -v nasm >/dev/null 2>&1; then
+      export AWS_LC_SYS_NO_ASM=1
+    fi
+    cargo test --locked -p jope-carbon --no-default-features --features cli --test carbon_ux_security_upgrade -- --nocapture --test-threads=1
     ;;
   *) echo 'usage: go.sh preflight|sanitizer|qualify|race|fuzz|examples|platform' >&2; exit 2 ;;
 esac

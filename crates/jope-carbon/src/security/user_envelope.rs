@@ -482,6 +482,16 @@ pub struct CarbonEncryptedPredictPayload {
     pub rows: Vec<Vec<Option<f64>>>,
 }
 
+/// `CarbonEncryptedExplainPayload` is serialized inside `CuenPayloadKind::ExplainOutputs` so
+/// neither feature names, permutation importances, nor holdout losses appear in cleartext at `carbon-edge`.
+#[cfg(feature = "edge")]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonEncryptedExplainPayload {
+    pub baseline_holdout_loss: f64,
+    pub feature_importances: Vec<jope_api::carbon::CarbonFeatureImportanceWire>,
+}
+
 #[cfg(feature = "edge")]
 const SPKI_P256_UNCOMPRESSED_PREFIX: [u8; 26] = [
     0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a,

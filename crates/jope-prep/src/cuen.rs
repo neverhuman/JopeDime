@@ -45,6 +45,10 @@ pub enum CuenPayloadKind {
     PredictFeatures = 4,
     /// Encrypted `/predict` scalar output vector (`engine -> client`).
     PredictOutputs = 5,
+    /// Encrypted `/explain` feature-importance JSON payload (`engine -> client`).
+    ExplainOutputs = 6,
+    /// Encrypted `/export` standalone predictor source payload (`engine -> client`).
+    ExportArtifact = 7,
 }
 
 impl CuenPayloadKind {
@@ -56,6 +60,8 @@ impl CuenPayloadKind {
             3 => Some(Self::LandmarkJlmb),
             4 => Some(Self::PredictFeatures),
             5 => Some(Self::PredictOutputs),
+            6 => Some(Self::ExplainOutputs),
+            7 => Some(Self::ExportArtifact),
             _ => None,
         }
     }
@@ -68,6 +74,8 @@ impl CuenPayloadKind {
             Self::LandmarkJlmb => "landmark_jlmb",
             Self::PredictFeatures => "predict_features",
             Self::PredictOutputs => "predict_outputs",
+            Self::ExplainOutputs => "explain_outputs",
+            Self::ExportArtifact => "export_artifact",
         }
     }
 }

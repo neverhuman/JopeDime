@@ -91,6 +91,7 @@ pub(crate) async fn axum_request_to_gateway_with_peer(
         if name
             .as_str()
             .eq_ignore_ascii_case("x-carbon-trusted-source-ip")
+            || name.as_str().eq_ignore_ascii_case("x-carbon-raw-path")
         {
             continue;
         }
@@ -98,6 +99,7 @@ pub(crate) async fn axum_request_to_gateway_with_peer(
             headers.insert(name.as_str().to_ascii_lowercase(), text.to_owned());
         }
     }
+    headers.insert("x-carbon-raw-path".to_owned(), path.clone());
     if let Some(ip) = peer_ip {
         let ip_str = ip.to_string();
         headers.insert("x-carbon-trusted-source-ip".to_owned(), ip_str.clone());
@@ -153,21 +155,38 @@ async fn handle_axum_gateway_request(
     ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     req: Request<Body>,
 ) -> Response<Body> {
+    let inbound_req_id = crate::observability::generate_or_sanitize_request_id(
+        req.headers()
+            .get("x-carbon-request-id")
+            .and_then(|v| v.to_str().ok()),
+    );
     let gw_req = match axum_request_to_gateway_with_peer(req, Some(peer_addr.ip())).await {
         Ok(r) => r,
         Err(GatewayBodyReadError::PayloadTooLarge(limit)) => {
-            return gateway_response_to_axum(CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                &format!("HTTP request body exceeds {limit} byte stream cap"),
-            ));
+            return gateway_response_to_axum(
+                CarbonGatewayResponse::error_json(
+                    413,
+                    "payload_too_large",
+                    &format!("HTTP request body exceeds {limit} byte stream cap"),
+                )
+                .with_header("x-carbon-request-id", inbound_req_id)
+                .with_header(
+                    "strict-transport-security",
+                    "max-age=63072000; includeSubDomains",
+                )
+                .with_header("x-content-type-options", "nosniff"),
+            );
         }
         Err(GatewayBodyReadError::BadRequest(msg)) => {
-            return gateway_response_to_axum(CarbonGatewayResponse::error_json(
-                400,
-                "bad_request",
-                &msg,
-            ));
+            return gateway_response_to_axum(
+                CarbonGatewayResponse::error_json(400, "bad_request", &msg)
+                    .with_header("x-carbon-request-id", inbound_req_id)
+                    .with_header(
+                        "strict-transport-security",
+                        "max-age=63072000; includeSubDomains",
+                    )
+                    .with_header("x-content-type-options", "nosniff"),
+            );
         }
     };
     let gw_resp = match tokio::task::spawn_blocking(move || router.handle(&gw_req)).await {
@@ -176,7 +195,13 @@ async fn handle_axum_gateway_request(
             500,
             "worker_panicked",
             &format!("gateway task join error: {err}"),
-        ),
+        )
+        .with_header("x-carbon-request-id", inbound_req_id)
+        .with_header(
+            "strict-transport-security",
+            "max-age=63072000; includeSubDomains",
+        )
+        .with_header("x-content-type-options", "nosniff"),
     };
     gateway_response_to_axum(gw_resp)
 }

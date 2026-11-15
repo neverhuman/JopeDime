@@ -20,13 +20,18 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cells::engine_invoker::now_epoch_ms,
     cli::{
-        client::{send_raw_edge_http, send_raw_put_url, CarbonThinClient},
+        client::{
+            send_raw_edge_http, send_raw_edge_http_with_headers, send_raw_put_url, CarbonThinClient,
+        },
         runner::generate_nonlinear_benchmark_rows,
     },
-    security::user_envelope::{
-        decode_p256_pubkey_b64, decrypt_cuen_payload, encrypt_cuen_payload, generate_random_u_dek,
-        unwrap_u_dek_with_kek, wrap_u_dek_to_pubkey, CarbonEncryptedPredictPayload,
-        CarbonEngineKek, CAS_BLOB_CUEN_SCOPE,
+    security::{
+        secrets_vault::parse_secret_bundle_json_for_role,
+        user_envelope::{
+            decode_p256_pubkey_b64, decrypt_cuen_payload, encrypt_cuen_payload,
+            generate_random_u_dek, unwrap_u_dek_with_kek, wrap_u_dek_to_pubkey,
+            CarbonEncryptedPredictPayload, CarbonEngineKek, CAS_BLOB_CUEN_SCOPE,
+        },
     },
     storage::cas::sha256_lower_hex,
 };
@@ -373,6 +378,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(wrong_slot_lm),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_08)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())?;
     let (c08, _) = send_raw_edge_http(
@@ -425,6 +433,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(valid_lm_09),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(bad_cudk)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())?;
     let (c09, _) = send_raw_edge_http(
@@ -494,6 +505,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(dup_lm),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(dup_cudk)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())?;
     let (c10, _) = send_raw_edge_http(
@@ -538,6 +552,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(huge_lm),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_11)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())?;
     let (c11, _) = send_raw_edge_http(
@@ -665,6 +682,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(lm_13),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_13)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())?;
     let (c13_run, _) = send_raw_edge_http(
@@ -756,7 +776,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         ),
     });
 
-    // V-14: Free-tier `/predict` call-rate quota (`<= 20` calls/run -> 21st returns 429)
+    // V-14: Free-tier `/predict` call-rate quota (`<= 20` calls/run -> 21st returns 403; legacy v1.1.0 returns 429)
     let t = Instant::now();
     let mut c14_last = 200u16;
     for call_idx in 0..21 {
@@ -768,7 +788,8 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         );
         if call_idx == 20 {
             c14_last = match res {
-                Err(msg) if msg.contains("429") => 429,
+                Err(msg) if msg.contains("HTTP 403") => 403,
+                Err(msg) if msg.contains("HTTP 429") => 429,
                 Err(_) => 500,
                 Ok(_) => 200,
             };
@@ -778,7 +799,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         vector_id: "V-14".to_owned(),
         finding_ref: "RT-10".to_owned(),
         title: "Free-tier per-run /predict model-extraction quota enforced".to_owned(),
-        passed: c14_last == 429,
+        passed: matches!(c14_last, 403 | 429),
         observed_http_status: c14_last,
         wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
         evidence: format!("21st /predict call on Free run -> HTTP {c14_last}"),
@@ -839,6 +860,110 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
             "deleted={} objects, post-shred GET -> {c16_get}, recreate -> {c16_recreate}",
             shred_resp.objects_deleted
         ),
+    });
+
+    // V-17: Edge-vs-engine secret scrub, security headers & download allowlist/traversal refusal
+    let t = Instant::now();
+    let sample_bundle_json = serde_json::json!({
+        "presign_secret_hex": "11".repeat(32),
+        "auth_secret_hex": "22".repeat(32),
+        "seal_secret_hex": "33".repeat(32),
+        "engine_kek_hex": "44".repeat(32),
+        "engine_kek_pubkey_b64": kek_b64,
+    })
+    .to_string();
+    let scrubbed = parse_secret_bundle_json_for_role(&sample_bundle_json, true)?;
+    let role_scrub_ok = scrubbed.presign_secret_hex.is_some()
+        && scrubbed.auth_secret_hex.is_some()
+        && scrubbed.seal_secret_hex.is_none()
+        && scrubbed.engine_kek_hex.is_none();
+
+    let (ping_code, ping_hdrs, _) =
+        send_raw_edge_http_with_headers(&base, "GET", "/v1/carbon/ping", &[], None)?;
+    let has_v12_headers = ping_hdrs.contains_key("x-carbon-request-id");
+    let (dl_bad_code, _, _) = send_raw_edge_http_with_headers(
+        &base,
+        "GET",
+        "/carbon/releases/v1.1.0/evil.exe",
+        &[],
+        None,
+    )?;
+    let (dl_trav_code, _, _) = send_raw_edge_http_with_headers(
+        &base,
+        "GET",
+        "/carbon/releases/v1.1.0/..%2f..%2fetc%2fpasswd",
+        &[],
+        None,
+    )?;
+    let (v17_passed, v17_status, v17_evidence) = if has_v12_headers {
+        let hsts_ok = ping_hdrs
+            .get("strict-transport-security")
+            .is_some_and(|v| v.contains("max-age="));
+        let nosniff_ok = ping_hdrs
+            .get("x-content-type-options")
+            .is_some_and(|v| v.eq_ignore_ascii_case("nosniff"));
+        let (_, auth_probe_hdrs, _) = send_raw_edge_http_with_headers(
+            &base,
+            "GET",
+            &format!(
+                "/v1/carbon/runs/{r_legit_str}?tenant_id={}",
+                anon_a.tenant_id
+            ),
+            &[("x-carbon-capability-token", &bearer_a)],
+            None,
+        )?;
+        let nostore_ok = auth_probe_hdrs
+            .get("cache-control")
+            .is_some_and(|v| v.contains("no-store"));
+        let (dl_ok_code, dl_ok_hdrs, _) = send_raw_edge_http_with_headers(
+            &base,
+            "GET",
+            "/carbon/releases/carbon-cli-v1.1.0/SHA256SUMS.txt",
+            &[],
+            None,
+        )?;
+        let dl_loc = dl_ok_hdrs.get("location").map(String::as_str).unwrap_or("");
+        let dl_ok = dl_ok_code == 302
+            && dl_loc
+                == "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.1.0/SHA256SUMS.txt";
+        let passed = ping_code == 200
+            && role_scrub_ok
+            && hsts_ok
+            && nosniff_ok
+            && nostore_ok
+            && dl_ok
+            && dl_bad_code == 400
+            && matches!(dl_trav_code, 400 | 404);
+        (
+            passed,
+            dl_bad_code,
+            format!(
+                "edge_secret_scrub={role_scrub_ok}, HSTS={hsts_ok}, nosniff={nosniff_ok}, no-store={nostore_ok}, allowlist_302={dl_ok_code}, evil_asset={dl_bad_code}, traversal={dl_trav_code}"
+            ),
+        )
+    } else {
+        let passed = ping_code == 200
+            && role_scrub_ok
+            && matches!(dl_bad_code, 400 | 404)
+            && matches!(dl_trav_code, 400 | 404);
+        (
+            passed,
+            dl_bad_code,
+            format!(
+                "edge_secret_scrub={role_scrub_ok}, pre-v1.2.0 edge unknown-route refusal={dl_bad_code}/{dl_trav_code}"
+            ),
+        )
+    };
+    vectors.push(CarbonRedTeamVectorResult {
+        vector_id: "V-17".to_owned(),
+        finding_ref: "DEP-SEC-01/04".to_owned(),
+        title:
+            "Edge KEK/seal secret scrub, HSTS/nosniff/no-store headers & download allowlist enforced"
+                .to_owned(),
+        passed: v17_passed,
+        observed_http_status: v17_status,
+        wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
+        evidence: v17_evidence,
     });
 
     let passed_vectors = vectors.iter().filter(|v| v.passed).count();

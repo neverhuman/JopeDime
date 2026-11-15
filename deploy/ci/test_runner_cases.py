@@ -29,11 +29,17 @@ class RunnerTests(unittest.TestCase):
             caller_name = re.search(r'^name: (.+)$', source, re.M).group(1)
             parent = re.search(r'^concurrency:\n  group: (.+)$', source, re.M).group(1)
             children = re.findall(r'uses: \./\.github/workflows/([\w.-]+\.ya?ml)', source)
-            for ref, pr in (('refs/heads/feature', ''), ('refs/pull/1716/merge', '1716'), ('refs/heads/main', '')):
+            for ref, pr, draft in (
+                ('refs/heads/feature', '', 'false'),
+                ('refs/pull/1716/merge', '1716', 'false'),
+                ('refs/pull/1716/merge', '1716', 'true'),
+                ('refs/heads/main', '', 'false'),
+            ):
                 def resolve(value):
                     values = {'github.workflow': caller_name, 'github.ref': ref,
                               'github.sha': 'a' * 40,
-                              'github.event.pull_request.number || github.ref': pr or ref}
+                              'github.event.pull_request.number || github.ref': pr or ref,
+                              'github.event.pull_request.draft || false': draft}
                     for expression, result in values.items():
                         value = value.replace('${{ ' + expression + ' }}', result)
                     self.assertNotIn('${{', value, 'test must resolve every concurrency expression')
@@ -42,7 +48,7 @@ class RunnerTests(unittest.TestCase):
                     text = (workflows / child).read_text()
                     group = re.search(r'^concurrency:\n  group: (.+)$', text, re.M)
                     if group is not None:
-                        with self.subTest(caller=caller, child=child, ref=ref):
+                        with self.subTest(caller=caller, child=child, ref=ref, draft=draft):
                             self.assertNotEqual(resolve(parent), resolve(group.group(1)),
                                                 'reusable workflow can cancel its own caller')
 

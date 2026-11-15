@@ -45,11 +45,26 @@
     },
     "SecretsArn": {
       "Type": "String",
-      "Description": "ARN of AWS Secrets Manager secret jopedime/carbon/<env>/cell-secrets."
+      "Description": "ARN of AWS Secrets Manager secret jopedime/carbon/<env>/cell-secrets (engine KEK + seal keys)."
     },
     "SecretsVersionId": {
       "Type": "String",
       "Description": "Pinned Secrets Manager VersionId for deterministic secret binding and rotation."
+    },
+    "EdgeSecretsArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Optional dedicated ARN of jopedime/carbon/<env>/edge-secrets (presign + auth + public KEK only; zero engine KEK or seal keys)."
+    },
+    "EdgeSecretsVersionId": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Pinned VersionId of jopedime/carbon/<env>/edge-secrets when EdgeSecretsArn is configured."
+    },
+    "CorsAllowedOrigins": {
+      "Type": "CommaDelimitedList",
+      "Default": "*",
+      "Description": "Comma-delimited CORS AllowOrigins list for EdgePublicHttpApi."
     },
     "EngineKekPubkeyB64": {
       "Type": "String",
@@ -99,6 +114,12 @@
     },
     "HasEvalConcurrencyCap": {
       "Fn::Not": [{"Fn::Equals": [{"Ref": "EvalReservedConcurrency"}, -1]}]
+    },
+    "HasDedicatedEdgeSecrets": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "EdgeSecretsArn"}, ""]}]
+    },
+    "HasDedicatedEdgeSecretsVersion": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "EdgeSecretsVersionId"}, ""]}]
     }
   },
   "Resources": {
@@ -373,7 +394,13 @@
                   "Sid": "EdgeReadCellSecrets",
                   "Effect": "Allow",
                   "Action": ["secretsmanager:GetSecretValue"],
-                  "Resource": {"Ref": "SecretsArn"}
+                  "Resource": {
+                    "Fn::If": [
+                      "HasDedicatedEdgeSecrets",
+                      {"Ref": "EdgeSecretsArn"},
+                      {"Ref": "SecretsArn"}
+                    ]
+                  }
                 }
               ]
             }
@@ -541,8 +568,20 @@
             "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
             "CARBON_ENGINE_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-engine:live"},
             "CARBON_ENGINE_KEK_PUBKEY_B64": {"Ref": "EngineKekPubkeyB64"},
-            "CARBON_SECRETS_ARN": {"Ref": "SecretsArn"},
-            "CARBON_SECRETS_VERSION_ID": {"Ref": "SecretsVersionId"},
+            "CARBON_SECRETS_ARN": {
+              "Fn::If": [
+                "HasDedicatedEdgeSecrets",
+                {"Ref": "EdgeSecretsArn"},
+                {"Ref": "SecretsArn"}
+              ]
+            },
+            "CARBON_SECRETS_VERSION_ID": {
+              "Fn::If": [
+                "HasDedicatedEdgeSecretsVersion",
+                {"Ref": "EdgeSecretsVersionId"},
+                {"Ref": "SecretsVersionId"}
+              ]
+            },
             "CARBON_RELEASE_ID": {"Ref": "ReleaseId"},
             "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"}
           }
@@ -601,8 +640,9 @@
         "Description": "Public stage-throttled HTTPS ingress for anonymous and capability-token Carbon clients",
         "CorsConfiguration": {
           "AllowMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-          "AllowHeaders": ["content-type", "authorization", "x-carbon-capability-token"],
-          "AllowOrigins": ["*"],
+          "AllowHeaders": ["content-type", "authorization", "x-carbon-capability-token", "x-carbon-request-id"],
+          "ExposeHeaders": ["x-carbon-request-id", "retry-after"],
+          "AllowOrigins": {"Ref": "CorsAllowedOrigins"},
           "MaxAge": 3600
         }
       }
@@ -637,7 +677,7 @@
           "DestinationArn": {
             "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EdgePublicAccessLogGroup}"
           },
-          "Format": "{\"requestId\":\"$context.requestId\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"path\":\"$context.path\",\"status\":$context.status,\"responseLength\":$context.responseLength,\"integrationLatency\":\"$context.integrationLatency\"}"
+          "Format": "{\"requestId\":\"$context.requestId\",\"requestTime\":\"$context.requestTime\",\"sourceIp\":\"$context.identity.sourceIp\",\"userAgent\":\"$context.identity.userAgent\",\"protocol\":\"$context.protocol\",\"domainName\":\"$context.domainName\",\"httpMethod\":\"$context.httpMethod\",\"path\":\"$context.path\",\"status\":$context.status,\"responseLength\":$context.responseLength,\"integrationLatency\":\"$context.integrationLatency\"}"
         },
         "DefaultRouteSettings": {
           "ThrottlingBurstLimit": {"Fn::If": ["IsProd", 2000, 400]},
@@ -747,6 +787,17 @@
         "Threshold": 10,
         "ComparisonOperator": "GreaterThanOrEqualToThreshold",
         "TreatMissingData": "notBreaching"
+      }
+    },
+    "PassiveDownloadsInsightsQuery": {
+      "Type": "AWS::Logs::QueryDefinition",
+      "DependsOn": ["EdgeLogGroup"],
+      "Properties": {
+        "Name": {"Fn::Sub": "${AWS::StackName}-${AWS::Region}-passive-downloads"},
+        "LogGroupNames": [
+          {"Fn::Sub": "/aws/lambda/${AWS::StackName}-edge"}
+        ],
+        "QueryString": "fields @timestamp, asset, tag, inferred_os, inferred_arch, inferred_libc, viewer_country, viewer_asn, ip_day_hmac, source_ip, user_agent | filter schema = \"carbon.download.v1\" | stats count(*) as downloads, count_distinct(ip_day_hmac) as unique_installers_day by inferred_os, inferred_arch, tag, viewer_country | sort downloads desc"
       }
     }
   },

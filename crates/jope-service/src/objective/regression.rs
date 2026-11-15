@@ -26,6 +26,16 @@ impl RegressionObjective {
         self.fitness.identity()
     }
 
+    /// Underlying validated runtime `Fitness` specification.
+    pub fn fitness(&self) -> &Fitness {
+        &self.fitness
+    }
+
+    /// Auxiliary numeric column names referenced by this objective, in deterministic order.
+    pub fn columns(&self) -> Vec<String> {
+        self.fitness.columns().into_iter().collect()
+    }
+
     /// Score targets and predictions without auxiliary columns, retaining runtime errors.
     pub fn evaluate(&self, targets: &[f64], predictions: &[f64]) -> Result<Score> {
         self.fitness.evaluate(targets, predictions)

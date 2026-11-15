@@ -18,11 +18,18 @@ param(
   [string]$BaseUrl = "",
   [string]$SourceDir = "",
   [string]$AllowTestPubkey = "",
-  [switch]$SkipPing
+  [switch]$SkipPing,
+  [switch]$NoModifyPath,
+  [switch]$Uninstall
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+try {
+  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+} catch {}
+$ProgressPreference = "SilentlyContinue"
 
 $SigningPubFingerprint = "de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
 $EmbeddedSigningPubPem = @"
@@ -45,27 +52,102 @@ if ([string]::IsNullOrWhiteSpace($ConfigDir)) {
   $ConfigDir = Join-Path $HomeRoot ".config\jopedime"
 }
 
-$ArchRaw = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+$IsWinHost = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+
+if ($Uninstall) {
+  $DestExe = Join-Path $BinDir "carbon.exe"
+  if (Test-Path -LiteralPath $DestExe) {
+    Remove-Item -LiteralPath $DestExe -Force -ErrorAction SilentlyContinue
+    Write-CarbonLog "Removed $DestExe"
+  }
+  Get-ChildItem -LiteralPath $BinDir -Filter "carbon.exe.old.*" -ErrorAction SilentlyContinue | ForEach-Object {
+    Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
+  }
+  foreach ($CfgFile in @("carbon-clouds.json", "SHA256SUMS.txt", "SHA256SUMS.txt.sig")) {
+    $TargetCfg = Join-Path $ConfigDir $CfgFile
+    if (Test-Path -LiteralPath $TargetCfg) {
+      Remove-Item -LiteralPath $TargetCfg -Force -ErrorAction SilentlyContinue
+      Write-CarbonLog "Removed $TargetCfg"
+    }
+  }
+  if ($IsWinHost -and -not $NoModifyPath) {
+    $CurrentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not [string]::IsNullOrWhiteSpace($CurrentUserPath)) {
+      $Filtered = ($CurrentUserPath -split ";" | Where-Object {
+        $_ -and ($_.TrimEnd("\") -ne $BinDir.TrimEnd("\"))
+      }) -join ";"
+      if ($Filtered -ne $CurrentUserPath) {
+        [Environment]::SetEnvironmentVariable("Path", $Filtered, "User")
+        Write-CarbonLog "Removed $BinDir from User Path"
+      }
+    }
+  }
+  Write-CarbonLog "Uninstall complete (saved zero-knowledge run keys under $ConfigDir\runs were preserved)."
+  return
+}
+
+function Resolve-NativeWindowsArch {
+  # Detect true native machine architecture even when PowerShell 5.1 runs under x64 WOW64 on Windows 11 ARM64.
+  if ($IsWinHost) {
+    try {
+      $RegArch = (Get-ItemProperty -LiteralPath "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name "PROCESSOR_ARCHITECTURE" -ErrorAction SilentlyContinue).PROCESSOR_ARCHITECTURE
+      if (-not [string]::IsNullOrWhiteSpace($RegArch)) {
+        return $RegArch.Trim().ToLowerInvariant()
+      }
+    } catch {}
+  }
+  if (-not [string]::IsNullOrWhiteSpace($env:PROCESSOR_ARCHITEW6432)) {
+    return $env:PROCESSOR_ARCHITEW6432.Trim().ToLowerInvariant()
+  }
+  if (-not [string]::IsNullOrWhiteSpace($env:PROCESSOR_ARCHITECTURE)) {
+    return $env:PROCESSOR_ARCHITECTURE.Trim().ToLowerInvariant()
+  }
+  return [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+}
+
+$ArchRaw = Resolve-NativeWindowsArch
 switch ($ArchRaw) {
-  "x64"   { $BaseAsset = "carbon-windows-x86_64-msvc" }
-  "arm64" { $BaseAsset = "carbon-windows-aarch64-msvc" }
-  default { throw "[carbon-install] ERROR: Unsupported Windows CPU architecture '$ArchRaw' (expected X64 or Arm64)" }
+  "x64"   { $BaseAsset = "carbon-windows-x86_64-msvc"; $ArchSlug = "x86_64" }
+  "amd64" { $BaseAsset = "carbon-windows-x86_64-msvc"; $ArchSlug = "x86_64" }
+  "arm64" { $BaseAsset = "carbon-windows-aarch64-msvc"; $ArchSlug = "aarch64" }
+  default { throw "[carbon-install] ERROR: Unsupported Windows CPU architecture '$ArchRaw' (expected x64/AMD64 or ARM64)" }
+}
+
+$TelemetryOptOut = ($env:DO_NOT_TRACK -eq "1" -or $env:CARBON_NO_TELEMETRY -eq "1")
+$InstallerUserAgent = if ($TelemetryOptOut) {
+  "jope-carbon-installer/1"
+} else {
+  "jope-carbon-installer/1 ($Version; windows-$ArchSlug)"
 }
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
-  $EffectiveBaseUrl = "https://github.com/neverhuman/JopeDime/releases/download/$Version"
+  if ($TelemetryOptOut) {
+    $EffectiveBaseUrl = "https://github.com/neverhuman/JopeDime/releases/download/$Version"
+    $MirrorUrl = "https://downloads.neverhuman.org/carbon/releases/$Version"
+  } else {
+    $EffectiveBaseUrl = "https://downloads.neverhuman.org/carbon/releases/$Version"
+    $MirrorUrl = "https://github.com/neverhuman/JopeDime/releases/download/$Version"
+  }
   $UseSecondaryMirror = $true
 } else {
   $EffectiveBaseUrl = $BaseUrl.TrimEnd("/")
+  $MirrorUrl = "https://github.com/neverhuman/JopeDime/releases/download/$Version"
   $UseSecondaryMirror = $false
 }
-$MirrorUrl = "https://downloads.neverhuman.org/carbon/releases/$Version"
 
-$StageDir = Join-Path ([System.IO.Path]::GetTempPath()) ("carbon-install-" + [Guid]::NewGuid().ToString("N"))
+$StageParent = if (-not [string]::IsNullOrWhiteSpace($env:CARBON_INSTALL_STAGE_ROOT)) {
+  $env:CARBON_INSTALL_STAGE_ROOT
+} elseif ($env:LOCALAPPDATA) {
+  Join-Path $env:LOCALAPPDATA "Temp"
+} else {
+  [System.IO.Path]::GetTempPath()
+}
+New-Item -ItemType Directory -Path $StageParent -Force | Out-Null
+$StageDir = Join-Path $StageParent ("carbon-install-" + [Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $StageDir -Force | Out-Null
 
 function Get-FileSha256Lower([string]$Path) {
-  return (Get-FileHash -Path $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+  return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
 function Fetch-CarbonAsset([string]$AssetName, [string]$DestPath) {
@@ -79,37 +161,74 @@ function Fetch-CarbonAsset([string]$AssetName, [string]$DestPath) {
   }
   $Primary = "$EffectiveBaseUrl/$AssetName"
   try {
-    Invoke-WebRequest -Uri $Primary -OutFile $DestPath -UseBasicParsing -TimeoutSec 30
+    Invoke-WebRequest -Uri $Primary -OutFile $DestPath -UseBasicParsing -UserAgent $InstallerUserAgent -TimeoutSec 30
   } catch {
     if (-not $UseSecondaryMirror) { throw }
-    Write-CarbonLog "Primary download unavailable for $AssetName; trying official mirror ($MirrorUrl)..."
-    Invoke-WebRequest -Uri "$MirrorUrl/$AssetName" -OutFile $DestPath -UseBasicParsing -TimeoutSec 30
+    Write-CarbonLog "Primary download unavailable for $AssetName; failing over to $MirrorUrl..."
+    Invoke-WebRequest -Uri "$MirrorUrl/$AssetName" -OutFile $DestPath -UseBasicParsing -UserAgent $InstallerUserAgent -TimeoutSec 30
   }
 }
 
 function Convert-Asn1DerEcdsaToP1363([byte[]]$DerSig) {
-  if ($DerSig.Length -lt 8 -or $DerSig[0] -ne 0x30) {
+  if ($null -eq $DerSig -or $DerSig.Length -lt 8 -or $DerSig[0] -ne 0x30) {
     throw "Invalid ASN.1 DER ECDSA signature header"
   }
   $idx = 2
-  if (($DerSig[1] -band 0x80) -ne 0) {
-    $lenBytes = $DerSig[1] -band 0x7F
-    $idx = 2 + $lenBytes
+  $seqLen = 0
+  if (($DerSig[1] -band 0x80) -eq 0) {
+    $seqLen = [int]$DerSig[1]
+    $idx = 2
+  } else {
+    $lenBytes = [int]($DerSig[1] -band 0x7F)
+    if ($lenBytes -ne 1 -or $DerSig.Length -lt 9) {
+      throw "Invalid ASN.1 DER ECDSA sequence length encoding"
+    }
+    $seqLen = [int]$DerSig[2]
+    $idx = 3
   }
-  if ($DerSig[$idx] -ne 0x02) { throw "Invalid ASN.1 INTEGER tag for R" }
+  if (($idx + $seqLen) -ne $DerSig.Length) {
+    throw "ASN.1 DER ECDSA signature has trailing or truncated outer bytes"
+  }
+
+  if (($idx + 2) -gt $DerSig.Length -or $DerSig[$idx] -ne 0x02) {
+    throw "Invalid ASN.1 INTEGER tag for R"
+  }
   $rLen = [int]$DerSig[$idx + 1]
-  $rBytes = $DerSig[($idx + 2)..($idx + 1 + $rLen)]
+  if ($rLen -lt 1 -or $rLen -gt 33 -or ($idx + 2 + $rLen) -ge $DerSig.Length) {
+    throw "Invalid ASN.1 INTEGER length for R ($rLen)"
+  }
+  $rOffset = $idx + 2
+  $rCopyLen = $rLen
+  if ($rCopyLen -eq 33) {
+    if ($DerSig[$rOffset] -ne 0x00) {
+      throw "Overlong non-padded ASN.1 INTEGER for R"
+    }
+    $rOffset += 1
+    $rCopyLen = 32
+  }
+
   $idx = $idx + 2 + $rLen
-  if ($DerSig[$idx] -ne 0x02) { throw "Invalid ASN.1 INTEGER tag for S" }
+  if (($idx + 2) -gt $DerSig.Length -or $DerSig[$idx] -ne 0x02) {
+    throw "Invalid ASN.1 INTEGER tag for S"
+  }
   $sLen = [int]$DerSig[$idx + 1]
-  $sBytes = $DerSig[($idx + 2)..($idx + 1 + $sLen)]
+  if ($sLen -lt 1 -or $sLen -gt 33 -or ($idx + 2 + $sLen) -ne $DerSig.Length) {
+    throw "Invalid ASN.1 INTEGER length for S ($sLen)"
+  }
+  $sOffset = $idx + 2
+  $sCopyLen = $sLen
+  if ($sCopyLen -eq 33) {
+    if ($DerSig[$sOffset] -ne 0x00) {
+      throw "Overlong non-padded ASN.1 INTEGER for S"
+    }
+    $sOffset += 1
+    $sCopyLen = 32
+  }
 
   $out = New-Object byte[] 64
-  $rTrim = if ($rBytes.Length -gt 32) { $rBytes[($rBytes.Length - 32)..($rBytes.Length - 1)] } else { $rBytes }
-  $sTrim = if ($sBytes.Length -gt 32) { $sBytes[($sBytes.Length - 32)..($sBytes.Length - 1)] } else { $sBytes }
-  [Array]::Copy($rTrim, 0, $out, 32 - $rTrim.Length, $rTrim.Length)
-  [Array]::Copy($sTrim, 0, $out, 64 - $sTrim.Length, $sTrim.Length)
-  return $out
+  [System.Buffer]::BlockCopy($DerSig, $rOffset, $out, 32 - $rCopyLen, $rCopyLen)
+  [System.Buffer]::BlockCopy($DerSig, $sOffset, $out, 64 - $sCopyLen, $sCopyLen)
+  return ,$out
 }
 
 function Verify-CarbonReleaseSignature([string]$PemText, [byte[]]$DataBytes, [byte[]]$DerSig) {
@@ -118,16 +237,19 @@ function Verify-CarbonReleaseSignature([string]$PemText, [byte[]]$DataBytes, [by
   if ($Spki.Length -ne 91 -or $Spki[26] -ne 0x04) {
     throw "Unsupported SPKI P-256 public key DER length ($($Spki.Length))"
   }
-  $X = $Spki[27..58]
-  $Y = $Spki[59..90]
+  $X = New-Object byte[] 32
+  $Y = New-Object byte[] 32
+  [System.Buffer]::BlockCopy($Spki, 27, $X, 0, 32)
+  [System.Buffer]::BlockCopy($Spki, 59, $Y, 0, 32)
+  $Pt = New-Object System.Security.Cryptography.ECPoint
+  $Pt.X = $X
+  $Pt.Y = $Y
   $Params = New-Object System.Security.Cryptography.ECParameters
-  $Params.Curve = [System.Security.Cryptography.ECCurve+NamedCurves]::nistP256
-  $Params.Q = New-Object System.Security.Cryptography.ECPoint
-  $Params.Q.X = $X
-  $Params.Q.Y = $Y
+  $Params.Curve = [System.Security.Cryptography.ECCurve]::CreateFromValue("1.2.840.10045.3.1.7")
+  $Params.Q = $Pt
   $Ecdsa = [System.Security.Cryptography.ECDsa]::Create($Params)
   try {
-    $IeeeSig = Convert-Asn1DerEcdsaToP1363 -DerSig $DerSig
+    [byte[]]$IeeeSig = Convert-Asn1DerEcdsaToP1363 -DerSig $DerSig
     if (-not $Ecdsa.VerifyData($DataBytes, $IeeeSig, [System.Security.Cryptography.HashAlgorithmName]::SHA256)) {
       throw "ECDSA-P256 signature verification FAILED for SHA256SUMS.txt"
     }
@@ -139,9 +261,10 @@ function Verify-CarbonReleaseSignature([string]$PemText, [byte[]]$DataBytes, [by
 try {
   if (-not [string]::IsNullOrWhiteSpace($AllowTestPubkey)) {
     Write-CarbonLog "WARNING: using test public key override ($AllowTestPubkey) — NOT for production installs"
-    $ActivePem = [System.IO.File]::ReadAllText($AllowTestPubkey)
+    $ActivePem = [System.IO.File]::ReadAllText($AllowTestPubkey).Replace("`r`n", "`n")
   } else {
-    $PemBytes = [System.Text.Encoding]::ASCII.GetBytes($EmbeddedSigningPubPem)
+    $NormalizedEmbeddedPem = $EmbeddedSigningPubPem.Replace("`r`n", "`n")
+    $PemBytes = [System.Text.Encoding]::ASCII.GetBytes($NormalizedEmbeddedPem)
     $Sha256Alg = [System.Security.Cryptography.SHA256]::Create()
     try {
       $GotPubHash = ([BitConverter]::ToString($Sha256Alg.ComputeHash($PemBytes)).Replace("-", "")).ToLowerInvariant()
@@ -151,7 +274,7 @@ try {
     if ($GotPubHash -ne $SigningPubFingerprint) {
       throw "Embedded release public key fingerprint mismatch ($GotPubHash)"
     }
-    $ActivePem = $EmbeddedSigningPubPem
+    $ActivePem = $NormalizedEmbeddedPem
   }
 
   Write-CarbonLog "Fetching signed Carbon release manifest '$Version'..."
@@ -224,8 +347,23 @@ try {
   New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
   New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
 
+  Get-ChildItem -LiteralPath $BinDir -Filter "carbon.exe.old.*" -ErrorAction SilentlyContinue | ForEach-Object {
+    Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
+  }
+
   $DestExe = Join-Path $BinDir "carbon.exe"
-  Copy-Item -LiteralPath $ExeSource -Destination $DestExe -Force
+  $DestNew = Join-Path $BinDir ("carbon.exe.new." + $PID)
+  Copy-Item -LiteralPath $ExeSource -Destination $DestNew -Force
+  try {
+    Move-Item -LiteralPath $DestNew -Destination $DestExe -Force
+  } catch {
+    $OldLocked = "$DestExe.old.$PID"
+    if (Test-Path -LiteralPath $DestExe) {
+      Move-Item -LiteralPath $DestExe -Destination $OldLocked -Force
+    }
+    Move-Item -LiteralPath $DestNew -Destination $DestExe -Force
+  }
+
   Copy-Item -LiteralPath $CloudsStage -Destination (Join-Path $ConfigDir "carbon-clouds.json") -Force
   Copy-Item -LiteralPath $ManifestPath -Destination (Join-Path $ConfigDir "SHA256SUMS.txt") -Force
   Copy-Item -LiteralPath $SigPath -Destination (Join-Path $ConfigDir "SHA256SUMS.txt.sig") -Force
@@ -235,10 +373,53 @@ try {
 
   $env:CARBON_CONFIG_DIR = $ConfigDir
   & $DestExe version | Write-Host
+  if ($LASTEXITCODE -ne 0) {
+    throw "Installed carbon.exe failed 'version' check (exit code $LASTEXITCODE)"
+  }
   if (-not $SkipPing) {
     & $DestExe ping --cloud prod | Write-Host
+    if ($LASTEXITCODE -ne 0) {
+      throw "Post-install 'carbon ping --cloud prod' failed (exit code $LASTEXITCODE)"
+    }
   }
-  & $DestExe self-verify | Out-Null
+  if ([string]::IsNullOrWhiteSpace($AllowTestPubkey)) {
+    & $DestExe self-verify | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      throw "Post-install 'carbon self-verify' failed (exit code $LASTEXITCODE)"
+    }
+  }
+
+  $PathSeparator = [System.IO.Path]::PathSeparator
+  $SessionPaths = ($env:PATH -split [regex]::Escape([string]$PathSeparator)) | Where-Object { $_ }
+  $NormalizedBin = $BinDir.TrimEnd("\").TrimEnd("/")
+  $InSessionPath = $false
+  foreach ($Entry in $SessionPaths) {
+    if ($Entry.TrimEnd("\").TrimEnd("/") -ieq $NormalizedBin) {
+      $InSessionPath = $true
+      break
+    }
+  }
+  if (-not $InSessionPath) {
+    $env:PATH = "$BinDir$PathSeparator$($env:PATH)"
+  }
+
+  if ($IsWinHost -and -not $NoModifyPath -and [string]::IsNullOrWhiteSpace($AllowTestPubkey)) {
+    $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    $UserEntries = if ([string]::IsNullOrWhiteSpace($UserPath)) { @() } else { $UserPath -split ";" | Where-Object { $_ } }
+    $InUserPath = $false
+    foreach ($Entry in $UserEntries) {
+      if ($Entry.TrimEnd("\") -ieq $NormalizedBin) {
+        $InUserPath = $true
+        break
+      }
+    }
+    if (-not $InUserPath) {
+      $UpdatedUserPath = if ([string]::IsNullOrWhiteSpace($UserPath)) { $BinDir } else { "$BinDir;$UserPath" }
+      [Environment]::SetEnvironmentVariable("Path", $UpdatedUserPath, "User")
+      Write-CarbonLog "Added $BinDir to persistent Windows User Path"
+    }
+  }
+
   Write-CarbonLog "Ready! Try: carbon quickstart  |  carbon data.csv  |  carbon self-verify"
 } finally {
   if (Test-Path -LiteralPath $StageDir) {

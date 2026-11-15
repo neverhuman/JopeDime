@@ -118,7 +118,7 @@ impl PrepError {
                     "supply a dataset with at least 2 rows",
                     "pass a finite holdout_fraction such as 0.20 in (0.0, 1.0)",
                 ],
-                "rerun `cargo test -p jope-prep --test prep split_refusals`",
+                "inspect your dataset row count and missing-target rows with `carbon inspect <data.csv> --target <col>`",
             ),
             Self::ZeroFeatures
             | Self::ShapeMismatch { .. }
@@ -130,7 +130,7 @@ impl PrepError {
                     "pass target y of length total_rows",
                     "use the SplitPlan constructed for the same total_rows count",
                 ],
-                "rerun `cargo test -p jope-prep --test prep conditioning_refusals`",
+                "run `carbon inspect <data.csv> --target <col>` to view retained and skipped columns",
             ),
             Self::NonFiniteFitTarget { .. } | Self::LandmarkRecipe(_) => (
                 "condition landmarks strictly on finite FIT targets and valid probe bounds",
@@ -138,7 +138,7 @@ impl PrepError {
                     "drop or repair training rows whose target y is NaN or infinite",
                     "ensure the FIT partition contains finite numeric feature values",
                 ],
-                "rerun `cargo test -p jope-prep --test prep holdout_poison_invariance`",
+                "run `carbon inspect <data.csv> --target <col>` to check target summary and non-finite rows",
             ),
             Self::InvalidLandmarkWire { .. } => (
                 "authenticate 6,368-byte JLMB v1 landmark bundles before conditioning",
@@ -146,7 +146,7 @@ impl PrepError {
                     "transmit the exact 6,368-byte buffer returned by FitLandmarkBundle::to_wire_bytes",
                     "verify transport compression did not truncate or corrupt trailing SHA-256 bytes",
                 ],
-                "rerun `cargo test -p jope-prep --test prep wire_roundtrip_and_tamper`",
+                "run `carbon doctor` to verify CLI build integrity and regional cell connectivity",
             ),
             Self::InvalidJmat { .. } => (
                 "accept only well-formed, SHA-256-verified JMAT v1 column-major matrices",
@@ -155,7 +155,7 @@ impl PrepError {
                     "ensure numeric cells are finite (use None for missing values)",
                     "verify trailing 32-byte SHA-256 checksum matches payload bytes",
                 ],
-                "rerun `cargo test -p jope-prep --test prep jmat_roundtrip_and_refusals`",
+                "run `carbon inspect <data.csv> --target <col>` to validate column names and numeric values",
             ),
             Self::InvalidUserEnvelope { .. } => (
                 "authenticate per-user zero-knowledge CUEN v1 and CUDK v1 ciphertext headers",
@@ -163,7 +163,7 @@ impl PrepError {
                     "encrypt fit.jmat, holdout.jmat, landmarks, and predict payloads with pack_cuen_v1",
                     "ensure tenant_id, run_id, and CuenPayloadKind match the target artifact slot",
                 ],
-                "rerun `cargo test -p jope-prep cuen`",
+                "run `carbon doctor` and `carbon whoami` to verify key-pinning and tenant credentials",
             ),
         };
         PrepGuidance {

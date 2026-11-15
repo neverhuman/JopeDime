@@ -167,10 +167,26 @@ impl Plan {
             );
         }
         let fitness = jope_runtime::fitness::Fitness::parse(&self.objective)?;
-        ensure!(
-            fitness.columns().is_empty(),
-            "M1 auxiliary-column objectives require their later adapter"
-        );
+        for aux_name in fitness.columns() {
+            ensure!(
+                aux_name != self.target,
+                "auxiliary objective column '{aux_name}' cannot equal target '{}'",
+                self.target
+            );
+            ensure!(
+                !self.features.contains(&aux_name),
+                "auxiliary objective column '{aux_name}' must be excluded from candidate features"
+            );
+            let column = matrix
+                .columns()
+                .iter()
+                .find(|c| c.name == aux_name)
+                .with_context(|| format!("missing auxiliary objective column '{aux_name}'"))?;
+            ensure!(
+                column.kind == crate::dataset::jmat::ColumnKind::Numeric,
+                "auxiliary objective column '{aux_name}' must be numeric"
+            );
+        }
         ensure!(
             !fitness.requires_order() || self.times.is_some(),
             "ordered objective needs chronological folds"
