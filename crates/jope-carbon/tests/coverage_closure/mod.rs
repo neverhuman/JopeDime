@@ -1,9 +1,12 @@
 //! Comprehensive offline loopback mocks (S3 SigV4 CAS, AWS Secrets Manager, AWS Lambda Custom
 //! Runtime `2018-06-01`) and full CLI / HTTP API / `tier x env` coverage closure tests.
 
+pub mod cli_bin_and_cell_functions;
 pub mod cli_commands_and_workers;
+pub mod deploy_packager_and_rollout_functions;
 pub mod deploy_vault_and_ci_clis;
 pub mod http_api_and_emu_matrix;
+pub mod sigv4_and_crypto_functions;
 pub mod tier_env_and_s3_serve;
 
 use std::collections::BTreeMap;
@@ -35,14 +38,23 @@ pub struct ScopedProcessEnv {
 
 impl ScopedProcessEnv {
     pub fn set(pairs: &[(&str, &str)]) -> Self {
+        let opt_pairs: Vec<(&str, Option<&str>)> =
+            pairs.iter().map(|&(k, v)| (k, Some(v))).collect();
+        Self::set_opt(&opt_pairs)
+    }
+
+    pub fn set_opt(pairs: &[(&str, Option<&str>)]) -> Self {
         let guard = ENV_MUTEX
             .get_or_init(|| Mutex::new(()))
             .lock()
             .unwrap_or_else(|e| e.into_inner());
         let mut prior = Vec::with_capacity(pairs.len());
-        for &(k, v) in pairs {
+        for &(k, v_opt) in pairs {
             prior.push((k.to_owned(), std::env::var(k).ok()));
-            std::env::set_var(k, v);
+            match v_opt {
+                Some(v) => std::env::set_var(k, v),
+                None => std::env::remove_var(k),
+            }
         }
         Self {
             _guard: guard,
@@ -102,20 +114,12 @@ impl LoopbackMockS3Server {
     }
 
     pub fn object_count_with_prefix(&self, prefix: &str) -> usize {
-        let map = self
-            .state
-            .objects
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let map = self.state.objects.lock().unwrap_or_else(|e| e.into_inner());
         map.keys().filter(|k| k.starts_with(prefix)).count()
     }
 
     pub fn has_key_ending_with(&self, suffix: &str) -> bool {
-        let map = self
-            .state
-            .objects
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let map = self.state.objects.lock().unwrap_or_else(|e| e.into_inner());
         map.keys().any(|k| k.ends_with(suffix))
     }
 }
@@ -257,11 +261,7 @@ impl LoopbackMockSecretsServer {
             version_id: version_id.to_owned(),
             secret_string: secret_string.to_owned(),
         };
-        let mut map = self
-            .state
-            .by_key
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let mut map = self.state.by_key.lock().unwrap_or_else(|e| e.into_inner());
         map.insert(name.to_owned(), entry.clone());
         map.insert(arn.to_owned(), entry);
     }
@@ -470,11 +470,7 @@ fn simple_resp(code: StatusCode, body: &[u8]) -> Response<Body> {
 fn spawn_loopback_axum(
     thread_name: &str,
     app: Router,
-) -> (
-    SocketAddr,
-    tokio::sync::oneshot::Sender<()>,
-    JoinHandle<()>,
-) {
+) -> (SocketAddr, tokio::sync::oneshot::Sender<()>, JoinHandle<()>) {
     let std_listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind loopback");
     std_listener
         .set_nonblocking(true)
@@ -523,5 +519,11 @@ pub fn minimal_aarch64_static_elf64() -> Vec<u8> {
     elf[18..20].copy_from_slice(&0x00B7u16.to_le_bytes()); // EM_AARCH64
     elf[20..24].copy_from_slice(&1u32.to_le_bytes()); // EV_CURRENT
     elf[52..54].copy_from_slice(&64u16.to_le_bytes()); // e_ehsize
+    elf
+}
+
+pub fn minimal_x86_64_static_elf64() -> Vec<u8> {
+    let mut elf = minimal_aarch64_static_elf64();
+    elf[18..20].copy_from_slice(&0x003Eu16.to_le_bytes()); // EM_X86_64
     elf
 }

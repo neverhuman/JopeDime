@@ -35,9 +35,18 @@ fn build_secret_bundle_json(
     });
     if let Some(pk_hex) = prev_kek_hex {
         let map = obj.as_object_mut().expect("obj");
-        map.insert("previous_presign_secret_hex".into(), serde_json::json!("44".repeat(32)));
-        map.insert("previous_auth_secret_hex".into(), serde_json::json!("55".repeat(32)));
-        map.insert("previous_seal_secret_hex".into(), serde_json::json!("66".repeat(32)));
+        map.insert(
+            "previous_presign_secret_hex".into(),
+            serde_json::json!("44".repeat(32)),
+        );
+        map.insert(
+            "previous_auth_secret_hex".into(),
+            serde_json::json!("55".repeat(32)),
+        );
+        map.insert(
+            "previous_seal_secret_hex".into(),
+            serde_json::json!("66".repeat(32)),
+        );
         map.insert("previous_engine_kek_hex".into(), serde_json::json!(pk_hex));
     }
     obj.to_string()
@@ -164,8 +173,9 @@ fn cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audi
     cfg_prod.engine_kek_scalar = [0x22; 32];
     let prod_auth_hex = hex::encode(cfg_prod.auth_secret);
     let mut emu_prod = CarbonLocalLambdaEmulator::start(cfg_prod).expect("start emu_prod");
-    let (_, prod_probed) = jope_carbon::CarbonThinClient::connect_fastest(vec![emu_prod.base_url()])
-        .expect("ping prod");
+    let (_, prod_probed) =
+        jope_carbon::CarbonThinClient::connect_fastest(vec![emu_prod.base_url()])
+            .expect("ping prod");
     let prod_kek_pub = prod_probed[0]
         .engine_kek_pubkey_b64
         .clone()
@@ -627,24 +637,26 @@ esac
     let ci_qual = tmp.path().join("ci-qual.json");
     fs::write(
         &ci_qual,
-        serde_json::to_vec_pretty(&jope_carbon::cli::spec_report::CiQuickstartQualificationReceipt {
-            schema: "jopedime.carbon.ci-quickstart-qualification.v1".to_owned(),
-            timestamp_epoch_ms: 1_762_000_000_000,
-            source_sha: sha.to_owned(),
-            binary_version: jope_carbon::CARBON_PKG_VERSION.to_owned(),
-            release_tag: jope_carbon::CARBON_RELEASE_TAG.to_owned(),
-            emulator_regions: vec!["us-east-2".to_owned()],
-            emulator_edge_invocations: 12,
-            emulator_engine_invocations: 8,
-            emulator_eval_invocations: 16,
-            residual_cas_blobs_after_shred: 0,
-            total_tests: 8,
-            passed_tests: 8,
-            all_passed: true,
-            total_wall_ms: 950.0,
-            steps: Vec::new(),
-            redteam_vectors: Vec::new(),
-        })
+        serde_json::to_vec_pretty(
+            &jope_carbon::cli::spec_report::CiQuickstartQualificationReceipt {
+                schema: "jopedime.carbon.ci-quickstart-qualification.v1".to_owned(),
+                timestamp_epoch_ms: 1_762_000_000_000,
+                source_sha: sha.to_owned(),
+                binary_version: jope_carbon::CARBON_PKG_VERSION.to_owned(),
+                release_tag: jope_carbon::CARBON_RELEASE_TAG.to_owned(),
+                emulator_regions: vec!["us-east-2".to_owned()],
+                emulator_edge_invocations: 12,
+                emulator_engine_invocations: 8,
+                emulator_eval_invocations: 16,
+                residual_cas_blobs_after_shred: 0,
+                total_tests: 8,
+                passed_tests: 8,
+                all_passed: true,
+                total_wall_ms: 950.0,
+                steps: Vec::new(),
+                redteam_vectors: Vec::new(),
+            },
+        )
         .expect("ser"),
     )
     .expect("write ci_qual");
@@ -677,7 +689,9 @@ esac
         "spec-report failed: {}",
         String::from_utf8_lossy(&sr.stderr)
     );
-    assert!(spec_dir.join("carbon-engineering-testing-spec.html").is_file());
+    assert!(spec_dir
+        .join("carbon-engineering-testing-spec.html")
+        .is_file());
 
     // Missing `spec-pdf-receipt.json` must fail `carbon spec-verify` closed!
     let sv_missing = Command::new(&bin)

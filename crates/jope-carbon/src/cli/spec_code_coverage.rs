@@ -15,7 +15,7 @@ use crate::cli::spec_code_coverage_rows::{
 pub const CODE_COVERAGE_SUMMARY_FILENAME: &str = "code-coverage-summary.json";
 
 const BASELINE_JSON: &str =
-    include_str!("../../../../docs/carbon/code-coverage-baseline-7988e2ec.json");
+    include_str!("../../../../docs/carbon/code-coverage-baseline-4c454329.json");
 
 /// Per-file or crate-wide coverage counters (`lines`, `regions`, `functions`).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -35,6 +35,14 @@ pub struct CoverageCounters {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FileCoverageDelta {
     pub file: String,
+    #[serde(default)]
+    pub before_functions_pct: f64,
+    #[serde(default)]
+    pub after_functions_covered: u64,
+    #[serde(default)]
+    pub after_functions_total: u64,
+    #[serde(default)]
+    pub after_functions_pct: f64,
     pub before_lines_pct: f64,
     pub after_lines_covered: u64,
     pub after_lines_total: u64,
@@ -114,6 +122,8 @@ struct BaselineFileEntry {
     file: String,
     lines_pct: f64,
     regions_pct: f64,
+    #[serde(default)]
+    functions_pct: f64,
 }
 
 struct ParsedLlvmFile {
@@ -154,7 +164,8 @@ pub fn load_and_evaluate_code_coverage(
         .map_err(|e| format!("read code coverage JSON {}: {e}", path.display()))?;
     let val: serde_json::Value = serde_json::from_str(&raw)
         .map_err(|e| format!("parse code coverage JSON {}: {e}", path.display()))?;
-    if val.get("schema").and_then(|s| s.as_str()) == Some("jopedime.carbon.code-coverage-summary.v1")
+    if val.get("schema").and_then(|s| s.as_str())
+        == Some("jopedime.carbon.code-coverage-summary.v1")
     {
         let mut rcpt: CodeCoverageSummaryReceipt = serde_json::from_value(val)
             .map_err(|e| format!("decode CodeCoverageSummaryReceipt: {e}"))?;
@@ -250,7 +261,8 @@ fn parse_single_llvm_file(entry: &serde_json::Value) -> Result<ParsedLlvmFile, S
                     let ln = items[0].as_u64().unwrap_or(0);
                     let col = items[1].as_u64().unwrap_or(0);
                     let cnt = items[2].as_u64().unwrap_or(0);
-                    let has_cnt = u64::from(items[3].as_bool().unwrap_or(items[3].as_u64() == Some(1)));
+                    let has_cnt =
+                        u64::from(items[3].as_bool().unwrap_or(items[3].as_u64() == Some(1)));
                     let is_entry =
                         u64::from(items[4].as_bool().unwrap_or(items[4].as_u64() == Some(1)));
                     let is_gap = u64::from(
@@ -340,12 +352,16 @@ fn build_file_deltas(
         base.files.iter().map(|f| (f.file.as_str(), f)).collect();
     let mut out = Vec::with_capacity(by_file.len());
     for (rel, parsed) in by_file {
-        let (bl, br) = match base_map.get(rel.as_str()) {
-            Some(b) => (b.lines_pct, b.regions_pct),
-            None => (0.0, 0.0),
+        let (bf, bl, br) = match base_map.get(rel.as_str()) {
+            Some(b) => (b.functions_pct, b.lines_pct, b.regions_pct),
+            None => (0.0, 0.0, 0.0),
         };
         out.push(FileCoverageDelta {
             file: rel.clone(),
+            before_functions_pct: bf,
+            after_functions_covered: parsed.summary.functions_covered,
+            after_functions_total: parsed.summary.functions_total,
+            after_functions_pct: parsed.summary.functions_pct,
             before_lines_pct: bl,
             after_lines_covered: parsed.summary.lines_covered,
             after_lines_total: parsed.summary.lines_total,
@@ -448,10 +464,16 @@ pub fn validate_code_coverage_receipt(
     }
     if rcpt.after.lines_pct <= rcpt.before.lines_pct
         || rcpt.after.regions_pct <= rcpt.before.regions_pct
+        || rcpt.after.functions_pct <= rcpt.before.functions_pct
     {
         return Err(format!(
-            "after coverage ({:.2}% lines / {:.2}% regions) did not improve over baseline ({:.2}% / {:.2}%)",
-            rcpt.after.lines_pct, rcpt.after.regions_pct, rcpt.before.lines_pct, rcpt.before.regions_pct
+            "after coverage ({:.2}% fn / {:.2}% ln / {:.2}% br) did not improve over baseline ({:.2}% / {:.2}% / {:.2}%)",
+            rcpt.after.functions_pct,
+            rcpt.after.lines_pct,
+            rcpt.after.regions_pct,
+            rcpt.before.functions_pct,
+            rcpt.before.lines_pct,
+            rcpt.before.regions_pct,
         ));
     }
     for row in rcpt.cli_rows.iter().chain(rcpt.api_rows.iter()) {
@@ -510,7 +532,11 @@ fn render_before_after_svg(before: &CoverageCounters, after: &CoverageCounters) 
     let metrics = [
         ("Line Coverage (src/**)", before.lines_pct, after.lines_pct),
         ("MIR Branch-Regions", before.regions_pct, after.regions_pct),
-        ("Function Coverage", before.functions_pct, after.functions_pct),
+        (
+            "Function Coverage",
+            before.functions_pct,
+            after.functions_pct,
+        ),
     ];
     let mut bars = String::new();
     for (idx, (label, b_pct, a_pct)) in metrics.iter().enumerate() {
@@ -535,7 +561,7 @@ fn render_before_after_svg(before: &CoverageCounters, after: &CoverageCounters) 
     format!(
         r##"<svg viewBox="0 0 880 182" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before vs After Compiler Coverage">
   <rect x="1" y="1" width="878" height="180" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
-  <text x="16" y="23" fill="#0f172a" font-size="11.0" font-weight="700" font-family="Liberation Sans, sans-serif">Figure 14A — rustc 1.97.1 -C instrument-coverage Before (7988e2ec) vs After Full Product Closure</text>
+  <text x="16" y="23" fill="#0f172a" font-size="11.0" font-weight="700" font-family="Liberation Sans, sans-serif">Figure 14A — rustc 1.97.1 -C instrument-coverage Before (4c4543295b) vs After Function &amp; Module Closure</text>
   {bars}
 </svg>"##
     )
@@ -557,7 +583,7 @@ pub fn render_code_coverage_section_html(rcpt: &CodeCoverageSummaryReceipt) -> S
         r##"  <div class="page-break"></div>
   <h2>14. Compiler-Instrumented Full Product Code Coverage Matrix (<code>CLI</code>, <code>API</code> &amp; <code>Tier &times; Env</code>)</h2>
   <p>
-    Section 14 binds every shipping Carbon CLI command and binary entrypoint (<strong>{cli_n}</strong> surfaces), every public Edge, Enterprise Serve, and internal Runtime/CAS HTTP endpoint (<strong>{api_n}</strong> routes), and every <code>effort &times; auth_tier &times; environment</code> product cell (<strong>64</strong> cells) to compiler-instrumented <code>rustc 1.97.1 -C instrument-coverage</code> + <code>llvm-cov export</code> line and MIR branch-region counters, comparing baseline <code>origin/main</code> (<code>{base_sha}</code>) against exact HEAD (<code>{head_sha}</code>). Live CI <code>high</code> and <code>ultra</code> Pro cells remain explicitly badged <code>AUTO-EMU-FALLBACK</code> under the zero-repo-secret posture:
+    Section 14 binds every shipping Carbon CLI command and binary entrypoint (<strong>{cli_n}</strong> surfaces), every public Edge, Enterprise Serve, and internal Runtime/CAS HTTP endpoint (<strong>{api_n}</strong> routes), and every <code>effort &times; auth_tier &times; environment</code> product cell (<strong>64</strong> cells) to compiler-instrumented <code>rustc 1.97.1 -C instrument-coverage</code> + <code>llvm-cov export</code> function, line, and MIR branch-region counters, comparing baseline <code>origin/main</code> (<code>{base_sha}</code>; evolved from initial baseline <code>7988e2ecd306</code> at <code>45.52%</code> fn / <code>63.42%</code> ln) against exact HEAD (<code>{head_sha}</code>). Live CI <code>high</code> and <code>ultra</code> Pro cells remain explicitly badged <code>AUTO-EMU-FALLBACK</code> under the zero-repo-secret posture:
   </p>
   <div class="kpi-strip">
     <div class="kpi"><div class="kpi-val">{al:.2}% ({dl:+.2} pp)</div><div class="kpi-lbl">Line Coverage: {alc}/{alt} (Before {bl:.2}%: {blc}/{blt})</div></div>
@@ -591,10 +617,10 @@ pub fn render_code_coverage_section_html(rcpt: &CodeCoverageSummaryReceipt) -> S
     <tbody>{te_body}</tbody>
   </table>
 
-  <h3>Table 14D — Per-Module Compiler Coverage Before (<code>7988e2ec</code>) vs After (<code>crates/jope-carbon/src/**</code>)</h3>
+  <h3>Table 14D — Per-Module Function, Line &amp; MIR Region Coverage Before (<code>4c4543295b</code>) vs After (<code>crates/jope-carbon/src/**</code>)</h3>
   <table class="cov-table">
     <thead>
-      <tr><th style="width:34%">Source File</th><th class="num" style="width:11%">Before Ln</th><th class="num" style="width:16%">After Lines</th><th class="num" style="width:11%">Delta Ln</th><th class="num" style="width:11%">Before Br</th><th class="num" style="width:17%">After MIR Regions</th></tr>
+      <tr><th style="width:24%">Source File</th><th class="num" style="width:8%">Before Fn</th><th class="num" style="width:14%">After Functions</th><th class="num" style="width:9%">Delta Fn</th><th class="num" style="width:8%">Before Ln</th><th class="num" style="width:14%">After Lines</th><th class="num" style="width:9%">Delta Ln</th><th class="num" style="width:14%">After MIR Br</th></tr>
     </thead>
     <tbody>{file_body}</tbody>
   </table>"##,
@@ -667,18 +693,23 @@ fn render_tier_env_rows_html(rows: &[EvaluatedTierEnvRow]) -> String {
 }
 
 fn render_file_delta_rows_html(files: &[FileCoverageDelta]) -> String {
-    let mut buf = String::with_capacity(files.len() * 220);
+    let mut buf = String::with_capacity(files.len() * 280);
     for f in files {
+        let d_fn = f.after_functions_pct - f.before_functions_pct;
         let d_ln = f.after_lines_pct - f.before_lines_pct;
         buf.push_str(&format!(
-            "<tr><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{:.1}%</td><td class=\"num\">{}/{} ({:.1}%)</td><td class=\"num\">{:+.1} pp</td><td class=\"num\">{:.1}%</td><td class=\"num\">{}/{} ({:.1}%)</td></tr>\n",
+            "<tr><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{:.1}%</td><td class=\"num\">{}/{} ({:.1}%)</td><td class=\"num\">{:+.1} pp</td><td class=\"num\">{:.1}%</td><td class=\"num\">{}/{} ({:.1}%)</td><td class=\"num\">{:+.1} pp</td><td class=\"num\">{}/{} ({:.1}%)</td></tr>\n",
             esc(&f.file),
+            f.before_functions_pct,
+            f.after_functions_covered,
+            f.after_functions_total,
+            f.after_functions_pct,
+            d_fn,
             f.before_lines_pct,
             f.after_lines_covered,
             f.after_lines_total,
             f.after_lines_pct,
             d_ln,
-            f.before_regions_pct,
             f.after_regions_covered,
             f.after_regions_total,
             f.after_regions_pct,

@@ -51,7 +51,10 @@ pub fn resolve_anchor_span(
             .iter()
             .position(|l| l.contains(anchor_end))
             .ok_or_else(|| {
-                format!("anchor_end '{anchor_end}' not found after L{} in {file}", start_idx + 1)
+                format!(
+                    "anchor_end '{anchor_end}' not found after L{} in {file}",
+                    start_idx + 1
+                )
             })?;
         (start_idx + 1 + rel).max(start_idx + 1)
     };
@@ -119,7 +122,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-05",
         surface: "carbon self-verify",
-        bound_test: "carbon_core::self_verify_ecdsa_p256 + coverage_closure::cli_full_model_handle_lifecycle",
+        bound_test: "coverage_closure::carbon_bin_self_verify_ecdsa_manifest_and_clouds_function_closure",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "fn execute_self_verify_command(",
@@ -128,7 +131,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-06",
         surface: "carbon package",
-        bound_test: "coverage_closure::package_assembly_and_cli_fail_closed_plus_secrets_vault_role_isolation",
+        bound_test: "coverage_closure::deploy_cross_compile_zig_wrappers_and_cli_archives_function_closure",
         status_badge: "PASS",
         file: "src/cli/deploy.rs",
         anchor_start: "pub fn execute_carbon_package(",
@@ -137,7 +140,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-07",
         surface: "carbon deploy (--dry-run & full)",
-        bound_test: "coverage_closure::cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audit",
+        bound_test: "coverage_closure::deploy_vault_bootstrap_sync_canary_wave_and_auto_rollback_function_closure",
         status_badge: "PASS",
         file: "src/cli/deploy.rs",
         anchor_start: "fn deploy_single_region(",
@@ -819,21 +822,62 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
 /// keeping live CI `high`/`ultra` Pro cells explicitly badged `AUTO-EMU-FALLBACK`.
 pub fn build_tier_env_rows() -> Vec<TierEnvCoverageSpec> {
     let envs: [(&str, &str, &str, &str); 8] = [
-        ("unit_inproc", "src/modes/planner.rs", "pub fn plan_carbon_execution(", "__EOF__"),
-        ("local_emu", "src/modes/emu.rs", "pub fn start(config: CarbonEmuConfig)", "async fn rt_next_handler("),
-        ("enterprise_serve_local", "src/modes/serve.rs", "pub fn spawn_background(", "__EOF__"),
-        ("enterprise_serve_s3", "src/storage/cas.rs", "pub fn open_remote_cas(", "__EOF__"),
-        ("cleanroom_docker_dev", "src/cli/spec_live_ci_4tier_exec.rs", "fn build_container_posix_script(", "fn parse_framed_container_output("),
-        ("cleanroom_docker_prod", "src/cli/spec_live_ci_4tier_exec.rs", "fn assemble_receipt_from_framed(", "pub fn execute_ci_live_4tier_docker("),
-        ("aws_dev", "src/cli/coverage_audit.rs", "fn run_api_and_signature_checks(", "fn run_kek_replay_and_shred_checks("),
-        ("aws_prod", "src/cli/runner.rs", "pub fn execute_carbon_cli_run_with_ux(", "__EOF__"),
+        (
+            "unit_inproc",
+            "src/modes/planner.rs",
+            "pub fn plan_carbon_execution(",
+            "__EOF__",
+        ),
+        (
+            "local_emu",
+            "src/modes/emu.rs",
+            "pub fn start(config: CarbonEmuConfig)",
+            "async fn rt_next_handler(",
+        ),
+        (
+            "enterprise_serve_local",
+            "src/modes/serve.rs",
+            "pub fn spawn_background(",
+            "__EOF__",
+        ),
+        (
+            "enterprise_serve_s3",
+            "src/storage/cas.rs",
+            "pub fn open_remote_cas(",
+            "__EOF__",
+        ),
+        (
+            "cleanroom_docker_dev",
+            "src/cli/spec_live_ci_4tier_exec.rs",
+            "fn build_container_posix_script(",
+            "fn parse_framed_container_output(",
+        ),
+        (
+            "cleanroom_docker_prod",
+            "src/cli/spec_live_ci_4tier_exec.rs",
+            "fn assemble_receipt_from_framed(",
+            "pub fn execute_ci_live_4tier_docker(",
+        ),
+        (
+            "aws_dev",
+            "src/cli/coverage_audit.rs",
+            "fn run_api_and_signature_checks(",
+            "fn run_kek_replay_and_shred_checks(",
+        ),
+        (
+            "aws_prod",
+            "src/cli/runner.rs",
+            "pub fn execute_carbon_cli_run_with_ux(",
+            "__EOF__",
+        ),
     ];
     let mut out = Vec::with_capacity(64);
     let mut seq = 1usize;
     for (env_name, file, a_start, a_end) in envs {
         for auth_tier in ["free", "pro"] {
             for effort in ["fast", "medium", "high", "ultra"] {
-                let (expected, test_ref, badge) = classify_tier_env_cell(env_name, auth_tier, effort);
+                let (expected, test_ref, badge) =
+                    classify_tier_env_cell(env_name, auth_tier, effort);
                 out.push(TierEnvCoverageSpec {
                     cell_id: format!("TE-{seq:02}"),
                     environment: env_name,
