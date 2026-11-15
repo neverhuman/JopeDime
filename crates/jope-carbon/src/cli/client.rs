@@ -53,29 +53,73 @@ use crate::{
 
 const PREDICT_CAS_THRESHOLD_BYTES: usize = 1_572_864;
 
-#[derive(serde::Deserialize)]
-struct CompatPingWire {
-    region: String,
-    healthy: bool,
-    server_epoch_ms: DecimalU64,
-    enterprise_self_hosted: bool,
-    #[serde(default)]
-    engine_kek_pubkey_b64: Option<String>,
-    #[serde(default)]
-    #[allow(dead_code)]
-    storage_backend: Option<String>,
+fn decode_wire_ping_response(bytes: &[u8]) -> Result<CarbonPingResponse, String> {
+    serde_json::from_slice(bytes).map_err(|e| format!("invalid ping JSON: {e}"))
 }
 
-fn decode_wire_ping_response(bytes: &[u8]) -> Result<CarbonPingResponse, String> {
-    let w: CompatPingWire =
-        serde_json::from_slice(bytes).map_err(|e| format!("invalid ping JSON: {e}"))?;
-    Ok(CarbonPingResponse {
-        region: w.region,
-        healthy: w.healthy,
-        server_epoch_ms: w.server_epoch_ms,
-        enterprise_self_hosted: w.enterprise_self_hosted,
-        engine_kek_pubkey_b64: w.engine_kek_pubkey_b64,
-    })
+fn is_strict_loopback_host(host: &str) -> bool {
+    let clean = host.trim().trim_start_matches('[').trim_end_matches(']');
+    if clean.eq_ignore_ascii_case("localhost") {
+        return true;
+    }
+    clean
+        .parse::<std::net::IpAddr>()
+        .is_ok_and(|ip| ip.is_loopback())
+}
+
+/// Return `true` iff `raw_url` targets strict local loopback (`127.0.0.0/8`, `::1`, or `localhost`).
+pub fn is_loopback_endpoint_url(raw_url: &str) -> bool {
+    url::Url::parse(raw_url.trim())
+        .ok()
+        .and_then(|u| u.host_str().map(is_strict_loopback_host))
+        .unwrap_or(false)
+}
+
+/// Validate that `raw_url` uses TLS (`https://` or SigV4 `lambda://`), permitting cleartext
+/// `http://` exclusively for strict local loopback (`127.0.0.1`, `::1`, `localhost`).
+pub fn validate_endpoint_transport(raw_url: &str) -> Result<(), String> {
+    let trimmed = raw_url.trim();
+    if trimmed.starts_with("lambda://") {
+        return Ok(());
+    }
+    let parsed =
+        url::Url::parse(trimmed).map_err(|e| format!("invalid endpoint URL '{trimmed}': {e}"))?;
+    match parsed.scheme() {
+        "https" => Ok(()),
+        "http" => {
+            let host = parsed.host_str().unwrap_or_default();
+            if is_strict_loopback_host(host) {
+                Ok(())
+            } else {
+                Err(format!(
+                    "refusing insecure cleartext HTTP endpoint '{trimmed}'; use https:// (http:// is permitted only for local loopback 127.0.0.1, ::1, or localhost)"
+                ))
+            }
+        }
+        other => Err(format!(
+            "unsupported endpoint URL scheme '{other}' in '{trimmed}' (expected https://)"
+        )),
+    }
+}
+
+fn parse_major_minor_semver(raw: &str) -> Option<(u32, u32)> {
+    let clean = raw
+        .trim()
+        .trim_start_matches("carbon-cli-v")
+        .trim_start_matches('v');
+    let mut parts = clean.split(['.', '-']);
+    let major = parts.next()?.parse::<u32>().ok()?;
+    let minor = parts.next()?.parse::<u32>().ok()?;
+    Some((major, minor))
+}
+
+fn server_supports_v120_wire(ver: Option<&CarbonVersionResponse>) -> bool {
+    let Some(v) = ver else {
+        return false;
+    };
+    parse_major_minor_semver(&v.version)
+        .or_else(|| parse_major_minor_semver(&v.release_tag))
+        .is_some_and(|(maj, min)| (maj, min) >= (1, 2))
 }
 
 #[derive(Clone)]
@@ -124,12 +168,14 @@ pub struct CarbonThinClient {
     endpoints: Vec<String>,
     active_idx: Arc<AtomicUsize>,
     enterprise_self_hosted: bool,
+    allow_unencrypted_enterprise: bool,
     endpoint_keks: Arc<Mutex<BTreeMap<String, [u8; 65]>>>,
     pinned_keks: BTreeMap<String, String>,
     capability_token: Option<Zeroizing<String>>,
     uploaded_secrets: Arc<Mutex<BTreeMap<String, UploadedEncryptionSecret>>>,
     uploaded_ids: Arc<Mutex<BTreeMap<String, String>>>,
     run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
+    cached_server_version: Arc<Mutex<Option<Option<CarbonVersionResponse>>>>,
     poll_requests: Arc<AtomicU32>,
     http_request_bytes: Arc<AtomicUsize>,
     http_response_bytes: Arc<AtomicUsize>,
@@ -170,6 +216,7 @@ impl CarbonThinClient {
         for raw_url in candidate_urls {
             let trimmed = raw_url.trim().trim_end_matches('/').to_owned();
             if !trimmed.is_empty() && !deduped.contains(&trimmed) {
+                validate_endpoint_transport(&trimmed)?;
                 deduped.push(trimmed);
             }
         }
@@ -195,38 +242,61 @@ impl CarbonThinClient {
                 let ag = probe_agent.clone();
                 let expected_kek = normalized_pins.get(&base_url).cloned();
                 handles.push(s.spawn(move || {
-                    let t0 = Instant::now();
-                    let (code, buf) = send_raw_edge_http_with_agent(
-                        &ag,
-                        &base_url,
-                        "GET",
-                        "/v1/carbon/ping",
-                        &[],
-                        None,
-                    )
-                    .map_err(|e| format!("{base_url}: {e}"))?;
-                    if code != 200 {
-                        return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
-                    }
-                    let ping =
-                        decode_wire_ping_response(&buf).map_err(|e| format!("{base_url}: {e}"))?;
-                    if !ping.healthy {
-                        return Err(format!("{base_url}: reported unhealthy"));
-                    }
-                    if let Some(pin_b64) = expected_kek {
-                        if ping.engine_kek_pubkey_b64.as_deref() != Some(pin_b64.as_str()) {
-                            return Err(format!(
-                                "{base_url}: engine_kek_pubkey_b64 mismatch against pinned manifest"
-                            ));
+                    let max_attempts = if is_loopback_endpoint_url(&base_url) {
+                        1usize
+                    } else {
+                        3usize
+                    };
+                    let mut last_err = String::new();
+                    for attempt in 0..max_attempts {
+                        if attempt > 0 {
+                            let backoff_ms = compute_backoff_with_jitter_ms(attempt - 1, 150, 800);
+                            thread::sleep(Duration::from_millis(backoff_ms));
                         }
+                        let t0 = Instant::now();
+                        let (code, buf) = match send_raw_edge_http_with_agent(
+                            &ag,
+                            &base_url,
+                            "GET",
+                            "/v1/carbon/ping",
+                            &[("x-carbon-client-version", crate::CARBON_PKG_VERSION)],
+                            None,
+                        ) {
+                            Ok(pair) => pair,
+                            Err(e) => {
+                                last_err = format!("{base_url}: {e}");
+                                continue;
+                            }
+                        };
+                        if code == 429 || code >= 500 {
+                            last_err = format!("{base_url}: /v1/carbon/ping returned HTTP {code}");
+                            continue;
+                        }
+                        if code != 200 {
+                            return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
+                        }
+                        let ping = decode_wire_ping_response(&buf)
+                            .map_err(|e| format!("{base_url}: {e}"))?;
+                        if !ping.healthy {
+                            last_err = format!("{base_url}: reported unhealthy");
+                            continue;
+                        }
+                        if let Some(ref pin_b64) = expected_kek {
+                            if ping.engine_kek_pubkey_b64.as_deref() != Some(pin_b64.as_str()) {
+                                return Err(format!(
+                                    "{base_url}: engine_kek_pubkey_b64 mismatch against pinned manifest"
+                                ));
+                            }
+                        }
+                        return Ok(CarbonProbedEndpoint {
+                            base_url,
+                            region: ping.region,
+                            rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+                            enterprise_self_hosted: ping.enterprise_self_hosted,
+                            engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
+                        });
                     }
-                    Ok(CarbonProbedEndpoint {
-                        base_url,
-                        region: ping.region,
-                        rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
-                        enterprise_self_hosted: ping.enterprise_self_hosted,
-                        engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
-                    })
+                    Err(last_err)
                 }));
             }
             handles
@@ -287,12 +357,14 @@ impl CarbonThinClient {
                 endpoints: ordered_endpoints,
                 active_idx: Arc::new(AtomicUsize::new(0)),
                 enterprise_self_hosted,
+                allow_unencrypted_enterprise: false,
                 endpoint_keks: Arc::new(Mutex::new(endpoint_keks)),
                 pinned_keks: normalized_pins,
                 capability_token: None,
                 uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
                 uploaded_ids: Arc::new(Mutex::new(BTreeMap::new())),
                 run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
+                cached_server_version: Arc::new(Mutex::new(None)),
                 poll_requests: Arc::new(AtomicU32::new(0)),
                 http_request_bytes: Arc::new(AtomicUsize::new(0)),
                 http_response_bytes: Arc::new(AtomicUsize::new(0)),
@@ -301,6 +373,13 @@ impl CarbonThinClient {
             },
             healthy,
         ))
+    }
+
+    /// Explicitly opt into unencrypted dataset uploads when connecting to a private VPC
+    /// `carbon serve` deployment configured without `--enable-user-envelope`.
+    pub fn with_allow_unencrypted_enterprise(mut self, allow: bool) -> Self {
+        self.allow_unencrypted_enterprise = allow;
+        self
     }
 
     /// Attach an observer invoked on initial run creation/resume and on each async poll update.
@@ -482,28 +561,67 @@ impl CarbonThinClient {
     }
 
     /// Fetch remote `/v1/carbon/version` build provenance from the active endpoint (`Ok(None)` on
-    /// legacy `v1.0.0` gateways that do not yet expose `/v1/carbon/version`).
+    /// legacy `v1.0.0` gateways that do not yet expose `/v1/carbon/version`), with bounded 3-attempt
+    /// cold-start retry resilience and per-client caching.
     pub fn fetch_server_version(&self) -> Result<Option<CarbonVersionResponse>, String> {
-        let (code, body) = send_raw_edge_http_with_agent(
-            crate::tls::carbon_probe_https_agent(),
-            self.active_endpoint(),
-            "GET",
-            "/v1/carbon/version",
-            &[],
-            None,
-        )?;
-        if code == 404 || code == 405 {
-            return Ok(None);
+        if let Ok(guard) = self.cached_server_version.lock() {
+            if let Some(cached) = &*guard {
+                return Ok(cached.clone());
+            }
         }
-        if code >= 300 {
-            return Err(format!(
-                "GET /v1/carbon/version returned HTTP {code}: {}",
-                String::from_utf8_lossy(&body)
-            ));
+        let ep = self.active_endpoint();
+        let max_attempts = if is_loopback_endpoint_url(ep) {
+            1usize
+        } else {
+            3usize
+        };
+        let mut last_err = String::new();
+        for attempt in 0..max_attempts {
+            if attempt > 0 {
+                let wait_ms = compute_backoff_with_jitter_ms(attempt - 1, 150, 800);
+                thread::sleep(Duration::from_millis(wait_ms));
+            }
+            let (code, body) = match send_raw_edge_http_with_agent(
+                crate::tls::carbon_probe_https_agent(),
+                ep,
+                "GET",
+                "/v1/carbon/version",
+                &[("x-carbon-client-version", crate::CARBON_PKG_VERSION)],
+                None,
+            ) {
+                Ok(pair) => pair,
+                Err(e) => {
+                    last_err = e;
+                    continue;
+                }
+            };
+            if code == 404 || code == 405 {
+                if let Ok(mut guard) = self.cached_server_version.lock() {
+                    *guard = Some(None);
+                }
+                return Ok(None);
+            }
+            if code == 429 || code >= 500 {
+                last_err = format!(
+                    "GET /v1/carbon/version returned HTTP {code}: {}",
+                    String::from_utf8_lossy(&body)
+                );
+                continue;
+            }
+            if code >= 300 {
+                return Err(format!(
+                    "GET /v1/carbon/version returned HTTP {code}: {}",
+                    String::from_utf8_lossy(&body)
+                ));
+            }
+            let ver: CarbonVersionResponse = serde_json::from_slice(&body)
+                .map_err(|e| format!("decode CarbonVersionResponse: {e}"))?;
+            if let Ok(mut guard) = self.cached_server_version.lock() {
+                *guard = Some(Some(ver.clone()));
+            }
+            return Ok(Some(ver));
         }
-        let ver: CarbonVersionResponse = serde_json::from_slice(&body)
-            .map_err(|e| format!("decode CarbonVersionResponse: {e}"))?;
-        Ok(Some(ver))
+        Err(last_err)
     }
 
     pub fn fetch_region_catalog(&self) -> Result<CarbonRegionCatalog, String> {
@@ -681,6 +799,31 @@ impl CarbonThinClient {
                     ));
                 }
             }
+        }
+        if !prepared.aux_column_names.is_empty()
+            || prepared.split_mode.is_some()
+            || prepared.calibration_mode.is_some()
+        {
+            let remote_ver = self.fetch_server_version()?;
+            if !server_supports_v120_wire(remote_ver.as_ref()) {
+                let ver_label = remote_ver
+                    .as_ref()
+                    .map(|v| format!("{} ({})", v.version, v.release_tag))
+                    .unwrap_or_else(|| "v1.0.0".to_owned());
+                return Err(format!(
+                    "endpoint '{}' is running Carbon server {ver_label} (< 1.2.0), which does not yet support v1.2.0 --split / --calibration / col(...) auxiliary fitness columns",
+                    self.active_endpoint()
+                ));
+            }
+        }
+        if !self.has_zero_knowledge_kek()
+            && !is_loopback_endpoint_url(self.active_endpoint())
+            && !self.allow_unencrypted_enterprise
+        {
+            return Err(format!(
+                "refusing unencrypted dataset upload to non-loopback endpoint '{}' because server did not advertise a P-256 zero-knowledge KEK (enable --enable-user-envelope on `carbon serve` or pass --allow-unencrypted-enterprise)",
+                self.active_endpoint()
+            ));
         }
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, mut secret_opt) =
@@ -1291,14 +1434,23 @@ impl CarbonThinClient {
         let started = Instant::now();
         let deadline = started + Duration::from_secs(960);
         let mut sleep_ms = 45u64;
+        let mut sent_sigint_stop = false;
         while matches!(
             progress.state,
             CarbonRunStateWire::Queued | CarbonRunStateWire::Running
         ) {
+            if !sent_sigint_stop && crate::observability::sigint_received() {
+                sent_sigint_stop = true;
+                let _ = self.signal_early_stop(tenant_id, run_id, Some("cli_sigint".to_owned()));
+            }
             if Instant::now() >= deadline {
                 return Err(format!("timed out waiting for async run {run_id}"));
             }
             thread::sleep(Duration::from_millis(sleep_ms));
+            if !sent_sigint_stop && crate::observability::sigint_received() {
+                sent_sigint_stop = true;
+                let _ = self.signal_early_stop(tenant_id, run_id, Some("cli_sigint".to_owned()));
+            }
             let cap_ms = if started.elapsed() >= Duration::from_secs(5) {
                 1_000
             } else {
@@ -1378,8 +1530,11 @@ impl CarbonThinClient {
     ) -> Result<Vec<u8>, String> {
         let bearer = self.resolve_bearer_header(tenant_id, requested_tier);
         let extra: Vec<(&str, &str)> = match &bearer {
-            Some(b) => vec![("x-carbon-capability-token", b.as_str())],
-            None => Vec::new(),
+            Some(b) => vec![
+                ("x-carbon-capability-token", b.as_str()),
+                ("x-carbon-client-version", crate::CARBON_PKG_VERSION),
+            ],
+            None => vec![("x-carbon-client-version", crate::CARBON_PKG_VERSION)],
         };
         let n_endpoints = self.endpoints.len().max(1);
         let max_attempts = if allow_region_failover {
@@ -1541,6 +1696,7 @@ fn send_raw_get_url_with_agent(agent: &ureq::Agent, url: &str) -> Result<(u16, V
             return send_raw_edge_http_with_agent(agent, &base, "GET", &pq, &[], None);
         }
     }
+    validate_endpoint_transport(url)?;
     if url.contains(".lambda-url.") {
         if let Ok(parsed) = url::Url::parse(url) {
             if let Some(host) = parsed.host_str() {
@@ -1585,6 +1741,7 @@ fn send_raw_put_url_with_agent(
     bytes: &[u8],
     include_sha_header: bool,
 ) -> Result<(u16, Vec<u8>), String> {
+    validate_endpoint_transport(url)?;
     let mut req = agent.put(url).config().http_status_as_error(false).build();
     if include_sha_header && url.contains(".s3.") && url.contains("X-Amz-Signature=") {
         let sha_hex = sha256_lower_hex(bytes);
@@ -1803,6 +1960,7 @@ fn send_raw_edge_http_with_headers_and_agent(
         return Ok((status_code, resp_headers, decoded_body));
     }
 
+    validate_endpoint_transport(base)?;
     let url = format!("{base}{path_and_query}");
     let payload_slice = body.unwrap_or(&[]);
     let is_fn_url = base.contains(".lambda-url.");
@@ -2046,8 +2204,35 @@ pub struct CarbonPublicCloudsManifest {
     pub clouds: BTreeMap<String, CarbonCloudCellEntry>,
 }
 
+fn is_non_public_redirect_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(v4) => {
+            let octets = v4.octets();
+            v4.is_loopback()
+                || v4.is_private()
+                || v4.is_link_local()
+                || v4.is_unspecified()
+                || v4.is_broadcast()
+                || v4.is_documentation()
+                || octets[0] == 0
+                || (octets[0] == 100 && (octets[1] & 0b1100_0000) == 64) // RFC 6598 CGNAT 100.64.0.0/10
+        }
+        std::net::IpAddr::V6(v6) => {
+            if let Some(mapped_v4) = v6.to_ipv4_mapped() {
+                return is_non_public_redirect_ip(std::net::IpAddr::V4(mapped_v4));
+            }
+            let seg0 = v6.segments()[0];
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || v6.is_multicast()
+                || (seg0 & 0xfe00) == 0xfc00 // RFC 4193 ULA fc00::/7
+                || (seg0 & 0xffc0) == 0xfe80 // Link-local fe80::/10
+        }
+    }
+}
+
 /// Resolve a redirect `Location` header for unauthenticated `carbon-clouds.json` discovery,
-/// refusing `https -> http` scheme downgrades and private/IMDS loopback redirects from HTTPS origins.
+/// refusing `https -> http` scheme downgrades and private/loopback/CGNAT/IMDS redirects from HTTPS origins.
 pub fn resolve_clouds_redirect_target(current_url: &str, location: &str) -> Result<String, String> {
     let base = url::Url::parse(current_url)
         .map_err(|e| format!("invalid clouds manifest URL '{current_url}': {e}"))?;
@@ -2060,14 +2245,23 @@ pub fn resolve_clouds_redirect_target(current_url: &str, location: &str) -> Resu
                 "refusing insecure redirect downgrade from '{current_url}' to '{next}'"
             ));
         }
-        let host = next.host_str().unwrap_or_default().to_ascii_lowercase();
-        if host == "localhost"
-            || host == "127.0.0.1"
-            || host == "::1"
-            || host.starts_with("169.254.")
-        {
+        let raw_host = next
+            .host_str()
+            .unwrap_or_default()
+            .trim_start_matches('[')
+            .trim_end_matches(']')
+            .to_ascii_lowercase();
+        let blocked_domain = raw_host == "localhost"
+            || raw_host.ends_with(".localhost")
+            || raw_host.ends_with(".local")
+            || raw_host.ends_with(".internal");
+        let blocked_ip = raw_host
+            .parse::<std::net::IpAddr>()
+            .map(is_non_public_redirect_ip)
+            .unwrap_or(false);
+        if blocked_domain || blocked_ip {
             return Err(format!(
-                "refusing redirect from public HTTPS '{current_url}' to local/link-local '{next}'"
+                "refusing redirect from public HTTPS '{current_url}' to local/private/link-local '{next}'"
             ));
         }
     } else if next.scheme() != "http" && next.scheme() != "https" {
@@ -2078,8 +2272,10 @@ pub fn resolve_clouds_redirect_target(current_url: &str, location: &str) -> Resu
 
 fn fetch_clouds_manifest_bytes(source: &str) -> Result<Vec<u8>, String> {
     if source.starts_with("https://") || source.starts_with("http://") {
+        validate_endpoint_transport(source)?;
         let mut current = source.to_owned();
         for _hop in 0..=5 {
+            validate_endpoint_transport(&current)?;
             let mut resp = crate::tls::carbon_https_agent()
                 .get(&current)
                 .config()
@@ -2223,6 +2419,7 @@ fn write_private_credentials_file(
     config_dir: &std::path::Path,
     store: &CarbonCredentialsStoreFile,
 ) -> Result<(), String> {
+    static CRED_TMP_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     std::fs::create_dir_all(config_dir)
         .map_err(|e| format!("create config dir {}: {e}", config_dir.display()))?;
     #[cfg(unix)]
@@ -2231,7 +2428,13 @@ fn write_private_credentials_file(
         let _ = std::fs::set_permissions(config_dir, std::fs::Permissions::from_mode(0o700));
     }
     let final_path = config_dir.join("carbon-credentials.json");
-    let tmp_path = config_dir.join(format!(".carbon-credentials.{}.tmp", std::process::id()));
+    let seq = CRED_TMP_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let tmp_path = config_dir.join(format!(
+        ".carbon-credentials.{}.{}.{}.tmp",
+        std::process::id(),
+        now_epoch_ms(),
+        seq
+    ));
     let encoded = zeroize::Zeroizing::new(
         serde_json::to_vec_pretty(store).map_err(|e| format!("encode credentials store: {e}"))?,
     );
@@ -2241,23 +2444,41 @@ fn write_private_credentials_file(
         use std::os::unix::fs::OpenOptionsExt;
         let mut f = std::fs::OpenOptions::new()
             .write(true)
-            .create(true)
-            .truncate(true)
+            .create_new(true)
             .mode(0o600)
             .open(&tmp_path)
             .map_err(|e| format!("open {}: {e}", tmp_path.display()))?;
-        f.write_all(&encoded)
-            .map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
-        f.sync_all()
-            .map_err(|e| format!("fsync {}: {e}", tmp_path.display()))?;
+        if let Err(e) = f.write_all(&encoded).and_then(|()| f.sync_all()) {
+            let _ = std::fs::remove_file(&tmp_path);
+            return Err(format!("write {}: {e}", tmp_path.display()));
+        }
     }
     #[cfg(not(unix))]
     {
-        std::fs::write(&tmp_path, &*encoded)
-            .map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
+        use std::io::Write;
+        let mut f = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&tmp_path)
+            .map_err(|e| format!("open {}: {e}", tmp_path.display()))?;
+        if let Err(e) = f.write_all(&encoded).and_then(|()| f.sync_all()) {
+            let _ = std::fs::remove_file(&tmp_path);
+            return Err(format!("write {}: {e}", tmp_path.display()));
+        }
+        #[cfg(windows)]
+        {
+            let _ = std::process::Command::new("icacls")
+                .arg(&tmp_path)
+                .args(["/inheritance:r", "/grant:r", "*S-1-3-4:(F)"])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status();
+        }
     }
-    std::fs::rename(&tmp_path, &final_path)
-        .map_err(|e| format!("activate {}: {e}", final_path.display()))?;
+    if let Err(e) = std::fs::rename(&tmp_path, &final_path) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(format!("activate {}: {e}", final_path.display()));
+    }
     Ok(())
 }
 
@@ -2360,7 +2581,7 @@ pub fn remove_stored_cloud_token(cloud_name: Option<&str>) -> Result<usize, Stri
         }
     };
     if store.clouds.is_empty() {
-        let _ = std::fs::remove_file(&cred_path);
+        let _ = crate::cli::model_store::shred_local_file(&cred_path);
     } else {
         write_private_credentials_file(&config_dir, &store)?;
     }

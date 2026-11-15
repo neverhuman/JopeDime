@@ -1723,6 +1723,7 @@ pub fn execute_live_aws_product_coverage_audit(
     let manifest: CarbonPublicCloudsManifest = serde_json::from_slice(&manifest_bytes)
         .map_err(|e| format!("parse {}: {e}", clouds_manifest_path.display()))?;
     let signing_pub_pem = fs::read_to_string(signing_pub_path)
+        .map(|s| s.replace("\r\n", "\n"))
         .map_err(|e| format!("read {}: {e}", signing_pub_path.display()))?;
 
     let dev_cell = manifest

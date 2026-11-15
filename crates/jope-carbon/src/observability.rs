@@ -419,6 +419,34 @@ pub fn classify_cli_error(message: &str) -> (u8, &'static str, Option<&'static s
             Some("Run `carbon self-verify` and `carbon doctor` to verify binary signatures and regional KEK pins."),
         );
     }
+    if lc.contains("http 500")
+        || lc.contains("http 502")
+        || lc.contains("http 503")
+        || lc.contains("http 504")
+        || lc.contains("run failed")
+    {
+        return (
+            EXIT_SERVER_RUN,
+            "server_execution_error",
+            Some("Check cell health with `carbon doctor` and retry; correlation ID (`x-carbon-request-id`) is included above."),
+        );
+    }
+    if lc.contains("connect")
+        || lc.contains("tls")
+        || lc.contains("certificate")
+        || lc.contains("timeout")
+        || lc.contains("timed out")
+        || lc.contains("dns")
+        || lc.contains("unreachable")
+        || lc.contains("insecure cleartext http")
+        || lc.contains("insecure redirect")
+    {
+        return (
+            EXIT_NETWORK,
+            "network_or_tls_error",
+            Some("Run `carbon doctor` to check regional connectivity; behind a corporate proxy, set `CARBON_CA_BUNDLE=/path/to/ca.pem`."),
+        );
+    }
     if lc.contains("csv")
         || lc.contains("column")
         || lc.contains("target")
@@ -434,32 +462,6 @@ pub fn classify_cli_error(message: &str) -> (u8, &'static str, Option<&'static s
             EXIT_DATA_VALIDATION,
             "data_validation_error",
             Some("Run `carbon inspect <FILE>` to check headers, missing values, and numeric columns, or `carbon fitness list` for valid objectives."),
-        );
-    }
-    if lc.contains("connect")
-        || lc.contains("tls")
-        || lc.contains("certificate")
-        || lc.contains("timeout")
-        || lc.contains("timed out")
-        || lc.contains("dns")
-        || lc.contains("unreachable")
-    {
-        return (
-            EXIT_NETWORK,
-            "network_or_tls_error",
-            Some("Run `carbon doctor` to check regional connectivity; behind a corporate proxy, set `CARBON_CA_BUNDLE=/path/to/ca.pem`."),
-        );
-    }
-    if lc.contains("http 500")
-        || lc.contains("http 502")
-        || lc.contains("http 503")
-        || lc.contains("http 504")
-        || lc.contains("run failed")
-    {
-        return (
-            EXIT_SERVER_RUN,
-            "server_execution_error",
-            Some("Check cell health with `carbon doctor` and retry; correlation ID (`x-carbon-request-id`) is included above."),
         );
     }
     (EXIT_USAGE, "cli_error", None)
@@ -517,8 +519,60 @@ pub fn emit_cli_error(json_mode: bool, raw_message: &str) -> ExitCode {
     ExitCode::from(code)
 }
 
-/// Install an optional cooperative Ctrl-C (`SIGINT`) flag (active when compiled with `serve`/`tokio`,
-/// no-op false flag in ultra-thin builds).
+#[cfg(all(unix, not(feature = "serve")))]
+#[allow(unsafe_code)]
+mod thin_cli_signal {
+    use std::sync::atomic::Ordering;
+
+    type SigHandler = extern "C" fn(i32);
+
+    extern "C" {
+        fn signal(signum: i32, handler: SigHandler) -> usize;
+    }
+
+    extern "C" fn on_termination_signal(_sig: i32) {
+        super::SIGINT_RECEIVED.store(true, Ordering::SeqCst);
+    }
+
+    pub(super) fn register_once() {
+        const SIGINT_NUM: i32 = 2;
+        const SIGTERM_NUM: i32 = 15;
+        // SAFETY: `on_termination_signal` performs only an async-signal-safe `AtomicBool::store`.
+        unsafe {
+            let _ = signal(SIGINT_NUM, on_termination_signal);
+            let _ = signal(SIGTERM_NUM, on_termination_signal);
+        }
+    }
+}
+
+#[cfg(all(windows, not(feature = "serve")))]
+#[allow(unsafe_code)]
+mod thin_cli_signal {
+    use std::sync::atomic::Ordering;
+
+    type ConsoleHandler = unsafe extern "system" fn(u32) -> i32;
+
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn SetConsoleCtrlHandler(handler_routine: Option<ConsoleHandler>, add: i32) -> i32;
+    }
+
+    unsafe extern "system" fn on_ctrl_event(_ctrl_type: u32) -> i32 {
+        super::SIGINT_RECEIVED.store(true, Ordering::SeqCst);
+        1
+    }
+
+    pub(super) fn register_once() {
+        // SAFETY: `on_ctrl_event` performs only an atomic store and returns TRUE (1) so cooperative
+        // loops can shred or persist handles cleanly before exiting.
+        unsafe {
+            let _ = SetConsoleCtrlHandler(Some(on_ctrl_event), 1);
+        }
+    }
+}
+
+/// Install a cooperative Ctrl-C (`SIGINT` / `SIGTERM`) flag across both thin (`--features cli`)
+/// and full (`--features serve`) builds.
 pub fn install_sigint_flag() -> Arc<AtomicBool> {
     let flag = Arc::new(AtomicBool::new(false));
     #[cfg(feature = "serve")]
@@ -539,6 +593,11 @@ pub fn install_sigint_flag() -> Arc<AtomicBool> {
                     });
                 }
             });
+    }
+    #[cfg(all(any(unix, windows), not(feature = "serve")))]
+    {
+        static ONCE: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+        ONCE.get_or_init(thin_cli_signal::register_once);
     }
     flag
 }
@@ -587,5 +646,17 @@ mod tests {
         );
         let generated = generate_or_sanitize_request_id(Some("bad\r\nheader"));
         assert!(generated.starts_with("req_"));
+    }
+
+    #[test]
+    fn classify_cli_error_prioritizes_http_and_transport_over_target_substring() {
+        let (code, kind, _) = classify_cli_error("HTTP 503 Service Unavailable on target endpoint");
+        assert_eq!(code, EXIT_SERVER_RUN);
+        assert_eq!(kind, "server_execution_error");
+
+        let (code_net, kind_net, _) =
+            classify_cli_error("refusing insecure cleartext HTTP endpoint 'http://example.com'");
+        assert_eq!(code_net, EXIT_NETWORK);
+        assert_eq!(kind_net, "network_or_tls_error");
     }
 }

@@ -31,6 +31,8 @@ for extra in (
     "crates/jope-api/src/carbon.rs",
     "crates/jope-api/tests/carbon_contract.rs",
     ".github/workflows/carbon-cli-matrix.yml",
+    ".github/workflows/carbon-live-e2e.yml",
+    "web/training-dashboard/scripts/render-carbon-spec-pdf.mjs",
 ):
     if pathlib.Path(extra).is_file():
         paths.append(extra)

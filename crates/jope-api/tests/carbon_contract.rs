@@ -185,13 +185,13 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
             "progress wire leaked forbidden key {forbidden}"
         );
     }
-    let mut poisoned: serde_json::Value =
+    let mut future_server: serde_json::Value =
         serde_json::from_str(&progress_json).expect("valid progress json");
-    poisoned["dsl"] = serde_json::Value::String("x0 + x1".to_owned());
-    assert!(
-        serde_json::from_value::<CarbonPublicWaveProgress>(poisoned).is_err(),
-        "CarbonPublicWaveProgress must reject unknown candidate-structure fields"
+    future_server["future_server_telemetry_field"] = serde_json::json!(42);
+    let decoded_future: CarbonPublicWaveProgress = serde_json::from_value(future_server).expect(
+        "server->client responses must tolerate additive server fields for forward compatibility",
     );
+    assert_eq!(decoded_future, progress);
     let mut legacy_progress: serde_json::Value =
         serde_json::from_str(&progress_json).expect("valid progress json");
     legacy_progress

@@ -27,7 +27,11 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 try {
-  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+  $TlsProto = [Net.SecurityProtocolType]::Tls12
+  if ([Enum]::IsDefined([Net.SecurityProtocolType], "Tls13")) {
+    $TlsProto = $TlsProto -bor [Net.SecurityProtocolType]::Tls13
+  }
+  [Net.ServicePointManager]::SecurityProtocol = $TlsProto
 } catch {}
 $ProgressPreference = "SilentlyContinue"
 
@@ -131,6 +135,10 @@ if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
   $UseSecondaryMirror = $true
 } else {
   $EffectiveBaseUrl = $BaseUrl.TrimEnd("/")
+  if (-not ($EffectiveBaseUrl -match '^https://' -or $EffectiveBaseUrl -match '^http://(127\.0\.0\.1|localhost|\[::1\])(:|/|$)')) {
+    Write-CarbonLog "ERROR: Insecure or unsupported -BaseUrl '$EffectiveBaseUrl' (HTTPS required for non-loopback hosts)"
+    exit 1
+  }
   $MirrorUrl = "https://github.com/neverhuman/JopeDime/releases/download/$Version"
   $UseSecondaryMirror = $false
 }
@@ -144,7 +152,7 @@ $StageParent = if (-not [string]::IsNullOrWhiteSpace($env:CARBON_INSTALL_STAGE_R
 }
 New-Item -ItemType Directory -Path $StageParent -Force | Out-Null
 $StageDir = Join-Path $StageParent ("carbon-install-" + [Guid]::NewGuid().ToString("N"))
-New-Item -ItemType Directory -Path $StageDir -Force | Out-Null
+New-Item -ItemType Directory -Path $StageDir | Out-Null
 
 function Get-FileSha256Lower([string]$Path) {
   return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -426,6 +434,12 @@ try {
   }
 
   Write-CarbonLog "Ready! Try: carbon quickstart  |  carbon data.csv  |  carbon self-verify"
+} catch {
+  Write-CarbonLog "ERROR: $($_.Exception.Message)"
+  if (Test-Path -LiteralPath $StageDir) {
+    Remove-Item -LiteralPath $StageDir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+  exit 1
 } finally {
   if (Test-Path -LiteralPath $StageDir) {
     Remove-Item -LiteralPath $StageDir -Recurse -Force -ErrorAction SilentlyContinue

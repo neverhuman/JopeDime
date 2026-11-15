@@ -42,7 +42,6 @@ python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
 python3 deploy/ci/test-provenance.py
 python3 deploy/ci/test-full-main.py
-python3 -W error::ResourceWarning deploy/carbon/test_ci_live_4tier_docker.py
     # Split jobs cover the families and rust-test slices of the single jobs they replaced (and,
     # on a pull request, nothing the base declared is missing)
 cargo run -q --locked -p jope-ci -- test-partition static --base "${BASE_SHA:-}" --output "$EVIDENCE/test-partition-static.json"

@@ -21,7 +21,6 @@ struct FoldSpec {
     features: Vec<String>,
     folds: Vec<Fold>,
     #[serde(default)]
-    #[allow(dead_code)]
     calibration_mode: Option<String>,
 }
 #[derive(Deserialize)]
@@ -131,6 +130,8 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
             .context("objective must be a specification string")?,
     )?;
     let aux_names = user_objective.columns();
+    let apply_domain_floor = spec.calibration_mode.as_deref() != Some("none");
+    let pred_domain = jope_runtime::calibration::prediction_domain(user_objective.fitness());
     let mut logs = Vec::new();
     let mut losses = Vec::new();
     let mut user_losses = Vec::new();
@@ -168,7 +169,33 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
         logs.push(feat_math::portable_math::frozen_s1::ln(ratio));
         wins += usize::from(ratio <= 1.0);
         losses.push(rmse);
-        let user_score = user_objective.evaluate_with(&vy, &prediction, &val_aux)?;
+        let eval_preds_buf;
+        let eval_preds: &[f64] = if apply_domain_floor {
+            match pred_domain {
+                jope_runtime::calibration::PredictionDomain::Any => &prediction,
+                jope_runtime::calibration::PredictionDomain::NonNegative => {
+                    eval_preds_buf = prediction.iter().map(|p| p.max(0.0)).collect::<Vec<_>>();
+                    &eval_preds_buf
+                }
+                jope_runtime::calibration::PredictionDomain::Positive => {
+                    let smallest = y
+                        .iter()
+                        .copied()
+                        .filter(|v| *v > 0.0)
+                        .fold(f64::INFINITY, f64::min);
+                    let floor = if smallest.is_finite() {
+                        smallest * 1e-3
+                    } else {
+                        1e-12
+                    };
+                    eval_preds_buf = prediction.iter().map(|p| p.max(floor)).collect::<Vec<_>>();
+                    &eval_preds_buf
+                }
+            }
+        } else {
+            &prediction
+        };
+        let user_score = user_objective.evaluate_with(&vy, eval_preds, &val_aux)?;
         user_losses.push(user_score.loss);
         user_values.push(user_score.value);
         for (y, p) in vy.iter().zip(prediction) {

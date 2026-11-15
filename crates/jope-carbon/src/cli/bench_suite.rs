@@ -188,6 +188,8 @@ fn build_numeric_raw_table(headers: Vec<String>, rows: Vec<Vec<f64>>) -> CarbonR
         rows: str_rows,
         delimiter: ',',
         had_header: true,
+        extra_na_tokens: Vec::new(),
+        inf_as_nan: false,
     }
 }
 

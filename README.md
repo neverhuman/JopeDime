@@ -458,9 +458,9 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 40 members: 33 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | tracked in `docs/parity/test-inventory.json` across 35 packages; a listing, not a run <sup>5</sup> |
+| Rust tests | tracked in `docs/parity/test-inventory.json` across 38 packages; a listing, not a run <sup>5</sup> |
 | Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) <sup>5</sup> |
-| CI | 18 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 22 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
+| CI | 18 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 26 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
 | Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 36 lanes <sup>7</sup> |
 | Capability matrix | 849 rows: 353 moved, 86 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
@@ -529,8 +529,8 @@ JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 
 Pull-request CI runs automatically on non-draft pull requests (`opened`, `synchronize`, `reopened`, `ready_for_review`) and supports manual dispatch on `main`.
 The configured pull-request CI is `.github/workflows/ci.yml`: eighteen jobs declared at the top
-level expand to twenty-two jobs, including both Rust shards, both TypeScript runtimes,
-two Go versions and two native Go platform jobs. Existing lanes use self-hosted
+level expand to twenty-six jobs, including all three Rust shards, all three TypeScript parity legs,
+two Go versions and two native Go platform jobs, and Fresh-Docker Carbon live qualification. Existing lanes use self-hosted
 `jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers. The manual-main
 export parity job uses an isolated hosted Ubuntu VM.
 Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts

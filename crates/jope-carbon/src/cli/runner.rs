@@ -184,6 +184,7 @@ pub struct CarbonCliRunUxConfig {
     pub inf_as_nan: bool,
     pub embed_token: bool,
     pub dry_run: bool,
+    pub allow_unencrypted_enterprise: bool,
 }
 
 /// `CarbonCliRunOptions` is a struct configuring a single `carbon run` CLI invocation.
@@ -279,6 +280,8 @@ pub struct CarbonCliRunReceipt {
     pub saved_model_path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub objective_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_direction: Option<String>,
     #[serde(default)]
     pub sample_targets: Vec<f64>,
     pub sample_predictions: Vec<f64>,
@@ -454,6 +457,31 @@ struct HoldoutBaselineStats {
     linear_baseline_r2: Option<f64>,
 }
 
+fn flatten_split_feature_matrices(
+    fit_x: &[Vec<f64>],
+    holdout_x: &[Vec<f64>],
+) -> Option<(Vec<f64>, Vec<f64>, usize)> {
+    let p = fit_x.first().map(Vec::len).unwrap_or(0);
+    if p == 0 {
+        return None;
+    }
+    let mut fit_flat = Vec::with_capacity(fit_x.len() * p);
+    for r in fit_x {
+        if r.len() != p {
+            return None;
+        }
+        fit_flat.extend_from_slice(r);
+    }
+    let mut ho_flat = Vec::with_capacity(holdout_x.len() * p);
+    for r in holdout_x {
+        if r.len() != p {
+            return None;
+        }
+        ho_flat.extend_from_slice(r);
+    }
+    Some((fit_flat, ho_flat, p))
+}
+
 fn compute_holdout_baselines(
     fit_x: &[Vec<f64>],
     fit_y: &[f64],
@@ -481,46 +509,42 @@ fn compute_holdout_baselines(
     {
         (Some(r_rmse), r_r2)
     } else if p > 0 && p <= 256 {
-        let mut flat_fit = Vec::with_capacity(n_fit * p);
-        for row in fit_x {
-            flat_fit.extend_from_slice(row);
-        }
-        let mut flat_hold = Vec::with_capacity(n_hold * p);
-        for row in holdout_x {
-            flat_hold.extend_from_slice(row);
-        }
-        match (
-            FeatureMatrix::new(&flat_fit, n_fit, p),
-            FeatureMatrix::new(&flat_hold, n_hold, p),
-        ) {
-            (Ok(train_mat), Ok(hold_mat)) => {
-                if let Ok(ridge) = RidgeModel::fit(
-                    train_mat,
-                    fit_y,
-                    &RidgeParams {
-                        alpha: 1e-6 * (n_fit.max(1) as f64),
-                    },
-                ) {
-                    if let Ok(preds) = ridge.predict(hold_mat) {
-                        if let Ok(lin_rmse) = comp_rmse(holdout_y, &preds) {
-                            let sse_lin = lin_rmse * lin_rmse * (n_hold as f64);
-                            let lin_r2 = if sse_mean > 1e-18 {
-                                Some(1.0 - (sse_lin / sse_mean))
+        if let Some((flat_fit, flat_hold, p)) = flatten_split_feature_matrices(fit_x, holdout_x) {
+            match (
+                FeatureMatrix::new(&flat_fit, n_fit, p),
+                FeatureMatrix::new(&flat_hold, n_hold, p),
+            ) {
+                (Ok(train_mat), Ok(hold_mat)) => {
+                    if let Ok(ridge) = RidgeModel::fit(
+                        train_mat,
+                        fit_y,
+                        &RidgeParams {
+                            alpha: 1e-6 * (n_fit.max(1) as f64),
+                        },
+                    ) {
+                        if let Ok(preds) = ridge.predict(hold_mat) {
+                            if let Ok(lin_rmse) = comp_rmse(holdout_y, &preds) {
+                                let sse_lin = lin_rmse * lin_rmse * (n_hold as f64);
+                                let lin_r2 = if sse_mean > 1e-18 {
+                                    Some(1.0 - (sse_lin / sse_mean))
+                                } else {
+                                    None
+                                };
+                                (Some(lin_rmse), lin_r2)
                             } else {
-                                None
-                            };
-                            (Some(lin_rmse), lin_r2)
+                                (None, None)
+                            }
                         } else {
                             (None, None)
                         }
                     } else {
                         (None, None)
                     }
-                } else {
-                    (None, None)
                 }
+                _ => (None, None),
             }
-            _ => (None, None),
+        } else {
+            (None, None)
         }
     } else {
         (None, None)
@@ -553,19 +577,11 @@ fn compute_holdout_feature_drivers(
     {
         return Vec::new();
     }
-    let mut fit_flat = Vec::with_capacity(fit_x.len() * p);
-    for r in fit_x {
-        if r.len() != p {
-            return Vec::new();
-        }
-        fit_flat.extend_from_slice(r);
-    }
-    let mut ho_flat = Vec::with_capacity(holdout_x.len() * p);
-    for r in holdout_x {
-        if r.len() != p {
-            return Vec::new();
-        }
-        ho_flat.extend_from_slice(r);
+    let Some((fit_flat, ho_flat, p_chk)) = flatten_split_feature_matrices(fit_x, holdout_x) else {
+        return Vec::new();
+    };
+    if p_chk != p {
+        return Vec::new();
     }
     let Ok(x_tr) = jope_comparators::FeatureMatrix::new(&fit_flat, fit_x.len(), p) else {
         return Vec::new();
@@ -658,19 +674,11 @@ fn compute_objective_run_comparators(
     {
         return Vec::new();
     }
-    let mut fit_flat = Vec::with_capacity(fit_x.len() * p);
-    for r in fit_x {
-        if r.len() != p {
-            return Vec::new();
-        }
-        fit_flat.extend_from_slice(r);
-    }
-    let mut ho_flat = Vec::with_capacity(holdout_x.len() * p);
-    for r in holdout_x {
-        if r.len() != p {
-            return Vec::new();
-        }
-        ho_flat.extend_from_slice(r);
+    let Some((fit_flat, ho_flat, p_chk)) = flatten_split_feature_matrices(fit_x, holdout_x) else {
+        return Vec::new();
+    };
+    if p_chk != p {
+        return Vec::new();
     }
     let (Ok(x_tr), Ok(x_ho)) = (
         jope_comparators::FeatureMatrix::new(&fit_flat, fit_x.len(), p),
@@ -703,7 +711,7 @@ fn compute_objective_run_comparators(
                     label: "Standardized Ridge (alpha=1.0, Rust)".to_owned(),
                     reference: "Closed-form Cholesky Ridge".to_owned(),
                     known_gaps: "fixed alpha=1.0".to_owned(),
-                    rmse: obj_score.loss,
+                    rmse: obj_score.value,
                     mae: 0.0,
                     r2,
                     fit_ms: t_ridge.elapsed().as_secs_f64() * 1_000.0,
@@ -741,7 +749,7 @@ fn compute_objective_run_comparators(
                         label: desc.label.to_owned(),
                         reference: desc.reference.to_owned(),
                         known_gaps: desc.known_gaps.to_owned(),
-                        rmse: obj_score.loss,
+                        rmse: obj_score.value,
                         mae: 0.0,
                         r2,
                         fit_ms: t0.elapsed().as_secs_f64() * 1_000.0,
@@ -751,6 +759,69 @@ fn compute_objective_run_comparators(
         }
     }
     out
+}
+
+fn validate_target_domain_for_objective(
+    spec: &ObjectiveSpec,
+    target_col: &str,
+    fit_y: &[f64],
+    holdout_y: &[f64],
+) -> Result<(), String> {
+    let name_lc = spec.name().to_ascii_lowercase();
+    let base_metric = name_lc.split(':').next().unwrap_or(name_lc.as_str());
+    match base_metric {
+        "rmsle" | "msle" | "poisson" | "tweedie" => {
+            if let Some(bad_y) = fit_y
+                .iter()
+                .chain(holdout_y.iter())
+                .copied()
+                .find(|&y| y < 0.0)
+            {
+                return Err(format!(
+                    "target column '{target_col}' contains negative value {bad_y}, which is outside the valid domain (y >= 0) for objective '{}'",
+                    spec.name()
+                ));
+            }
+        }
+        "gamma" => {
+            if let Some(bad_y) = fit_y
+                .iter()
+                .chain(holdout_y.iter())
+                .copied()
+                .find(|&y| y <= 0.0)
+            {
+                return Err(format!(
+                    "target column '{target_col}' contains non-positive value {bad_y}, which is outside the valid domain (y > 0) for objective 'gamma'"
+                ));
+            }
+        }
+        "mape" => {
+            let all_zero = fit_y
+                .iter()
+                .chain(holdout_y.iter())
+                .all(|&y| y.abs() <= 1e-15);
+            if all_zero {
+                return Err(format!(
+                    "target column '{target_col}' is identically zero on all rows, making objective 'mape' undefined"
+                ));
+            }
+        }
+        _ => {}
+    }
+    if spec.direction() == jope_prep::ObjectiveDirection::Maximize {
+        for (split_lbl, ys) in [("FIT", fit_y), ("holdout", holdout_y)] {
+            if ys.len() >= 2 {
+                let first = ys[0];
+                if ys.iter().all(|&v| (v - first).abs() <= 1e-15) {
+                    return Err(format!(
+                        "target column '{target_col}' is constant ({first}) on {split_lbl} split, making maximization objective '{}' undefined",
+                        spec.name()
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn prepare_from_options(
@@ -818,6 +889,12 @@ fn prepare_from_options(
                 );
             }
         }
+        validate_target_domain_for_objective(
+            objective_spec,
+            &encoded.encoder.target_column,
+            &encoded.fit_y,
+            &encoded.holdout_y,
+        )?;
         let total_rows = encoded.total_valid_rows;
         let requested_samples = opts.predict_rows.max(1).min(total_rows);
         let eval_holdout_count = encoded.holdout_x.len().min(256);
@@ -898,6 +975,8 @@ fn prepare_from_options(
         target_column: target_col.clone(),
         delimiter: ',',
         had_header: true,
+        extra_na_tokens: Vec::new(),
+        inf_as_nan: false,
     };
     let prepared = CarbonThinClient::prepare_numeric_dataset_with_options(
         headers,
@@ -923,6 +1002,7 @@ fn prepare_from_options(
         holdout_x.push(extract_features(&rows[idx]));
         holdout_y.push(rows[idx][target_idx]);
     }
+    validate_target_domain_for_objective(objective_spec, &target_col, &fit_y, &holdout_y)?;
 
     let requested_samples = opts.predict_rows.max(1).min(total_rows);
     let eval_holdout_count = holdout_x.len().min(256);
@@ -1024,8 +1104,14 @@ pub fn render_pretty_run_scorecard(receipt: &CarbonCliRunReceipt) -> String {
     out.push('\n');
 
     if !receipt.comparator_baselines.is_empty() {
+        let higher_is_better = receipt.objective_direction.as_deref() == Some("maximize");
+        let dir_phrase = if higher_is_better {
+            "higher is better"
+        } else {
+            "lower is better"
+        };
         out.push_str(&format!(
-            "  Same-Split Leaderboard (Holdout {obj_lbl} — lower is better):\n"
+            "  Same-Split Leaderboard (Holdout {obj_lbl} — {dir_phrase}):\n"
         ));
         if let Some(c_rmse) = receipt.outer_holdout_score {
             out.push_str(&format!(
@@ -1034,10 +1120,12 @@ pub fn render_pretty_run_scorecard(receipt: &CarbonCliRunReceipt) -> String {
             ));
             for comp in &receipt.comparator_baselines {
                 let lift = if comp.rmse.abs() > 1e-12 {
-                    format!(
-                        "{:+.1}% vs Carbon",
-                        100.0 * (comp.rmse - c_rmse) / comp.rmse.abs()
-                    )
+                    let delta = if higher_is_better {
+                        c_rmse - comp.rmse
+                    } else {
+                        comp.rmse - c_rmse
+                    };
+                    format!("{:+.1}% vs Carbon", 100.0 * delta / comp.rmse.abs())
                 } else {
                     String::new()
                 };
@@ -1100,6 +1188,15 @@ pub fn execute_carbon_cli_run_with_ux(
     let t_total = Instant::now();
     let (objective_wire, objective_spec) = resolve_objective_argument(&opts.objective)?;
     let is_plain_rmse = objective_wire == "rmse";
+    let is_maximize = objective_spec.direction() == jope_prep::ObjectiveDirection::Maximize;
+    let objective_direction_label = if is_plain_rmse {
+        None
+    } else {
+        Some(objective_spec.direction().as_str().to_owned())
+    };
+    let resolve_natural_metric = |metric: Option<f64>, loss: Option<f64>| -> Option<f64> {
+        metric.or_else(|| loss.map(|l| if is_maximize { -l } else { l }))
+    };
     let objective_display_name = if is_plain_rmse {
         None
     } else {
@@ -1247,6 +1344,7 @@ pub fn execute_carbon_cli_run_with_ux(
             feature_importances,
             saved_model_path: None,
             objective_name: objective_display_name,
+            objective_direction: objective_direction_label,
             sample_targets: Vec::new(),
             sample_predictions: Vec::new(),
         });
@@ -1264,6 +1362,9 @@ pub fn execute_carbon_cli_run_with_ux(
             .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
         (c, first)
     };
+    if ux.allow_unencrypted_enterprise {
+        client = client.with_allow_unencrypted_enterprise(true);
+    }
     if ux.show_stderr_progress {
         eprintln!(
             "[carbon] Connected to {} ({:.1} ms RTT, zero-knowledge KEK={})",
@@ -1343,13 +1444,16 @@ pub fn execute_carbon_cli_run_with_ux(
                     Some("cli_sigint".to_owned()),
                 );
             }
+            let cv_disp = p
+                .best_cv_metric
+                .or_else(|| p.best_cv_loss.map(|l| if is_maximize { -l } else { l }));
             if let Ok(mut sp) = spinner_ref.lock() {
                 *sp = (
                     Some(p.state),
                     p.wave_index,
                     p.waves_target,
                     p.candidates_evaluated.0,
-                    p.best_cv_loss,
+                    cv_disp,
                 );
             }
             if is_tty_progress {
@@ -1362,8 +1466,7 @@ pub fn execute_carbon_cli_run_with_ux(
                 return;
             }
             *guard = (Some(p.state), p.wave_index);
-            let cv_txt = p
-                .best_cv_loss
+            let cv_txt = cv_disp
                 .map(|v| format!("{v:.4}"))
                 .unwrap_or_else(|| "-".to_owned());
             eprintln!(
@@ -1421,6 +1524,50 @@ pub fn execute_carbon_cli_run_with_ux(
         )?
     };
 
+    let persist_interrupted_handle = |prog: &CarbonPublicWaveProgress| -> Option<String> {
+        if opts.shred_after_run || !(ux.persist_handle || ux.save_model_path.is_some()) {
+            return None;
+        }
+        let sel_reg = if prog.region.is_empty() {
+            best_probe.region.clone()
+        } else {
+            prog.region.clone()
+        };
+        let u_dek_b64 = client
+            .export_run_udek(&effective_tenant, &run_id_str)
+            .map(|dek| base64::engine::general_purpose::STANDARD.encode(dek));
+        let handle = CarbonSavedModelHandle {
+            schema: CARBON_MODEL_HANDLE_SCHEMA.to_owned(),
+            created_epoch_ms: now_epoch_ms(),
+            run_id: run_id_str.clone(),
+            dataset_id: ds_id.to_string(),
+            tenant_id: effective_tenant.clone(),
+            tier: opts.tier,
+            cloud: ux.cloud_name.clone(),
+            endpoint: client.active_endpoint().to_owned(),
+            region: sel_reg,
+            engine_kek_pubkey_b64: client.active_kek_pubkey_b64(),
+            encrypted_cuen: prog.encrypted_cuen,
+            u_dek_b64,
+            capability_token: client.active_capability_token(),
+            encoder: encoder.clone(),
+            fit_rows: prepared.fit_rows,
+            holdout_rows: prepared.holdout_rows,
+            holdout_rmse: resolve_natural_metric(
+                prog.outer_holdout_metric,
+                prog.outer_holdout_loss,
+            ),
+            holdout_mae: None,
+            holdout_r2: None,
+            objective_name: objective_display_name.clone(),
+            objective_direction: objective_direction_label.clone(),
+            feature_importances: feature_importances.clone(),
+        };
+        persist_model_handle_with_options(&handle, ux.save_model_path.as_deref(), ux.embed_token)
+            .ok()
+            .map(|p| p.display().to_string())
+    };
+
     if sigint_received() {
         tty_spinner.finish();
         if opts.shred_after_run {
@@ -1428,7 +1575,16 @@ pub fn execute_carbon_cli_run_with_ux(
             shred_guard.disarm();
             return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
         }
-        return Err("interrupted by SIGINT (Ctrl+C)".to_owned());
+        if let Some(saved_p) = persist_interrupted_handle(&progress) {
+            return Err(format!(
+                "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
+                run_id_str
+            ));
+        }
+        return Err(format!(
+            "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
+            run_id_str
+        ));
     }
 
     if opts.stop_after_ms.is_some() {
@@ -1474,7 +1630,16 @@ pub fn execute_carbon_cli_run_with_ux(
             shred_guard.disarm();
             return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
         }
-        return Err("interrupted by SIGINT (Ctrl+C)".to_owned());
+        if let Some(saved_p) = persist_interrupted_handle(&progress) {
+            return Err(format!(
+                "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
+                run_id_str
+            ));
+        }
+        return Err(format!(
+            "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
+            run_id_str
+        ));
     }
 
     let predict_inputs: Vec<Vec<Option<f64>>> = predict_batch_x
@@ -1591,9 +1756,14 @@ pub fn execute_carbon_cli_run_with_ux(
                 encoder,
                 fit_rows: prepared.fit_rows,
                 holdout_rows: prepared.holdout_rows,
-                holdout_rmse: progress.outer_holdout_loss,
+                holdout_rmse: resolve_natural_metric(
+                    progress.outer_holdout_metric,
+                    progress.outer_holdout_loss,
+                ),
                 holdout_mae: residual_quantiles.map(|q| q.mae),
                 holdout_r2,
+                objective_name: objective_display_name.clone(),
+                objective_direction: objective_direction_label.clone(),
                 feature_importances: feature_importances.clone(),
             };
             let persisted = persist_model_handle_with_options(
@@ -1678,8 +1848,11 @@ pub fn execute_carbon_cli_run_with_ux(
         waves_completed: progress.wave_index,
         waves_target: progress.waves_target,
         candidates_evaluated: progress.candidates_evaluated.0,
-        best_cv_score: progress.best_cv_loss,
-        outer_holdout_score: progress.outer_holdout_loss,
+        best_cv_score: resolve_natural_metric(progress.best_cv_metric, progress.best_cv_loss),
+        outer_holdout_score: resolve_natural_metric(
+            progress.outer_holdout_metric,
+            progress.outer_holdout_loss,
+        ),
         holdout_r2,
         mean_baseline_rmse,
         linear_baseline_rmse,
@@ -1694,6 +1867,7 @@ pub fn execute_carbon_cli_run_with_ux(
         feature_importances,
         saved_model_path,
         objective_name: objective_display_name,
+        objective_direction: objective_direction_label,
         sample_targets,
         sample_predictions,
     };

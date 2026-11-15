@@ -222,8 +222,13 @@ case "$OS_NAME" in
     ;;
 esac
 
-for req_cmd in openssl awk grep; do
-  command -v "$req_cmd" >/dev/null 2>&1 || die "required command '$req_cmd' is not installed"
+for req_cmd in openssl awk grep mktemp; do
+  if ! command -v "$req_cmd" >/dev/null 2>&1; then
+    if [ "$req_cmd" = "openssl" ]; then
+      die "required command 'openssl' is not installed (install via: apt-get install -y openssl | dnf install -y openssl | apk add --no-cache openssl | brew install openssl)"
+    fi
+    die "required command '$req_cmd' is not installed"
+  fi
 done
 
 DOWNLOADER=""
@@ -285,6 +290,10 @@ if [ -z "$BASE_URL" ]; then
     MIRROR_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
   fi
 else
+  case "$BASE_URL" in
+    https://*|http://127.0.0.1:*|http://127.0.0.1/*|http://localhost:*|http://localhost/*|http://\[::1\]:*|http://\[::1\]/*) ;;
+    *) die "insecure or unsupported --base-url '$BASE_URL' (HTTPS required for non-loopback hosts)" ;;
+  esac
   MIRROR_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
 fi
 
@@ -300,10 +309,8 @@ fi
 mkdir -p "$STAGE_PARENT"
 
 umask 077
-STAGE_DIR="$(mktemp -d "$STAGE_PARENT/.carbon-install-stage.XXXXXX" 2>/dev/null || printf '%s/.carbon-install-stage.%s' "$STAGE_PARENT" "$$")"
-if [ ! -d "$STAGE_DIR" ]; then
-  mkdir -m 0700 "$STAGE_DIR"
-fi
+STAGE_DIR="$(mktemp -d "$STAGE_PARENT/.carbon-install-stage.XXXXXX")" \
+  || die "failed to create secure staging directory under '$STAGE_PARENT'"
 chmod 0700 "$STAGE_DIR"
 trap 'rm -rf "$STAGE_DIR"' EXIT INT TERM
 
@@ -326,11 +333,25 @@ fi
 http_download_one() {
   src_url="$1"
   dst_file="$2"
-  if [ "$DOWNLOADER" = "curl" ]; then
-    curl -fsSL --retry 3 --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
-  else
-    wget -q -T 15 -t 3 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
-  fi
+  case "$src_url" in
+    https://*)
+      if [ "$DOWNLOADER" = "curl" ]; then
+        curl -fsSL --proto '=https' --tlsv1.2 --retry 5 --retry-connrefused --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+      else
+        wget -q --https-only --secure-protocol=TLSv1_2 -T 15 -t 5 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+      fi
+      ;;
+    http://127.0.0.1:*|http://127.0.0.1/*|http://localhost:*|http://localhost/*|http://\[::1\]:*|http://\[::1\]/*)
+      if [ "$DOWNLOADER" = "curl" ]; then
+        curl -fsSL --retry 3 --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+      else
+        wget -q -T 15 -t 3 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+      fi
+      ;;
+    *)
+      die "refusing non-HTTPS download URL '$src_url'"
+      ;;
+  esac
 }
 
 fetch_asset() {
@@ -498,20 +519,26 @@ fi
 mkdir -p "$BIN_DIR" "$CONFIG_DIR"
 chmod 0700 "$CONFIG_DIR" 2>/dev/null || true
 
-cp "$EXTRACTED_BIN" "$BIN_DIR/.carbon.new.$$"
-chmod 0755 "$BIN_DIR/.carbon.new.$$"
-mv -f "$BIN_DIR/.carbon.new.$$" "$BIN_DIR/carbon"
+BIN_TMP="$(mktemp "$BIN_DIR/.carbon.new.XXXXXX")" || die "failed to stage executable in '$BIN_DIR'"
+cp "$EXTRACTED_BIN" "$BIN_TMP"
+chmod 0755 "$BIN_TMP"
+mv -f "$BIN_TMP" "$BIN_DIR/carbon"
 
 for cfg_asset in "carbon-clouds.json" "SHA256SUMS.txt" "SHA256SUMS.txt.sig"; do
-  cp "$STAGE_DIR/$cfg_asset" "$CONFIG_DIR/.${cfg_asset}.new.$$"
-  chmod 0644 "$CONFIG_DIR/.${cfg_asset}.new.$$"
-  mv -f "$CONFIG_DIR/.${cfg_asset}.new.$$" "$CONFIG_DIR/$cfg_asset"
+  CFG_TMP="$(mktemp "$CONFIG_DIR/.${cfg_asset}.new.XXXXXX")" || die "failed to stage '$cfg_asset' in '$CONFIG_DIR'"
+  cp "$STAGE_DIR/$cfg_asset" "$CFG_TMP"
+  chmod 0644 "$CFG_TMP"
+  mv -f "$CFG_TMP" "$CONFIG_DIR/$cfg_asset"
 done
 
 say "Installed verified binary     -> $BIN_DIR/carbon ($DOWNLOAD_ASSET)"
 say "Installed verified cloud pins -> $CONFIG_DIR/carbon-clouds.json"
 
 CARBON_CONFIG_DIR="$CONFIG_DIR" "$BIN_DIR/carbon" version >&2
+if [ -z "$TEST_PUBKEY_FILE" ]; then
+  CARBON_CONFIG_DIR="$CONFIG_DIR" "$BIN_DIR/carbon" self-verify >/dev/null \
+    || die "post-install 'carbon self-verify' failed"
+fi
 
 if [ "$SKIP_PING" -eq 0 ]; then
   say "Probing live Carbon prod cloud..."

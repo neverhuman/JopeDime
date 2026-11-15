@@ -91,10 +91,23 @@ impl ObjectiveSpec {
         serde_json::from_str(COMMITTED_SCHEMA_JSON).expect("valid committed fitness JSON schema")
     }
 
-    /// Expand friendly CLI shorthand such as `pinball(0.9)` or `asymmetric_absolute(3,1)` into
-    /// canonical `name:key=value` notation accepted by both `ObjectiveSpec` and `jope-runtime`.
+    /// Expand friendly CLI shorthand such as `pinball(0.9)`, `pinball_q90`, or
+    /// `asymmetric_absolute(3,1)` into canonical `name:key=value` notation accepted by both
+    /// `ObjectiveSpec` and `jope-runtime`.
     pub fn normalize_shorthand(raw: &str) -> String {
         let trimmed = raw.trim();
+        let lower = trimmed.to_ascii_lowercase();
+        if let Some(q_digits) = lower.strip_prefix("pinball_q") {
+            if !q_digits.is_empty() && q_digits.bytes().all(|b| b.is_ascii_digit()) {
+                if let Ok(num) = q_digits.parse::<u32>() {
+                    let denom = 10_f64.powi(q_digits.len() as i32);
+                    let q = f64::from(num) / denom;
+                    if (0.0..1.0).contains(&q) {
+                        return format!("pinball:quantile={q}");
+                    }
+                }
+            }
+        }
         if trimmed.starts_with('{') || !trimmed.ends_with(')') {
             return trimmed.to_owned();
         }
@@ -152,7 +165,16 @@ impl ObjectiveSpec {
                 None => (normalized.as_str(), None),
             };
             let mut base = builtin_default_value(name).ok_or_else(|| {
-                format!("unknown fitness {name:?}; run `carbon fitness list` to inspect valid objectives")
+                if matches!(
+                    name.to_ascii_lowercase().as_str(),
+                    "logloss" | "log_loss" | "brier" | "auc" | "roc_auc" | "f1"
+                ) {
+                    format!(
+                        "classification-only metric {name:?} is not a Carbon regression objective; for binary {{0,1}} probability scoring use \"rmse\" (Brier equivalent) or a custom JSON expression, or run `carbon fitness list`"
+                    )
+                } else {
+                    format!("unknown fitness {name:?}; run `carbon fitness list` to inspect valid objectives")
+                }
             })?;
             if let Some(ov) = overrides {
                 let obj = base.as_object_mut().expect("object spec");
@@ -2458,6 +2480,16 @@ mod tests {
         };
         assert_eq!(pinball.identity_sha256(), expected_pinball_hash);
         assert!(pinball.benefits_from_post_hoc_calibration());
+        let pinball_q90 = ObjectiveSpec::parse("pinball_q90").expect("pinball_q90 shorthand");
+        assert_eq!(pinball_q90.identity_sha256(), expected_pinball_hash);
+        let pinball_q10 = ObjectiveSpec::parse("pinball_q10").expect("pinball_q10 shorthand");
+        let pinball_01 = ObjectiveSpec::parse("pinball(0.1)").expect("pinball(0.1)");
+        assert_eq!(pinball_q10.identity_sha256(), pinball_01.identity_sha256());
+        let pinball_q50 = ObjectiveSpec::parse("pinball_q50").expect("pinball_q50 shorthand");
+        let pinball_05 = ObjectiveSpec::parse("pinball(0.5)").expect("pinball(0.5)");
+        assert_eq!(pinball_q50.identity_sha256(), pinball_05.identity_sha256());
+        let cls_err = ObjectiveSpec::parse("logloss").unwrap_err();
+        assert!(cls_err.contains("classification-only metric"));
     }
 
     #[test]

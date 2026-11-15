@@ -46,7 +46,6 @@ pub enum CarbonExecutionModeWire {
 /// `CarbonAnonymousAuthResponse` is a struct returned by `POST /v1/carbon/auth/anonymous`
 /// issuing a short-lived HMAC-signed Free-tier capability token bound to a fresh `tenant_id`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonAnonymousAuthResponse {
     pub tenant_id: String,
     pub capability_token: String,
@@ -68,7 +67,6 @@ pub struct CarbonRegisterFreeRequest {
 /// `CarbonRegisterFreeResponse` is a struct returned by `POST /v1/carbon/auth/register`
 /// issuing a `30`-day HMAC-signed Free-tier capability token bound to a unique `free_<...>` `tenant_id`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonRegisterFreeResponse {
     pub tenant_id: String,
     pub capability_token: String,
@@ -105,7 +103,6 @@ pub struct CarbonPrepareUploadRequest {
 
 /// `CarbonPresignedTarget` is a struct returning one time-bounded, size-pinned upload destination.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPresignedTarget {
     pub url: String,
     pub method: String,
@@ -118,7 +115,6 @@ pub struct CarbonPresignedTarget {
 /// `CarbonPrepareUploadResponse` is a struct returning presigned `PUT` URLs for the
 /// disjoint `FIT` and `HOLDOUT` blobs plus the `carbon-engine` P-256 KEK public key.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPrepareUploadResponse {
     pub upload_id: String,
     pub fit_target: CarbonPresignedTarget,
@@ -199,7 +195,6 @@ pub struct CarbonResumeRunRequest {
 /// outer-holdout metrics, authenticated neural bundle identity, and sealed-state digests
 /// with zero candidate structure fields.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPublicWaveProgress {
     pub run_id: RunId,
     pub state: CarbonRunStateWire,
@@ -260,7 +255,6 @@ pub struct CarbonPreparePredictRequest {
 /// `CarbonPreparePredictResponse` is a struct returning a presigned S3/gateway `PUT` target for
 /// large encrypted `/predict` batches.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPreparePredictResponse {
     pub upload_id: String,
     pub input_target: CarbonPresignedTarget,
@@ -293,7 +287,6 @@ pub struct CarbonPredictRequest {
 /// `CarbonPredictResponse` is a struct returning scalar predictions (or an E2E `CUEN\x01`
 /// response inline or via presigned S3 CAS `GET`) without exposing model internals.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPredictResponse {
     pub run_id: RunId,
     #[serde(default)]
@@ -313,7 +306,6 @@ pub struct CarbonPredictResponse {
 /// `CarbonFeatureImportanceWire` reports one feature's holdout permutation importance (`Δloss`)
 /// computed directly on the winning `CarbonParsedChampion` inside `carbon-engine`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonFeatureImportanceWire {
     pub feature: String,
     pub importance: f64,
@@ -336,7 +328,6 @@ pub struct CarbonExplainRequest {
 /// `CarbonExplainResponse` returns champion permutation importances (cleartext in local VPC mode
 /// or sealed inside `CUEN\x01(ExplainOutputs)` under `response_cudk_b64` in zero-knowledge mode).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonExplainResponse {
     pub run_id: RunId,
     pub method: String,
@@ -391,7 +382,6 @@ pub struct CarbonExportRequest {
 /// sealed inside `CUEN\x01(ExportArtifact)` under `response_cudk_b64` so `carbon-edge` never sees
 /// the fitted equation).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonExportResponse {
     pub run_id: RunId,
     pub lang: CarbonExportLangWire,
@@ -407,7 +397,6 @@ pub struct CarbonExportResponse {
 /// `CarbonShredRunResponse` is a struct returned by `DELETE /v1/carbon/runs/{id}` confirming
 /// cryptographic destruction of user ciphertexts, sealed state, and wrapped key envelopes.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonShredRunResponse {
     pub run_id: RunId,
     pub shredded: bool,
@@ -417,7 +406,6 @@ pub struct CarbonShredRunResponse {
 /// `CarbonPingResponse` is a struct returned by `/v1/carbon/ping` for smart-routing RTT probes
 /// and advertising the regional `carbon-engine` P-256 KEK public key.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonPingResponse {
     pub region: String,
     pub healthy: bool,
@@ -448,7 +436,6 @@ pub struct CarbonVersionResponse {
 
 /// `CarbonRegionDescriptor` is a struct describing one regional Carbon Lambda cell endpoint.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonRegionDescriptor {
     pub region: String,
     pub geography: String,
@@ -459,7 +446,6 @@ pub struct CarbonRegionDescriptor {
 /// `CarbonRegionCatalog` is a struct served at `/.well-known/carbon-regions.json` listing
 /// all active regional Carbon cells for latency-probing client failover.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct CarbonRegionCatalog {
     pub catalog_version: u32,
     pub regions: Vec<CarbonRegionDescriptor>,

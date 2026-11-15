@@ -102,8 +102,7 @@ jobs:
       - name: Prepare run-scoped evidence directory
         run: mkdir -p "target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
 
-      - name: Install repository-pinned Rust toolchain for Option B emulator binary
-        if: ${{ !inputs.use_live_pro_secrets }}
+      - name: Install repository-pinned Rust toolchain
         env:
           RUSTUP_HOME: /opt/rust/rustup
         run: |
@@ -113,8 +112,16 @@ jobs:
           rustup default 1.97.1
           printf 'RUSTUP_HOME=%s\n' "$RUSTUP_HOME" >> "$GITHUB_ENV"
 
-      - name: Build Carbon emulator binary for Option B high/ultra cells
-        if: ${{ !inputs.use_live_pro_secrets }}
+      - name: Cache Cargo registry for Carbon live-4tier orchestrator
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-reg-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+      - name: Build pure-Rust Carbon live-4tier orchestrator and emulator binary
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
@@ -129,17 +136,14 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
           out_dir="target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+          extra_args=()
           if [ "$USE_LIVE_PRO" = "true" ]; then
-            python3 deploy/carbon/ci-live-4tier-docker.py \
-              --source-sha "$JOPE_SOURCE_SHA" \
-              --out-dir "$out_dir" \
-              --require-live-pro
-          else
-            python3 deploy/carbon/ci-live-4tier-docker.py \
-              --source-sha "$JOPE_SOURCE_SHA" \
-              --out-dir "$out_dir" \
-              --carbon-emu-bin "$CARGO_TARGET_DIR/dist-ci/carbon"
+            extra_args+=(--require-live-pro)
           fi
+          "$CARGO_TARGET_DIR/dist-ci/carbon" ci-live-4tier \
+            --source-sha "$JOPE_SOURCE_SHA" \
+            --out-dir "$out_dir" \
+            "${extra_args[@]}"
 
       - name: Retain Fresh-Docker 4-tier qualification receipt
         if: always()
