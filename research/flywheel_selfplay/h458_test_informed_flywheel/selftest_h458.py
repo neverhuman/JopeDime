@@ -507,7 +507,8 @@ class _LookupEngine:
     def make_stratified_kfold(key, y, k=5, rep=0):
         return np.arange(len(y), dtype=np.int64) % int(k)
 
-    def evolve_single_context_1000g(self, *, cid, Xs, Xa, ys, out_root, n_gens, **_kw):
+    def evolve_single_context_1000g(self, *, cid, Xs, Xa, ys, out_root, n_gens, n_pop=None, **_kw):
+        self.n_pops = getattr(self, "n_pops", []) + [n_pop]
         if (Path(out_root) / f"g{int(n_gens)}" / f"{cid}.npz").is_file():
             return {"cid": cid, "skipped_existing": True}  # what the real engine does when a stage's snapshot exists
         table = {Xs[i].tobytes(): float(ys[i]) for i in range(len(ys))}
@@ -555,6 +556,12 @@ def gate_gp_chain_units(ctx) -> dict:
         assert np.allclose(st["q"], (1.0 - 0.5**j) * yy), "the chain does not fit the residual of its running sum"
         assert np.allclose(st["ref"][:10], (1.0 - 0.5**j) * yy[:10]) and np.allclose(st["ref"][10:], 0.0)
     assert [c["gens"] for c in eng.calls] == [4, 4, 4] and res["book"]["generations_total"] == 12 and not res["book"]["honest_search_column"]
+    assert eng.n_pops == [GC.N_POP] * 3, "the default seed population changed"
+    eng_s = _LookupEngine()
+    A.seeds_per_call = 12
+    GC.run_context((eng_s, None, None), "ctxs", d, A, work / "chain_seeds12")
+    assert eng_s.n_pops == [12, 12, 12], "--seeds-per-call did not reach the engine"
+    del A.seeds_per_call
     eng = _LookupEngine()
     A.arm, A.stages = "oof_chain", 2
     res = GC.run_context((eng, None, None), "ctxb", d, A, work / "oof")
@@ -686,7 +693,7 @@ def gate_gp_chain_units(ctx) -> dict:
     with np.load(s_out / f"{cidr}.npz") as z:
         assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
     assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
-    return {"checks": 51, "dir": str(work)}
+    return {"checks": 53, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

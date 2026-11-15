@@ -128,7 +128,7 @@ def u_search(pred: np.ndarray, y: np.ndarray) -> float:
     return float(-np.log(max(rmse(pred, y), 1e-300) / max(float(np.std(y)), 1e-300)))
 
 
-def run_stage(eng, key: str, family: str, xs, xa, target, work: Path, n_gens: int, seed: int, inner_slots: int) -> tuple[dict, dict]:
+def run_stage(eng, key: str, family: str, xs, xa, target, work: Path, n_gens: int, seed: int, inner_slots: int, n_pop: int = N_POP) -> tuple[dict, dict]:
     """One engine run of `n_gens` generations on `target`; returns the exported snapshot arrays and the engine's record."""
     U, encoder, qhat = eng
     for sub in ("snap", "slots"):
@@ -147,7 +147,7 @@ def run_stage(eng, key: str, family: str, xs, xa, target, work: Path, n_gens: in
         slot_dir=work / "slots" / key,
         encoder=encoder,
         qhat=qhat,
-        n_pop=N_POP,
+        n_pop=int(n_pop),
         start_gen=1,
         n_gens=int(n_gens),
         snapshots=(int(n_gens),),
@@ -205,7 +205,7 @@ def pipeline(eng, key: str, family: str, xs, xa, y, plan: list[int], style: dict
     for j, n_gens in enumerate(plan):
         target = y if col is None else y - col["q"]
         t0 = time.time()
-        snap, res = run_stage(eng, f"{key}.s{j + 1}", family, xs, xa, target, work, n_gens, seed + 17 * j, inner_slots)
+        snap, res = run_stage(eng, f"{key}.s{j + 1}", family, xs, xa, target, work, n_gens, seed + 17 * j, inner_slots, style.get("n_pop", N_POP))
         part, weights, dsls = stage_column(snap, target, style["committee"])
         kept = True
         if col is None:
@@ -249,7 +249,8 @@ def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
     base = load_base(Path(a.base_block), a.base_col, cid, n_s, n_a) if getattr(a, "base_block", "") else None
     chain = a.arm in ("chain", "chain_sc", "oof_chain")
     fancy = a.arm in ("chain_sc", "oof_chain")
-    style = {"committee": a.committee if fancy else 1, "nu": a.nu if fancy else 1.0, "keep_rule": fancy, "min_gain": a.min_gain}
+    style = {"committee": a.committee if fancy else 1, "nu": a.nu if fancy else 1.0, "keep_rule": fancy, "min_gain": a.min_gain,
+             "n_pop": int(getattr(a, "seeds_per_call", N_POP))}
     k_stage = a.stages if chain else 1
     t0 = time.time()
     if a.arm in ("single", "chain", "chain_sc"):
@@ -499,6 +500,7 @@ def main() -> None:
     ap.add_argument("--committee", type=int, default=3, help="chain_sc and oof_chain: programs blended per stage")
     ap.add_argument("--min-gain", type=float, default=0.002, help="keep rule: relative cross-fitted RMSE gain a stage must bring")
     ap.add_argument("--seed", type=int, default=458)
+    ap.add_argument("--seeds-per-call", type=int, default=N_POP, help="fresh seed programs of every engine call (stage or fold); a multi-call arm can spend one run's 48 across its calls")
     ap.add_argument("--prior", choices=tuple(PRIORS), default="dev91-free", help="surrogate prior; a column meant to be fair on dev91 needs dev91-free")
     ap.add_argument("--cids", default="")
     ap.add_argument("--families", default="", help="comma-separated 8-hex family ids")
@@ -537,6 +539,8 @@ def main() -> None:
         return
     if a.arm not in ARMS or a.gens < 1:
         raise SystemExit("--arm and --gens are required")
+    if not 4 <= a.seeds_per_call <= 256:
+        raise SystemExit("--seeds-per-call between 4 and 256")
     if bool(a.base_block) != bool(a.base_col):
         raise SystemExit("--base-block and --base-col go together")
     bank = load_bank(Path(a.bank))
@@ -561,11 +565,11 @@ def main() -> None:
     if not cids:
         raise SystemExit("no contexts to run (none selected, or all already written)")
     eng = load_engine(a.prior)
-    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots", "base_block", "base_col", "prior")}
+    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots", "base_block", "base_col", "prior", "seeds_per_call")}
     settings.update({"bank": str(a.bank), "bank_sha256": P.digest_file(Path(a.bank)), "extra_audit_bank": str(a.extra_audit_bank),
                      "extra_audit_bank_sha256": P.digest_file(Path(a.extra_audit_bank)) if a.extra_audit_bank else None,
                      "engine_sha256": ENGINE_SHA256, "qhat_sha256": PRIORS[a.prior][1],
-                     "n_pop": N_POP, "eval_per_gen": EVAL_PER_GEN, "top_export": TOP_EXPORT, "reads_audit_labels": False, **P.DISCLOSURE})
+                     "eval_per_gen": EVAL_PER_GEN, "top_export": TOP_EXPORT, "reads_audit_labels": False, **P.DISCLOSURE})
 
     claim_folder(out_dir, {k: v for k, v in settings.items() if k != "inner_slots"})
 
