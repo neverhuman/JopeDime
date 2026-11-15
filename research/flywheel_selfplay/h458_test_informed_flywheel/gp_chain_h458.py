@@ -22,8 +22,9 @@ of an existing column (for example a stack), which must itself be out of fold on
 "dataset 2" applied where the ladder is decided: what can GP still find in what our best model misses.
 An out-of-fold arm takes a base only when the block also holds the column NESTED on that arm's own outer folds
 (`nest_lab_<name>`, `nest_q_<name>`, `nest_a_<name>`): a column that is merely out of fold on all SEARCH rows was fitted
-on rows of the held-out fold, so its values on the training rows carry that fold's labels into the fit. The folds are
-compared as sets of row indices, not by name, and a base without them is refused.
+on rows of the held-out fold, so its values on the training rows carry that fold's labels into the fit. With such a
+base the arm runs on the base's own partition (`nest_lab_`, which must have exactly `--outer` non-empty folds), so the
+base and the chain share one set of row sets by construction; a base without the nested arrays is refused.
 
 The out-of-fold arms return a SEARCH column that no fit and no selection ever saw, so its utility is an honest
 estimate of generalisation and a stack can weight it without deflation, and K fold-models averaged on the audit rows.
@@ -237,30 +238,31 @@ def split_generations(total: int, parts: int) -> list[int]:
     return [base + (1 if i < extra else 0) for i in range(parts)]
 
 
-def load_base(block: Path, name: str, cid: str, n_s: int, n_a: int, lab_o: np.ndarray | None = None) -> dict:
+def load_base(block: Path, name: str, cid: str, n_s: int, n_a: int, outer_k: int = 0) -> dict:
     """The starting column of a chain: SEARCH-row out-of-fold values and audit-slot values of one stored column.
 
-    With `lab_o` (the outer folds of an out-of-fold arm) the block must also hold the column nested on exactly those
-    folds: `nest_lab_<name>` (n_search,), the fold of every SEARCH row; `nest_q_<name>` (K, n_search), row o = the
-    column's SEARCH values from a fit that used no row of fold o (out of fold among the other rows, a plain prediction
-    on fold o); `nest_a_<name>` (K, n_audit), that fit's audit-slot values. The partition is checked by row sets.
+    With `outer_k` (an out-of-fold arm with K outer folds) the block must also hold the column nested on K folds, and
+    the arm then runs on that partition:
+      nest_lab_<name>  (n_search,)    the outer fold of every SEARCH row, values 0..K-1, every fold non-empty;
+      nest_q_<name>    (K, n_search)  row o = the column from the fit that used NO row of fold o. On the rows outside
+                                      fold o these must be that fit's own INNER out-of-fold values (never in-sample
+                                      values: the chain is evolved on their residual); on fold o, plain predictions;
+      nest_a_<name>    (K, n_audit)   that fit's audit-slot values.
+    What the producer put into nest_q cannot be checked from here; the shapes, the fold count and the coverage can.
     """
     with np.load(block / f"{cid}.npz", allow_pickle=False) as z:
         col = {k: np.asarray(z[f"{k}_{name}"], dtype=np.float64) for k in ("q", "bag", "ref")}
-        if lab_o is not None:
+        if outer_k:
             need = (f"nest_lab_{name}", f"nest_q_{name}", f"nest_a_{name}")
             if any(k not in z.files for k in need):
-                raise SystemExit(f"{block}/{cid}.npz: an out-of-fold arm takes column {name} only nested on its outer folds ({', '.join(need)}); "
+                raise SystemExit(f"{block}/{cid}.npz: an out-of-fold arm takes column {name} only nested on outer folds ({', '.join(need)}); "
                                  "a column that is out of fold on all SEARCH rows has seen the held-out fold's labels")
-            lab_o = np.asarray(lab_o, dtype=np.int64)
-            k_o = int(lab_o.max()) + 1
             nl, nq, na = np.asarray(z[need[0]], dtype=np.int64), np.asarray(z[need[1]], dtype=np.float64), np.asarray(z[need[2]], dtype=np.float64)
-            rows = lambda lab: [frozenset(np.flatnonzero(lab == o).tolist()) for o in range(k_o)]  # noqa: E731
-            if nl.shape != (n_s,) or rows(nl) != rows(lab_o):
-                raise SystemExit(f"{block}/{cid}.npz: column {name} is nested on other outer folds than this run's (the row sets differ)")
-            if nq.shape != (k_o, n_s) or na.shape != (k_o, n_a) or not (np.isfinite(nq).all() and np.isfinite(na).all()):
+            if nl.shape != (n_s,) or sorted(set(nl.tolist())) != list(range(int(outer_k))):
+                raise SystemExit(f"{block}/{cid}.npz: nest_lab_{name} must give every SEARCH row one of exactly {int(outer_k)} non-empty folds (0..{int(outer_k) - 1})")
+            if nq.shape != (int(outer_k), n_s) or na.shape != (int(outer_k), n_a) or not (np.isfinite(nq).all() and np.isfinite(na).all()):
                 raise SystemExit(f"{block}/{cid}.npz: the nested values of column {name} do not fit this bank")
-            col["nest_q"], col["nest_a"] = nq, na
+            col["nest_lab"], col["nest_q"], col["nest_a"] = nl, nq, na
     if col["q"].shape != (n_s,) or col["ref"].shape != (n_a,) or col["bag"].shape != (n_a,) or not all(np.isfinite(col[k]).all() for k in ("q", "bag", "ref")):
         raise SystemExit(f"{block}/{cid}.npz: column {name} does not fit this bank")
     return col
@@ -287,9 +289,10 @@ def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
         lab_o = np.zeros(n_s, dtype=np.int64)
     else:
         U = eng[0]
-        lab_o = U.make_stratified_kfold(cid + ".outer", y, k=a.outer, rep=0)
+        base = load_base(Path(a.base_block), a.base_col, cid, n_s, n_a, int(a.outer)) if has_base else None  # refused unless nested
+        # with a nested base the arm runs on the base's partition: one set of row sets for the base and the chain
+        lab_o = base["nest_lab"] if has_base else U.make_stratified_kfold(cid + ".outer", y, k=a.outer, rep=0)
         k_o = int(lab_o.max()) + 1
-        base = load_base(Path(a.base_block), a.base_col, cid, n_s, n_a, lab_o) if has_base else None  # refused unless nested on lab_o
         per_fold = split_generations(a.gens, k_o)
         stages = [{"q": np.full(n_s, np.nan), "bag": np.zeros(n_a), "ref": np.zeros(n_a)} for _ in range(k_stage)]
         pipes = []
@@ -307,7 +310,7 @@ def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
                 stages[j]["bag"] += c["bag"][n_h:] / k_o
                 stages[j]["ref"] += c["ref"][n_h:] / k_o
             pipes.append(recs)
-        book = {"outer_folds": k_o, "pipelines": pipes, "honest_search_column": True}
+        book = {"outer_folds": k_o, "pipelines": pipes, "honest_search_column": True, "outer_partition": "from_base" if has_base else "stratified_kfold"}
     for s in stages:
         if not (np.isfinite(s["q"]).all() and np.isfinite(s["ref"]).all() and np.isfinite(s["bag"]).all()):
             raise SystemExit(f"{cid}: non-finite column")

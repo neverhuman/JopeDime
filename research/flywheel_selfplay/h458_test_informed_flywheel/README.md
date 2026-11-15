@@ -93,6 +93,6 @@ the running sum, and repeats. The engine's own curve says depth overfits (Ultra-
 1815 at 1,000), so the arms spend a tier's generations on honesty and diversity instead: residual chains with
 cross-fitted stage columns, and evolution out of fold, where K outer folds each run the chain on the other folds and
 the held-out fold is predicted by a pipeline that never saw it. Every arm is read first on SEARCH rows and on the
-fresh-row probe board; the PREREG, the budget table and all scoring are Track S's (S9). An out-of-fold arm takes a `--base-block` column only when the block also holds it nested on that arm's own outer folds (`nest_lab_`, `nest_q_`, `nest_a_`, compared as sets of row indices); a base that is merely out of fold on all SEARCH rows is refused, because it would carry the held-out fold's labels into the fit (probe ledger line 45 measured what that does to a stack: 92% of the weight and 7 losses of 10).
+fresh-row probe board; the PREREG, the budget table and all scoring are Track S's (S9). An out-of-fold arm takes a `--base-block` column only when the block also holds it nested on outer folds (`nest_lab_`, `nest_q_`, `nest_a_`), and then runs on that partition, which must have exactly `--outer` folds; a base that is merely out of fold on all SEARCH rows is refused, because it would carry the held-out fold's labels into the fit (probe ledger line 45 measured what that does to a stack: 92% of the weight and 7 losses of 10).
 
 Full results are recorded in `metrics.json` once the gates in `PREREG.md` have been read for all families.
