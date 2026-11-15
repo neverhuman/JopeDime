@@ -2,22 +2,22 @@
 
 Enforces three invariants across H460 `APEX-EQ`:
 1. `FitScopeV2`: Full SHA-256 content-addressed provenance over training features,
-   training labels, row weights, incumbent residual vector, and fold identifier.
-   Changing a single bit of any input changes `scope_sha256`, preventing cross-fold
-   or cross-iteration cache reuse (`Compiler §6.1`).
+   training labels, row weights, incumbent residual vector, optional auxiliary arrays
+   (`bank_train`, `bank_val`, `incumbent_train`, `incumbent_val`, `static_ctrl_val`),
+   and fold identifier (`cl_fwriter` Finding #7).
 2. `EnsembleSnapshot` + `CoordinatorCAS`: Immutable state snapshots committed one at a
    time via compare-and-swap (`base_epoch`), re-verifying stale worker proposals against
    the current covariance before acceptance (`Coalition §4.1`).
 3. `learn_whole_procedure(X_train, y_train, X_val, learner_fn)`: Strict outer-fold
-   functional boundary where `y_val` does not even exist in the signature, paired with a
-   canary helper proving `max_abs_diff == 0.0` under held-out label poisoning.
+   functional boundary where `y_val` is absent, paired with both in-memory and on-disk
+   poisoning canaries proving `max_abs_diff == 0.0` under held-out label corruption.
 """
 from __future__ import annotations
 
 import dataclasses
 import hashlib
 import json
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -42,6 +42,7 @@ class FitScopeV2:
     y_sha256: str
     weights_sha256: str
     residual_sha256: str
+    extra_sha256: str
     scope_sha256: str
 
     @classmethod
@@ -51,6 +52,7 @@ class FitScopeV2:
         y_train: np.ndarray,
         residual: Optional[np.ndarray] = None,
         row_weights: Optional[np.ndarray] = None,
+        extra_arrays: Optional[Mapping[str, np.ndarray]] = None,
         fold_id: str = "full",
     ) -> "FitScopeV2":
         x_arr = np.ascontiguousarray(x_train, dtype=np.float64)
@@ -72,12 +74,21 @@ class FitScopeV2:
         if res_arr.shape[0] != x_arr.shape[0] or w_arr.shape[0] != x_arr.shape[0]:
             raise ValueError("residual and row_weights must match x_train row count")
 
+        extra_hashes: Dict[str, str] = {}
+        if extra_arrays:
+            for k in sorted(extra_arrays.keys()):
+                extra_hashes[str(k)] = _hash_array_f64(extra_arrays[k])
+        extra_sha = hashlib.sha256(
+            json.dumps(extra_hashes, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+
         x_sha = _hash_array_f64(x_arr)
         y_sha = _hash_array_f64(y_arr)
         w_sha = _hash_array_f64(w_arr)
         r_sha = _hash_array_f64(res_arr)
         payload = json.dumps(
             {
+                "extra": extra_sha,
                 "fold_id": str(fold_id),
                 "n_features": int(x_arr.shape[1]),
                 "n_rows": int(x_arr.shape[0]),
@@ -97,6 +108,7 @@ class FitScopeV2:
             y_sha256=y_sha,
             weights_sha256=w_sha,
             residual_sha256=r_sha,
+            extra_sha256=extra_sha,
             scope_sha256=hashlib.sha256(payload).hexdigest(),
         )
 
@@ -124,9 +136,12 @@ class ScopedFeatureCache:
         self._store[(scope.scope_sha256, str(expr_id))] = arr
 
 
+ALLOWED_EVIDENCE_ROLES = ("outer_whole_procedure", "conditional_fixed_matrix_lfo")
+
+
 @dataclasses.dataclass(frozen=True)
 class EnsembleSnapshot:
-    """Immutable coordinator snapshot published to parallel proposal workers."""
+    """Immutable coordinator snapshot published to parallel proposal workers (`F04, F08`)."""
 
     epoch: int
     scope_sha256: str
@@ -134,11 +149,19 @@ class EnsembleSnapshot:
     marginal_log_evidence: float
     alpha_Dual: np.ndarray
     state_digest: str
+    evidence_role: str = "outer_whole_procedure"
+
+    def __post_init__(self) -> None:
+        if self.evidence_role not in ALLOWED_EVIDENCE_ROLES:
+            raise ValueError(f"Invalid evidence_role: {self.evidence_role!r}")
+        ro_alpha = np.array(self.alpha_Dual, dtype=np.float64, copy=True)
+        ro_alpha.setflags(write=False)
+        object.__setattr__(self, "alpha_Dual", ro_alpha)
 
 
 @dataclasses.dataclass(frozen=True)
 class WorkerProposal:
-    """Asynchronous candidate proposal tagged with the snapshot epoch it conditioned on."""
+    """Asynchronous candidate proposal tagged with the snapshot epoch & scope it conditioned on (`F08`)."""
 
     base_epoch: int
     name: str
@@ -146,6 +169,19 @@ class WorkerProposal:
     val_col: Optional[np.ndarray]
     claimed_score_z2: float
     family_tag: str = "generic"
+    proposal_scope_sha256: Optional[str] = None
+    evidence_role: str = "outer_whole_procedure"
+
+    def __post_init__(self) -> None:
+        if self.evidence_role not in ALLOWED_EVIDENCE_ROLES:
+            raise ValueError(f"Invalid evidence_role: {self.evidence_role!r}")
+        ro_tr = np.array(self.train_col, dtype=np.float64, copy=True)
+        ro_tr.setflags(write=False)
+        object.__setattr__(self, "train_col", ro_tr)
+        if self.val_col is not None:
+            ro_va = np.array(self.val_col, dtype=np.float64, copy=True)
+            ro_va.setflags(write=False)
+            object.__setattr__(self, "val_col", ro_va)
 
 
 class CoordinatorCAS:
@@ -164,11 +200,20 @@ class CoordinatorCAS:
         proposal: WorkerProposal,
         reverify_fn: Callable[[WorkerProposal, EnsembleSnapshot], Optional[EnsembleSnapshot]],
     ) -> Tuple[bool, EnsembleSnapshot]:
-        """Commit `proposal`; if `proposal.base_epoch < current.epoch`, re-verify on current state."""
+        """Commit `proposal`; enforce `proposal_scope_sha256` and re-verify stale proposals (`F08`)."""
+        if (
+            proposal.proposal_scope_sha256 is not None
+            and proposal.proposal_scope_sha256 != self._current.scope_sha256
+        ):
+            return False, self._current
+        if proposal.evidence_role != self._current.evidence_role:
+            return False, self._current
         was_stale = proposal.base_epoch != self._current.epoch
         next_snap = reverify_fn(proposal, self._current)
         if next_snap is None:
             return False, self._current
+        if next_snap.scope_sha256 != self._current.scope_sha256:
+            raise ValueError("Accepted snapshot must preserve scope_sha256")
         if next_snap.epoch != self._current.epoch + 1:
             raise ValueError("Accepted snapshot must increment epoch by exactly 1")
         self._current = next_snap
@@ -182,6 +227,7 @@ def learn_whole_procedure(
     x_val: np.ndarray,
     learner_fn: Callable[[np.ndarray, np.ndarray, np.ndarray, FitScopeV2], Tuple[np.ndarray, Dict[str, Any]]],
     fold_id: str = "outer_fold",
+    extra_arrays: Optional[Mapping[str, np.ndarray]] = None,
 ) -> Tuple[np.ndarray, FitScopeV2, Dict[str, Any]]:
     """Execute an entire discovery + equilibrium fit strictly inside `(x_train, y_train, x_val)`.
 
@@ -194,7 +240,7 @@ def learn_whole_procedure(
     x_tr.setflags(write=False)
     y_tr.setflags(write=False)
     x_va.setflags(write=False)
-    scope = FitScopeV2.from_arrays(x_tr, y_tr, fold_id=fold_id)
+    scope = FitScopeV2.from_arrays(x_tr, y_tr, extra_arrays=extra_arrays, fold_id=fold_id)
     preds_val, meta = learner_fn(x_tr, y_tr, x_va, scope)
     return np.asarray(preds_val, dtype=np.float64).reshape(-1), scope, meta
 
@@ -216,10 +262,12 @@ def run_outer_fold_poisoning_canary(
     pred_poison, meta_poison = sliced_pipeline_fn(x_all, y_poison, train_idx, val_idx)
     max_diff = float(np.max(np.abs(pred_clean - pred_poison)))
     state_match = meta_clean.get("state_digest") == meta_poison.get("state_digest")
+    scope_match = meta_clean.get("fit_scope_sha256") == meta_poison.get("fit_scope_sha256")
     return {
         "max_abs_diff": max_diff,
-        "passed": bool(max_diff == 0.0 and state_match),
+        "passed": bool(max_diff == 0.0 and state_match and scope_match),
         "poison_offset": float(poison_offset),
+        "scope_match": bool(scope_match),
         "state_digest_clean": meta_clean.get("state_digest"),
         "state_digest_poison": meta_poison.get("state_digest"),
         "state_match": bool(state_match),
