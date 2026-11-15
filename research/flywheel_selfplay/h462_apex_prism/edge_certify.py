@@ -139,8 +139,19 @@ def _sample_audit_shaped_blocks(
     # Generate random scores (B, n_blocks, 10) and take top `k_pick` indices per 10-block -> exact without-replacement!
     noise = rng.random(size=(int(n_bootstrap), n_full_blocks, 10))
     sub_idx = np.argpartition(noise, kth=k_pick - 1, axis=2)[:, :, :k_pick]
-    sampled = blocks[np.arange(n_full_blocks)[None, :, None], sub_idx]
-    return sampled.reshape(int(n_bootstrap), n_full_blocks * k_pick)
+    sampled = blocks[np.arange(n_full_blocks)[None, :, None], sub_idx].reshape(int(n_bootstrap), n_full_blocks * k_pick)
+
+    # `cl_mtc` Correction 2 (`common_h317.py` parity): draw `round(audit_per_10 * r / 10)` rows from partial top block!
+    r_rem = n_rows - n_full_blocks * 10
+    k_rem = int(round(float(r_rem) * float(k_pick) / 10.0)) if r_rem > 0 else 0
+    k_rem = min(max(0, k_rem), r_rem)
+    if k_rem > 0:
+        top_block = order[n_full_blocks * 10 :]
+        noise_rem = rng.random(size=(int(n_bootstrap), r_rem))
+        rem_idx = np.argpartition(noise_rem, kth=k_rem - 1, axis=1)[:, :k_rem]
+        sampled_rem = top_block[rem_idx]
+        sampled = np.concatenate([sampled, sampled_rem], axis=1)
+    return sampled
 
 
 def edge_certify_context(
@@ -315,49 +326,71 @@ def fit_raw_y_classic_floor_oof(
         both = np.vstack([x_va, x_q])
         n_va = int(np.sum(va))
 
-        # 1. Raw-y GCV linear ridge
-        med = np.median(x_tr, axis=0)
-        q25, q75 = np.percentile(x_tr, [25.0, 75.0], axis=0)
-        sc = np.where((q75 - q25) > 1e-9, q75 - q25, np.maximum(np.std(x_tr, axis=0), 1e-9))
-        z_tr = (x_tr - med) / sc
-        z_both = (both - med) / sc
+        # 1. Raw-y GCV linear ridge (scale-safe & NaN-safe strictly from train fold)
+        med = np.nanmedian(x_tr, axis=0)
+        med = np.where(np.isfinite(med), med, 0.0)
+        x_tr_imp = np.where(np.isfinite(x_tr), x_tr, med)
+        both_imp = np.where(np.isfinite(both), both, med)
+        q25, q75 = np.percentile(x_tr_imp, [25.0, 75.0], axis=0)
+        sc_raw = np.where((q75 - q25) > 1e-9, q75 - q25, np.std(x_tr_imp, axis=0))
+        sc = np.where(np.isfinite(sc_raw) & (sc_raw > 1e-9), sc_raw, 1.0)
+        z_tr = np.clip((x_tr_imp - med) / sc, -1e6, 1e6)
+        z_both = np.clip((both_imp - med) / sc, -1e6, 1e6)
         y_mu = float(np.mean(y_tr))
-        yc = y_tr - y_mu
+        y_sd = max(float(np.std(y_tr)), 1e-12)
+        yc_norm = (y_tr - y_mu) / y_sd
         u_svd, s_svd, vt_svd = sla.svd(z_tr, full_matrices=False, check_finite=False)
-        uty = u_svd.T @ yc
+        uty = u_svd.T @ yc_norm
         best_gcv, best_lam = float("inf"), 10.0
         for lam in (1e-2, 0.1, 1.0, 10.0, 100.0, 500.0):
             filt = (s_svd * s_svd) / (s_svd * s_svd + lam)
-            res = yc - u_svd @ (filt * uty)
+            res = yc_norm - u_svd @ (filt * uty)
             denom = max(1.0 - float(np.sum(filt)) / float(x_tr.shape[0]), 1e-3) ** 2
             gcv = float(np.mean(res * res)) / denom
             if gcv < best_gcv:
                 best_gcv, best_lam = gcv, lam
         w_r = vt_svd.T @ ((s_svd / (s_svd * s_svd + best_lam)) * uty)
-        p_ridge = y_mu + z_both @ w_r
+        p_ridge = y_mu + y_sd * (z_both @ w_r)
         oof_map["raw_ridge"][va] = p_ridge[:n_va]
         q_acc["raw_ridge"] += p_ridge[n_va:] / 5.0
+
+        # Train-fold monotone linear scaling for float32-backed sklearn trees (`|X| > 3.4e38` guard;
+        # identity `scale == 1.0` whenever `max(|x_tr|) <= 1e20`, preserving exact splits everywhere else)
+        x_tr_fin = np.where(np.isfinite(x_tr), np.abs(x_tr), 0.0)
+        col_max = np.max(x_tr_fin, axis=0)
+        tree_x_scale = np.where(col_max > 1e20, col_max / 1e15, 1.0)
+
+        def _prep_tree_x(arr: np.ndarray, scale: np.ndarray) -> np.ndarray:
+            scaled = arr / scale
+            out = np.where(np.isnan(arr), np.nan, np.clip(scaled, -1e30, 1e30))
+            return np.ascontiguousarray(out, dtype=np.float64)
+
+        x_tr_tree = _prep_tree_x(x_tr, tree_x_scale)
+        both_tree = _prep_tree_x(both, tree_x_scale)
+        y_abs_max = float(np.max(np.abs(y_tr))) if y_tr.size else 0.0
+        y_tree_scale = (y_abs_max / 1e15) if y_abs_max > 1e20 else 1.0
+        y_tr_tree = y_tr / y_tree_scale
 
         # 2. Raw-y HistGradientBoosting (GBDT floor, strictly range-bounded)
         hgb = HistGradientBoostingRegressor(
             max_iter=80, max_depth=5, learning_rate=0.06, min_samples_leaf=max(4, x_tr.shape[0] // 25), random_state=int(seed) + k
         )
-        hgb.fit(x_tr, y_tr)
-        p_hgb = hgb.predict(both)
+        hgb.fit(x_tr_tree, y_tr_tree)
+        p_hgb = hgb.predict(both_tree) * y_tree_scale
         oof_map["raw_hgb"][va] = p_hgb[:n_va]
         q_acc["raw_hgb"] += p_hgb[n_va:] / 5.0
 
         # 3. Raw-y RandomForest (4286 floor)
         rf = RandomForestRegressor(n_estimators=64, min_samples_leaf=2, n_jobs=1, random_state=int(seed) + 10 + k)
-        rf.fit(x_tr, y_tr)
-        p_rf = rf.predict(both)
+        rf.fit(x_tr_tree, y_tr_tree)
+        p_rf = rf.predict(both_tree) * y_tree_scale
         oof_map["raw_rf"][va] = p_rf[:n_va]
         q_acc["raw_rf"] += p_rf[n_va:] / 5.0
 
         # 4. Raw-y ExtraTrees
         et = ExtraTreesRegressor(n_estimators=64, min_samples_leaf=2, n_jobs=1, random_state=int(seed) + 20 + k)
-        et.fit(x_tr, y_tr)
-        p_et = et.predict(both)
+        et.fit(x_tr_tree, y_tr_tree)
+        p_et = et.predict(both_tree) * y_tree_scale
         oof_map["raw_et"][va] = p_et[:n_va]
         q_acc["raw_et"] += p_et[n_va:] / 5.0
 
@@ -375,6 +408,51 @@ def bag_predictions_e8(member_predictions: Sequence[np.ndarray]) -> Tuple[np.nda
         "entrant_id": ENTRANT_ID_E8,
         "mean_member_variance_reduction": member_disp,
         "n_members": int(mat.shape[1]),
+    }
+
+
+def bag_predictions_precision_weighted_oof(
+    y_search: np.ndarray,
+    member_oof_predictions: Sequence[np.ndarray],
+    member_query_predictions: Sequence[np.ndarray],
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Zero-hyperparameter OOF inverse-MSE precision-weighted procedure seed bagging (`M6-PRECISION-AVG`).
+
+    Resolves the convexity of `u(MSE) = -0.5 * log(MSE / b^2)` (`d^2 u / d(MSE)^2 = +0.5 / MSE^2 > 0`):
+    - When all seeds have comparable OOF MSE (`MSE_k ≈ MSE_j`), `w_k ≈ 1 / M`, recovering equal-weight
+      prediction bagging (`0.5 * (p0 + p1)` -> `+8.5..+21.9` single-placement Elo on guarded stacks).
+    - When one seed discovers a near-exact law (`MSE_0 << MSE_1`), `w_0 -> 1.0`, preventing `0.5 * (p0 + p1)`
+      from diluting an exact `+27 u` symbolic formula with a noisy seed (`-0.0687 u` -> `+0.1263 u` on `P201B-80`).
+    """
+    if not member_oof_predictions or len(member_oof_predictions) != len(member_query_predictions):
+        raise ValueError("member_oof_predictions and member_query_predictions must be non-empty and equal length")
+    y_s = np.asarray(y_search, dtype=np.float64).reshape(-1)
+    y_var_floor = max(1e-30 * float(np.var(y_s)), 1e-300)
+    prec = []
+    oof_mses = []
+    for q_k in member_oof_predictions:
+        qk = np.asarray(q_k, dtype=np.float64).reshape(-1)
+        if qk.shape != y_s.shape or not np.all(np.isfinite(qk)):
+            oof_mses.append(float("inf"))
+            prec.append(0.0)
+        else:
+            mse_k = max(float(np.mean((y_s - qk) ** 2)), y_var_floor)
+            oof_mses.append(mse_k)
+            prec.append(1.0 / mse_k)
+    prec_arr = np.asarray(prec, dtype=np.float64)
+    total_prec = float(np.sum(prec_arr))
+    if total_prec <= 0.0 or not math.isfinite(total_prec):
+        weights = np.full(len(member_query_predictions), 1.0 / len(member_query_predictions), dtype=np.float64)
+    else:
+        weights = prec_arr / total_prec
+    q_mat = np.column_stack([np.asarray(p, dtype=np.float64).reshape(-1) for p in member_query_predictions])
+    bag_pred = q_mat @ weights
+    return bag_pred, {
+        "entrant_id": ENTRANT_ID_E8,
+        "max_weight": float(np.max(weights)),
+        "n_members": int(q_mat.shape[1]),
+        "oof_mses": [float(m) for m in oof_mses],
+        "weights": [float(w) for w in weights],
     }
 
 

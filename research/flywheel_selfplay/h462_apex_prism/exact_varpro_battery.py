@@ -184,6 +184,29 @@ def _inductive_bootstrap_probes(z_tr: np.ndarray, n_probes: int = 200, seed: int
     return med[None, :] + stretch * (base - med[None, :])
 
 
+def _safe_pos_solve(gram: np.ndarray, rhs: np.ndarray, rel_eps: float = 1e-10) -> Optional[np.ndarray]:
+    """Scale-invariant regularized symmetric solve with `lstsq` fallback for collinear/extreme-scale tables."""
+    if not (np.all(np.isfinite(gram)) and np.all(np.isfinite(rhs))):
+        return None
+    d = gram.shape[0]
+    diag_scale = float(np.mean(np.abs(np.diag(gram)))) if d > 0 else 1.0
+    reg = max(1e-10, rel_eps * max(diag_scale, 1.0))
+    g_reg = 0.5 * (gram + gram.T) + reg * np.eye(d, dtype=np.float64)
+    try:
+        sol = sla.solve(g_reg, rhs, assume_a="pos", check_finite=False)
+        if np.all(np.isfinite(sol)):
+            return sol
+    except (sla.LinAlgError, np.linalg.LinAlgError, ValueError):
+        pass
+    try:
+        sol_ls = sla.lstsq(g_reg, rhs, check_finite=False)[0]
+        if np.all(np.isfinite(sol_ls)):
+            return sol_ls
+    except (sla.LinAlgError, np.linalg.LinAlgError, ValueError):
+        return None
+    return None
+
+
 def _fit_single_spec_from_init_delta(
     zc: np.ndarray,
     m_p: np.ndarray,
@@ -206,6 +229,9 @@ def _fit_single_spec_from_init_delta(
         anc = None
         target_y = y_tr.copy()
 
+    if not np.all(np.isfinite(target_y)):
+        return None
+
     if spec.warp == "log":
         min_y = float(np.min(target_y))
         if min_y <= 1e-6:
@@ -217,29 +243,46 @@ def _fit_single_spec_from_init_delta(
     if n_q == 0:
         if anc is not None and spec.use_anchor_cancel and spec.warp == "identity":
             z_aug = np.column_stack([anc, m_p])
-            g_aug = z_aug.T @ z_aug + 1e-10 * np.eye(n_p + 1, dtype=np.float64)
-            c_aug = sla.solve(g_aug, z_aug.T @ y_tr, assume_a="pos", check_finite=False)
+            c_aug = _safe_pos_solve(z_aug.T @ z_aug, z_aug.T @ y_tr, rel_eps=1e-10)
+            if c_aug is None:
+                return None
             delta_a = min(0.0, max(-1.0, float(c_aug[0]) - 1.0))
             t_eff = y_tr - (1.0 + delta_a) * anc
-            p_coef = sla.lstsq(m_p, t_eff, check_finite=False)[0]
+            try:
+                p_coef = sla.lstsq(m_p, t_eff, check_finite=False)[0]
+            except (sla.LinAlgError, np.linalg.LinAlgError, ValueError):
+                return None
         else:
-            p_coef = sla.lstsq(m_p, t_fit, check_finite=False)[0]
+            try:
+                p_coef = sla.lstsq(m_p, t_fit, check_finite=False)[0]
+            except (sla.LinAlgError, np.linalg.LinAlgError, ValueError):
+                return None
+        if not np.all(np.isfinite(p_coef)):
+            return None
         q_coef = np.zeros(0, dtype=np.float64)
     else:
-        a_lin = np.hstack([m_p, -(t_fit[:, None] * m_q)])
+        # Normalize target scale during SK initialization so `t_fit * m_q` stays O(1)
+        t_scale = max(float(np.std(t_fit)), float(np.max(np.abs(t_fit))) * 1e-3, 1e-12)
+        t_norm = t_fit / t_scale
+        a_lin = np.hstack([m_p, -(t_norm[:, None] * m_q)])
+        if not np.all(np.isfinite(a_lin)):
+            return None
         col_nrm = np.maximum(np.linalg.norm(a_lin, axis=0), 1e-12)
-        _, _, vt = sla.svd(a_lin / col_nrm[None, :], full_matrices=False, check_finite=False)
+        try:
+            _, _, vt = sla.svd(a_lin / col_nrm[None, :], full_matrices=False, check_finite=False)
+        except (sla.LinAlgError, np.linalg.LinAlgError, ValueError):
+            return None
         v_last = vt[-1, :] / col_nrm
-        rhs_sk = t_fit.copy()
-        w_sk = np.ones(zc.shape[0], dtype=np.float64)
-        p_coef = v_last[:n_p]
+        p_coef = v_last[:n_p] * t_scale
         q_coef = v_last[n_p:]
+        w_sk = np.ones(zc.shape[0], dtype=np.float64)
         for _ in range(2):
-            a_w = np.hstack([m_p, -(t_fit[:, None] * m_q)]) * w_sk[:, None]
-            b_w = rhs_sk * w_sk
-            gram = a_w.T @ a_w + 1e-9 * np.eye(n_p + n_q, dtype=np.float64)
-            sol = sla.solve(gram, a_w.T @ b_w, assume_a="pos", check_finite=False)
-            p_coef = sol[:n_p]
+            a_w = np.hstack([m_p, -(t_norm[:, None] * m_q)]) * w_sk[:, None]
+            b_w = t_norm * w_sk
+            sol = _safe_pos_solve(a_w.T @ a_w, a_w.T @ b_w, rel_eps=1e-9)
+            if sol is None:
+                break
+            p_coef = sol[:n_p] * t_scale
             q_coef = sol[n_p:]
             den_cur = 1.0 + m_q @ q_coef
             if float(np.min(np.abs(den_cur))) < 1e-4:
@@ -250,46 +293,52 @@ def _fit_single_spec_from_init_delta(
         damp = 1e-4
         for _ in range(max(1, int(n_gn_steps))):
             den = 1.0 + m_q @ q_coef
-            if float(np.min(np.abs(den))) < 1e-3:
+            if not np.all(np.isfinite(den)) or float(np.min(np.abs(den))) < 1e-3:
                 break
             inv_q = 1.0 / den
             z_vp = m_p * inv_q[:, None]
             if anc is not None and spec.use_anchor_cancel and spec.warp == "identity":
                 z_aug = np.column_stack([anc, z_vp])
-                g_aug = z_aug.T @ z_aug + 1e-10 * np.eye(n_p + 1, dtype=np.float64)
-                c_aug = sla.solve(g_aug, z_aug.T @ y_tr, assume_a="pos", check_finite=False)
+                c_aug = _safe_pos_solve(z_aug.T @ z_aug, z_aug.T @ y_tr, rel_eps=1e-10)
+                if c_aug is None:
+                    break
                 delta_a = min(0.0, max(-1.0, float(c_aug[0]) - 1.0))
                 t_eff = y_tr - (1.0 + delta_a) * anc
             else:
                 t_eff = t_fit
 
-            g_p = z_vp.T @ z_vp + 1e-10 * np.eye(n_p, dtype=np.float64)
-            p_coef = sla.solve(g_p, z_vp.T @ t_eff, assume_a="pos", check_finite=False)
+            g_p = z_vp.T @ z_vp
+            p_cand = _safe_pos_solve(g_p, z_vp.T @ t_eff, rel_eps=1e-10)
+            if p_cand is None:
+                break
+            p_coef = p_cand
             f_val = z_vp @ p_coef
             res = t_eff - f_val
             cur_sse = float(np.dot(res, res))
 
             dz_p = -((f_val * inv_q)[:, None] * m_q)
-            proj = z_vp @ sla.solve(g_p, z_vp.T @ dz_p, assume_a="pos", check_finite=False)
+            proj_rhs = _safe_pos_solve(g_p, z_vp.T @ dz_p, rel_eps=1e-10)
+            if proj_rhs is None:
+                break
+            proj = z_vp @ proj_rhs
             j_vp = dz_p - proj
-            jt_j = j_vp.T @ j_vp + damp * np.eye(n_q, dtype=np.float64)
-            step_q = sla.solve(jt_j, -(j_vp.T @ res), assume_a="pos", check_finite=False)
+            jt_j = j_vp.T @ j_vp + damp * max(float(np.mean(np.abs(np.diag(j_vp.T @ j_vp)))), 1.0) * np.eye(n_q, dtype=np.float64)
+            step_q = _safe_pos_solve(jt_j, -(j_vp.T @ res), rel_eps=1e-12)
+            if step_q is None:
+                break
 
             accepted_step = False
             for ls in (1.0, 0.5, 0.25, 0.1):
                 cand_q = q_coef + ls * step_q
                 cand_den = 1.0 + m_q @ cand_q
-                if float(np.min(np.abs(cand_den))) < 0.05 * float(np.median(np.abs(cand_den))):
+                if not np.all(np.isfinite(cand_den)) or float(np.min(np.abs(cand_den))) < 0.05 * float(np.median(np.abs(cand_den))):
                     continue
                 cand_z = m_p / cand_den[:, None]
-                cand_p = sla.solve(
-                    cand_z.T @ cand_z + 1e-10 * np.eye(n_p, dtype=np.float64),
-                    cand_z.T @ t_eff,
-                    assume_a="pos",
-                    check_finite=False,
-                )
+                cand_p = _safe_pos_solve(cand_z.T @ cand_z, cand_z.T @ t_eff, rel_eps=1e-10)
+                if cand_p is None:
+                    continue
                 cand_sse = float(np.sum((t_eff - cand_z @ cand_p) ** 2))
-                if cand_sse <= cur_sse:
+                if math.isfinite(cand_sse) and cand_sse <= cur_sse:
                     q_coef = cand_q
                     p_coef = cand_p
                     damp = max(1e-7, 0.5 * damp)
@@ -389,11 +438,15 @@ def _predict_uncapped_gp_oof(
         x_tr, y_tr, x_va = x[tr], y[tr], x[va]
         y_mu = float(np.mean(y_tr))
         yc = y_tr - y_mu
-        med = np.median(x_tr, axis=0)
-        q25, q75 = np.percentile(x_tr, [25.0, 75.0], axis=0)
-        sc = np.where((q75 - q25) > 1e-9, q75 - q25, np.maximum(np.std(x_tr, axis=0), 1e-9))
-        z_tr = (x_tr - med) / sc
-        z_va = (x_va - med) / sc
+        med = np.nanmedian(x_tr, axis=0)
+        med = np.where(np.isfinite(med), med, 0.0)
+        x_tr_imp = np.where(np.isfinite(x_tr), x_tr, med)
+        x_va_imp = np.where(np.isfinite(x_va), x_va, med)
+        q25, q75 = np.percentile(x_tr_imp, [25.0, 75.0], axis=0)
+        sc_raw = np.where((q75 - q25) > 1e-9, q75 - q25, np.std(x_tr_imp, axis=0))
+        sc = np.where(np.isfinite(sc_raw) & (sc_raw > 1e-9), sc_raw, 1.0)
+        z_tr = np.clip((x_tr_imp - med) / sc, -25.0, 25.0)
+        z_va = np.clip((x_va_imp - med) / sc, -25.0, 25.0)
 
         best_loo = float("inf")
         best_pred = np.full(x_va.shape[0], y_mu, dtype=np.float64)
@@ -543,13 +596,16 @@ def run_exact_varpro_battery(
     x = np.ascontiguousarray(x_search, dtype=np.float64)
     y = np.ascontiguousarray(y_search, dtype=np.float64).reshape(-1)
     lab = np.asarray(lab_folds, dtype=np.int64).reshape(-1)
-    y_std = max(float(np.std(y)), 1e-12)
+    y_std = max(float(np.std(y)), 1e-30)
+    rmse_floor = max(1e-15 * y_std, 1e-300)
 
     gp_oof = _predict_uncapped_gp_oof(x, y, lab)
     gp_fold_u = tuple(
-        float(math.log(y_std / max(float(math.sqrt(np.mean((y[lab == k] - gp_oof[lab == k]) ** 2))), 1e-15)))
+        float(math.log(y_std / max(float(math.sqrt(np.mean((y[lab == k] - gp_oof[lab == k]) ** 2))), rmse_floor)))
         for k in range(5)
     )
+    gp_pooled_rmse = float(math.sqrt(np.mean((y - gp_oof) ** 2)))
+    gp_pooled_u = float(math.log(y_std / max(gp_pooled_rmse, rmse_floor)))
 
     specs = _build_candidate_specs(x, y, allow_anchor_cancel=(anchor_oof is not None))
     best_pooled_u = -1e9
@@ -578,14 +634,15 @@ def run_exact_varpro_battery(
             continue
 
         fold_u = tuple(
-            float(math.log(y_std / max(float(math.sqrt(np.mean((y[lab == k] - oof[lab == k]) ** 2))), 1e-15)))
+            float(math.log(y_std / max(float(math.sqrt(np.mean((y[lab == k] - oof[lab == k]) ** 2))), rmse_floor)))
             for k in range(5)
         )
         margins = [fold_u[k] - gp_fold_u[k] for k in range(5)]
         min_margin = min(margins)
         pooled_rmse = float(math.sqrt(np.mean((y - oof) ** 2)))
-        pooled_u = float(math.log(y_std / max(pooled_rmse, 1e-15)))
-        if min_margin >= float(min_fold_margin_u) and pooled_u > best_pooled_u:
+        pooled_u = float(math.log(y_std / max(pooled_rmse, rmse_floor)))
+        pooled_margin = pooled_u - gp_pooled_u
+        if min(min_margin, pooled_margin) >= float(min_fold_margin_u) and pooled_u > best_pooled_u:
             best_pooled_u = pooled_u
             best_res = (spec, oof, fold_u, min_pole_ratio)
 

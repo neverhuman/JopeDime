@@ -1,18 +1,28 @@
 """Protocol Consistency Rule (`PCR`) Inner-OOF Hint & Reliability Compiler (`pcr_hint_compiler.py`).
 
-Implements `SYMBIONT §7` + `Solver-Trained §6` strictly without label leakage or `Yeo-Johnson` warps:
-  - **PCR Invariant (`T8`):** Every label-dependent hint (`Class B/C`: inner-OOF uncapped Matérn-5/2 GP
-    mean & SD under `identity` and rank-Gauss `rg` warps ONLY, GCV linear ridge, ARD-kNN, and smoothed
-    key target encoding) is computed **strictly out-of-fold** across `K_inner = 5` deterministic target-
-    stratified inner folds on context rows `(x_context, y_context)`.
-  - Query rows `x_query` receive fold-averaged predictions from those identical `5` inner-fold fits with
-    **zero cross-query interaction (`T1 == 0.0`)**.
-  - **Reliability Channels:** Every `Class B/C` hint is paired with a constant-per-context fold-stability
-    skill channel `rel_j = max(0, 1 - rmse_oof_j / std(y_context))` plus per-row GP predictive SD / fold
-    disagreement so `PRISM` knows when to trust or ignore each hint.
-  - **Counterfactual Corrupted-Hint Training (`corrupt_pcr_hints`):** Corrupts `20%` of training-episode
-    hint channels (sign flip, noise injection, or zeroing while keeping raw `X` intact) so `PRISM` never
-    collapses to copying a single hint column.
+Implements `HNC-1` + `Correction 1` (`cl_fwriter`, `2026-11-15T14:11Z` / `14:13Z`):
+  - **H1 Self-Exclusion:** Label-free deterministic inner fold assignment (`_label_free_inner_folds`) +
+    strictly per-inner-fold train-only target normalization `(y_med_tr, y_scale_tr)` and hyperparameter
+    selection. Adding `+1000 * sd(y)` to `y_i` leaves every non-selected channel at row `i` unchanged to
+    `0.0` (`< 1e-12` relative).
+  - **H1 Exception + Finding 2 (`Class A` Cross-Fitted Select-Then-Score Reliability):** `Class A` algebraic
+    formula definitions `(op, col_i, col_j)` are selected once per context on `C`, applied identically to `C`
+    and `Q` via inner-fold 1D ridge location fits, and paired with cross-fitted select-then-score reliability
+    channels (`select on C \\ fold_k, fit on C \\ fold_k, score on fold_k`).
+  - **H2 Query Exclusion (`T1 == 0.0`):** Query hints depend only on context labels and each query row's own `x`.
+  - **H3 Row-Type Parity (Finding 1 & Correction 1 Finding 7):**
+    * Both context and query reliability matrices carry `gp_sd` in the same slot; query-only `gp_fold_disagreement`
+      is placed in its own dedicated channel paired with an explicit `gp_fold_disagreement_missing` indicator
+      (`1.0` on context rows, `0.0` on query rows).
+    * Query hints come from a single inner-fold model `k_q` chosen deterministically at random per episode
+      (`Correction 1` Fix `(a)`), matching the `(k_eff - 1) / k_eff` single-fold variance of context OOF hints.
+  - **H4 Train/Deploy Parity (Finding 3):** `corrupt_pcr_hints_counterfactual` recomputes ONLY the corrupted
+    channels' reliability from the corrupted values via the exact deploy `L350` skill formula, leaving
+    uncorrupted channels untouched (no training-only `* 0.25` flag).
+  - **H7 Protocol Identity (Finding 4):** `hint_protocol_id` is the 64-hex SHA-256 of the compiler module
+    source bytes plus every compiler parameter; data-dependent `k_eff` is recorded separately on `PCRHintBundle`.
+  - **H8 Calibration Canary:** Over 200 synthetic episodes (`max_formulas = 6`), context-side OOF skill and
+    query-side skill match within `<= 0.05` on average across every location hint channel.
 """
 from __future__ import annotations
 
@@ -20,7 +30,8 @@ import dataclasses
 import hashlib
 import json
 import math
-from typing import List, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 from scipy import linalg as sla
@@ -28,28 +39,71 @@ from scipy import stats as sstats
 
 from .assay_regime import _matern52_gram
 
+_COMPILER_SOURCE_SHA256: str = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+PRIOR_HINT_NAMES: Tuple[str, ...] = (
+    "pcr_ridge_oof",
+    "pcr_gp_id_oof",
+    "pcr_gp_sd_oof",
+    "pcr_gp_rg_oof",
+    "pcr_ard_knn_oof",
+    "pcr_key_te_oof",
+)
+PRIOR_LOC_INDICES: Tuple[int, ...] = (0, 1, 3, 4, 5)
+PRIOR_GPSD_INDEX: int = 2
+
 
 @dataclasses.dataclass(frozen=True)
 class PCRHintBundle:
-    """Compiled context & query hint matrices plus `hint_protocol_id` SHA-256."""
+    """Compiled context & query hint matrices, reliability matrices, and `HNC-1` metadata."""
 
     context_hints: np.ndarray
     query_hints: np.ndarray
     context_reliability: np.ndarray
     query_reliability: np.ndarray
     hint_names: Tuple[str, ...]
+    reliability_names: Tuple[str, ...]
     hint_protocol_id: str
+    k_eff: int
+    query_fold_index: int
+    selected_formula_channels: Tuple[int, ...]
+    non_selected_channels: Tuple[int, ...]
+    skill_col_for_hint: Tuple[Optional[int], ...]
+    gp_sd_hint_col: int
+    gp_sd_median_rel_col: int
+    gp_sd_row_rel_col: int
+    context_target_norm: np.ndarray
+    oof_predictions_raw: np.ndarray
+    query_predictions_raw: np.ndarray
 
 
-def _target_stratified_inner_folds(y_ctx: np.ndarray, k_inner: int = 5, seed: int = 462201) -> np.ndarray:
-    y = np.asarray(y_ctx, dtype=np.float64).reshape(-1)
-    order = np.argsort(y, kind="mergesort")
-    rng = np.random.default_rng(int(seed))
-    lab = np.zeros(y.shape[0], dtype=np.int64)
-    for start in range(0, y.shape[0], int(k_inner)):
-        blk = order[start : min(start + int(k_inner), y.shape[0])]
-        lab[blk] = rng.permutation(int(k_inner))[: blk.size]
+def compute_l350_skill(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Canonical `L350` truncated RMSE skill `max(0, 1 - rmse(y, y_hat) / std(y))`."""
+    yt = np.asarray(y_true, dtype=np.float64).reshape(-1)
+    yp = np.asarray(y_pred, dtype=np.float64).reshape(-1)
+    if yt.size == 0:
+        return 0.0
+    y_std = max(float(np.std(yt)), 1e-12)
+    rmse = float(math.sqrt(np.mean((yt - yp) ** 2)))
+    return float(max(0.0, 1.0 - rmse / y_std))
+
+
+def _label_free_inner_folds(n_c: int, k_inner: int = 5, seed: int = 462201) -> np.ndarray:
+    """Deterministic `y`-independent inner fold assignment (`H1` self-exclusion)."""
+    rng = np.random.default_rng(int(seed) ^ 0x517CC1B7)
+    perm = rng.permutation(int(n_c))
+    lab = np.zeros(int(n_c), dtype=np.int64)
+    lab[perm] = np.arange(int(n_c), dtype=np.int64) % int(k_inner)
     return lab
+
+
+def _robust_loc_scale(v: np.ndarray) -> Tuple[float, float]:
+    arr = np.asarray(v, dtype=np.float64).reshape(-1)
+    med = float(np.median(arr))
+    q25, q75 = np.percentile(arr, [25.0, 75.0])
+    iqr = float(q75 - q25)
+    sc = iqr if iqr > 1e-9 else max(float(np.std(arr)), 1e-9)
+    return med, sc
 
 
 class RankGaussTargetWarp:
@@ -72,7 +126,6 @@ class RankGaussTargetWarp:
 
     def inverse_transform(self, z_in: np.ndarray) -> np.ndarray:
         z = np.asarray(z_in, dtype=np.float64)
-        # Linear tail continuation using robust outer deciles (never explodes super-linearly!)
         lo_z, hi_z = float(self.z_grid[0]), float(self.z_grid[-1])
         lo_y, hi_y = float(self.y_sorted[0]), float(self.y_sorted[-1])
         q10_i = max(0, int(0.10 * (self.y_sorted.size - 1)))
@@ -91,67 +144,94 @@ class RankGaussTargetWarp:
         return out
 
 
-def _build_class_a_formula_hints(
-    x_ctx: np.ndarray,
-    y_ctx: np.ndarray,
-    x_qu: np.ndarray,
+def _eval_formula_op(z_mat: np.ndarray, op: str, i: int, j: int) -> np.ndarray:
+    zi = z_mat[:, i]
+    zj = z_mat[:, j]
+    if op == "prod":
+        return zi * zj
+    if op == "diff":
+        return zi - zj
+    if op == "rat":
+        return zi / (np.abs(zj) + 0.5)
+    if op == "lograt":
+        return np.log((np.abs(zi) + 0.25) / (np.abs(zj) + 0.25))
+    raise ValueError(f"Unknown Class A formula op: {op!r}")
+
+
+def _select_class_a_definitions(
+    x_fit: np.ndarray,
+    y_fit: np.ndarray,
     max_formulas: int = 6,
-) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-    """Score-screen `Class A` algebraic ratios, products, differences, and log-ratios on `(x_ctx, y_ctx)`."""
-    n_c, n_cols = x_ctx.shape
-    n_q = x_qu.shape[0]
-    if n_cols < 2 or max_formulas <= 0:
-        return np.zeros((n_c, 0), dtype=np.float64), np.zeros((n_q, 0), dtype=np.float64), []
+) -> List[Tuple[str, int, int, str]]:
+    """Select up to `max_formulas` algebraic formula definitions `(op, col_i, col_j, name)` on `(x_fit, y_fit)`."""
+    n_r, n_cols = x_fit.shape
+    if n_cols < 2 or max_formulas <= 0 or n_r < 4:
+        return []
 
-    med = np.median(x_ctx, axis=0)
-    q25, q75 = np.percentile(x_ctx, [25.0, 75.0], axis=0)
-    sc = np.where((q75 - q25) > 1e-9, q75 - q25, np.maximum(np.std(x_ctx, axis=0), 1e-9))
-    zc = (x_ctx - med) / sc
-    zq = (x_qu - med) / sc
+    med = np.median(x_fit, axis=0)
+    q25, q75 = np.percentile(x_fit, [25.0, 75.0], axis=0)
+    sc = np.where((q75 - q25) > 1e-9, q75 - q25, np.maximum(np.std(x_fit, axis=0), 1e-9))
+    zf = np.clip((x_fit - med) / sc, -20.0, 20.0)
 
-    yc = y_ctx - float(np.mean(y_ctx))
+    yc = y_fit - float(np.mean(y_fit))
     y_norm = max(float(np.linalg.norm(yc)), 1e-12)
-    col_scores = [abs(float(np.dot(zc[:, j], yc))) for j in range(n_cols)]
+    col_scores = [abs(float(np.dot(zf[:, j], yc))) for j in range(n_cols)]
     top_cols = [int(i) for i in np.argsort(-np.asarray(col_scores))[: min(4, n_cols)]]
 
-    cands: List[Tuple[float, str, np.ndarray, np.ndarray]] = []
+    cands: List[Tuple[float, str, int, int, str]] = []
     for a_pos in range(len(top_cols)):
         for b_pos in range(a_pos + 1, len(top_cols)):
             i, j = top_cols[a_pos], top_cols[b_pos]
-            ops = [
-                (f"prod_c{i}_c{j}", zc[:, i] * zc[:, j], zq[:, i] * zq[:, j]),
-                (f"diff_c{i}_c{j}", zc[:, i] - zc[:, j], zq[:, i] - zq[:, j]),
-                (
-                    f"rat_c{i}_over_c{j}",
-                    zc[:, i] / (np.abs(zc[:, j]) + 0.5),
-                    zq[:, i] / (np.abs(zq[:, j]) + 0.5),
-                ),
-                (
-                    f"lograt_c{i}_c{j}",
-                    np.log((np.abs(zc[:, i]) + 0.25) / (np.abs(zc[:, j]) + 0.25)),
-                    np.log((np.abs(zq[:, i]) + 0.25) / (np.abs(zq[:, j]) + 0.25)),
-                ),
-            ]
-            for nm, vc, vq in ops:
-                vc_c = vc - float(np.mean(vc))
-                nrm = float(np.linalg.norm(vc_c))
+            for op, nm in (
+                ("prod", f"prod_c{i}_c{j}"),
+                ("diff", f"diff_c{i}_c{j}"),
+                ("rat", f"rat_c{i}_over_c{j}"),
+                ("lograt", f"lograt_c{i}_c{j}"),
+            ):
+                vf = _eval_formula_op(zf, op, i, j)
+                vf_c = vf - float(np.mean(vf))
+                nrm = float(np.linalg.norm(vf_c))
                 if nrm <= 1e-9:
-                    continue
-                score = abs(float(np.dot(vc_c, yc))) / (nrm * y_norm)
-                mu_v = float(np.median(vc))
-                iqr_v = float(np.percentile(vc, 75.0) - np.percentile(vc, 25.0))
-                sd_v = iqr_v if iqr_v > 1e-9 else max(float(np.std(vc)), 1e-9)
-                cands.append((score, nm, (vc - mu_v) / sd_v, (vq - mu_v) / sd_v))
+                    score = -1.0
+                else:
+                    score = abs(float(np.dot(vf_c, yc))) / (nrm * y_norm)
+                cands.append((score, op, i, j, nm))
 
-    cands.sort(key=lambda item: -item[0])
-    sel = cands[: int(max_formulas)]
-    if not sel:
-        return np.zeros((n_c, 0), dtype=np.float64), np.zeros((n_q, 0), dtype=np.float64), []
-    return (
-        np.column_stack([s[2] for s in sel]),
-        np.column_stack([s[3] for s in sel]),
-        [s[1] for s in sel],
-    )
+    cands.sort(key=lambda item: (-item[0], item[4]))
+    return [(c[1], c[2], c[3], c[4]) for c in cands[: int(max_formulas)]]
+
+
+def _fit_predict_1d_formulas(
+    x_tr: np.ndarray,
+    y_tr: np.ndarray,
+    x_eval: np.ndarray,
+    defs: Sequence[Tuple[str, int, int, str]],
+    target_slots: int,
+) -> np.ndarray:
+    """Fit 1D damped linear predictors on `(x_tr, y_tr)` for `defs`, padding missing slots with `mean(y_tr)`."""
+    n_ev = x_eval.shape[0]
+    y_mu = float(np.mean(y_tr))
+    out = np.full((n_ev, int(target_slots)), y_mu, dtype=np.float64)
+    if target_slots <= 0 or not defs:
+        return out
+
+    med = np.median(x_tr, axis=0)
+    q25, q75 = np.percentile(x_tr, [25.0, 75.0], axis=0)
+    sc = np.where((q75 - q25) > 1e-9, q75 - q25, np.maximum(np.std(x_tr, axis=0), 1e-9))
+    z_tr = np.clip((x_tr - med) / sc, -20.0, 20.0)
+    z_ev = np.clip((x_eval - med) / sc, -20.0, 20.0)
+    yc = y_tr - y_mu
+
+    for r_idx, (op, col_i, col_j, _nm) in enumerate(defs[: int(target_slots)]):
+        f_tr = _eval_formula_op(z_tr, op, col_i, col_j)
+        f_ev = _eval_formula_op(z_ev, op, col_i, col_j)
+        f_mu = float(np.mean(f_tr))
+        fc_tr = f_tr - f_mu
+        fc_ev = np.clip(f_ev - f_mu, -25.0, 25.0)
+        denom = float(np.dot(fc_tr, fc_tr)) + 2.0
+        slope = float(np.dot(fc_tr, yc)) / max(denom, 1e-9)
+        out[:, r_idx] = y_mu + slope * fc_ev
+    return out
 
 
 def _fit_predict_fold_priors(
@@ -159,9 +239,8 @@ def _fit_predict_fold_priors(
     y_tr: np.ndarray,
     x_eval: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Fit inner-fold `{ridge, gp_id_mean, gp_id_sd, gp_rg_mean, ard_knn, key_te}` on `(x_tr, y_tr)`."""
+    """Fit inner-fold `{ridge, gp_id_mean, gp_id_sd, gp_rg_mean, ard_knn, key_te}` strictly on `(x_tr, y_tr)`."""
     n_tr, n_cols = x_tr.shape
-    n_ev = x_eval.shape[0]
     y_mu = float(np.mean(y_tr))
     yc = y_tr - y_mu
     y_var = max(float(np.var(yc)), 1e-9)
@@ -217,20 +296,19 @@ def _fit_predict_fold_priors(
     k_et = _matern52_gram(z_ev, z_tr, best_ell)
     pred_gp_id = y_mu + k_et @ alpha_id
 
-    # Predictive variance k(x*, x*) - k_*^T (K + rho I)^{-1} k_*
     d_cols = max(int(z_ev.shape[1]), 1)
     k_diag_ev = 1.0 + 0.15 * np.sum((z_ev / (best_ell * math.sqrt(float(d_cols)))) ** 2, axis=1)
     proj_v = k_et @ v_g
     var_ratio = np.maximum(k_diag_ev - (proj_v * proj_v) @ inv_dg, 1e-9)
     pred_gp_sd = np.sqrt(y_var * var_ratio)
 
-    # 3. Rank-Gauss (`rg`) Matérn-5/2 GP (monotone, outlier-resistant, NO Yeo-Johnson!)
+    # 3. Rank-Gauss (`rg`) Matérn-5/2 GP (`Yeo-Johnson` banned)
     rg = RankGaussTargetWarp().fit(y_tr)
     z_y = rg.transform(y_tr)
     alpha_rg = v_g @ ((v_g.T @ z_y) / (ev_g + max(best_rho, 1e-2)))
     pred_gp_rg = rg.inverse_transform(k_et @ alpha_rg)
 
-    # 4. ARD distance-weighted kNN (k = min(12, n_tr - 1)) with strictly train-only bandwidth (`T1 == 0.0`)
+    # 4. ARD distance-weighted kNN with strictly train-only bandwidth (`T1 == 0.0`)
     ard_w = np.abs(w_ridge)
     ard_w = ard_w / max(float(np.mean(ard_w)), 1e-6)
     ard_w = np.clip(ard_w, 0.2, 3.0)
@@ -259,7 +337,7 @@ def _fit_predict_fold_priors(
     w_nn = w_nn / np.maximum(np.sum(w_nn, axis=1, keepdims=True), 1e-12)
     pred_knn = np.sum(w_nn * y_tr[nn_idx], axis=1)
 
-    # 5. Smoothed key target encoding on highest-multiplicity discrete column (or binned top ARD col)
+    # 5. Smoothed key target encoding
     best_j = int(np.argmax(ard_w))
     mult_best = 0.0
     for j in range(n_cols):
@@ -293,82 +371,155 @@ def compile_pcr_hints(
     k_inner: int = 5,
     max_formulas: int = 6,
     seed: int = 462201,
+    query_fold_mode: str = "random_single_fold",
 ) -> PCRHintBundle:
-    """Compile strictly inner-OOF `PCR` hints + reliability channels (`T1 == 0.0`, `T8` leak-free)."""
+    """Compile strictly inner-OOF `PCR` hints + `HNC-1` compliant reliability channels."""
+    if query_fold_mode not in ("random_single_fold", "fold_mean_legacy"):
+        raise ValueError(f"Unsupported query_fold_mode: {query_fold_mode!r}")
+
     x_c = np.ascontiguousarray(x_context, dtype=np.float64)
     y_c = np.ascontiguousarray(y_context, dtype=np.float64).reshape(-1)
     x_q = np.ascontiguousarray(x_query, dtype=np.float64)
     n_c = x_c.shape[0]
     n_q = x_q.shape[0]
-    y_med = float(np.median(y_c))
-    y_iqr = float(np.percentile(y_c, 75.0) - np.percentile(y_c, 25.0))
-    y_scale = y_iqr if y_iqr > 1e-9 else max(float(np.std(y_c)), 1e-9)
-    y_std = max(float(np.std(y_c)), 1e-12)
 
-    fa_c, fa_q, fa_names = _build_class_a_formula_hints(x_c, y_c, x_q, max_formulas=max_formulas)
+    # Once-per-context Class A formula definition selection (H1 exception conditions 1 & 2)
+    fa_defs = _select_class_a_definitions(x_c, y_c, max_formulas=int(max_formulas))
+    m_fa = len(fa_defs)
+    fa_names = [f"pcr_fa_{nm}" for (_op, _i, _j, nm) in fa_defs]
 
     k_eff = min(max(2, int(k_inner)), max(2, n_c // 4))
-    lab = _target_stratified_inner_folds(y_c, k_inner=k_eff, seed=seed)
+    lab = _label_free_inner_folds(n_c, k_inner=k_eff, seed=int(seed))
+    rng_q = np.random.default_rng(int(seed) ^ 0x2C1B3F91)
+    k_q = int(rng_q.integers(0, k_eff))
 
-    n_priors = 6  # ridge, gp_id, gp_sd, gp_rg, knn, key_te
-    oof_priors = np.zeros((n_c, n_priors), dtype=np.float64)
-    fold_q_preds = np.zeros((k_eff, n_q, n_priors), dtype=np.float64)
+    n_priors = len(PRIOR_HINT_NAMES)
+    oof_priors_raw = np.zeros((n_c, n_priors), dtype=np.float64)
+    oof_priors_norm = np.zeros((n_c, n_priors), dtype=np.float64)
+    fold_q_priors_raw = np.zeros((k_eff, n_q, n_priors), dtype=np.float64)
+    fold_q_priors_norm = np.zeros((k_eff, n_q, n_priors), dtype=np.float64)
+
+    oof_fa_fixed_raw = np.zeros((n_c, m_fa), dtype=np.float64)
+    oof_fa_cf_raw = np.zeros((n_c, m_fa), dtype=np.float64)
+    oof_fa_norm = np.zeros((n_c, m_fa), dtype=np.float64)
+    fold_q_fa_raw = np.zeros((k_eff, n_q, m_fa), dtype=np.float64)
+    fold_q_fa_norm = np.zeros((k_eff, n_q, m_fa), dtype=np.float64)
 
     for k in range(k_eff):
         va = lab == k
         tr = ~va
         n_va = int(np.sum(va))
+        y_med_tr, y_scale_tr = _robust_loc_scale(y_c[tr])
+
         both_ev = np.vstack([x_c[va], x_q])
         p_ridge, p_gpid, p_gpsd, p_gprg, p_knn, p_te = _fit_predict_fold_priors(x_c[tr], y_c[tr], both_ev)
-        stacked = np.column_stack([p_ridge, p_gpid, p_gpsd, p_gprg, p_knn, p_te])
-        oof_priors[va] = stacked[:n_va]
-        fold_q_preds[k] = stacked[n_va:]
+        stacked_raw = np.column_stack([p_ridge, p_gpid, p_gpsd, p_gprg, p_knn, p_te])
+        stacked_norm = np.zeros_like(stacked_raw)
+        for idx in PRIOR_LOC_INDICES:
+            stacked_norm[:, idx] = (stacked_raw[:, idx] - y_med_tr) / y_scale_tr
+        stacked_norm[:, PRIOR_GPSD_INDEX] = stacked_raw[:, PRIOR_GPSD_INDEX] / y_scale_tr
 
-    q_priors = np.mean(fold_q_preds, axis=0)
-    q_fold_std = np.std(fold_q_preds[:, :, 1], axis=0)  # GP fold disagreement on query
+        oof_priors_raw[va] = stacked_raw[:n_va]
+        oof_priors_norm[va] = stacked_norm[:n_va]
+        fold_q_priors_raw[k] = stacked_raw[n_va:]
+        fold_q_priors_norm[k] = stacked_norm[n_va:]
 
-    # Normalize location-valued hints (`0, 1, 3, 4, 5`) in `(y - y_med) / y_scale` units; SD (`2`) in `/ y_scale`
-    loc_cols = [0, 1, 3, 4, 5]
-    c_norm = np.zeros_like(oof_priors)
-    q_norm = np.zeros_like(q_priors)
-    for idx in loc_cols:
-        c_norm[:, idx] = (oof_priors[:, idx] - y_med) / y_scale
-        q_norm[:, idx] = (q_priors[:, idx] - y_med) / y_scale
-    c_norm[:, 2] = oof_priors[:, 2] / y_scale
-    q_norm[:, 2] = q_priors[:, 2] / y_scale
+        if m_fa > 0:
+            # Same-definition 1D location fits for context/query channel values (H1 cond 2 + H3 parity)
+            fa_both_raw = _fit_predict_1d_formulas(x_c[tr], y_c[tr], both_ev, fa_defs, m_fa)
+            fa_both_norm = (fa_both_raw - y_med_tr) / y_scale_tr
+            oof_fa_fixed_raw[va] = fa_both_raw[:n_va]
+            oof_fa_norm[va] = fa_both_norm[:n_va]
+            fold_q_fa_raw[k] = fa_both_raw[n_va:]
+            fold_q_fa_norm[k] = fa_both_norm[n_va:]
 
-    prior_names = [
-        "pcr_ridge_oof",
-        "pcr_gp_id_oof",
-        "pcr_gp_sd_oof",
-        "pcr_gp_rg_oof",
-        "pcr_ard_knn_oof",
-        "pcr_key_te_oof",
-    ]
-    skills = []
-    for idx in loc_cols:
-        rmse_j = float(math.sqrt(np.mean((y_c - oof_priors[:, idx]) ** 2)))
-        skills.append(max(0.0, 1.0 - rmse_j / y_std))
-    rel_vec = np.array(skills + [float(np.median(c_norm[:, 2]))], dtype=np.float64)
-    c_rel = np.column_stack([np.tile(rel_vec, (n_c, 1)), c_norm[:, 2]])
-    q_rel = np.column_stack([np.tile(rel_vec, (n_q, 1)), q_fold_std / y_scale])
+            # Cross-fitted select-then-score on C \ fold_k -> score on fold_k (H1 cond 3 + Finding 2)
+            defs_tr = _select_class_a_definitions(x_c[tr], y_c[tr], max_formulas=m_fa)
+            oof_fa_cf_raw[va] = _fit_predict_1d_formulas(x_c[tr], y_c[tr], x_c[va], defs_tr, m_fa)
 
-    c_all = np.hstack([fa_c, c_norm]) if fa_c.shape[1] > 0 else c_norm
-    q_all = np.hstack([fa_q, q_norm]) if fa_q.shape[1] > 0 else q_norm
-    all_names = tuple(fa_names + prior_names)
+    if query_fold_mode == "random_single_fold":
+        q_priors_raw = fold_q_priors_raw[k_q]
+        q_priors_norm = fold_q_priors_norm[k_q]
+        q_fa_raw = fold_q_fa_raw[k_q]
+        q_fa_norm = fold_q_fa_norm[k_q]
+    else:
+        q_priors_raw = np.mean(fold_q_priors_raw, axis=0)
+        q_priors_norm = np.mean(fold_q_priors_norm, axis=0)
+        q_fa_raw = np.mean(fold_q_fa_raw, axis=0)
+        q_fa_norm = np.mean(fold_q_fa_norm, axis=0)
 
+    # Dedicated query GP fold-disagreement channel (Finding 1: separate from gp_sd + missing flag on C)
+    q_fold_std_norm = np.std(fold_q_priors_norm[:, :, 1], axis=0)
+
+    c_all = np.hstack([oof_fa_norm, oof_priors_norm]) if m_fa > 0 else oof_priors_norm
+    q_all = np.hstack([q_fa_norm, q_priors_norm]) if m_fa > 0 else q_priors_norm
+    oof_all_raw = np.hstack([oof_fa_cf_raw, oof_priors_raw]) if m_fa > 0 else oof_priors_raw
+    q_all_raw = np.hstack([q_fa_raw, q_priors_raw]) if m_fa > 0 else q_priors_raw
+    all_names = tuple(fa_names + list(PRIOR_HINT_NAMES))
+
+    # Build skill & uncertainty reliability channels with strict H3 row-type parity
+    skill_vals: List[float] = []
+    rel_names: List[str] = []
+    skill_col_map: List[Optional[int]] = []
+
+    for r_idx in range(m_fa):
+        skill_col_map.append(len(skill_vals))
+        skill_vals.append(compute_l350_skill(y_c, oof_fa_cf_raw[:, r_idx]))
+        rel_names.append(f"rel_skill_{fa_names[r_idx]}")
+
+    for p_idx, p_name in enumerate(PRIOR_HINT_NAMES):
+        if p_idx == PRIOR_GPSD_INDEX:
+            skill_col_map.append(None)
+        else:
+            skill_col_map.append(len(skill_vals))
+            skill_vals.append(compute_l350_skill(y_c, oof_priors_raw[:, p_idx]))
+            rel_names.append(f"rel_skill_{p_name}")
+
+    gp_sd_hint_col = m_fa + PRIOR_GPSD_INDEX
+    gp_sd_med_val = float(np.median(c_all[:, gp_sd_hint_col]))
+    gp_sd_median_rel_col = len(skill_vals)
+    rel_vec = np.array(skill_vals + [gp_sd_med_val], dtype=np.float64)
+    rel_names.append("rel_median_gp_sd")
+
+    gp_sd_row_rel_col = gp_sd_median_rel_col + 1
+    rel_names.extend(["rel_row_gp_sd", "rel_row_gp_fold_disagreement", "rel_row_gp_fold_disagreement_missing"])
+
+    c_rel = np.column_stack(
+        [
+            np.tile(rel_vec, (n_c, 1)),
+            c_all[:, gp_sd_hint_col],
+            np.zeros(n_c, dtype=np.float64),
+            np.ones(n_c, dtype=np.float64),
+        ]
+    )
+    q_rel = np.column_stack(
+        [
+            np.tile(rel_vec, (n_q, 1)),
+            q_all[:, gp_sd_hint_col],
+            q_fold_std_norm,
+            np.zeros(n_q, dtype=np.float64),
+        ]
+    )
+
+    y_med_all, y_scale_all = _robust_loc_scale(y_c)
+    y_c_norm = (y_c - y_med_all) / y_scale_all
+
+    # H7 Identity: hash compiler module source bytes + every compiler parameter; record k_eff separately
     proto_spec = json.dumps(
         {
             "ban_yeo_johnson": True,
-            "hint_names": list(prior_names),
-            "k_inner": int(k_eff),
+            "compiler_source_sha256": _COMPILER_SOURCE_SHA256,
+            "k_inner_param": int(k_inner),
             "max_formulas": int(max_formulas),
-            "schema": "jope.h462.pcr_hints/v1",
+            "prior_names": list(PRIOR_HINT_NAMES),
+            "query_fold_mode": str(query_fold_mode),
+            "schema": "jope.h462.pcr_hints/v2_hnc1",
+            "seed": int(seed),
             "warps": ["identity", "rank_gauss"],
         },
         sort_keys=True,
     ).encode("utf-8")
-    proto_id = hashlib.sha256(proto_spec).hexdigest()[:16]
+    proto_id = "pcr_v2_" + hashlib.sha256(proto_spec).hexdigest()
 
     return PCRHintBundle(
         context_hints=c_all,
@@ -376,8 +527,34 @@ def compile_pcr_hints(
         context_reliability=c_rel,
         query_reliability=q_rel,
         hint_names=all_names,
-        hint_protocol_id=f"pcr_v1_{proto_id}",
+        reliability_names=tuple(rel_names),
+        hint_protocol_id=proto_id,
+        k_eff=int(k_eff),
+        query_fold_index=int(k_q),
+        selected_formula_channels=tuple(range(m_fa)),
+        non_selected_channels=tuple(range(m_fa, m_fa + n_priors)),
+        skill_col_for_hint=tuple(skill_col_map),
+        gp_sd_hint_col=int(gp_sd_hint_col),
+        gp_sd_median_rel_col=int(gp_sd_median_rel_col),
+        gp_sd_row_rel_col=int(gp_sd_row_rel_col),
+        context_target_norm=y_c_norm,
+        oof_predictions_raw=oof_all_raw,
+        query_predictions_raw=q_all_raw,
     )
+
+
+def evaluate_h8_episode_skills(bundle: PCRHintBundle, y_query: np.ndarray) -> Dict[str, Tuple[float, float]]:
+    """Return `{hint_name: (ctx_skill, qry_skill)}` using the identical `L350` formula on every location channel."""
+    yq = np.asarray(y_query, dtype=np.float64).reshape(-1)
+    out: Dict[str, Tuple[float, float]] = {}
+    for j, h_name in enumerate(bundle.hint_names):
+        s_col = bundle.skill_col_for_hint[j]
+        if s_col is None:
+            continue
+        ctx_sk = float(bundle.context_reliability[0, s_col])
+        qry_sk = compute_l350_skill(yq, bundle.query_predictions_raw[:, j])
+        out[h_name] = (ctx_sk, qry_sk)
+    return out
 
 
 def corrupt_pcr_hints_counterfactual(
@@ -385,7 +562,7 @@ def corrupt_pcr_hints_counterfactual(
     corrupt_prob: float = 0.20,
     seed: int = 462299,
 ) -> Tuple[PCRHintBundle, np.ndarray]:
-    """Corrupt a subset of hint channels identically on context & query (`SYMBIONT §10.4` repair training)."""
+    """Corrupt a subset of hint channels and recompute ONLY their reliability by the deploy `L350` formula (`H4`)."""
     rng = np.random.default_rng(int(seed))
     n_h = bundle.context_hints.shape[1]
     mask = rng.uniform(size=n_h) < float(corrupt_prob)
@@ -405,18 +582,29 @@ def corrupt_pcr_hints_counterfactual(
         else:
             c_h[:, j] = 0.0
             q_h[:, j] = 0.0
-    if np.any(mask) and c_r.shape[1] > 0:
-        c_r[:, 0] *= 0.25
-        q_r[:, 0] *= 0.25
+
+        # H4 Finding 3: recompute ONLY the corrupted channel's deploy reliability; leave uncorrupted untouched!
+        s_col = bundle.skill_col_for_hint[int(j)]
+        if s_col is not None:
+            new_skill = compute_l350_skill(bundle.context_target_norm, c_h[:, int(j)])
+            c_r[:, s_col] = new_skill
+            q_r[:, s_col] = new_skill
+        elif int(j) == bundle.gp_sd_hint_col:
+            c_h[:, j] = np.abs(c_h[:, j])
+            q_h[:, j] = np.abs(q_h[:, j])
+            new_med = float(np.median(c_h[:, j]))
+            c_r[:, bundle.gp_sd_median_rel_col] = new_med
+            q_r[:, bundle.gp_sd_median_rel_col] = new_med
+            c_r[:, bundle.gp_sd_row_rel_col] = c_h[:, j]
+            q_r[:, bundle.gp_sd_row_rel_col] = q_h[:, j]
 
     return (
-        PCRHintBundle(
+        dataclasses.replace(
+            bundle,
             context_hints=c_h,
             query_hints=q_h,
             context_reliability=c_r,
             query_reliability=q_r,
-            hint_names=bundle.hint_names,
-            hint_protocol_id=bundle.hint_protocol_id + "_corrupted",
         ),
         mask,
     )
