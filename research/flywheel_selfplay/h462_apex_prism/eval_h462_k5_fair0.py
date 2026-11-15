@@ -67,8 +67,8 @@ CV7_HYBRID_COLS = (
     "icl_e8_gp_resid_cv7",
 )
 
-ANCHOR = T16.ANCHOR if T16 is not None else "dope.v1"
-LADDER_SEED = T16.LADDER_SEED if T16 is not None else 416001
+ANCHOR = T16.ANCHOR if T16 is not None else "h335.H257_REPLICA"
+LADDER_SEED = T16.LADDER_SEED if T16 is not None else 335160
 FAIR_CANONICAL = "h448.APEX_FAIR_CHAMPION"
 KUMO_LARGE = "kumo_tabular_large_e8.v1"
 TABFM = "tabfm_ensemble.v1"

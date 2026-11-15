@@ -66,8 +66,8 @@ except ImportError:
     M = None  # type: ignore[assignment]
     T16 = None  # type: ignore[assignment]
 
-ANCHOR = T16.ANCHOR if T16 is not None else "dope.v1"
-LADDER_SEED = T16.LADDER_SEED if T16 is not None else 416001
+ANCHOR = T16.ANCHOR if T16 is not None else "h335.H257_REPLICA"
+LADDER_SEED = T16.LADDER_SEED if T16 is not None else 335160
 FAIR_CANONICAL = "h448.APEX_FAIR_CHAMPION"
 KUMO_LARGE = "kumo_tabular_large_e8.v1"
 TABFM = "tabfm_ensemble.v1"
@@ -419,6 +419,12 @@ def predict_tabcv7_cvrep8_prec48_context_no_ya(
     (`0` `ya`/`ba` reads, `0` `M.utility` calls).
     """
     n_s, n_a = len(y), len(Xa)
+    files_accessed_sha256: Dict[str, str] = {}
+    for _fp in (gp0_p, gp1_p, m7_p, k3_p, f4_p, tab450_p, wc_r4_p, s1_r4_p, s2_r4_p):
+        pp = Path(_fp)
+        if pp.is_file():
+            files_accessed_sha256[str(pp)] = _sha256_file(pp)
+
     blk_m = _load_col_block_flex(Path(m7_p), GM.PRIMARY_NAMES, n_s, n_a)
     blk_k = _clip_k3(_load_col_block_flex(Path(k3_p), H430_K3, n_s, n_a), y)
     blk_f = _clip_f4(_load_col_block_flex(Path(f4_p), H433_F4, n_s, n_a), y)
@@ -474,6 +480,7 @@ def predict_tabcv7_cvrep8_prec48_context_no_ya(
         "member_audit": np.column_stack(preds_all),
         "member_oof_hwm_fast": np.column_stack(oofs_all),
         "member_weights": np.asarray(meta_w["weights"], np.float64),
+        "files_accessed_sha256": files_accessed_sha256,
         "blocks_loaded": {
             "m7": blk_m is not None,
             "k3": blk_k is not None,

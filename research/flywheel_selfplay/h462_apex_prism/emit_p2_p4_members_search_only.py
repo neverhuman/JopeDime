@@ -788,6 +788,75 @@ def compute_context_members_search_only(
 
 
 HWM_BASE_R4_NAMES = frozenset(("wc_r4e8", "s46201_r4e8", "s46202_r4e8"))
+BASE_TOP_LEVEL_ROLES = ("d1", "d2", "m7", "k3", "f4", "tab450")
+
+
+def compute_package_code_files_sha256(pkg_dir: Optional[Path] = None) -> Tuple[Dict[str, str], str]:
+    """Computes deterministic `{filename: sha256}` and manifest SHA256 over `*.py` in `pkg_dir` (`M1`)."""
+    root = HERE if pkg_dir is None else Path(pkg_dir)
+    code_files = sorted(root.glob("*.py"))
+    code_hashes = {p.name: _sha256_file(p) for p in code_files}
+    code_manifest_sha = hashlib.sha256(
+        json.dumps(code_hashes, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    return code_hashes, code_manifest_sha
+
+
+def build_block_loaded_counts(
+    done: Sequence[Dict[str, object]],
+    extra_r4_tags: Sequence[str] = (),
+) -> Dict[str, object]:
+    """Builds canonical `block_loaded_counts` (`top-level` + nested `e8` role map) for emitter receipts."""
+    counts: Dict[str, object] = {
+        role: sum(1 for d in done if bool(d["blocks_loaded"][role]))  # type: ignore[index]
+        for role in (*BASE_TOP_LEVEL_ROLES, "gpbag")
+    }
+    e8_names = ["wc_r4e8", "s46201_r4e8", "s46202_r4e8"] + list(extra_r4_tags)
+    counts["e8"] = {
+        rname: sum(1 for d in done if bool(d["blocks_loaded"]["e8"].get(rname)))  # type: ignore[index]
+        for rname in e8_names
+    }
+    return counts
+
+
+def verify_receipt_role_load_counts(
+    receipt: Dict[str, object],
+    n_expected: int,
+    expected_e8_names: Sequence[str] = ("wc_r4e8", "s46201_r4e8", "s46202_r4e8"),
+    require_gpbag: bool = False,
+    exact_e8_keys: bool = True,
+) -> Dict[str, int]:
+    """Shared writer/reader schema gate (`B1`) verifying `n_expected` loads across top-level + `e8` roles."""
+    blk_counts = receipt.get("block_loaded_counts")
+    if not isinstance(blk_counts, dict):
+        raise RuntimeError("F2 G3 ROLE-LOAD FAILURE: receipt missing dict 'block_loaded_counts'")
+    verified: Dict[str, int] = {}
+    req_top = list(BASE_TOP_LEVEL_ROLES) + (["gpbag"] if require_gpbag else [])
+    for role in req_top:
+        raw_v = blk_counts.get(role, -1)
+        got_c = int(raw_v) if isinstance(raw_v, (int, np.integer)) and not isinstance(raw_v, bool) else -1
+        if got_c != n_expected:
+            raise RuntimeError(
+                f"F2 G3 ROLE-LOAD FAILURE: comparator receipt role {role!r} loaded {got_c}/{n_expected}"
+            )
+        verified[role] = got_c
+
+    e8_map = blk_counts.get("e8")
+    if not isinstance(e8_map, dict):
+        raise RuntimeError("F2 G3 ROLE-LOAD FAILURE: receipt 'block_loaded_counts.e8' missing or not a dict")
+    if exact_e8_keys and set(e8_map.keys()) != set(expected_e8_names):
+        raise RuntimeError(
+            f"F2 G3 ROLE-LOAD FAILURE: receipt e8 keys {sorted(e8_map.keys())} != expected {sorted(expected_e8_names)}"
+        )
+    for ename in expected_e8_names:
+        raw_e = e8_map.get(ename, -1)
+        got_e = int(raw_e) if isinstance(raw_e, (int, np.integer)) and not isinstance(raw_e, bool) else -1
+        if got_e != n_expected:
+            raise RuntimeError(
+                f"F2 G3 ROLE-LOAD FAILURE: comparator receipt e8 role {ename!r} loaded {got_e}/{n_expected}"
+            )
+        verified[f"e8.{ename}"] = got_e
+    return verified
 
 
 def _ctx_worker(job: Tuple) -> Dict[str, object]:
@@ -1102,11 +1171,7 @@ def main() -> int:
             done = list(pool.imap_unordered(_ctx_worker, jobs, chunksize=1))
     done.sort(key=lambda d: str(d["cid"]))
 
-    code_files = sorted(HERE.glob("*.py"))
-    code_hashes = {p.name: _sha256_file(p) for p in code_files}
-    code_manifest_sha = hashlib.sha256(
-        json.dumps(code_hashes, sort_keys=True).encode("utf-8")
-    ).hexdigest()
+    code_hashes, code_manifest_sha = compute_package_code_files_sha256(HERE)
 
     accessed_map: Dict[str, str] = {str(bank_p): _sha256_file(bank_p)}
     all_keys_read: set[str] = set()
@@ -1121,14 +1186,15 @@ def main() -> int:
 
     all_gpbag_nested = all(bool(d["gpbag_nested"]) for d in done) if int(a.gpbag_k) > 0 and a.gpbag_mode != "none" else None
     canary_rows = [d["search_canary"] for d in done if d["search_canary"] is not None]
-    block_loaded_counts = {
-        role: sum(1 for d in done if bool(d["blocks_loaded"][role]))  # type: ignore[index]
-        for role in ("d1", "d2", "m7", "k3", "f4", "tab450", "gpbag")
-    }
-    block_loaded_counts["e8"] = {  # type: ignore[assignment]
-        rname: sum(1 for d in done if bool(d["blocks_loaded"]["e8"].get(rname)))  # type: ignore[index]
-        for rname in (["wc_r4e8", "s46201_r4e8", "s46202_r4e8"] + [tag for tag, _, _ in extra_r4])
-    }
+    extra_r4_tags = [tag for tag, _, _ in extra_r4]
+    block_loaded_counts = build_block_loaded_counts(done, extra_r4_tags)
+    verify_receipt_role_load_counts(
+        {"block_loaded_counts": block_loaded_counts},
+        n_expected=len(done),
+        expected_e8_names=["wc_r4e8", "s46201_r4e8", "s46202_r4e8"] + extra_r4_tags,
+        require_gpbag=(int(a.gpbag_k) > 0 and str(a.gpbag_mode) != "none"),
+        exact_e8_keys=True,
+    )
     receipt = {
         "schema": "jope.h462.p2_p4_members_search_only/v3",
         "timestamp_utc": time.strftime("%FT%TZ", time.gmtime()),
