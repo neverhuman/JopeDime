@@ -176,3 +176,14 @@ condition = "AND"
 regexTarget = "match"
 paths = ['''^docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e\.json$''']
 regexes = ['''^ne_kek_pubkey_b64_sha256": "[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "H462 P1 evaluator fixed comparator column-key names (public metric dictionary keys, not credentials)"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^research/flywheel_selfplay/h462_apex_prism/eval_h462_p1_gpbag_scaling_fitsel\.py$''']
+regexes = [
+  '''^hwm_key = "tabcv7_cvrep8_prec48_all"$''',
+  '''^k2_all_key = "tabcv7_cvrep8_gpbag_k2_allcol"$''',
+  '''^k2_2c_key = "tabcv7_cvrep8_gpbag_k2_2col"$''',
+]

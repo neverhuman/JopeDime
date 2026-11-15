@@ -212,10 +212,16 @@ fn unknown_vocabularies_and_wrong_field_kinds_are_rejected() {
 
 #[test]
 fn every_top_level_schema_matches_the_committed_snapshot() {
-    let expected: Value = serde_json::from_str(include_str!("snapshots/schemas.json")).unwrap();
+    let raw = include_str!("snapshots/schemas.json");
+    let expected: Value = serde_json::from_str(raw).unwrap();
+    let actual = support::schemas();
     assert_eq!(
-        support::schemas(),
-        expected,
+        actual, expected,
         "review schema changes, then regenerate with the schema_snapshots example"
+    );
+    let canonical = format!("{}\n", serde_json::to_string_pretty(&actual).unwrap());
+    assert_eq!(
+        canonical, raw,
+        "snapshots/schemas.json formatting or trailing newline drifted; regenerate with the schema_snapshots example"
     );
 }
