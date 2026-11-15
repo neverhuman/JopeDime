@@ -71,3 +71,5 @@ fn rt05_aws_lambda_production_boot_fails_closed_when_secrets_missing() {
     let engine_err = String::from_utf8_lossy(&engine_missing.stderr);
     assert!(engine_err.contains("CARBON_SEAL_SECRET_HEX"));
 }
+
+mod coverage_closure;

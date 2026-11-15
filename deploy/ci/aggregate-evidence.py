@@ -196,6 +196,12 @@ def verify_carbon_live_e2e(root, source_sha, run_id, attempt, spec_root=None):
         _require(bundle_mf.get('live_ci_qualification_file') == 'live-ci-4tier-docker.json', 'missing bundle live file')
         _require(bundle_mf.get('live_ci_qualification_sha256') == digest, 'bundle live SHA-256 mismatch')
         _require(pdf_rcpt.get('live_ci_qualification_sha256') == digest, 'spec-pdf-receipt live SHA-256 mismatch')
+        cov_file = spec_dir / 'code-coverage-summary.json'
+        _require(cov_file.is_file(), 'missing spec-dir code-coverage-summary.json')
+        cov_digest = hashlib.sha256(cov_file.read_bytes()).hexdigest()
+        _require(bundle_mf.get('code_coverage_file') == 'code-coverage-summary.json', 'missing bundle code_coverage_file')
+        _require(bundle_mf.get('code_coverage_sha256') == cov_digest, 'bundle code_coverage_sha256 mismatch')
+        _require(pdf_rcpt.get('code_coverage_sha256') == cov_digest, 'spec-pdf-receipt code_coverage_sha256 mismatch')
     print('Fresh-Docker Carbon install + 8 dev/prod 4-tier runs verified; sha256 =', digest)
 
 

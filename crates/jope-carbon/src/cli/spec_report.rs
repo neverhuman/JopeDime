@@ -117,6 +117,7 @@ pub struct CarbonSpecReportOptions {
     pub run_ci_qualification: bool,
     pub ci_qualification_in: Option<PathBuf>,
     pub live_ci_receipt_in: Option<PathBuf>,
+    pub code_coverage_in: Option<PathBuf>,
     pub source_sha: Option<String>,
     pub repo_root: PathBuf,
 }
@@ -201,6 +202,10 @@ pub struct SpecBundleManifest {
     pub live_ci_qualification_file: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub live_ci_qualification_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code_coverage_file: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code_coverage_sha256: Option<String>,
     pub required_screenshots: Vec<(String, String, String)>,
     pub evidence_ledger: Vec<SpecEvidenceEntry>,
 }
@@ -225,6 +230,10 @@ pub struct SpecPdfReceipt {
     pub live_ci_qualification_file: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub live_ci_qualification_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code_coverage_file: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code_coverage_sha256: Option<String>,
     pub horizontal_overflow_px: i64,
     pub screenshots: Vec<SpecScreenshotEntry>,
     pub evidence_ledger: Vec<SpecEvidenceEntry>,
@@ -627,6 +636,35 @@ pub fn execute_carbon_spec_verify(
             .map_err(|e| format!("parse {}: {e}", live_path.display()))?;
         crate::cli::spec_live_ci_4tier::validate_live_ci_4tier_receipt(
             &live_doc,
+            opts.expected_source_sha.as_deref(),
+        )?;
+    }
+
+    if let Some(expected_cov_sha) = &receipt.code_coverage_sha256 {
+        let cov_leaf = receipt
+            .code_coverage_file
+            .as_deref()
+            .unwrap_or(crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME);
+        if cov_leaf != crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME {
+            return Err(format!("unexpected code_coverage_file '{cov_leaf}'"));
+        }
+        let cov_path = opts.dir.join(cov_leaf);
+        let cov_raw =
+            fs::read(&cov_path).map_err(|e| format!("read {}: {e}", cov_path.display()))?;
+        let cov_text = String::from_utf8(cov_raw.clone())
+            .map_err(|e| format!("{} is not UTF-8: {e}", cov_path.display()))?;
+        assert_no_secret_substrings(cov_leaf, &cov_text)?;
+        let actual_cov_sha = sha256_lower_hex(&cov_raw);
+        if &actual_cov_sha != expected_cov_sha {
+            return Err(format!(
+                "{cov_leaf} SHA-256 mismatch (file={actual_cov_sha}, receipt={expected_cov_sha})"
+            ));
+        }
+        let cov_rcpt: crate::cli::spec_code_coverage::CodeCoverageSummaryReceipt =
+            serde_json::from_str(&cov_text)
+                .map_err(|e| format!("parse {}: {e}", cov_path.display()))?;
+        crate::cli::spec_code_coverage::validate_code_coverage_receipt(
+            &cov_rcpt,
             opts.expected_source_sha.as_deref(),
         )?;
     }
@@ -1885,6 +1923,32 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         (None, None, None)
     };
 
+    let (code_cov_rcpt_opt, code_cov_sha_opt, code_cov_len_opt) =
+        if let Some(cov_in) = &opts.code_coverage_in {
+            let cov_rcpt = crate::cli::spec_code_coverage::load_and_evaluate_code_coverage(
+                cov_in,
+                &resolved_sha,
+            )?;
+            let cov_bytes = serde_json::to_vec_pretty(&cov_rcpt)
+                .map_err(|e| format!("serialize code-coverage-summary.json: {e}"))?;
+            let cov_text = String::from_utf8(cov_bytes.clone())
+                .map_err(|e| format!("code-coverage-summary.json UTF-8: {e}"))?;
+            assert_no_secret_substrings(
+                crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME,
+                &cov_text,
+            )?;
+            let cov_out = opts
+                .out_dir
+                .join(crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME);
+            fs::write(&cov_out, &cov_bytes)
+                .map_err(|e| format!("write {}: {e}", cov_out.display()))?;
+            let sha = sha256_lower_hex(&cov_bytes);
+            let len = cov_bytes.len();
+            (Some(cov_rcpt), Some(sha), Some(len))
+        } else {
+            (None, None, None)
+        };
+
     let mut ledger = Vec::new();
     let deploy_dev =
         load_tracked_evidence_json(&opts.evidence_dir, "deploy-dev.json", &mut ledger)?;
@@ -2421,11 +2485,29 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
             live_len
         ));
     }
+    if let (Some(cov_sha), Some(cov_len)) = (&code_cov_sha_opt, code_cov_len_opt) {
+        ledger_rows_html.push_str(&format!(
+            "<tr><td><code>{}</code> (Compiler-instrumented CLI/API/Tier&times;Env coverage)</td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{}</td></tr>\n",
+            crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME,
+            cov_sha,
+            cov_len
+        ));
+    }
     let section_4c_html = match &live_ci_doc_opt {
         Some(live_doc) => {
             crate::cli::spec_live_ci_4tier::render_live_ci_4tier_section_4c_html(live_doc)
         }
         None => String::new(),
+    };
+    let (toc_slot_14, code_coverage_section_html) = match &code_cov_rcpt_opt {
+        Some(cov_rcpt) => (
+            "<span class=\"toc-num\">14.</span> Compiler-Instrumented Code Coverage (<code>CLI</code>, <code>API</code>, <code>Tier&times;Env</code>)",
+            crate::cli::spec_code_coverage::render_code_coverage_section_html(cov_rcpt),
+        ),
+        None => (
+            "<span class=\"toc-num\">&nbsp;</span> 78 Product Surfaces, 98/98 Live Checks &amp; Multi-OS Signed Matrix",
+            String::new(),
+        ),
     };
     for e in &ledger {
         ledger_rows_html.push_str(&format!(
@@ -2830,7 +2912,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     <div class="toc-item"><span class="toc-num">06.</span> Virgin <code>ubuntu:24.04</code> Docker, Alpine &amp; Native <code>macOS arm64</code> E2E</div>
     <div class="toc-item"><span class="toc-num">13.</span> 15-File Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
     <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>dev</code> &amp; <code>prod</code> <code>carbon bench --pro</code> Suite</div>
-    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces, 98/98 Live Checks &amp; Multi-OS Signed Matrix</div>
+    <div class="toc-item">{toc_slot_14}</div>
   </div>
 
   <h2>1. Three-Plane System Architecture &amp; <code>r882</code> Neural-Guided GP Synthesis</h2>
@@ -3092,7 +3174,7 @@ carbon logout --all</pre>
     <thead><tr><th style="width:42%">Tracked Receipt / CI Qualification Artifact</th><th style="width:47%">Full SHA-256 Digest (64 Hex)</th><th class="num" style="width:11%">Size (Bytes)</th></tr></thead>
     <tbody>{ledger_rows_html}</tbody>
   </table>
-
+{code_coverage_section_html}
   <div class="callout">
     <strong>Independent Offline &amp; CI Audit Reproduction:</strong> Any auditor or CI worker can regenerate this specification from scratch, re-execute all 8 live exact-HEAD CLI/emulator suites, re-capture all 8 Retina PNG screenshots, and verify every SHA-256 digest, PNG chunk CRC-32, PDF page boundary, and secret-free invariant without AWS credentials:
   </div>
@@ -3230,6 +3312,10 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
             .as_ref()
             .map(|_| crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME.to_owned()),
         live_ci_qualification_sha256: live_ci_sha_opt,
+        code_coverage_file: code_cov_sha_opt
+            .as_ref()
+            .map(|_| crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME.to_owned()),
+        code_coverage_sha256: code_cov_sha_opt,
         required_screenshots: REQUIRED_SPEC_SCREENSHOTS
             .iter()
             .map(|(a, b, c)| ((*a).to_owned(), (*b).to_owned(), (*c).to_owned()))

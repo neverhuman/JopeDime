@@ -35,7 +35,10 @@ use crate::{
     },
     security::{
         auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
-        sigv4::{resolve_aws_cli_binary, sign_aws_v4_headers_with_extra, CarbonAwsCredentials},
+        sigv4::{
+            resolve_aws_cli_binary, resolve_s3_request_target, resolve_secretsmanager_endpoint,
+            sign_aws_v4_headers_with_extra, CarbonAwsCredentials,
+        },
         user_envelope::CarbonEngineKek,
     },
     storage::cas::sha256_lower_hex,
@@ -978,7 +981,15 @@ pub fn execute_carbon_package(
     let r882_bundle_digest =
         jope_service::discover::r#loop::carbon::verify_r882_release_dir(&opts.r882_dir)
             .map_err(|e| format!("r882 verification failed: {e:#}"))?;
+    assemble_verified_carbon_package(opts, r882_bundle_digest)
+}
 
+/// Assemble deterministic ARM64 Lambda archives (`carbon-edge.zip`, `carbon-worker.zip`,
+/// `r882-layer.zip`) and `release-manifest.json` after `r882_bundle_digest` has been verified.
+pub fn assemble_verified_carbon_package(
+    opts: &CarbonPackageOptions,
+    r882_bundle_digest: String,
+) -> Result<CarbonReleaseManifest, String> {
     fs::create_dir_all(&opts.out_dir)
         .map_err(|e| format!("create package out_dir {}: {e}", opts.out_dir.display()))?;
 
@@ -1195,8 +1206,7 @@ fn call_secrets_manager_rpc(
     target_op: &str,
     payload: &[u8],
 ) -> Result<(u16, Zeroizing<Vec<u8>>), String> {
-    let host = format!("secretsmanager.{region}.amazonaws.com");
-    let url = format!("https://{host}/");
+    let (host, url) = resolve_secretsmanager_endpoint(region)?;
     let full_target = format!("secretsmanager.{target_op}");
     let extra = [
         ("content-type", "application/x-amz-json-1.1"),
@@ -1818,9 +1828,8 @@ fn s3_stage_object_verified(
     }
     let expected_sha_b64 = base64::engine::general_purpose::STANDARD.encode(digest);
 
-    let host = format!("{bucket}.s3.{region}.amazonaws.com");
-    let uri = format!("/{}", key.trim_start_matches('/'));
-    let url = format!("https://{host}{uri}");
+    let (host, uri, url) =
+        resolve_s3_request_target(bucket, region, key).map_err(str::to_owned)?;
 
     // Check HEAD first (with x-amz-checksum-mode: ENABLED) so content-addressed re-deploys verify SHA-256!
     let head_headers = sign_aws_v4_headers_with_extra(

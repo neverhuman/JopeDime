@@ -3,11 +3,12 @@ use jope_api::{
         CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
         CarbonExecutionModeWire, CarbonExplainRequest, CarbonExplainResponse, CarbonExportLangWire,
         CarbonExportRequest, CarbonExportResponse, CarbonFeatureImportanceWire, CarbonPingResponse,
-        CarbonPredictRequest, CarbonPredictResponse, CarbonPrepareUploadRequest,
-        CarbonPrepareUploadResponse, CarbonPresignedTarget, CarbonPublicWaveProgress,
-        CarbonRegionCatalog, CarbonRegisterFreeRequest, CarbonRegisterFreeResponse,
-        CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire,
-        CarbonUploadSlotWire, CARBON_DEFAULT_REGIONS,
+        CarbonPredictRequest, CarbonPredictResponse, CarbonPreparePredictRequest,
+        CarbonPreparePredictResponse, CarbonPrepareUploadRequest, CarbonPrepareUploadResponse,
+        CarbonPresignedTarget, CarbonPublicWaveProgress, CarbonRegionCatalog,
+        CarbonRegisterFreeRequest, CarbonRegisterFreeResponse, CarbonResumeRunRequest,
+        CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire, CarbonUploadSlotWire,
+        CarbonVersionResponse, CARBON_DEFAULT_REGIONS,
     },
     decimal::DecimalU64,
     ids::{DatasetId, RunId},
@@ -443,4 +444,131 @@ fn default_create_run_request_is_byte_compatible_with_frozen_v1_1_0_strict_edge(
             .unwrap(),
         export_resp
     );
+}
+
+#[test]
+fn carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal() {
+    let prep_pred_req = CarbonPreparePredictRequest {
+        tenant_id: "free_alice_01".to_owned(),
+        predict_cuen: CarbonUploadSlotWire {
+            sha256: "9".repeat(64),
+            bytes: DecimalU64(131_072),
+        },
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonPreparePredictRequest>(
+            &serde_json::to_string(&prep_pred_req).expect("encode CarbonPreparePredictRequest")
+        )
+        .expect("decode CarbonPreparePredictRequest"),
+        prep_pred_req
+    );
+
+    let prep_pred_resp = CarbonPreparePredictResponse {
+        upload_id: "upl_pred_01jccarb0n".to_owned(),
+        input_target: CarbonPresignedTarget {
+            url: "https://us-east-2.carbon.jopedime.com/v1/carbon/cas/999".to_owned(),
+            method: "PUT".to_owned(),
+            sha256: "9".repeat(64),
+            max_bytes: DecimalU64(131_072),
+            expires_epoch_secs: DecimalU64(1_800_000_900),
+        },
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonPreparePredictResponse>(
+            &serde_json::to_string(&prep_pred_resp).expect("encode CarbonPreparePredictResponse")
+        )
+        .expect("decode CarbonPreparePredictResponse"),
+        prep_pred_resp
+    );
+
+    let ver = CarbonVersionResponse {
+        version: "1.2.0".to_owned(),
+        release_tag: "carbon-cli-v1.2.0".to_owned(),
+        git_sha: "7988e2ecd3067647526762774e9bdfc522745990".to_owned(),
+        build_target: "aarch64-unknown-linux-gnu".to_owned(),
+        region: "us-east-2".to_owned(),
+        enterprise_self_hosted: false,
+        release_id: Some("rel_01jccarb0n".to_owned()),
+        r882_bundle_digest: Some("sha256:057e50a9".to_owned()),
+        engine_kek_pubkey_b64: Some("BA==".to_owned()),
+        server_epoch_ms: DecimalU64(1_762_000_000_000),
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonVersionResponse>(
+            &serde_json::to_string(&ver).expect("encode CarbonVersionResponse")
+        )
+        .expect("decode CarbonVersionResponse"),
+        ver
+    );
+
+    let ping = CarbonPingResponse {
+        region: "us-east-2".to_owned(),
+        healthy: true,
+        server_epoch_ms: DecimalU64(1_762_000_000_000),
+        enterprise_self_hosted: true,
+        engine_kek_pubkey_b64: None,
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonPingResponse>(
+            &serde_json::to_string(&ping).expect("encode CarbonPingResponse")
+        )
+        .expect("decode CarbonPingResponse"),
+        ping
+    );
+
+    for (variant, wire_name) in [
+        (CarbonExportLangWire::Python, "python"),
+        (CarbonExportLangWire::Rust, "rust"),
+        (CarbonExportLangWire::RustRefittable, "rust-refittable"),
+        (CarbonExportLangWire::Js, "js"),
+        (CarbonExportLangWire::C, "c"),
+        (CarbonExportLangWire::Cpp, "cpp"),
+    ] {
+        assert_eq!(variant.as_str(), wire_name);
+        let enc = serde_json::to_string(&variant).expect("encode lang");
+        assert_eq!(enc, format!("\"{wire_name}\""));
+        assert_eq!(
+            serde_json::from_str::<CarbonExportLangWire>(&enc).expect("decode lang"),
+            variant
+        );
+    }
+
+    assert!(serde_json::from_str::<CarbonRegisterFreeRequest>(r#"{"label":"ok","extra":1}"#).is_err());
+    assert!(serde_json::from_str::<CarbonUploadSlotWire>(
+        &format!(r#"{{"sha256":"{}","bytes":10,"extra":1}}"#, "a".repeat(64))
+    )
+    .is_err());
+    assert!(serde_json::from_str::<CarbonPrepareUploadRequest>(
+        &format!(
+            r#"{{"tenant_id":"t","tier":"free","fit_rows":10,"holdout_rows":5,"feature_count":1,"fit_jmat":{{"sha256":"{0}","bytes":1}},"holdout_jmat":{{"sha256":"{0}","bytes":1}},"extra":true}}"#,
+            "a".repeat(64)
+        )
+    )
+    .is_err());
+    assert!(serde_json::from_str::<CarbonCreateRunRequest>(
+        &format!(
+            r#"{{"run_id":"run_01JCCARB0N0000000000000001","dataset_id":"ds_111111111111111111111111","tenant_id":"t","tier":"free","fit_jmat_sha256":"{0}","holdout_jmat_sha256":"{0}","fit_rows":10,"holdout_rows":5,"feature_names":["x"],"target_name":"y","objective":"rmse","effort":"fast","seed":1,"landmark_bundle_b64":"AA==","extra":1}}"#,
+            "a".repeat(64)
+        )
+    )
+    .is_err());
+    assert!(serde_json::from_str::<CarbonEarlyStopRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
+    assert!(serde_json::from_str::<CarbonResumeRunRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
+    assert!(serde_json::from_str::<CarbonPreparePredictRequest>(
+        &format!(
+            r#"{{"tenant_id":"t","predict_cuen":{{"sha256":"{}","bytes":1}},"extra":1}}"#,
+            "a".repeat(64)
+        )
+    )
+    .is_err());
+    assert!(serde_json::from_str::<CarbonPredictRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
+    assert!(serde_json::from_str::<CarbonExplainRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
+    assert!(serde_json::from_str::<CarbonExportRequest>(
+        r#"{"tenant_id":"t","lang":"python","extra":1}"#
+    )
+    .is_err());
+
+    let schema_str = serde_json::to_string(&schemars::schema_for!(CarbonVersionResponse))
+        .expect("CarbonVersionResponse JsonSchema");
+    assert!(schema_str.contains("r882_bundle_digest"));
 }

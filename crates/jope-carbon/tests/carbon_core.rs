@@ -1534,6 +1534,7 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture),
             live_ci_receipt_in: None,
+            code_coverage_in: None,
             source_sha: Some("e10c2dd594b64a0d9717823bbc5374db1fa0189d".to_owned()),
             repo_root: repo_root.to_path_buf(),
         })
@@ -1668,6 +1669,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture.clone()),
             live_ci_receipt_in: None,
+            code_coverage_in: None,
             source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
             repo_root: repo_root.clone(),
         })
@@ -1752,6 +1754,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture.clone()),
             live_ci_receipt_in: None,
+            code_coverage_in: None,
             source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
             repo_root: repo_root.clone(),
         })
@@ -1784,6 +1787,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
         run_ci_qualification: false,
         ci_qualification_in: Some(ci_qual_fixture),
         live_ci_receipt_in: None,
+        code_coverage_in: None,
         source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
         repo_root,
     })
@@ -2256,6 +2260,7 @@ fn spec_report_and_verify_bind_live_ci_4tier_docker_receipt_and_reject_tamper() 
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_path.clone()),
             live_ci_receipt_in: Some(live_path),
+            code_coverage_in: None,
             source_sha: Some(sha.to_owned()),
             repo_root: repo_root.clone(),
         })
@@ -2299,6 +2304,7 @@ fn spec_report_and_verify_bind_live_ci_4tier_docker_receipt_and_reject_tamper() 
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_path),
             live_ci_receipt_in: Some(bad_live),
+            code_coverage_in: None,
             source_sha: Some(sha.to_owned()),
             repo_root,
         })
@@ -2399,4 +2405,278 @@ fn hybrid_fanout_zero_fallback_omits_eval_fallback_shards_for_v110_wire_compat()
         "zero-fallback HybridFanOut SSE stream must omit eval_fallback_shards for v1.1.0 clients: {sse}"
     );
     emu.shutdown();
+}
+
+#[test]
+fn spec_report_section_14_compiler_code_coverage_matrix_and_tamper_refusal() {
+    use jope_carbon::cli::spec_code_coverage::{
+        validate_code_coverage_receipt, CodeCoverageSummaryReceipt, CoverageCounters,
+        EvaluatedSurfaceRow, EvaluatedTierEnvRow, FileCoverageDelta,
+    };
+    use jope_carbon::cli::spec_code_coverage_rows::{
+        build_tier_env_rows, resolve_anchor_span, CLI_COMMAND_ROWS, HTTP_API_ROWS,
+    };
+
+    let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .expect("workspace root")
+        .to_path_buf();
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let sha = "7988e2ecd3067647526762774e9bdfc522745990";
+
+    assert_eq!(CLI_COMMAND_ROWS.len(), 48, "expected 48 CLI/binary rows");
+    assert_eq!(HTTP_API_ROWS.len(), 33, "expected 33 HTTP API rows");
+    let te_specs = build_tier_env_rows();
+    assert_eq!(te_specs.len(), 64, "expected 64 tier x env cells");
+    let fallback_cells = te_specs
+        .iter()
+        .filter(|c| c.status_badge == "AUTO-EMU-FALLBACK")
+        .count();
+    assert_eq!(
+        fallback_cells, 8,
+        "all 8 live CI Pro high/ultra cells must keep AUTO-EMU-FALLBACK"
+    );
+
+    let cli_rows: Vec<EvaluatedSurfaceRow> = CLI_COMMAND_ROWS
+        .iter()
+        .map(|sp| {
+            let (s_ln, e_ln) =
+                resolve_anchor_span(sp.file, sp.anchor_start, sp.anchor_end).expect("cli span");
+            assert!(s_ln >= 1 && e_ln >= s_ln, "invalid span for {}", sp.id);
+            EvaluatedSurfaceRow {
+                id: sp.id.to_owned(),
+                surface: sp.surface.to_owned(),
+                bound_test: sp.bound_test.to_owned(),
+                status_badge: sp.status_badge.to_owned(),
+                source_span: format!("{}:{s_ln}-{e_ln}", sp.file),
+                lines_covered: 18,
+                lines_total: 20,
+                lines_pct: 90.0,
+                regions_covered: 27,
+                regions_total: 30,
+                regions_pct: 90.0,
+            }
+        })
+        .collect();
+    let api_rows: Vec<EvaluatedSurfaceRow> = HTTP_API_ROWS
+        .iter()
+        .map(|sp| {
+            let (s_ln, e_ln) =
+                resolve_anchor_span(sp.file, sp.anchor_start, sp.anchor_end).expect("api span");
+            assert!(s_ln >= 1 && e_ln >= s_ln, "invalid span for {}", sp.id);
+            EvaluatedSurfaceRow {
+                id: sp.id.to_owned(),
+                surface: sp.surface.to_owned(),
+                bound_test: sp.bound_test.to_owned(),
+                status_badge: sp.status_badge.to_owned(),
+                source_span: format!("{}:{s_ln}-{e_ln}", sp.file),
+                lines_covered: 19,
+                lines_total: 20,
+                lines_pct: 95.0,
+                regions_covered: 28,
+                regions_total: 30,
+                regions_pct: 93.33,
+            }
+        })
+        .collect();
+    let tier_env_rows: Vec<EvaluatedTierEnvRow> = te_specs
+        .into_iter()
+        .map(|sp| {
+            let (s_ln, e_ln) =
+                resolve_anchor_span(sp.file, sp.anchor_start, sp.anchor_end).expect("te span");
+            EvaluatedTierEnvRow {
+                cell_id: sp.cell_id,
+                environment: sp.environment.to_owned(),
+                auth_tier: sp.auth_tier.to_owned(),
+                effort: sp.effort.to_owned(),
+                expected_behavior: sp.expected_behavior.to_owned(),
+                bound_test: sp.bound_test.to_owned(),
+                status_badge: sp.status_badge.to_owned(),
+                source_span: format!("{}:{s_ln}-{e_ln}", sp.file),
+                lines_covered: 45,
+                lines_total: 50,
+                lines_pct: 90.0,
+                regions_covered: 64,
+                regions_total: 70,
+                regions_pct: 91.43,
+            }
+        })
+        .collect();
+
+    let cov_rcpt = CodeCoverageSummaryReceipt {
+        schema: "jopedime.carbon.code-coverage-summary.v1".to_owned(),
+        source_sha: sha.to_owned(),
+        baseline_sha: sha.to_owned(),
+        before: CoverageCounters {
+            lines_covered: 18_584,
+            lines_total: 29_305,
+            lines_pct: 63.42,
+            regions_covered: 28_428,
+            regions_total: 44_705,
+            regions_pct: 63.59,
+            functions_covered: 1_012,
+            functions_total: 2_223,
+            functions_pct: 45.52,
+        },
+        after: CoverageCounters {
+            lines_covered: 25_200,
+            lines_total: 29_400,
+            lines_pct: 85.71,
+            regions_covered: 38_100,
+            regions_total: 44_900,
+            regions_pct: 84.86,
+            functions_covered: 1_850,
+            functions_total: 2_230,
+            functions_pct: 82.96,
+        },
+        files: vec![FileCoverageDelta {
+            file: "src/bin/carbon.rs".to_owned(),
+            before_lines_pct: 53.86,
+            after_lines_covered: 2_450,
+            after_lines_total: 2_855,
+            after_lines_pct: 85.81,
+            before_regions_pct: 53.24,
+            after_regions_covered: 3_480,
+            after_regions_total: 4_065,
+            after_regions_pct: 85.61,
+        }],
+        cli_rows,
+        api_rows,
+        tier_env_rows,
+    };
+    validate_code_coverage_receipt(&cov_rcpt, Some(sha)).expect("valid cov receipt");
+
+    let cov_in = tmp.path().join("code-coverage-summary.json");
+    std::fs::write(
+        &cov_in,
+        serde_json::to_vec_pretty(&cov_rcpt).expect("serialize cov"),
+    )
+    .expect("write cov");
+
+    let ci_qual_path = tmp.path().join("ci-qual.json");
+    std::fs::write(
+        &ci_qual_path,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
+            "timestamp_epoch_ms": 1_794_680_000_000_u64,
+            "source_sha": sha,
+            "binary_version": jope_carbon::CARBON_PKG_VERSION,
+            "release_tag": jope_carbon::SPEC_RELEASE_TAG,
+            "emulator_regions": ["us-east-2", "us-west-2", "eu-central-1"],
+            "emulator_edge_invocations": 42,
+            "emulator_engine_invocations": 12,
+            "emulator_eval_invocations": 8,
+            "residual_cas_blobs_after_shred": 0,
+            "total_tests": 8,
+            "passed_tests": 8,
+            "all_passed": true,
+            "total_wall_ms": 950.0,
+            "steps": [],
+            "redteam_vectors": []
+        }))
+        .expect("ser ci_qual"),
+    )
+    .expect("write ci_qual");
+
+    let out_dir = tmp.path().join("spec-cov-out");
+    let html_path =
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: out_dir.clone(),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_path.clone()),
+            live_ci_receipt_in: None,
+            code_coverage_in: Some(cov_in),
+            source_sha: Some(sha.to_owned()),
+            repo_root: repo_root.clone(),
+        })
+        .expect("spec-report with code coverage matrix must succeed");
+
+    let html = std::fs::read_to_string(html_path).expect("read html");
+    for needle in [
+        "14. Compiler-Instrumented Full Product Code Coverage Matrix",
+        "Table 14A",
+        "Table 14B",
+        "Table 14C",
+        "Table 14D",
+        "AUTO-EMU-FALLBACK",
+        "code-coverage-summary.json",
+    ] {
+        assert!(html.contains(needle), "missing '{needle}' in Section 14 HTML");
+    }
+
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(out_dir.join("spec-bundle-manifest.json")).expect("read manifest"),
+    )
+    .expect("parse manifest");
+    assert_eq!(
+        manifest["code_coverage_file"].as_str(),
+        Some("code-coverage-summary.json")
+    );
+    assert!(manifest["code_coverage_sha256"]
+        .as_str()
+        .is_some_and(|s| s.len() == 64));
+
+    let mut zeroed = cov_rcpt;
+    zeroed.cli_rows[0].lines_covered = 0;
+    let bad_cov = tmp.path().join("bad-cov.json");
+    std::fs::write(
+        &bad_cov,
+        serde_json::to_vec_pretty(&zeroed).expect("ser bad cov"),
+    )
+    .expect("write bad cov");
+    assert!(
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: tmp.path().join("spec-bad-cov"),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_path),
+            live_ci_receipt_in: None,
+            code_coverage_in: Some(bad_cov),
+            source_sha: Some(sha.to_owned()),
+            repo_root,
+        })
+        .is_err(),
+        "zero covered lines on any CLI/API/tierxenv row must fail closed"
+    );
+
+    // Also verify raw `llvm-cov export` JSON evaluation (`evaluate_llvm_cov_export` + `compute_span_metrics`).
+    let mut unique_files = std::collections::BTreeSet::new();
+    for sp in CLI_COMMAND_ROWS.iter().chain(HTTP_API_ROWS.iter()) {
+        unique_files.insert(sp.file);
+    }
+    for sp in build_tier_env_rows() {
+        unique_files.insert(sp.file);
+    }
+    let llvm_files: Vec<serde_json::Value> = unique_files
+        .into_iter()
+        .map(|rel| {
+            serde_json::json!({
+                "filename": format!("crates/jope-carbon/{rel}"),
+                "summary": {
+                    "lines": { "count": 1200, "covered": 1080 },
+                    "regions": { "count": 1800, "covered": 1620 },
+                    "functions": { "count": 90, "covered": 81 }
+                },
+                "segments": [
+                    [1, 1, 7, true, true, false],
+                    [10000, 1, 0, false, false, false]
+                ]
+            })
+        })
+        .collect();
+    let raw_llvm_path = tmp.path().join("llvm-cov-export.json");
+    std::fs::write(
+        &raw_llvm_path,
+        serde_json::to_vec(&serde_json::json!({ "data": [{ "files": llvm_files }] }))
+            .expect("ser llvm export"),
+    )
+    .expect("write llvm export");
+    let eval_rcpt =
+        jope_carbon::cli::spec_code_coverage::load_and_evaluate_code_coverage(&raw_llvm_path, sha)
+            .expect("evaluate raw llvm-cov export JSON");
+    assert_eq!(eval_rcpt.cli_rows.len(), 48);
+    assert_eq!(eval_rcpt.api_rows.len(), 33);
+    assert_eq!(eval_rcpt.tier_env_rows.len(), 64);
 }

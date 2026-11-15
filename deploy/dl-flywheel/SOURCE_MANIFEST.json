@@ -12,7 +12,7 @@
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "d23418e7c691b014ae853963d329949d4f8aa2b37572dde9dcfd8ddb622513de"
+      "sha256": "65b59ef9537f329a9d7b78817e0bb601c5c5a031505e4a6b2a4f0073d9179c57"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5220,7 +5220,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "ed3f6a7fdb66a09bb0ced202724959446e08378883328f8956ef6efa92ad7d28"
+      "sha256": "94096eaeb9bb5d7837dece61cab3c86e6f82b981f9c0b548a006150d9436966d"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",

@@ -401,9 +401,9 @@ impl CarbonS3Cas {
         extra_headers: &[(&str, &str)],
     ) -> Result<(u16, Vec<u8>), String> {
         let creds = crate::security::sigv4::CarbonAwsCredentials::from_env()?;
-        let host = format!("{}.s3.{}.amazonaws.com", self.bucket, self.region);
-        let canonical_uri = crate::security::sigv4::url_encode_s3_key(object_key);
-        let url = format!("https://{host}{canonical_uri}");
+        let (host, canonical_uri, url) =
+            crate::security::sigv4::resolve_s3_request_target(&self.bucket, &self.region, object_key)
+                .map_err(str::to_owned)?;
 
         let mut last_err = String::new();
         for attempt in 0..4usize {

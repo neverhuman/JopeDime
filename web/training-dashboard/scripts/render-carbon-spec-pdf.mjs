@@ -177,6 +177,12 @@ async function main() {
       ...(manifest.live_ci_qualification_sha256
         ? { live_ci_qualification_sha256: manifest.live_ci_qualification_sha256 }
         : {}),
+      ...(manifest.code_coverage_file
+        ? { code_coverage_file: manifest.code_coverage_file }
+        : {}),
+      ...(manifest.code_coverage_sha256
+        ? { code_coverage_sha256: manifest.code_coverage_sha256 }
+        : {}),
       horizontal_overflow_px: overflowPx,
       screenshots: screenshotEntries,
       evidence_ledger: manifest.evidence_ledger,

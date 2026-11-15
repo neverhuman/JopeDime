@@ -557,8 +557,8 @@ impl CarbonPresigner {
         }
         let lower_sha = expected_sha256_hex.to_ascii_lowercase();
         let date_stamp = &amz_date_iso8601[..8];
-        let host = format!("{bucket}.s3.{region}.amazonaws.com");
-        let encoded_path = url_encode_s3_key(object_key);
+        let (host, encoded_path, full_base_url) =
+            resolve_s3_request_target(bucket, region, object_key)?;
         let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
         let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
         let signed_hdrs = "content-length;host;x-amz-content-sha256";
@@ -605,7 +605,7 @@ impl CarbonPresigner {
         let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
 
         Ok(format!(
-            "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"
+            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
         ))
     }
 
@@ -622,8 +622,8 @@ impl CarbonPresigner {
             return Err("invalid SigV4 timestamp or expiration window");
         }
         let date_stamp = &amz_date_iso8601[..8];
-        let host = format!("{bucket}.s3.{region}.amazonaws.com");
-        let encoded_path = url_encode_s3_key(object_key);
+        let (host, encoded_path, full_base_url) =
+            resolve_s3_request_target(bucket, region, object_key)?;
         let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
         let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
 
@@ -666,7 +666,7 @@ impl CarbonPresigner {
         let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
 
         Ok(format!(
-            "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"
+            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
         ))
     }
 
@@ -684,8 +684,8 @@ impl CarbonPresigner {
             return Err("invalid SigV4 timestamp or expiration window");
         }
         let date_stamp = &amz_date_iso8601[..8];
-        let host = format!("{bucket}.s3.{region}.amazonaws.com");
-        let encoded_path = url_encode_s3_key(object_key);
+        let (host, encoded_path, full_base_url) =
+            resolve_s3_request_target(bucket, region, object_key)?;
         let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
         let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
 
@@ -728,7 +728,7 @@ impl CarbonPresigner {
         let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
 
         Ok(format!(
-            "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"
+            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
         ))
     }
 
@@ -788,4 +788,95 @@ pub fn url_encode_s3_key(object_key: &str) -> String {
         .collect::<Vec<_>>()
         .join("/");
     format!("/{encoded_segments}")
+}
+
+#[cfg(feature = "edge")]
+fn is_loopback_authority(authority: &str) -> bool {
+    if authority == "127.0.0.1" || authority == "[::1]" {
+        return true;
+    }
+    if let Some(port_str) = authority.strip_prefix("127.0.0.1:") {
+        return port_str.parse::<u16>().is_ok_and(|p| p > 0);
+    }
+    if let Some(port_str) = authority.strip_prefix("[::1]:") {
+        return port_str.parse::<u16>().is_ok_and(|p| p > 0);
+    }
+    false
+}
+
+/// Resolve `(host_header, canonical_uri, full_url)` for S3 requests and presigned URLs.
+/// Defaults to virtual-hosted `https://{bucket}.s3.{region}.amazonaws.com/{key}`, or path-style
+/// `{endpoint}/{bucket}/{key}` when `CARBON_S3_ENDPOINT_URL` is explicitly set to `https://...`
+/// or a loopback `http://127.0.0.1:<port>` / `http://[::1]:<port>` endpoint.
+#[cfg(feature = "edge")]
+pub fn resolve_s3_request_target(
+    bucket: &str,
+    region: &str,
+    object_key: &str,
+) -> Result<(String, String, String), &'static str> {
+    if let Ok(raw) = std::env::var("CARBON_S3_ENDPOINT_URL") {
+        let trimmed = raw.trim().trim_end_matches('/');
+        if !trimmed.is_empty() {
+            let (scheme, authority) = if let Some(rest) = trimmed.strip_prefix("https://") {
+                ("https", rest)
+            } else if let Some(rest) = trimmed.strip_prefix("http://") {
+                if !is_loopback_authority(rest) {
+                    return Err("CARBON_S3_ENDPOINT_URL refuses non-loopback plaintext HTTP");
+                }
+                ("http", rest)
+            } else {
+                return Err(
+                    "CARBON_S3_ENDPOINT_URL must use https:// or loopback http://127.0.0.1",
+                );
+            };
+            if authority.is_empty() || authority.contains('/') || authority.contains('?') {
+                return Err("CARBON_S3_ENDPOINT_URL must contain only scheme://host[:port]");
+            }
+            let clean_key = object_key.trim_start_matches('/');
+            let combined_key = if clean_key.is_empty() {
+                bucket.to_owned()
+            } else {
+                format!("{bucket}/{clean_key}")
+            };
+            let canonical_uri = url_encode_s3_key(&combined_key);
+            let full_url = format!("{scheme}://{authority}{canonical_uri}");
+            return Ok((authority.to_owned(), canonical_uri, full_url));
+        }
+    }
+    let host = format!("{bucket}.s3.{region}.amazonaws.com");
+    let canonical_uri = url_encode_s3_key(object_key);
+    let full_url = format!("https://{host}{canonical_uri}");
+    Ok((host, canonical_uri, full_url))
+}
+
+/// Resolve `(host_header, endpoint_url)` for AWS Secrets Manager JSON-RPC calls.
+/// Defaults to `https://secretsmanager.{region}.amazonaws.com/`, allowing `CARBON_SECRETSMANAGER_ENDPOINT_URL`
+/// strictly for loopback `127.0.0.1` / `[::1]` test harnesses (refusing all non-loopback hosts).
+#[cfg(feature = "edge")]
+pub fn resolve_secretsmanager_endpoint(region: &str) -> Result<(String, String), String> {
+    if let Ok(raw) = std::env::var("CARBON_SECRETSMANAGER_ENDPOINT_URL") {
+        let trimmed = raw.trim().trim_end_matches('/');
+        if !trimmed.is_empty() {
+            let (scheme, authority) = if let Some(rest) = trimmed.strip_prefix("https://") {
+                ("https", rest)
+            } else if let Some(rest) = trimmed.strip_prefix("http://") {
+                ("http", rest)
+            } else {
+                return Err(
+                    "CARBON_SECRETSMANAGER_ENDPOINT_URL must start with http://127.0.0.1 or https://127.0.0.1"
+                        .to_owned(),
+                );
+            };
+            if !is_loopback_authority(authority) {
+                return Err(
+                    "CARBON_SECRETSMANAGER_ENDPOINT_URL is restricted strictly to loopback 127.0.0.1 / [::1]"
+                        .to_owned(),
+                );
+            }
+            return Ok((authority.to_owned(), format!("{scheme}://{authority}/")));
+        }
+    }
+    let host = format!("secretsmanager.{region}.amazonaws.com");
+    let url = format!("https://{host}/");
+    Ok((host, url))
 }

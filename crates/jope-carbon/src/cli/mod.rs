@@ -12,6 +12,10 @@ pub mod model_store;
 pub mod redteam;
 pub mod runner;
 #[cfg(feature = "emu")]
+pub mod spec_code_coverage;
+#[cfg(feature = "emu")]
+pub mod spec_code_coverage_rows;
+#[cfg(feature = "emu")]
 pub mod spec_coverage_matrix;
 #[cfg(feature = "emu")]
 pub mod spec_live_ci_4tier;

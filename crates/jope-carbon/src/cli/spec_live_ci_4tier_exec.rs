@@ -528,6 +528,20 @@ if [ "$MODE" = "live_pro_secrets" ]; then
 else
   retry2 "$CARBON_BIN" register --free --cloud dev --label ci_dev >/dev/null
   retry2 "$CARBON_BIN" register --free --cloud prod --label ci_prod >/dev/null
+  probe_free_gate() {{
+    g_cloud="$1"
+    g_eff="$2"
+    g_tag="$3"
+    set +e
+    "$CARBON_BIN" run --csv "$CSV_PATH" --target target --cloud "$g_cloud" --free --effort "$g_eff" --shred >"/root/gate_${{g_tag}}.txt" 2>&1
+    g_rc=$?
+    set -e
+    emit_kv "GATE_${{g_tag}}_RC" "$g_rc"
+    emit_block "GATE_${{g_tag}}_OUT" "/root/gate_${{g_tag}}.txt"
+  }}
+  probe_free_gate dev high DEV_HIGH
+  probe_free_gate dev ultra DEV_ULTRA
+  probe_free_gate prod ultra PROD_ULTRA
   for eff in fast medium; do
     run_tier dev "$eff" --free aws_live "" &
     pid_d=$!
@@ -752,15 +766,19 @@ fn assemble_receipt_from_framed(
     let sv = parse_blk("SELF_VERIFY")?;
     let doc = parse_blk("DOCTOR")?;
     let qs = parse_blk("QUICKSTART")?;
-    let gate_rc = kv_u64("GATE_RC");
-    let gate_txt = framed.blocks.get("GATE_OUT").cloned().unwrap_or_default();
-    let gate_status = if gate_rc != 0
-        && (gate_txt.contains("403") || gate_txt.to_ascii_lowercase().contains("pro"))
-    {
-        403u64
-    } else {
-        0u64
+    let decode_gate = |rc_key: &str, blk_key: &str| -> Option<u64> {
+        let rc = framed.kvs.get(rc_key)?.parse::<u64>().ok()?;
+        let txt = framed.blocks.get(blk_key).cloned().unwrap_or_default();
+        if rc != 0 && (txt.contains("403") || txt.to_ascii_lowercase().contains("pro")) {
+            Some(403)
+        } else {
+            Some(0)
+        }
     };
+    let gate_status = decode_gate("GATE_RC", "GATE_OUT").unwrap_or(0);
+    let dev_high_gate = decode_gate("GATE_DEV_HIGH_RC", "GATE_DEV_HIGH_OUT");
+    let dev_ultra_gate = decode_gate("GATE_DEV_ULTRA_RC", "GATE_DEV_ULTRA_OUT");
+    let prod_ultra_gate = decode_gate("GATE_PROD_ULTRA_RC", "GATE_PROD_ULTRA_OUT");
 
     let mut runs = Vec::with_capacity(8);
     let mut total_usd = 0.0f64;
@@ -822,6 +840,18 @@ fn assemble_receipt_from_framed(
         "quickstart_shredded": qs["shredded_after_run"].as_bool().unwrap_or(false),
         "live_anon_high_gate_status": gate_status,
     });
+    let mut install = install;
+    if let Some(obj) = install.as_object_mut() {
+        if let Some(code) = dev_high_gate {
+            obj.insert("live_dev_free_high_gate_status".to_owned(), json!(code));
+        }
+        if let Some(code) = dev_ultra_gate {
+            obj.insert("live_dev_free_ultra_gate_status".to_owned(), json!(code));
+        }
+        if let Some(code) = prod_ultra_gate {
+            obj.insert("live_prod_free_ultra_gate_status".to_owned(), json!(code));
+        }
+    }
     let dataset = json!({
         "name": "nonlinear_240x6.csv",
         "rows": 240,

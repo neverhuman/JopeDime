@@ -17,8 +17,8 @@ use crate::{
         auth::CarbonAuthVerifier,
         seal::CarbonSealKey,
         sigv4::{
-            compute_backoff_with_jitter_ms, sign_aws_v4_headers_with_extra, CarbonAwsCredentials,
-            CarbonPresigner,
+            compute_backoff_with_jitter_ms, resolve_secretsmanager_endpoint,
+            sign_aws_v4_headers_with_extra, CarbonAwsCredentials, CarbonPresigner,
         },
         user_envelope::{decode_p256_pubkey_b64, CarbonEngineKek},
     },
@@ -164,8 +164,7 @@ pub fn fetch_secretsmanager_secret_string(
             .filter(|s| !s.trim().is_empty())
             .unwrap_or_else(|| default_region.to_owned())
     });
-    let host = format!("secretsmanager.{target_region}.amazonaws.com");
-    let url = format!("https://{host}/");
+    let (host, url) = resolve_secretsmanager_endpoint(&target_region)?;
     let mut req_json = serde_json::Map::new();
     req_json.insert(
         "SecretId".to_owned(),
@@ -243,11 +242,12 @@ pub fn fetch_secretsmanager_secret_string(
     Err(last_err)
 }
 
-fn load_cached_runtime_secrets_with_scrub(
+fn load_runtime_secrets_for_role(
     default_region: &str,
     scrub_engine_secrets: bool,
-) -> Result<Option<&'static CarbonRuntimeSecrets>, String> {
-    static CACHED_SECRETS: OnceLock<CarbonRuntimeSecrets> = OnceLock::new();
+) -> Result<Option<CarbonRuntimeSecrets>, String> {
+    static CACHED_EDGE: OnceLock<(String, CarbonRuntimeSecrets)> = OnceLock::new();
+    static CACHED_FULL: OnceLock<(String, CarbonRuntimeSecrets)> = OnceLock::new();
     let Some(secret_arn) = std::env::var("CARBON_SECRETS_ARN")
         .ok()
         .map(|s| s.trim().to_owned())
@@ -255,21 +255,32 @@ fn load_cached_runtime_secrets_with_scrub(
     else {
         return Ok(None);
     };
-    if let Some(existing) = CACHED_SECRETS.get() {
-        return Ok(Some(existing));
-    }
     let version_id = std::env::var("CARBON_SECRETS_VERSION_ID")
         .ok()
         .filter(|s| !s.trim().is_empty());
-    let raw_secret =
-        fetch_secretsmanager_secret_string(default_region, &secret_arn, version_id.as_deref())?;
     let is_edge_env = std::env::var("CARBON_ROLE")
         .map(|r| r.trim().eq_ignore_ascii_case("edge"))
         .unwrap_or(false);
-    let parsed =
-        parse_secret_bundle_json_for_role(&raw_secret, scrub_engine_secrets || is_edge_env)?;
-    let _ = CACHED_SECRETS.set(parsed);
-    Ok(CACHED_SECRETS.get())
+    let effective_scrub = scrub_engine_secrets || is_edge_env;
+    let cache_key = format!(
+        "{secret_arn}|{}|{effective_scrub}",
+        version_id.as_deref().unwrap_or_default()
+    );
+    let slot = if effective_scrub {
+        &CACHED_EDGE
+    } else {
+        &CACHED_FULL
+    };
+    if let Some((cached_key, existing)) = slot.get() {
+        if *cached_key == cache_key {
+            return Ok(Some(existing.clone()));
+        }
+    }
+    let raw_secret =
+        fetch_secretsmanager_secret_string(default_region, &secret_arn, version_id.as_deref())?;
+    let parsed = parse_secret_bundle_json_for_role(&raw_secret, effective_scrub)?;
+    let _ = slot.set((cache_key, parsed.clone()));
+    Ok(Some(parsed))
 }
 
 /// Load `CARBON_SECRETS_ARN` once per container cold start (cached in `Zeroizing` RAM), or return
@@ -277,7 +288,25 @@ fn load_cached_runtime_secrets_with_scrub(
 pub fn load_cached_runtime_secrets(
     default_region: &str,
 ) -> Result<Option<&'static CarbonRuntimeSecrets>, String> {
-    load_cached_runtime_secrets_with_scrub(default_region, false)
+    static CACHED_PUBLIC: OnceLock<CarbonRuntimeSecrets> = OnceLock::new();
+    let Some(secret_arn) = std::env::var("CARBON_SECRETS_ARN")
+        .ok()
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty())
+    else {
+        return Ok(None);
+    };
+    if let Some(existing) = CACHED_PUBLIC.get() {
+        return Ok(Some(existing));
+    }
+    let version_id = std::env::var("CARBON_SECRETS_VERSION_ID")
+        .ok()
+        .filter(|s| !s.trim().is_empty());
+    let raw_secret =
+        fetch_secretsmanager_secret_string(default_region, &secret_arn, version_id.as_deref())?;
+    let parsed = parse_secret_bundle_json(&raw_secret)?;
+    let _ = CACHED_PUBLIC.set(parsed);
+    Ok(CACHED_PUBLIC.get())
 }
 
 /// Resolve `(CarbonPresigner, Option<CarbonAuthVerifier>, Option<String>)` for `carbon-edge` from
@@ -286,18 +315,19 @@ pub fn resolve_edge_secrets(
     region: &str,
     is_aws_production: bool,
 ) -> Result<(CarbonPresigner, Option<CarbonAuthVerifier>, Option<String>), String> {
-    let vault = load_cached_runtime_secrets_with_scrub(region, true)?;
+    let vault = load_runtime_secrets_for_role(region, true)?;
+    let vault_ref = vault.as_ref();
 
     let presign_hex_opt = std::env::var("CARBON_PRESIGN_SECRET_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.presign_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.presign_secret_hex.clone()));
     let prev_presign_opt = std::env::var("CARBON_PREVIOUS_PRESIGN_SECRET_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.previous_presign_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.previous_presign_secret_hex.clone()));
 
     let presign_secret = match presign_hex_opt {
         Some(hex_val) => *decode_32byte_hex_named("CARBON_PRESIGN_SECRET_HEX", &hex_val)?,
@@ -319,12 +349,12 @@ pub fn resolve_edge_secrets(
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.auth_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.auth_secret_hex.clone()));
     let prev_auth_opt = std::env::var("CARBON_PREVIOUS_AUTH_SECRET_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.previous_auth_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.previous_auth_secret_hex.clone()));
 
     let auth_verifier = match auth_hex_opt {
         Some(active_hex) => Some(
@@ -344,7 +374,7 @@ pub fn resolve_edge_secrets(
         .ok()
         .map(|s| s.trim().to_owned())
         .filter(|s| !s.is_empty())
-        .or_else(|| vault.and_then(|v| v.engine_kek_pubkey_b64.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.engine_kek_pubkey_b64.clone()));
     let engine_kek_pubkey_b64 = match pubkey_opt {
         Some(b64) => {
             let _ = decode_p256_pubkey_b64(&b64).map_err(|e| e.to_string())?;
@@ -365,18 +395,19 @@ pub fn resolve_engine_secrets(
     region: &str,
     is_aws_production: bool,
 ) -> Result<(CarbonSealKey, Option<CarbonEngineKek>), String> {
-    let vault = load_cached_runtime_secrets(region)?;
+    let vault = load_runtime_secrets_for_role(region, false)?;
+    let vault_ref = vault.as_ref();
 
     let seal_hex_opt = std::env::var("CARBON_SEAL_SECRET_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.seal_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.seal_secret_hex.clone()));
     let prev_seal_opt = std::env::var("CARBON_PREVIOUS_SEAL_SECRET_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.previous_seal_secret_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.previous_seal_secret_hex.clone()));
 
     let seal_bytes = match seal_hex_opt {
         Some(hex_val) => *decode_32byte_hex_named("CARBON_SEAL_SECRET_HEX", &hex_val)?,
@@ -398,12 +429,12 @@ pub fn resolve_engine_secrets(
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.engine_kek_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.engine_kek_hex.clone()));
     let prev_kek_opt = std::env::var("CARBON_PREVIOUS_ENGINE_KEK_HEX")
         .ok()
         .filter(|s| !s.trim().is_empty())
         .map(Zeroizing::new)
-        .or_else(|| vault.and_then(|v| v.previous_engine_kek_hex.clone()));
+        .or_else(|| vault_ref.and_then(|v| v.previous_engine_kek_hex.clone()));
 
     let engine_kek = match kek_hex_opt {
         Some(active_hex) => Some(
