@@ -1,12 +1,16 @@
 //! Comprehensive offline loopback mocks (S3 SigV4 CAS, AWS Secrets Manager, AWS Lambda Custom
 //! Runtime `2018-06-01`) and full CLI / HTTP API / `tier x env` coverage closure tests.
 
+pub mod api_edge_emu_and_serve_gaps;
 pub mod cli_bin_and_cell_functions;
 pub mod cli_commands_and_workers;
+pub mod cli_surface_and_pty_gaps;
 pub mod deploy_packager_and_rollout_functions;
 pub mod deploy_vault_and_ci_clis;
 pub mod http_api_and_emu_matrix;
+pub mod runner_bench_and_model_store_gaps;
 pub mod sigv4_and_crypto_functions;
+pub mod spec_report_verify_and_cell_invokers;
 pub mod tier_env_and_s3_serve;
 
 use std::collections::BTreeMap;

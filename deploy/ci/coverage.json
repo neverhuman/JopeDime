@@ -227,6 +227,19 @@
       ],
       "scope": "Carbon 11-comparator same-split benchmark CLI (`carbon bench`); unit-tested in rust-test, live cloud benchmarks are opt-in and not run in CI."
     },
+    "benchmark:crates/jope-carbon/tests/coverage_closure/runner_bench_and_model_store_gaps.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Section 14 offline coverage-closure tests for Carbon CLI benchmark runner (`runner.rs`), `bench_suite.rs` CSV-dir loader, and `model_store.rs`."
+    },
     "benchmark:crates/jope-engine/examples/gpr_cuda_bench.rs": {
       "discovery": {
         "kind": "benchmark-source"

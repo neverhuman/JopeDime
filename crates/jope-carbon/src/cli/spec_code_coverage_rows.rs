@@ -167,7 +167,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-10",
         surface: "carbon register",
-        bound_test: "coverage_closure::cli_full_model_handle_lifecycle_resume_explain_6lang_export_auth_and_shred",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + cli_full_model_handle_lifecycle",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Register {",
@@ -176,7 +176,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-11",
         surface: "carbon login",
-        bound_test: "carbon_e2e::cli_ux_v044_login_whoami + CI-QS-06",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + CI-QS-06",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Login {",
@@ -203,7 +203,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-14",
         surface: "carbon doctor (--cloud all & --offline)",
-        bound_test: "CI-QS-02 + carbon_e2e::cli_ux_v044_doctor",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + CI-QS-02",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "fn execute_doctor_command(",
@@ -257,7 +257,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-20",
         surface: "carbon runs",
-        bound_test: "coverage_closure::cli_full_model_handle_lifecycle_resume_explain_6lang_export_auth_and_shred",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + cli_full_model_handle_lifecycle",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Runs {",
@@ -293,7 +293,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-24",
         surface: "carbon fitness list",
-        bound_test: "examples/objectives/run.sh + carbon_e2e::custom_fitness_objectives",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + custom_fitness_objectives",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "FitnessCommand::List {",
@@ -338,7 +338,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-29",
         surface: "carbon export (py/rs/rust-refittable/js/c/cpp)",
-        bound_test: "coverage_closure::cli_full_model_handle_lifecycle_resume_explain_6lang_export_auth_and_shred",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + cli_full_model_handle_lifecycle",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Export {",
@@ -356,7 +356,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-31",
         surface: "carbon upgrade (--check & atomic swap)",
-        bound_test: "carbon_e2e::self_upgrade_ecdsa_verified_swap_and_tamper_refusal",
+        bound_test: "coverage_closure::model_store_tarzst_upgrade_predict_csv + self_upgrade_ecdsa_verified_swap",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Upgrade {",
@@ -374,7 +374,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-33",
         surface: "carbon bench (smoke/ops/standard/scientific)",
-        bound_test: "coverage_closure::cli_stdin_shorthand_quickstart_redteam_bench_and_emu_selftest_subprocesses",
+        bound_test: "coverage_closure::runner_ops_benchmark_free_pro_enterprise + cli_pty_tables_runs_fitness",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Bench {",
@@ -383,7 +383,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-34",
         surface: "carbon redteam (17 adversarial vectors)",
-        bound_test: "coverage_closure::cli_stdin_shorthand_quickstart_redteam_bench + CI-QS-08",
+        bound_test: "coverage_closure::cli_pty_tables_runs_fitness_and_doctor + CI-QS-08",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::Redteam {",
@@ -392,7 +392,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-35",
         surface: "carbon token-mint (env & Secrets Manager)",
-        bound_test: "coverage_closure::cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audit",
+        bound_test: "coverage_closure::cli_eval_engine_runtime_and_token_mint + cli_token_mint_deploy",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::TokenMint {",
@@ -419,7 +419,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-38",
         surface: "carbon serve (VPC local & SigV4 S3 CAS)",
-        bound_test: "coverage_closure::enterprise_serve_local_8_cells + loopback_sigv4_s3_cas",
+        bound_test: "coverage_closure::emu_public_url_413_400_and_enterprise_serve_sigint + enterprise_serve_local_8_cells",
         status_badge: "PASS",
         file: "src/modes/serve.rs",
         anchor_start: "pub fn enterprise_default(",
@@ -455,7 +455,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-42",
         surface: "carbon spec-report",
-        bound_test: "coverage_closure::cli_ci_live_4tier_and_spec_report_verify_subprocesses",
+        bound_test: "coverage_closure::spec_report_full_ci_qualification_and_spec_verify + cli_ci_live_4tier",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::SpecReport {",
@@ -464,7 +464,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-43",
         surface: "carbon spec-verify",
-        bound_test: "coverage_closure::cli_ci_live_4tier_and_spec_report_verify_subprocesses",
+        bound_test: "coverage_closure::spec_report_full_ci_qualification_and_spec_verify_bundle_roundtrip",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "Command::SpecVerify {",
@@ -482,7 +482,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-45",
         surface: "carbon engine --lambda-runtime",
-        bound_test: "coverage_closure::carbon_edge_carbon_worker_and_cli_lambda_runtime_loops",
+        bound_test: "coverage_closure::cli_eval_engine_runtime_and_token_mint + carbon_edge_carbon_worker",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "fn run_engine_runtime(",
@@ -491,7 +491,7 @@ pub const CLI_COMMAND_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "CLI-46",
         surface: "carbon eval --lambda-runtime",
-        bound_test: "coverage_closure::carbon_edge_carbon_worker_and_cli_lambda_runtime_loops",
+        bound_test: "coverage_closure::cli_eval_engine_runtime_and_token_mint + engine_invoker_and_eval_worker",
         status_badge: "PASS",
         file: "src/bin/carbon.rs",
         anchor_start: "fn run_eval_runtime(",
@@ -549,7 +549,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-04",
         surface: "POST /v1/carbon/auth/anonymous",
-        bound_test: "coverage_closure::unit_inproc_free_medium + carbon_redteam::V-15",
+        bound_test: "coverage_closure::edge_auth_resume_predict_prepare + carbon_redteam::V-15",
         status_badge: "PASS",
         file: "src/cells/edge.rs",
         anchor_start: "fn handle_anonymous_auth(",
@@ -558,7 +558,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-05",
         surface: "POST /v1/carbon/auth/register",
-        bound_test: "coverage_closure::cli_full_model_handle_lifecycle + API-LIVE-04",
+        bound_test: "coverage_closure::edge_auth_resume_predict_prepare + API-LIVE-04",
         status_badge: "PASS",
         file: "src/cells/edge.rs",
         anchor_start: "fn handle_register_free(",
@@ -630,7 +630,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-13",
         surface: "POST /v1/carbon/runs/{run_id}/resume",
-        bound_test: "coverage_closure::cli_full_model_handle_lifecycle + ADV-ABT-02..05",
+        bound_test: "coverage_closure::edge_auth_resume_predict_prepare + ADV-ABT-02..05",
         status_badge: "PASS",
         file: "src/cells/edge.rs",
         anchor_start: "fn handle_resume(",
@@ -639,7 +639,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-14",
         surface: "POST /v1/carbon/runs/{run_id}/predict/prepare",
-        bound_test: "coverage_closure::edge_explain_export_prepare_predict + API-LIVE-10",
+        bound_test: "coverage_closure::edge_auth_resume_predict_prepare + API-LIVE-10",
         status_badge: "PASS",
         file: "src/cells/edge.rs",
         anchor_start: "fn handle_prepare_predict(",
@@ -648,7 +648,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-15",
         surface: "POST /v1/carbon/runs/{run_id}/predict",
-        bound_test: "coverage_closure::edge_explain_export + tier_env_and_s3_serve",
+        bound_test: "coverage_closure::edge_auth_resume_predict_prepare + tier_env_and_s3_serve",
         status_badge: "PASS",
         file: "src/cells/edge.rs",
         anchor_start: "fn handle_predict(",
@@ -729,7 +729,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-24",
         surface: "POST /v1/carbon/* (serve 131KiB 413 cap)",
-        bound_test: "coverage_closure::enterprise_serve_local_8_cells_and_streaming_precheck",
+        bound_test: "coverage_closure::emu_public_url_413_400_and_enterprise_serve_sigint + enterprise_serve_local_8_cells",
         status_badge: "PASS",
         file: "src/modes/serve.rs",
         anchor_start: "async fn handle_axum_gateway_request(",
@@ -810,7 +810,7 @@ pub const HTTP_API_ROWS: &[SurfaceCoverageSpec] = &[
     SurfaceCoverageSpec {
         id: "API-33",
         surface: "ANY /* (CarbonLocalLambdaEmulator Function URL)",
-        bound_test: "coverage_closure::cli_stdin_shorthand_quickstart + CI-QS-01..08",
+        bound_test: "coverage_closure::emu_public_url_413_400_and_enterprise_serve_sigint + CI-QS-01..08",
         status_badge: "PASS",
         file: "src/modes/emu.rs",
         anchor_start: "async fn public_function_url_handler(",
@@ -906,12 +906,12 @@ fn classify_tier_env_cell(
     match (env_name, auth_tier, is_high_or_ultra) {
         ("enterprise_serve_local", "free", true) => (
             "200 VPC no_limit() + 403 cloud-gate",
-            "coverage_closure::enterprise_serve_local_8_cells",
+            "coverage_closure::enterprise_serve_sigint + enterprise_serve_local_8_cells",
             "PASS",
         ),
         ("enterprise_serve_local", _, _) => (
             "200 CUEN v1 + r882 + shred",
-            "coverage_closure::enterprise_serve_local_8_cells",
+            "coverage_closure::enterprise_serve_sigint + enterprise_serve_local_8_cells",
             "PASS",
         ),
         ("enterprise_serve_s3", "free", true) => (
@@ -976,7 +976,7 @@ fn classify_tier_env_cell(
         ),
         ("aws_dev" | "aws_prod", "pro", false) => (
             "200 Live AWS receipt + CI emulator",
-            "cost-time-4effort-matrix.json + bench-prod-pro.json",
+            "coverage_closure::runner_ops_benchmark + bench-prod-pro.json",
             "PASS",
         ),
         ("aws_dev" | "aws_prod", "pro", true) => (
