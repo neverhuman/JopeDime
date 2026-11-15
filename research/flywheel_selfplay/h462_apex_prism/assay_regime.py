@@ -72,7 +72,6 @@ def uncapped_matern52_loo_fit(
     """
     x = np.ascontiguousarray(x_search, dtype=np.float64)
     y = np.ascontiguousarray(y_search, dtype=np.float64).reshape(-1)
-    n_rows = y.shape[0]
     y_mu = float(np.mean(y))
     yc = y - y_mu
     y_std = max(float(np.std(yc)), 1e-12)

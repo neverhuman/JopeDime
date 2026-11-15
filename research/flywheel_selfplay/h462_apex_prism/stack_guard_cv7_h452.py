@@ -578,7 +578,6 @@ def stack_guard_cv7_context(
 
     # Fixed-pool OOF consensus (`M_trials = 1` models) to guard against correlated winner's-curse clones
     rm_fix = None
-    norm_fix = 1.0
     e_fix = None
     f_rm_fix = None
     if non_ugp_idx:
@@ -591,7 +590,6 @@ def stack_guard_cv7_context(
         p_fix_oof = Q_jg_eval[:, top_non] @ w_fix
         e_fix = p_fix_oof - ys
         rm_fix = max(float(np.sqrt(np.mean(e_fix * e_fix))), 1e-15)
-        norm_fix = max(float(np.linalg.norm(e_fix)), 1e-15)
         f_rm_fix = np.array([float(np.sqrt(np.mean((ys[lab_meta == k] - p_fix_oof[lab_meta == k]) ** 2))) for k in uniq_f])
 
     # Base OOF blend reference (`gp_legacy` if available and competitive, else global top leaders)

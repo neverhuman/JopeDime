@@ -348,7 +348,6 @@ def _p0_7_causal_ablation_solver_grad_vs_stopgrad_and_corrupted_hints() -> Dict[
     xc = torch.tensor(ep["x_context"])
     yc = torch.tensor(ep["y_context"])
     xq = torch.tensor(ep["x_query"])
-    yq = torch.tensor(ep["y_query"])
     yq_clean = ep["y_query_clean"]
     anc_c = torch.tensor(ep["anchor_context"])
     anc_q = torch.tensor(ep["anchor_query"])
@@ -1643,6 +1642,252 @@ def _p0_23_g3_constants_parity_missing_q_refusal_and_role_load() -> Dict[str, An
     }
 
 
+def _p0_24_f2_role_load_m1_code_binding_and_l3_input_sha() -> Dict[str, Any]:
+    """Verifies PR #2337 review fixes `B1` (nested `e8` role-load schema), `M1` (`code_files_sha256`), `L1`, `L3`, `L4`."""
+    from research.flywheel_selfplay.h462_apex_prism import (
+        emit_p2_p4_members_search_only as EM,
+        eval_h462_k5_fair0 as K5,
+        eval_h462_tabcv7_cvrep as TC,
+        guard_matern_core as GM,
+        verify_f2_comparator_parity_no_ya as VF2,
+    )
+
+    # L4: sterile fallbacks match train_h416 canonical constants
+    assert TC.ANCHOR == "h335.H257_REPLICA" and TC.LADDER_SEED == 335160
+    assert K5.ANCHOR == "h335.H257_REPLICA" and K5.LADDER_SEED == 335160
+
+    pkg_dir = Path(__file__).resolve().parent
+    code_hashes, _manifest_sha = EM.compute_package_code_files_sha256(pkg_dir)
+
+    # B1: build receipt dict via emitter's own build_block_loaded_counts helper and run VF2's binding gate
+    done_mock = [
+        {
+            "blocks_loaded": {
+                "d1": True,
+                "d2": True,
+                "m7": True,
+                "k3": True,
+                "f4": True,
+                "tab450": True,
+                "gpbag": False,
+                "e8": {"wc_r4e8": True, "s46201_r4e8": True, "s46202_r4e8": True},
+            }
+        }
+        for _ in range(3)
+    ]
+    blk_counts = EM.build_block_loaded_counts(done_mock)
+    valid_rcpt: Dict[str, object] = {
+        "host": "test-host",
+        "code_files_sha256": dict(code_hashes),
+        "block_loaded_counts": blk_counts,
+    }
+    verified_roles = VF2.verify_comparator_receipt_binding(
+        rcpt_doc=valid_rcpt,
+        expected_code_files_sha256=code_hashes,
+        expected_host="test-host",
+        n_expected_contexts=3,
+    )
+    assert verified_roles["e8.wc_r4e8"] == 3 and verified_roles["f4"] == 3 and verified_roles["tab450"] == 3
+
+    # Negative B1a: missing nested e8 entry (2/3 on wc_r4e8) MUST fail
+    bad_e8 = json.loads(json.dumps(valid_rcpt))
+    bad_e8["block_loaded_counts"]["e8"]["wc_r4e8"] = 2
+    caught_bad_e8 = False
+    try:
+        VF2.verify_comparator_receipt_binding(bad_e8, code_hashes, "test-host", 3)
+    except RuntimeError:
+        caught_bad_e8 = True
+    assert caught_bad_e8
+
+    # Negative B1b: missing top-level tab450 (2/3) MUST fail
+    bad_top = json.loads(json.dumps(valid_rcpt))
+    bad_top["block_loaded_counts"]["tab450"] = 2
+    caught_bad_top = False
+    try:
+        VF2.verify_comparator_receipt_binding(bad_top, code_hashes, "test-host", 3)
+    except RuntimeError:
+        caught_bad_top = True
+    assert caught_bad_top
+
+    # Negative M1: stale code_files_sha256 from another tree MUST fail
+    bad_code = json.loads(json.dumps(valid_rcpt))
+    first_k = sorted(code_hashes)[0]
+    bad_code["code_files_sha256"][first_k] = "0" * 64
+    caught_bad_code = False
+    try:
+        VF2.verify_comparator_receipt_binding(bad_code, code_hashes, "test-host", 3)
+    except RuntimeError:
+        caught_bad_code = True
+    assert caught_bad_code
+
+    # L3: TC reference files_accessed_sha256 matches receipt; tampering any file SHA fails
+    scratch = _scratch_dir()
+    try:
+        rng = np.random.default_rng(46224)
+        n_s, n_a = 35, 10
+        Xs = rng.normal(size=(n_s, 3))
+        Xa = rng.normal(size=(n_a, 3))
+        y = 1.4 * Xs[:, 0] - 0.6 * Xs[:, 1] + 0.15 * rng.normal(size=n_s)
+        lab0 = np.arange(n_s, dtype=np.int64) % 5
+        bank_p = scratch / "bank.npz"
+        np.savez_compressed(
+            bank_p,
+            cids=np.asarray(["c0"]),
+            family=np.asarray(["fam0"]),
+            s_shape=np.asarray([[n_s, 4]], dtype=np.int64),
+            a_shape=np.asarray([[n_a, 3]], dtype=np.int64),
+            search=np.column_stack([Xs, y]).reshape(-1),
+            audit=Xa.reshape(-1),
+            y64=y,
+            lab=lab0,
+        )
+
+        def _w_gp(p: Path, sd: int) -> None:
+            r = np.random.default_rng(sd)
+            np.savez_compressed(
+                p,
+                Q=y[:, None] + 0.1 * r.normal(size=(n_s, 3)),
+                AKF=r.normal(size=(n_a, 3)),
+                PA=r.normal(size=(n_a, 3)),
+                pa_ok=np.ones(3, dtype=bool),
+                ym=np.float64(np.mean(y)),
+                lab=lab0,
+            )
+
+        def _w_blk(p: Path, cols: Tuple[str, ...], sd: int) -> None:
+            r = np.random.default_rng(sd)
+            kw: Dict[str, Any] = {"ok": np.asarray(True)}
+            for nm in cols:
+                kw[f"q_{nm}"] = y + 0.12 * r.normal(size=n_s)
+                kw[f"bag_{nm}"] = r.normal(size=n_a)
+                kw[f"ref_{nm}"] = kw[f"bag_{nm}"]
+            np.savez_compressed(p, **kw)
+
+        d1_p, d2_p = scratch / "d1" / "c0.npz", scratch / "d2" / "c0.npz"
+        m7_p, k3_p, f4_p, tab_p = (
+            scratch / "m7" / "c0.npz",
+            scratch / "k3" / "c0.npz",
+            scratch / "f4" / "c0.npz",
+            scratch / "tab" / "c0.npz",
+        )
+        wc_p, s1_p, s2_p = scratch / "wc" / "c0.npz", scratch / "s1" / "c0.npz", scratch / "s2" / "c0.npz"
+        for pp in (d1_p, d2_p, m7_p, k3_p, f4_p, tab_p, wc_p, s1_p, s2_p):
+            pp.parent.mkdir(parents=True, exist_ok=True)
+        _w_gp(d1_p, 1)
+        _w_gp(d2_p, 2)
+        _w_blk(m7_p, GM.PRIMARY_NAMES, 3)
+        _w_blk(k3_p, TC.H430_K3, 4)
+        _w_blk(f4_p, TC.H433_F4, 5)
+        _w_blk(tab_p, TC.H450_TAB_COLS, 6)
+        _w_blk(wc_p, ("r4_e8",), 7)
+        _w_blk(s1_p, ("r4_e8",), 8)
+        _w_blk(s2_p, ("r4_e8",), 9)
+
+        # Run the REAL emitter CLI to write a real comparator receipt on disk, then run VF2 gates on it (cl_fwriter B1)
+        real_out_dir = scratch / "emit_out"
+        real_rcpt_p = scratch / "real_comparator_receipt.json"
+        em_env = {
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "PYTHONPATH": f"{pkg_dir.parents[2]}:{pkg_dir.parent}",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+        }
+        cp_em = subprocess.run(
+            [
+                sys.executable,
+                str(pkg_dir / "emit_p2_p4_members_search_only.py"),
+                "--bank",
+                str(bank_p),
+                "--d1-dir",
+                str(d1_p.parent),
+                "--d2-dir",
+                str(d2_p.parent),
+                "--m7-dir",
+                str(m7_p.parent),
+                "--k3-dir",
+                str(k3_p.parent),
+                "--f4-dir",
+                str(f4_p.parent),
+                "--tab450-dir",
+                str(tab_p.parent),
+                "--wc-r4e8-dir",
+                str(wc_p.parent),
+                "--s1-r4e8-dir",
+                str(s1_p.parent),
+                "--s2-r4e8-dir",
+                str(s2_p.parent),
+                "--cv-repeats",
+                "2",
+                "--audit-weight-mode",
+                "hwm_1842_exact",
+                "--out-dir",
+                str(real_out_dir),
+                "--receipt-json",
+                str(real_rcpt_p),
+                "--procs",
+                "1",
+            ],
+            env=em_env,
+            capture_output=True,
+            text=True,
+        )
+        assert cp_em.returncode == 0, f"Real emitter CLI failed: {cp_em.stderr}"
+        real_rcpt_doc = json.loads(real_rcpt_p.read_text())
+        code_hashes_now, _ = EM.compute_package_code_files_sha256(pkg_dir)
+        real_verified_roles = VF2.verify_comparator_receipt_binding(
+            rcpt_doc=real_rcpt_doc,
+            expected_code_files_sha256=code_hashes_now,
+            expected_host=os.uname().nodename,
+            n_expected_contexts=1,
+        )
+        assert real_verified_roles["e8.wc_r4e8"] == 1 and real_verified_roles["tab450"] == 1
+
+        ref_out = TC.predict_tabcv7_cvrep8_prec48_context_no_ya(
+            c="c0",
+            Xs=Xs,
+            Xa=Xa,
+            y=y,
+            lab0=lab0,
+            gp0_p=d1_p,
+            gp1_p=d2_p,
+            is_d91_gp=True,
+            m7_p=m7_p,
+            k3_p=k3_p,
+            f4_p=f4_p,
+            tab450_p=tab_p,
+            wc_r4_p=wc_p,
+            s1_r4_p=s1_p,
+            s2_r4_p=s2_p,
+            n_reps=2,
+        )
+        ref_files = dict(ref_out["files_accessed_sha256"])  # type: ignore[arg-type]
+        assert len(ref_files) == 9
+        n_ver = VF2.verify_reference_inputs_match_receipt(real_rcpt_doc, bank_p, ref_files)
+        assert n_ver == 10
+
+        bad_l3 = json.loads(json.dumps(real_rcpt_doc))
+        bad_l3["files_accessed_sha256"][str(f4_p)] = "f" * 64
+        caught_bad_l3 = False
+        try:
+            VF2.verify_reference_inputs_match_receipt(bad_l3, bank_p, ref_files)
+        except RuntimeError:
+            caught_bad_l3 = True
+        assert caught_bad_l3
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    return {
+        "b1_nested_e8_verified": True,
+        "caught_bad_e8": caught_bad_e8,
+        "caught_bad_top": caught_bad_top,
+        "caught_bad_code_m1": caught_bad_code,
+        "caught_bad_input_l3": caught_bad_l3,
+        "l4_anchor_seed_match": True,
+    }
+
+
 def run_all_selftests() -> Dict[str, Any]:
     t0 = time.perf_counter()
     results = {
@@ -1669,6 +1914,7 @@ def run_all_selftests() -> Dict[str, Any]:
         "p0_21_search_only_members_emitter_blocks_ya": _p0_21_search_only_members_emitter_blocks_ya(),
         "p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker": _p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker(),
         "p0_23_g3_constants_parity_missing_q_refusal_and_role_load": _p0_23_g3_constants_parity_missing_q_refusal_and_role_load(),
+        "p0_24_f2_role_load_m1_code_binding_and_l3_input_sha": _p0_24_f2_role_load_m1_code_binding_and_l3_input_sha(),
     }
     return {
         "all_passed": True,

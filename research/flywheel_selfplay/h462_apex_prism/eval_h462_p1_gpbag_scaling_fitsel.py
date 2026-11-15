@@ -413,14 +413,14 @@ def _summarize(H, done: List[Dict], cids: List[str], fam_map: Dict[str, str], k_
         },
     }
     if include_per_fam_kmax:
-        cand_key = f"tabcv7_cvrep8_gpbag_k{k_max}_allcol"
+        cand_col = f"tabcv7_cvrep8_gpbag_k{k_max}_allcol"
         out["per_family_kmax_allcol_vs_hwm"] = [
             {
                 "cid": c,
                 "family_key": fam_map[c],
-                f"u_{cand_key}": round(sk_umaps[cand_key][c], 6),
+                f"u_{cand_col}": round(sk_umaps[cand_col][c], 6),
                 "u_tabcv7_cvrep8_prec48_all": round(sk_umaps[hwm_col][c], 6),
-                "delta_vs_hwm": round(sk_umaps[cand_key][c] - sk_umaps[hwm_col][c], 6),
+                "delta_vs_hwm": round(sk_umaps[cand_col][c] - sk_umaps[hwm_col][c], 6),
             }
             for c in cids
         ]
@@ -498,9 +498,31 @@ def main() -> int:
     jobs.sort(key=lambda j: -len(j[3]))
     cache_dir_s = getattr(a, "ctx_cache_dir", "").strip()
     cache_dir = Path(cache_dir_s) if cache_dir_s else None
+    code_self_sha = _sha256_file(Path(__file__).resolve())
     if cache_dir is not None:
         _check_safe_path(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
+        stamp_p = cache_dir / "_cache_stamp.json"
+        expected_stamp = {
+            "eval_script_sha256": code_self_sha,
+            "bundle_root": str(root),
+            "gpbag_dirs": [str(gd) for gd in gpbag_dirs],
+            "valley_mode": vmode,
+        }
+        if stamp_p.is_file():
+            got_stamp = json.loads(stamp_p.read_text())
+            if got_stamp != expected_stamp:
+                raise SystemExit(
+                    f"REFUSAL (L2): --ctx-cache-dir {cache_dir} stamp mismatch: {got_stamp} != {expected_stamp}"
+                )
+        else:
+            existing_ctx = list(cache_dir.glob("*.json"))
+            if existing_ctx:
+                raise SystemExit(
+                    f"REFUSAL (L2): --ctx-cache-dir {cache_dir} has unstamped cached JSONs ({len(existing_ctx)}); "
+                    "pass a fresh directory or --ctx-cache-dir ''"
+                )
+            stamp_p.write_text(json.dumps(expected_stamp, indent=2, sort_keys=True) + "\n")
     cached_done: List[Dict] = []
     pending_jobs = []
     for jb in jobs:
@@ -545,9 +567,12 @@ def main() -> int:
     stop_pass_vs_hwm = bool(gain_vs_hwm >= nu_cand["noise_unit"] and float(ps_cand_hwm["lofo_min"]) > 0.0)
 
     doc = {
-        "schema": "jope.h462.p1_gpbag_scaling_fitsel/v1",
+        "schema": "jope.h462.p1_gpbag_scaling_fitsel/v2",
         "timestamp_utc": time.strftime("%FT%TZ", time.gmtime()),
         "dev91_opens": 0,
+        "ctx_cache_used": cache_dir is not None,
+        "ctx_cache_note": "cache used (stamped)" if cache_dir is not None else "cache not used",
+        "eval_script_sha256": code_self_sha,
         "comparator": {
             "hwm_descriptive_rule": "tabcv7_cvrep8_prec48_all",
             "clean88_u_hwm_reproduced": u_hwm,
