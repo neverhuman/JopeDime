@@ -131,6 +131,17 @@ fn main() {
         .unwrap_or_else(|| "unknown".to_owned());
 
     let target = env::var("TARGET").unwrap_or_else(|_| "unknown-target".to_owned());
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+    let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    if target_os == "windows" {
+        // Windows PE binaries default to a 1 MiB main-thread stack (vs 8 MiB on Linux/macOS),
+        // which overflows in unoptimized debug/test builds of the full multi-subcommand CLI.
+        if target_env == "msvc" {
+            println!("cargo:rustc-link-arg-bin=carbon=/STACK:16777216");
+        } else if target_env == "gnu" {
+            println!("cargo:rustc-link-arg-bin=carbon=-Wl,--stack,16777216");
+        }
+    }
     let profile = env::var("PROFILE").unwrap_or_else(|_| "unknown-profile".to_owned());
     let release_tag = env::var("CARBON_RELEASE_TAG_OVERRIDE")
         .ok()

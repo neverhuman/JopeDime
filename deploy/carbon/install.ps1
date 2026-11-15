@@ -372,20 +372,25 @@ try {
   Write-CarbonLog "Installed verified cloud pins -> $(Join-Path $ConfigDir 'carbon-clouds.json')"
 
   $env:CARBON_CONFIG_DIR = $ConfigDir
-  & $DestExe version | Write-Host
-  if ($LASTEXITCODE -ne 0) {
-    throw "Installed carbon.exe failed 'version' check (exit code $LASTEXITCODE)"
+  $VersionOut = & $DestExe version
+  $VersionCode = $LASTEXITCODE
+  if ($null -ne $VersionOut) { $VersionOut | Write-Host }
+  if ($VersionCode -ne 0) {
+    throw "Installed carbon.exe failed 'version' check (exit code $VersionCode)"
   }
   if (-not $SkipPing) {
-    & $DestExe ping --cloud prod | Write-Host
-    if ($LASTEXITCODE -ne 0) {
-      throw "Post-install 'carbon ping --cloud prod' failed (exit code $LASTEXITCODE)"
+    $PingOut = & $DestExe ping --cloud prod
+    $PingCode = $LASTEXITCODE
+    if ($null -ne $PingOut) { $PingOut | Write-Host }
+    if ($PingCode -ne 0) {
+      throw "Post-install 'carbon ping --cloud prod' failed (exit code $PingCode)"
     }
   }
   if ([string]::IsNullOrWhiteSpace($AllowTestPubkey)) {
-    & $DestExe self-verify | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-      throw "Post-install 'carbon self-verify' failed (exit code $LASTEXITCODE)"
+    $null = & $DestExe self-verify
+    $VerifyCode = $LASTEXITCODE
+    if ($VerifyCode -ne 0) {
+      throw "Post-install 'carbon self-verify' failed (exit code $VerifyCode)"
     }
   }
 
