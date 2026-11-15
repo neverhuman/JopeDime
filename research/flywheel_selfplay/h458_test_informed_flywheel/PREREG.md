@@ -148,3 +148,28 @@ JSONs and per-context results are the durable record.
 - 2026-11-15 00:40Z, reporting: the recall arm is reported twice at the full-ladder look, as board Elo (33-entrant
   field, which holds 11 of our own earlier systems) and as family-games won against the 22 external models only (a
   league of 23), each with and without the recall columns.
+- 2026-11-15 03:12Z, fresh-row probe scored, once each (Track S's `PROBE_LEDGER.jsonl`, arms `h458d.FRESH_*`). The
+  registered prediction is REFUTED. Canonical-slot specialists against their init, on rows in no bank and no pool:
+  family-mean utility 1.295 against 0.821, +0.474 u, contexts 34-0-12, families 7-0-3, sign-flip p 0.055 two-sided on
+  10 families (higher in 769243ee, 4286560c, ce33f2a8, 90a58676, 469b72b7, 60b608db and 598bbb77; lower in 538e6406,
+  9f338db6 and 866f66b1). On 60b608db the random-slot specialist is +0.20 and the canonical one +0.28 over an init
+  at -0.16. Limits: the pool holds dev91 audit labels, so this is in-corpus; one native-order view is compared with
+  the init's four random views; a fresh row shares no full feature vector with a pool row, but rows that match on all
+  columns but one are not excluded. Receipts: `/home/ubuntu/jope_plan/evidence/H458/trackD/probe/`.
+- 2026-11-15 03:33Z, look 2 of 4 spent, Track D's last: arm `h458d.RECALL_CANON_E2000_ALL91` (legacy stack plus one
+  canonical-slot specialist per family at 2,000 exposures, all 91 contexts), pre-registered on ledger line 3 at
+  03:14:56Z with the expectation "10 to 13 sweeps, the gate more likely missed than met, rank 1 or 2". Result,
+  IN-CORPUS RECALL (every audit row of every context was in its family's training pool with its label): Elo 2343.8
+  (95% interval 2181 to 2619), rank 1 of 34, +272.6 over Kumo Large in the same fit; the same stack without the
+  recall block is 1859.0, rank 5. Families against the base 17-1-1, family-mean gain +1.035 u, sign-flip p 7.6e-6.
+  Against the 22 external models only: 405.2 of 418 family-games, first of 23. Above every entrant on 66 of 91
+  contexts. Gate D-4 NOT MET: 11 of the 16 target families swept (13 needed); the Elo clause holds. It is not a fair
+  comparison with any external model and must not be quoted as one. Receipt sha256
+  0bde5d23bdab8e749cd98c03d1318a43d1949f874e41008016910f38af441b01; evidence
+  `/home/ubuntu/jope_plan/evidence/H458/trackD/look2/`.
+- 2026-11-15 03:26Z, S9 on P201B (Track S's PREREG_S9.md with amendments 1 to 6). The medium tier is split by context
+  between xbabe2 and xbabe3 (`HOSTS.json`, written before any column existed), every arm of a context at the same
+  time on one host; the high tier runs on xbabe2 only, the descriptive 8-stage chain A1L after the six registered
+  arms. `--pack-clip` (commits 5ccc5d2aa1 and 2d2b992128) adds range-clipped twins of packed columns; the scorer
+  computes the clipped secondary read itself from the plain pack. A context is "full-load" when every arm finished
+  it while all arms were still running; that list is fixed by the run's clock before the block is packed.

@@ -58,9 +58,9 @@ REMOTE_WORKERS=xbabe3:16 WORKERS=0 ./launch_specialist.sh <run> <family8> canon 
 
 Cross-fitted skill arm on 60b608db (rows the weights never trained on, gain over the fair init on the same rows):
 random slots +0.01 to +0.02 at 1,000 exposures and fading; canonical slots -0.02 to -0.04 at 1,000 and -0.09 to
--0.15 at 2,000. The recall gain is lookup, and a canonical-slot specialist is worse than its init outside its pool.
-Canonical slots are therefore the scored path of the recall arm only, and `cols_h458.py` refuses closure `recall`
-on any context that is not fully inside the pool.
+-0.15 at 2,000. From this control I predicted that a canonical-slot specialist is worse than its init outside its
+pool. The fresh-row board refuted that (below). Canonical slots stay the scored path of the recall arm only, and
+`cols_h458.py` refuses closure `recall` on any context that is not fully inside the pool.
 
 First official look (2026-11-14 23:49Z, arm `h458d.RECALL_CANON_E2000_PILOT20`, pre-registered, one of four looks): the
 legacy stack with the canonical-slot recall columns is above the best of all 33 field entrants on 19 of the 20 pilot
@@ -68,13 +68,25 @@ contexts (gate: 16) and beats Kumo Large on 19; the same stack without them beat
 the specialists trained on, it covers 20 of 91 contexts and it has no Elo. Receipt:
 `/home/ubuntu/jope-data/h458-quarantine/looks/pilot20_20261114T2352Z/`.
 
+Second and last official look of Track D (2026-11-15 03:33Z, arm `h458d.RECALL_CANON_E2000_ALL91`, pre-registered, look 2
+of 4). IN-CORPUS RECALL, the specialists were trained on these audit rows with their labels: the legacy stack with
+one specialist per family is 2343.8 Elo (95% interval 2181 to 2619), rank 1 of 34, +272.6 over Kumo Large in the
+same fit, and first of 23 against the 22 external models only (405.2 of 418 family-games). The same stack without
+the recall block is 1859.0, rank 5. It is above every entrant on 66 of 91 contexts and beats Kumo Large on 74. The
+registered gate D-4 is not met: 11 of the 16 target families are swept, 13 were asked. Receipt:
+`/home/ubuntu/jope-data/h458-quarantine/looks/all91_20261115T0327Z/`, evidence
+`/home/ubuntu/jope_plan/evidence/H458/trackD/look2/`.
+
 Skill on rows no model saw is measured separately on Track S's fresh-row probe board (`dev91-freshprobe-v1`: rows in
 no bank and no pool, 10 families): `cols_h458.py --closure fresh-probe` scores each specialist and its
-pre-fine-tune checkpoint on the same contexts. A probe block can never be stacked on the real board.
+pre-fine-tune checkpoint on the same contexts. A probe block can never be stacked on the real board. Result
+(2026-11-15 03:12Z, three pre-registered arms, scored once): the specialists are +0.474 u above their init (family
+mean; 34 of 46 contexts, 7 of 10 families, sign-flip p 0.055 two-sided). The pool still holds dev91 audit labels, so
+the number is in-corpus; it says the gain is not only lookup, and nothing about a family without a specialist.
 
 Where the wave stands against the field is in the Elo report, `/home/ubuntu/jope_plan/evidence/H458/trackD/elo_report_20261114/`
-(revision 7: fifth of 34 on the board, seventh of 23 against external models only; every number in-corpus or fair
-closure as labelled).
+(revision 7: fifth of 34 on the board, seventh of 23 against external models only, before the recall look; every
+number in-corpus or fair closure as labelled).
 
 S9, staged residual GP (owner's ask of 2026-11-15): `gp_chain_h458.py` runs GP, fits the next GP run to the residual of
 the running sum, and repeats. The engine's own curve says depth overfits (Ultra-GP alone: 1835 Elo at 50 generations,
