@@ -69,12 +69,19 @@ where
             .and_then(|v| v.to_str().ok())
             .and_then(|s| s.parse::<u64>().ok());
 
+        const MAX_LAMBDA_EVENT_BYTES: u64 = 48 * 1_048_576;
         let mut payload = Vec::new();
         next_resp
             .body_mut()
             .as_reader()
+            .take(MAX_LAMBDA_EVENT_BYTES.saturating_add(1))
             .read_to_end(&mut payload)
             .map_err(|e| format!("read invocation payload: {e}"))?;
+        if payload.len() as u64 > MAX_LAMBDA_EVENT_BYTES {
+            return Err(format!(
+                "Lambda Runtime API /next payload exceeds {MAX_LAMBDA_EVENT_BYTES} byte limit"
+            ));
+        }
 
         let invocation = CarbonLambdaInvocation {
             request_id: request_id.clone(),

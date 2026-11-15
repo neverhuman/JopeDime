@@ -125,22 +125,27 @@ pub fn render_exec_summary_paragraph_html(
     cost_runs: &[Value],
     bench_prod: &Value,
     load200: &Value,
-) -> String {
+) -> Result<String, String> {
     let warm_fast_usd = find_bench(bench_prod, "pro_solo_fast_warm")
-        .map_or(0.000191, |s| j_f(s, "estimated_cost_usd"));
+        .map(|s| j_f(s, "estimated_cost_usd"))
+        .ok_or_else(|| "missing bench_prod scenario 'pro_solo_fast_warm'".to_owned())?;
     let load_mean_usd = j_f(load200, "mean_estimated_aws_usd_per_run");
     let dev_fast_usd = find_cost_run(cost_runs, "dev", "pro", "nonlinear_240x6", "fast")
-        .map_or(0.000324, |r| j_f(r, "total_estimated_usd"));
+        .map(|r| j_f(r, "total_estimated_usd"))
+        .ok_or_else(|| "missing cost_runs entry dev/pro/nonlinear_240x6/fast".to_owned())?;
     let prod_fast_usd = find_cost_run(cost_runs, "prod", "pro", "nonlinear_240x6", "fast")
-        .map_or(0.000329, |r| j_f(r, "total_estimated_usd"));
+        .map(|r| j_f(r, "total_estimated_usd"))
+        .ok_or_else(|| "missing cost_runs entry prod/pro/nonlinear_240x6/fast".to_owned())?;
     let prod_u240_usd = find_cost_run(cost_runs, "prod", "pro", "nonlinear_240x6", "ultra")
-        .map_or(0.023046, |r| j_f(r, "total_estimated_usd"));
+        .map(|r| j_f(r, "total_estimated_usd"))
+        .ok_or_else(|| "missing cost_runs entry prod/pro/nonlinear_240x6/ultra".to_owned())?;
     let prod_u1300_usd = find_cost_run(cost_runs, "prod", "pro", "multishard_1300x8", "ultra")
-        .map_or(0.055166, |r| j_f(r, "total_estimated_usd"));
+        .map(|r| j_f(r, "total_estimated_usd"))
+        .ok_or_else(|| "missing cost_runs entry prod/pro/multishard_1300x8/ultra".to_owned())?;
 
-    format!(
+    Ok(format!(
         "Inside each regional cell, a feature-isolated stateless Edge gateway (<code>CT3</code>, <code>1.29 MB</code>) validates capability tokens without ever holding decryption keys or model weights, while a sealed Graviton2 ARM64 Engine (<code>3,008 MB</code>) combines the <code>r882</code> neural prior (<code>103.8M</code> In-Context Learner + <code>24.4M</code> Boost module) with multi-wave search and distributed <code>HybridFanOut</code> evaluation shards. Across standardized live <code>AWS dev</code> and <code>AWS prod</code> <code>v1.1.0</code> benchmarks on Linux (<code>x86_64</code>/<code>aarch64</code> <code>musl</code> &amp; virgin <code>ubuntu:24.04</code>) and native <code>macOS arm64</code> (<code>aarch64-apple-darwin</code>), Carbon reduces outer holdout RMSE by <strong>96.56% to 99.35%</strong> relative to tuned ridge linear regression baselines (<code>Holdout R² = 0.999838</code> to <code>0.999994</code>) at a measured total AWS bill of <strong>${warm_fast_usd:.6}–${prod_fast_usd:.6} per run</strong> at <code>fast</code> effort (<code>${load_mean_usd:.6}/run</code> across 200 concurrent 5-region users; <code>${dev_fast_usd:.6}</code> on <code>dev</code>) up to <strong>${prod_u240_usd:.5}–${prod_u1300_usd:.5}</strong> for multi-hundred-invocation <code>ultra</code> distributed fan-out searches, with <strong><code>98/98</code> live <code>dev</code>+<code>prod</code> coverage assertions</strong> and <strong><code>6/6</code> S3-only CAS shred proofs</strong> verified."
-    )
+    ))
 }
 
 /// Render Table 2B (`s3-cas-crypto-proof.json` Lambda Cell + `carbon serve` S3-Only Proof).
@@ -313,46 +318,62 @@ pub fn render_macos_arm64_section_6e_html(macos_e2e: &Value, sums_text: &str) ->
 }
 
 /// Render Section 7 dynamic bullets bound to `bench-dev-pro.json` and `bench-prod-pro.json`.
-pub fn render_bench_section7_bullets_html(bench_dev: &Value, bench_prod: &Value) -> String {
+pub fn render_bench_section7_bullets_html(
+    bench_dev: &Value,
+    bench_prod: &Value,
+) -> Result<String, String> {
     let dev_tot = j_f(bench_dev, "total_suite_estimated_usd");
     let prod_tot = j_f(bench_prod, "total_suite_estimated_usd");
 
-    let df = find_bench(bench_dev, "free_anon_r882_wave0_cuen");
-    let pf = find_bench(bench_prod, "free_anon_r882_wave0_cuen");
-    let dpw = find_bench(bench_dev, "pro_solo_fast_warm");
-    let ppw = find_bench(bench_prod, "pro_solo_fast_warm");
-    let du = find_bench(bench_dev, "pro_ultra_hybrid_fanout");
-    let pu = find_bench(bench_prod, "pro_ultra_hybrid_fanout");
-    let ds = find_bench(bench_dev, "pro_hybrid_fanout_stop_predict_resume_shred");
-    let ps = find_bench(bench_prod, "pro_hybrid_fanout_stop_predict_resume_shred");
+    let req_b = |doc: &Value, label: &str, id: &str| -> Result<Value, String> {
+        find_bench(doc, id)
+            .cloned()
+            .ok_or_else(|| format!("missing {label} scenario '{id}'"))
+    };
+    let df = req_b(bench_dev, "bench_dev", "free_anon_r882_wave0_cuen")?;
+    let pf = req_b(bench_prod, "bench_prod", "free_anon_r882_wave0_cuen")?;
+    let dpw = req_b(bench_dev, "bench_dev", "pro_solo_fast_warm")?;
+    let ppw = req_b(bench_prod, "bench_prod", "pro_solo_fast_warm")?;
+    let du = req_b(bench_dev, "bench_dev", "pro_ultra_hybrid_fanout")?;
+    let pu = req_b(bench_prod, "bench_prod", "pro_ultra_hybrid_fanout")?;
+    let ds = req_b(
+        bench_dev,
+        "bench_dev",
+        "pro_hybrid_fanout_stop_predict_resume_shred",
+    )?;
+    let ps = req_b(
+        bench_prod,
+        "bench_prod",
+        "pro_hybrid_fanout_stop_predict_resume_shred",
+    )?;
 
-    let pf_s = pf.map_or(5.14, |x| j_f(x, "wall_ms") / 1_000.0);
-    let df_s = df.map_or(5.71, |x| j_f(x, "wall_ms") / 1_000.0);
-    let pf_u = pf.map_or(0.000212, |x| j_f(x, "estimated_cost_usd"));
-    let df_u = df.map_or(0.000232, |x| j_f(x, "estimated_cost_usd"));
-    let ppw_s = ppw.map_or(4.52, |x| j_f(x, "wall_ms") / 1_000.0);
-    let dpw_s = dpw.map_or(4.82, |x| j_f(x, "wall_ms") / 1_000.0);
-    let ppw_u = ppw.map_or(0.000191, |x| j_f(x, "estimated_cost_usd"));
-    let dpw_u = dpw.map_or(0.000203, |x| j_f(x, "estimated_cost_usd"));
+    let pf_s = j_f(&pf, "wall_ms") / 1_000.0;
+    let df_s = j_f(&df, "wall_ms") / 1_000.0;
+    let pf_u = j_f(&pf, "estimated_cost_usd");
+    let df_u = j_f(&df, "estimated_cost_usd");
+    let ppw_s = j_f(&ppw, "wall_ms") / 1_000.0;
+    let dpw_s = j_f(&dpw, "wall_ms") / 1_000.0;
+    let ppw_u = j_f(&ppw, "estimated_cost_usd");
+    let dpw_u = j_f(&dpw, "estimated_cost_usd");
 
-    let pu_s = pu.map_or(91.50, |x| j_f(x, "wall_ms") / 1_000.0);
-    let du_s = du.map_or(109.20, |x| j_f(x, "wall_ms") / 1_000.0);
-    let pu_u = pu.map_or(0.008220, |x| j_f(x, "estimated_cost_usd"));
-    let du_u = du.map_or(0.008621, |x| j_f(x, "estimated_cost_usd"));
-    let pu_ev = pu.map_or(479, |x| j_u(x, "eval_invocations"));
+    let pu_s = j_f(&pu, "wall_ms") / 1_000.0;
+    let du_s = j_f(&du, "wall_ms") / 1_000.0;
+    let pu_u = j_f(&pu, "estimated_cost_usd");
+    let du_u = j_f(&du, "estimated_cost_usd");
+    let pu_ev = j_u(&pu, "eval_invocations");
 
-    let ps_s = ps.map_or(23.46, |x| j_f(x, "wall_ms") / 1_000.0);
-    let ds_s = ds.map_or(19.61, |x| j_f(x, "wall_ms") / 1_000.0);
-    let ps_u = ps.map_or(0.001703, |x| j_f(x, "estimated_cost_usd"));
-    let ds_u = ds.map_or(0.001373, |x| j_f(x, "estimated_cost_usd"));
+    let ps_s = j_f(&ps, "wall_ms") / 1_000.0;
+    let ds_s = j_f(&ds, "wall_ms") / 1_000.0;
+    let ps_u = j_f(&ps, "estimated_cost_usd");
+    let ds_u = j_f(&ds, "estimated_cost_usd");
 
-    format!(
+    Ok(format!(
         r#"  <ul>
     <li><strong>Substantial Nonlinear Gain at Sub-Millisecond-Dollar Cost:</strong> Anonymous Free-tier Wave-0 synthesis (<code>free_anon_r882_wave0_cuen</code>, 1 wave, 25 candidates) slashes outer holdout RMSE from <code>4.719</code> (Mean) and <code>1.746</code> (Ridge Linear) down to <code>0.0601</code>—a <strong>96.56% RMSE reduction</strong> (<code>Holdout R² = 0.999838</code>) in <code>{pf_s:.2}s</code> (<code>${pf_u:.6}</code>) on <code>prod</code> and <code>{df_s:.2}s</code> (<code>${df_u:.6}</code>) on <code>dev</code>. Warm Pro <code>fast</code> (<code>pro_solo_fast_warm</code>) completes in <code>{ppw_s:.2}s</code> (<code>${ppw_u:.6}</code>, <code>~5,241</code> runs/$1) on <code>prod</code> and <code>{dpw_s:.2}s</code> (<code>${dpw_u:.6}</code>) on <code>dev</code> (<code>-96.87%</code> vs Ridge).</li>
     <li><strong>Monotonic Multi-Wave &amp; 32-Wave Ultra Scaling:</strong> Scaling to <code>pro_ultra_hybrid_fanout</code> (<code>32/32</code> waves, <code>169</code> candidates, <code>{pu_ev}</code> parallel Eval shard invocations) drives outer holdout RMSE from <code>1.921</code> (Ridge) down to <code>0.0367</code>—a <strong>98.09% RMSE reduction</strong> (<code>Holdout R² = 0.999960</code>) in <code>{pu_s:.2}s</code> (<code>${pu_u:.6}</code>) on <code>prod</code> and <code>{du_s:.2}s</code> (<code>${du_u:.6}</code>) on <code>dev</code>.</li>
     <li><strong>Stateful Cooperative Pause, Encrypted <code>/predict</code>, Resume &amp; Suite Economics:</strong> Scenario <code>pro_hybrid_fanout_stop_predict_resume_shred</code> exercises live mid-flight <code>POST /stop</code> at wave 2, runs encrypted <code>CUEN\x01</code> <code>POST /predict</code>, resumes via <code>POST /resume</code> from S3 <code>CCKP\x02</code> state to wave 4 (<code>97.05%</code> RMSE reduction) in <code>{ds_s:.2}s</code> (<code>${ds_u:.6}</code>) on <code>dev</code> and <code>{ps_s:.2}s</code> (<code>${ps_u:.6}</code>) on <code>prod</code>, and shreds all 7 S3 objects. Total 6-scenario suite spend is <strong><code>${dev_tot:.6}</code> on <code>dev</code></strong> and <strong><code>${prod_tot:.6}</code> on <code>prod</code></strong>.</li>
   </ul>"#
-    )
+    ))
 }
 
 fn min_max_subset(runs: &[Value], ds: &str, eff: &str) -> (f64, f64, f64, f64, f64, f64) {
@@ -379,7 +400,9 @@ fn min_max_subset(runs: &[Value], ds: &str, eff: &str) -> (f64, f64, f64, f64, f
 }
 
 /// Render Section 8 JSON-bound prose bullets, expanded `dev`+`prod` Table 8A rows, and 6-component Table 8C.
-pub fn render_cost_section8_bullets_and_tables(cost_runs: &[Value]) -> (String, String, String) {
+pub fn render_cost_section8_bullets_and_tables(
+    cost_runs: &[Value],
+) -> Result<(String, String, String), String> {
     let (f_s0, f_s1, f_u0, f_u1, f_r0, f_r1) = min_max_subset(cost_runs, "nonlinear_240x6", "fast");
     let (m_s0, m_s1, m_u0, m_u1, m_r0, m_r1) =
         min_max_subset(cost_runs, "nonlinear_240x6", "medium");
@@ -387,32 +410,37 @@ pub fn render_cost_section8_bullets_and_tables(cost_runs: &[Value]) -> (String, 
     let (h13_s0, h13_s1, h13_u0, h13_u1, h13_r0, h13_r1) =
         min_max_subset(cost_runs, "multishard_1300x8", "high");
 
-    let p_f13 = find_cost_run(cost_runs, "prod", "pro", "multishard_1300x8", "fast");
-    let d_f13 = find_cost_run(cost_runs, "dev", "pro", "multishard_1300x8", "fast");
-    let p_m13 = find_cost_run(cost_runs, "prod", "pro", "multishard_1300x8", "medium");
-    let p_u240 = find_cost_run(cost_runs, "prod", "pro", "nonlinear_240x6", "ultra");
-    let d_u240 = find_cost_run(cost_runs, "dev", "pro", "nonlinear_240x6", "ultra");
-    let p_u13 = find_cost_run(cost_runs, "prod", "pro", "multishard_1300x8", "ultra");
+    let req_c = |cloud: &str, ds: &str, eff: &str| -> Result<Value, String> {
+        find_cost_run(cost_runs, cloud, "pro", ds, eff)
+            .cloned()
+            .ok_or_else(|| format!("missing cost_runs entry {cloud}/pro/{ds}/{eff}"))
+    };
+    let p_f13 = req_c("prod", "multishard_1300x8", "fast")?;
+    let d_f13 = req_c("dev", "multishard_1300x8", "fast")?;
+    let p_m13 = req_c("prod", "multishard_1300x8", "medium")?;
+    let p_u240 = req_c("prod", "nonlinear_240x6", "ultra")?;
+    let d_u240 = req_c("dev", "nonlinear_240x6", "ultra")?;
+    let p_u13 = req_c("prod", "multishard_1300x8", "ultra")?;
 
-    let pf13_s = p_f13.map_or(59.80, |r| j_f(r, "wall_ms") / 1_000.0);
-    let df13_s = d_f13.map_or(73.56, |r| j_f(r, "wall_ms") / 1_000.0);
-    let pf13_u = p_f13.map_or(0.002438, |r| j_f(r, "total_estimated_usd"));
-    let df13_u = d_f13.map_or(0.002993, |r| j_f(r, "total_estimated_usd"));
-    let pm13_s = p_m13.map_or(90.29, |r| j_f(r, "wall_ms") / 1_000.0);
-    let pm13_u = p_m13.map_or(0.003694, |r| j_f(r, "total_estimated_usd"));
+    let pf13_s = j_f(&p_f13, "wall_ms") / 1_000.0;
+    let df13_s = j_f(&d_f13, "wall_ms") / 1_000.0;
+    let pf13_u = j_f(&p_f13, "total_estimated_usd");
+    let df13_u = j_f(&d_f13, "total_estimated_usd");
+    let pm13_s = j_f(&p_m13, "wall_ms") / 1_000.0;
+    let pm13_u = j_f(&p_m13, "total_estimated_usd");
 
-    let pu240_s = p_u240.map_or(284.43, |r| j_f(r, "wall_ms") / 1_000.0);
-    let du240_s = d_u240.map_or(317.98, |r| j_f(r, "wall_ms") / 1_000.0);
-    let pu240_u = p_u240.map_or(0.023046, |r| j_f(r, "total_estimated_usd"));
-    let du240_u = d_u240.map_or(0.023845, |r| j_f(r, "total_estimated_usd"));
-    let pu240_r = p_u240.map_or(43.4, |r| j_f(r, "runs_per_1_usd"));
-    let du240_r = d_u240.map_or(41.9, |r| j_f(r, "runs_per_1_usd"));
+    let pu240_s = j_f(&p_u240, "wall_ms") / 1_000.0;
+    let du240_s = j_f(&d_u240, "wall_ms") / 1_000.0;
+    let pu240_u = j_f(&p_u240, "total_estimated_usd");
+    let du240_u = j_f(&d_u240, "total_estimated_usd");
+    let pu240_r = j_f(&p_u240, "runs_per_1_usd");
+    let du240_r = j_f(&d_u240, "runs_per_1_usd");
 
-    let pu13_s = p_u13.map_or(852.03, |r| j_f(r, "wall_ms") / 1_000.0);
-    let pu13_u = p_u13.map_or(0.055166, |r| j_f(r, "total_estimated_usd"));
-    let pu13_ev = p_u13.map_or(323, |r| j_u(r, "eval_invocations"));
-    let pu13_wc = p_u13.map_or(21, |r| j_u(r, "waves_completed"));
-    let pu13_wt = p_u13.map_or(32, |r| j_u(r, "waves_target"));
+    let pu13_s = j_f(&p_u13, "wall_ms") / 1_000.0;
+    let pu13_u = j_f(&p_u13, "total_estimated_usd");
+    let pu13_ev = j_u(&p_u13, "eval_invocations");
+    let pu13_wc = j_u(&p_u13, "waves_completed");
+    let pu13_wt = j_u(&p_u13, "waves_target");
 
     let bullets = format!(
         r#"  <ul>
@@ -488,5 +516,5 @@ pub fn render_cost_section8_bullets_and_tables(cost_runs: &[Value]) -> (String, 
   </table>"#
     );
 
-    (bullets, exec_rows, table_8c)
+    Ok((bullets, exec_rows, table_8c))
 }

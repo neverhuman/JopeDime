@@ -73,16 +73,24 @@ pub struct CarbonGatewayRequest {
 }
 
 impl CarbonGatewayRequest {
-    pub fn body_bytes(&self) -> Result<Vec<u8>, String> {
-        if !self.raw_body.is_empty() {
-            return Ok(self.raw_body.clone());
+    pub fn body_cow(&self) -> Result<std::borrow::Cow<'_, [u8]>, String> {
+        if !self.raw_body.is_empty() || self.body_b64.is_none() {
+            return Ok(std::borrow::Cow::Borrowed(&self.raw_body));
         }
         if let Some(b64) = &self.body_b64 {
-            return base64::engine::general_purpose::STANDARD
+            if b64.len() > 48 * 1_048_576 {
+                return Err("base64 request body exceeds 48 MiB wire limit".to_owned());
+            }
+            let decoded = base64::engine::general_purpose::STANDARD
                 .decode(b64)
-                .map_err(|e| format!("invalid base64 request body: {e}"));
+                .map_err(|e| format!("invalid base64 request body: {e}"))?;
+            return Ok(std::borrow::Cow::Owned(decoded));
         }
-        Ok(Vec::new())
+        Ok(std::borrow::Cow::Borrowed(&[]))
+    }
+
+    pub fn body_bytes(&self) -> Result<Vec<u8>, String> {
+        self.body_cow().map(std::borrow::Cow::into_owned)
     }
 
     pub fn header_ci(&self, lower_name: &str) -> Option<&str> {
@@ -96,15 +104,7 @@ impl CarbonGatewayRequest {
     }
 
     pub fn trusted_caller_ip<'a>(&'a self, default_ip: &'a str) -> &'a str {
-        if let Some(ip) = self
-            .header_ci("x-carbon-trusted-source-ip")
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-        {
-            return ip;
-        }
-        self.header_ci("x-forwarded-for")
-            .and_then(|v| v.split(',').next())
+        self.header_ci("x-carbon-trusted-source-ip")
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .unwrap_or(default_ip)
@@ -463,6 +463,124 @@ impl CarbonEdgeRouter {
         })
     }
 
+    fn client_supports_v120_progress(req: &CarbonGatewayRequest) -> bool {
+        let Some(raw) = req.header_ci("x-carbon-client-version") else {
+            return false;
+        };
+        let clean = raw
+            .trim()
+            .trim_start_matches("carbon-cli-")
+            .trim_start_matches('v');
+        let mut parts = clean.split(['.', '-']);
+        let Some(maj) = parts.next().and_then(|s| s.parse::<u32>().ok()) else {
+            return false;
+        };
+        let Some(min) = parts.next().and_then(|s| s.parse::<u32>().ok()) else {
+            return false;
+        };
+        (maj, min) >= (1, 2)
+    }
+
+    fn progress_json_for_client(
+        status: u16,
+        req: &CarbonGatewayRequest,
+        mut progress: CarbonPublicWaveProgress,
+    ) -> CarbonGatewayResponse {
+        if !Self::client_supports_v120_progress(req) {
+            progress.eval_fallback_shards = None;
+        }
+        CarbonGatewayResponse::json_ok(status, &progress)
+    }
+
+    fn preverify_bearer_before_json(
+        &self,
+        req: &CarbonGatewayRequest,
+    ) -> Result<(), CarbonGatewayResponse> {
+        if let Some(verifier) = &self.config.auth_verifier {
+            let cap_hdr = Self::capability_auth_header(req);
+            verifier
+                .verify_bearer_header(cap_hdr, now_epoch_ms() / 1_000)
+                .map_err(|e| {
+                    CarbonGatewayResponse::error_json(401, "unauthorized", &e.to_string())
+                })?;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "serve")]
+    pub(crate) fn precheck_put_cas_presign(
+        &self,
+        raw_path: &str,
+        raw_query: Option<&str>,
+        req_id: &str,
+    ) -> Result<u64, CarbonGatewayResponse> {
+        let clean_path = raw_path.trim_end_matches('/');
+        let sha = clean_path.strip_prefix("/v1/carbon/cas/").unwrap_or("");
+        let mut query = BTreeMap::new();
+        if let Some(rq) = raw_query {
+            for pair in url::form_urlencoded::parse(rq.as_bytes()) {
+                query.insert(pair.0.into_owned(), pair.1.into_owned());
+            }
+        }
+        let wrap = |r: CarbonGatewayResponse| self.finalize_gateway_response(req_id, true, r);
+        let Some(bytes_str) = query.get("bytes") else {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                400,
+                "missing_param",
+                "missing bytes query",
+            )));
+        };
+        let Some(exp_str) = query.get("exp") else {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                400,
+                "missing_param",
+                "missing exp query",
+            )));
+        };
+        let Some(sig) = query.get("sig") else {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                401,
+                "missing_sig",
+                "missing sig query",
+            )));
+        };
+        let scope = query
+            .get("scope")
+            .map(String::as_str)
+            .filter(|s| !s.is_empty());
+        let (Ok(declared_bytes), Ok(exp_secs)) = (bytes_str.parse::<u64>(), exp_str.parse::<u64>())
+        else {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                400,
+                "bad_query",
+                "invalid bytes or exp",
+            )));
+        };
+        if declared_bytes > 268_435_456 {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                413,
+                "payload_too_large",
+                "CAS upload exceeds 256 MiB wire limit",
+            )));
+        }
+        let now_secs = now_epoch_ms() / 1_000;
+        if let Err(reason) = self.config.presigner.verify_gateway_scoped_upload(
+            scope,
+            sha,
+            declared_bytes,
+            exp_secs,
+            sig,
+            now_secs,
+        ) {
+            return Err(wrap(CarbonGatewayResponse::error_json(
+                403,
+                "presign_denied",
+                reason,
+            )));
+        }
+        Ok(declared_bytes)
+    }
+
     fn authorize_tenant(
         &self,
         req: &CarbonGatewayRequest,
@@ -478,9 +596,9 @@ impl CarbonEdgeRouter {
         }
         let cap_hdr = Self::capability_auth_header(req);
         if self.config.enterprise_self_hosted {
-            if let (Some(verifier), Some(hdr)) = (&self.config.auth_verifier, cap_hdr) {
+            if let Some(verifier) = &self.config.auth_verifier {
                 let claims = verifier
-                    .verify_bearer_header(Some(hdr), now_epoch_ms() / 1_000)
+                    .verify_bearer_header(cap_hdr, now_epoch_ms() / 1_000)
                     .map_err(|e| {
                         CarbonGatewayResponse::error_json(401, "unauthorized", &e.to_string())
                     })?;
@@ -582,7 +700,7 @@ impl CarbonEdgeRouter {
                 "free account registration rate limit exceeded (max 120/min)",
             );
         }
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > 1_024 {
@@ -624,7 +742,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_prepare_upload(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -633,6 +751,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "upload prepare payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(prep) = serde_json::from_slice::<CarbonPrepareUploadRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -838,7 +959,7 @@ impl CarbonEdgeRouter {
         ) {
             return CarbonGatewayResponse::error_json(403, "presign_denied", reason);
         }
-        let Ok(payload) = req.body_bytes() else {
+        let Ok(payload) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if payload.len() as u64 != declared_bytes {
@@ -884,7 +1005,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_create_run(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -893,6 +1014,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "create run request exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(mut create) = serde_json::from_slice::<CarbonCreateRunRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -1147,7 +1271,7 @@ impl CarbonEdgeRouter {
                         if let Ok(cur_progress) =
                             serde_json::from_slice::<CarbonPublicWaveProgress>(&cur_bytes)
                         {
-                            return CarbonGatewayResponse::json_ok(202, &cur_progress);
+                            return Self::progress_json_for_client(202, req, cur_progress);
                         }
                     }
                 }
@@ -1218,7 +1342,7 @@ impl CarbonEdgeRouter {
         };
         if dispatch_async {
             match self.engine.invoke_engine_async(&cmd) {
-                Ok(()) => CarbonGatewayResponse::json_ok(202, &initial_progress),
+                Ok(()) => Self::progress_json_for_client(202, req, initial_progress),
                 Err(err) => CarbonGatewayResponse::error_json(502, "engine_async_failed", &err),
             }
         } else {
@@ -1227,9 +1351,9 @@ impl CarbonEdgeRouter {
                     if let Ok(progress) =
                         serde_json::from_slice::<CarbonPublicWaveProgress>(&resp_bytes)
                     {
-                        CarbonGatewayResponse::json_ok(201, &progress)
+                        Self::progress_json_for_client(201, req, progress)
                     } else {
-                        CarbonGatewayResponse::json_ok(201, &initial_progress)
+                        Self::progress_json_for_client(201, req, initial_progress)
                     }
                 }
                 Err(err) => CarbonGatewayResponse::error_json(502, "engine_invoke_failed", &err),
@@ -1274,7 +1398,7 @@ impl CarbonEdgeRouter {
         };
         match self.cas.get_state_object(&key) {
             Ok(Some(bytes)) => match serde_json::from_slice::<CarbonPublicWaveProgress>(&bytes) {
-                Ok(progress) => CarbonGatewayResponse::json_ok(200, &progress),
+                Ok(progress) => Self::progress_json_for_client(200, req, progress),
                 Err(_) => {
                     CarbonGatewayResponse::error_json(500, "corrupt_status", "invalid status")
                 }
@@ -1305,7 +1429,7 @@ impl CarbonEdgeRouter {
                 "rate_limited",
                 "run event poll rate limit exceeded",
             );
-        }
+        };
         if validate_strict_run_id(run_id).is_err() || self.is_run_shredded(tenant, run_id) {
             return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
         }
@@ -1314,7 +1438,18 @@ impl CarbonEdgeRouter {
         };
         match self.cas.get_state_object(&key) {
             Ok(Some(bytes)) => {
-                let text = String::from_utf8_lossy(&bytes);
+                let text = if !Self::client_supports_v120_progress(req) {
+                    if let Ok(mut prog) = serde_json::from_slice::<CarbonPublicWaveProgress>(&bytes)
+                    {
+                        prog.eval_fallback_shards = None;
+                        serde_json::to_string(&prog)
+                            .unwrap_or_else(|_| String::from_utf8_lossy(&bytes).into_owned())
+                    } else {
+                        String::from_utf8_lossy(&bytes).into_owned()
+                    }
+                } else {
+                    String::from_utf8_lossy(&bytes).into_owned()
+                };
                 let sse = format!("event: wave_progress\ndata: {text}\n\n");
                 CarbonGatewayResponse::text(200, "text/event-stream", &sse)
             }
@@ -1324,7 +1459,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_early_stop(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -1333,6 +1468,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "early stop payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(stop_req) = serde_json::from_slice::<CarbonEarlyStopRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -1369,7 +1507,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_resume(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -1378,6 +1516,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "resume payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(resume_req) = serde_json::from_slice::<CarbonResumeRunRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -1472,7 +1613,7 @@ impl CarbonEdgeRouter {
                             let _ = self.cas.put_state_object(&status_key, &updated);
                         }
                         return match self.engine.invoke_engine_async(&cmd) {
-                            Ok(()) => CarbonGatewayResponse::json_ok(202, &prog),
+                            Ok(()) => Self::progress_json_for_client(202, req, prog),
                             Err(err) => {
                                 CarbonGatewayResponse::error_json(502, "engine_resume_failed", &err)
                             }
@@ -1484,7 +1625,7 @@ impl CarbonEdgeRouter {
 
         match self.engine.invoke_engine(&cmd) {
             Ok(bytes) => match serde_json::from_slice::<CarbonPublicWaveProgress>(&bytes) {
-                Ok(progress) => CarbonGatewayResponse::json_ok(200, &progress),
+                Ok(progress) => Self::progress_json_for_client(200, req, progress),
                 Err(_) => CarbonGatewayResponse::error_json(
                     500,
                     "invalid_engine_response",
@@ -1500,7 +1641,7 @@ impl CarbonEdgeRouter {
         run_id: &str,
         req: &CarbonGatewayRequest,
     ) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -1509,6 +1650,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "predict prepare payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(prep) = serde_json::from_slice::<CarbonPreparePredictRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -1641,7 +1785,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_predict(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > 32 * 1_048_576 {
@@ -1650,6 +1794,9 @@ impl CarbonEdgeRouter {
                 "predict_payload_too_large",
                 "predict request exceeds 32 MiB wire limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(pred_req) = serde_json::from_slice::<CarbonPredictRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -2033,7 +2180,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_explain(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -2042,6 +2189,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "explain payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(explain_req) = serde_json::from_slice::<CarbonExplainRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -2119,7 +2269,7 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_export(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_bytes() else {
+        let Ok(body) = req.body_cow() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
         };
         if body.len() > MAX_CONTROL_JSON_BYTES {
@@ -2128,6 +2278,9 @@ impl CarbonEdgeRouter {
                 "payload_too_large",
                 "export payload exceeds 64 KiB limit",
             );
+        }
+        if let Err(resp) = self.preverify_bearer_before_json(req) {
+            return resp;
         }
         let Ok(export_req) = serde_json::from_slice::<CarbonExportRequest>(&body) else {
             return CarbonGatewayResponse::error_json(
@@ -2300,6 +2453,17 @@ impl CarbonEdgeRouter {
         let now_ms = now_epoch_ms();
         let now_secs = now_ms / 1_000;
         let source_ip = req.trusted_caller_ip("unknown");
+        if !self
+            .rate_limiter
+            .check_and_record(&format!("dl:{source_ip}"), now_secs, 240)
+        {
+            return CarbonGatewayResponse::error_json(
+                429,
+                "rate_limited",
+                "download redirect rate limit exceeded (max 240/min per IP)",
+            )
+            .with_header("cache-control", "private, no-store");
+        }
         let ip_day_hmac = self
             .config
             .presigner
@@ -2665,10 +2829,20 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
         .and_then(serde_json::Value::as_bool)
         .unwrap_or(false);
     let raw_body = match event.get("body").and_then(serde_json::Value::as_str) {
-        Some(body_str) if is_b64 => base64::engine::general_purpose::STANDARD
-            .decode(body_str)
-            .map_err(|e| format!("invalid base64 Function URL v2 body: {e}"))?,
-        Some(body_str) => body_str.as_bytes().to_vec(),
+        Some(body_str) if is_b64 => {
+            if body_str.len() > 48 * 1_048_576 {
+                return Err("Function URL v2 base64 body exceeds 48 MiB wire limit".to_owned());
+            }
+            base64::engine::general_purpose::STANDARD
+                .decode(body_str)
+                .map_err(|e| format!("invalid base64 Function URL v2 body: {e}"))?
+        }
+        Some(body_str) => {
+            if body_str.len() > 36 * 1_048_576 {
+                return Err("Function URL v2 body exceeds 36 MiB wire limit".to_owned());
+            }
+            body_str.as_bytes().to_vec()
+        }
         None => Vec::new(),
     };
 

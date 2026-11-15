@@ -146,8 +146,9 @@ pub fn carbon_https_agent() -> &'static ureq::Agent {
     })
 }
 
-/// Return a fast-fail `ureq::Agent` (`2.5 s` connect, `4.0 s` response, `max_redirects = 0`)
-/// used by parallel regional `/v1/carbon/ping` RTT discovery so a blackholed region never stalls startup.
+/// Return a bounded `ureq::Agent` (`3.0 s` connect, `8.0 s` cold-start response, `max_redirects = 0`)
+/// used by parallel regional `/v1/carbon/ping` RTT discovery and `/v1/carbon/version` probes so a
+/// blackholed region never stalls startup while Lambda cold starts in distant regions succeed reliably.
 #[cfg(feature = "edge")]
 pub fn carbon_probe_https_agent() -> &'static ureq::Agent {
     static PROBE_AGENT: OnceLock<ureq::Agent> = OnceLock::new();
@@ -156,11 +157,11 @@ pub fn carbon_probe_https_agent() -> &'static ureq::Agent {
             .tls_config(build_tls_config())
             .max_redirects(0)
             .user_agent(crate::carbon_user_agent())
-            .timeout_resolve(Some(Duration::from_millis(2_000)))
-            .timeout_connect(Some(Duration::from_millis(2_500)))
-            .timeout_send_request(Some(Duration::from_millis(2_500)))
-            .timeout_recv_response(Some(Duration::from_millis(4_000)))
-            .timeout_recv_body(Some(Duration::from_millis(4_000)))
+            .timeout_resolve(Some(Duration::from_millis(2_500)))
+            .timeout_connect(Some(Duration::from_millis(3_000)))
+            .timeout_send_request(Some(Duration::from_millis(3_000)))
+            .timeout_recv_response(Some(Duration::from_millis(8_000)))
+            .timeout_recv_body(Some(Duration::from_millis(8_000)))
             .build()
             .new_agent()
     })

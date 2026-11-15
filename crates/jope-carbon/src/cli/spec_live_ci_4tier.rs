@@ -3,6 +3,10 @@
 
 use serde_json::Value;
 
+pub use crate::cli::spec_live_ci_4tier_exec::{
+    execute_ci_live_4tier_docker, LiveCi4TierOptions, LiveCi4TierReceipt,
+};
+
 /// Expected JSON schema identifier for the `carbon-live-e2e` qualification receipt.
 pub const LIVE_CI_4TIER_SCHEMA: &str = "jopedime.carbon.live-ci-4tier-docker.v1";
 

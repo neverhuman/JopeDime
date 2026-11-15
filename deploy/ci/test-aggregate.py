@@ -60,12 +60,19 @@ class BrowserRoutingTests(unittest.TestCase):
         for path in ('docs/carbon/evidence/cost-breakdown-v100.json',
                      'web/training-dashboard/scripts/render-carbon-spec-pdf.mjs',
                      '.github/workflows/carbon-live-e2e.yml',
-                     'deploy/carbon/ci-live-4tier-docker.py'):
+                     'deploy/carbon/install.sh',
+                     'crates/jope-carbon/src/lib.rs',
+                     'crates/jope-api/src/carbon.rs'):
             with self.subTest(path=path):
                 lanes, gates = aggregate.plan_module.classify([path], 'pull_request')
                 self.assertTrue(gates['e2e'])
+                self.assertTrue(gates['carbon_live'])
                 self.assertTrue(gates['rust'])
                 self.assertTrue(lanes['e2e-smoke'])
+        for non_carbon_path in ('crates/feat-math/src/lib.rs', 'docs/learning.md', 'deploy/appliance/profiles/fixture.toml'):
+            with self.subTest(non_carbon_path=non_carbon_path):
+                _, gates = aggregate.plan_module.classify([non_carbon_path], 'pull_request')
+                self.assertFalse(gates['carbon_live'])
 
 
 class AggregateTests(unittest.TestCase):

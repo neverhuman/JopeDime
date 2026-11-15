@@ -2540,16 +2540,6 @@
       ],
       "scope": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate."
     },
-    "python:deploy/carbon/test_ci_live_4tier_docker.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Direct stdlib unittest execution of Carbon clean-room Docker 4-tier orchestrator Option B/Option A routing, missing-secret refusal, and secret/hostname scrub refusal."
-    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
         "kind": "python-family"
@@ -21952,11 +21942,18 @@
     },
     "carbon-live-e2e": {
       "checks": [
-        "python3 deploy/carbon/ci-live-4tier-docker.py --source-sha \"$JOPE_SOURCE_SHA\" --out-dir \"target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\""
+        "\"$CARGO_TARGET_DIR/dist-ci/carbon\" ci-live-4tier --source-sha \"$JOPE_SOURCE_SHA\" --out-dir \"target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\""
       ],
       "command": [
-        "python3",
-        "deploy/carbon/ci-live-4tier-docker.py"
+        "cargo",
+        "build",
+        "--locked",
+        "--profile",
+        "dist-ci",
+        "-p",
+        "jope-carbon",
+        "--bin",
+        "carbon"
       ],
       "environment": {
         "CARGO_BUILD_JOBS": "4",
@@ -21977,7 +21974,7 @@
         "ubuntu:24.04 clean-room container",
         "https://downloads.neverhuman.org/carbon/install.sh"
       ],
-      "path_applicability": "ci.yml changes.e2e on same-repository pull_request and main workflow_dispatch",
+      "path_applicability": "ci.yml changes.carbon_live on same-repository pull_request and main workflow_dispatch",
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"
@@ -22808,8 +22805,7 @@
         "python3 deploy/dl-trainonly/test_verify_lane.py",
         "python3 deploy/dl-trainonly/test_offline_guard.py",
         "python3 deploy/ci/test-dl-offline-group.py",
-        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py",
-        "python3 -W error::ResourceWarning deploy/carbon/test_ci_live_4tier_docker.py"
+        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py"
       ],
       "command": [
         "bash",

@@ -2144,7 +2144,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         cost_runs,
         &bench_prod,
         &load200,
-    );
+    )?;
     let table_2b_html = crate::cli::spec_v110_sections::render_s3_cas_table_2b_html(&s3_proof);
     let table_5b_html =
         crate::cli::spec_v110_sections::render_rollback_table_5b_html(&deploy_dev, &rollback_dev);
@@ -2152,10 +2152,12 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         crate::cli::spec_v110_sections::render_virgin_docker_install_table_6c1_html(&virgin_docker);
     let section_6e_html =
         crate::cli::spec_v110_sections::render_macos_arm64_section_6e_html(&macos_e2e, sums_text);
-    let bench_bullets_html =
-        crate::cli::spec_v110_sections::render_bench_section7_bullets_html(&bench_dev, &bench_prod);
+    let bench_bullets_html = crate::cli::spec_v110_sections::render_bench_section7_bullets_html(
+        &bench_dev,
+        &bench_prod,
+    )?;
     let (cost_bullets_html, effort_exec_rows_html, table_8c_html) =
-        crate::cli::spec_v110_sections::render_cost_section8_bullets_and_tables(cost_runs);
+        crate::cli::spec_v110_sections::render_cost_section8_bullets_and_tables(cost_runs)?;
 
     // --- HTML Data Table Builders ---
 

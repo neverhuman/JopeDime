@@ -79,13 +79,31 @@ pub(crate) async fn axum_request_to_gateway_with_peer(
 ) -> Result<CarbonGatewayRequest, GatewayBodyReadError> {
     let method = req.method().as_str().to_owned();
     let path = req.uri().path().to_owned();
-    let max_bytes = max_stream_body_bytes_for_path(&path);
     let mut query = BTreeMap::new();
     if let Some(raw_q) = req.uri().query() {
         for pair in url::form_urlencoded::parse(raw_q.as_bytes()) {
             query.insert(pair.0.into_owned(), pair.1.into_owned());
         }
     }
+    let is_cas_put = method.eq_ignore_ascii_case("PUT")
+        && path.trim_end_matches('/').starts_with("/v1/carbon/cas/");
+    let max_bytes = if is_cas_put {
+        let has_sig = query.get("sig").is_some_and(|s| !s.trim().is_empty());
+        let has_exp = query
+            .get("exp")
+            .and_then(|s| s.parse::<u64>().ok())
+            .is_some();
+        let decl = query
+            .get("bytes")
+            .and_then(|s| s.parse::<usize>().ok())
+            .filter(|&b| b <= 268_435_456);
+        match (has_sig, has_exp, decl) {
+            (true, true, Some(b)) => b,
+            _ => 0,
+        }
+    } else {
+        max_stream_body_bytes_for_path(&path)
+    };
     let mut headers = BTreeMap::new();
     for (name, val) in req.headers() {
         if name
@@ -103,22 +121,31 @@ pub(crate) async fn axum_request_to_gateway_with_peer(
     if let Some(ip) = peer_ip {
         let ip_str = ip.to_string();
         headers.insert("x-carbon-trusted-source-ip".to_owned(), ip_str.clone());
-        headers
-            .entry("x-forwarded-for".to_owned())
-            .or_insert(ip_str);
+        headers.insert("x-forwarded-for".to_owned(), ip_str);
     }
-    let collected = Limited::new(req.into_body(), max_bytes)
-        .collect()
-        .await
-        .map_err(|e| {
-            let msg = e.to_string();
-            if msg.to_ascii_lowercase().contains("length limit") {
-                GatewayBodyReadError::PayloadTooLarge(max_bytes)
-            } else {
-                GatewayBodyReadError::BadRequest(format!("read HTTP body failed: {msg}"))
+    let raw_body = if is_cas_put && max_bytes == 0 {
+        Vec::new()
+    } else {
+        match Limited::new(req.into_body(), max_bytes).collect().await {
+            Ok(collected) => collected.to_bytes().to_vec(),
+            Err(e) => {
+                let msg = e.to_string();
+                if msg.to_ascii_lowercase().contains("length limit") {
+                    if is_cas_put {
+                        // Sentinel 1-byte mismatch so `handle_put_cas_blob` returns `400 size_mismatch`
+                        // after stopping socket reads immediately at `declared_bytes`.
+                        vec![0u8; usize::from(max_bytes != 1)]
+                    } else {
+                        return Err(GatewayBodyReadError::PayloadTooLarge(max_bytes));
+                    }
+                } else {
+                    return Err(GatewayBodyReadError::BadRequest(format!(
+                        "read HTTP body failed: {msg}"
+                    )));
+                }
             }
-        })?;
-    let raw_body = collected.to_bytes().to_vec();
+        }
+    };
     Ok(CarbonGatewayRequest {
         method,
         path,
@@ -160,6 +187,19 @@ async fn handle_axum_gateway_request(
             .get("x-carbon-request-id")
             .and_then(|v| v.to_str().ok()),
     );
+    if req.method() == axum::http::Method::PUT
+        && req
+            .uri()
+            .path()
+            .trim_end_matches('/')
+            .starts_with("/v1/carbon/cas/")
+    {
+        if let Err(early_resp) =
+            router.precheck_put_cas_presign(req.uri().path(), req.uri().query(), &inbound_req_id)
+        {
+            return gateway_response_to_axum(early_resp);
+        }
+    }
     let gw_req = match axum_request_to_gateway_with_peer(req, Some(peer_addr.ip())).await {
         Ok(r) => r,
         Err(GatewayBodyReadError::PayloadTooLarge(limit)) => {

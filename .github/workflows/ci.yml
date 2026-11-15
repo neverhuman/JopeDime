@@ -41,6 +41,7 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
+      carbon_live: ${{ steps.lane.outputs.carbon_live }}
       runner_pool: jope-ci
     steps:
       - name: Checkout
@@ -72,6 +73,7 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
+      carbon_live: ${{ steps.lane.outputs.carbon_live }}
       runner_pool: jope-ci
     steps:
       - name: Checkout
@@ -102,6 +104,7 @@ jobs:
       inputs: ${{ needs['changes-pr'].outputs.inputs || needs['changes-dispatch'].outputs.inputs }}
       python: ${{ needs['changes-pr'].outputs.python || needs['changes-dispatch'].outputs.python }}
       e2e: ${{ needs['changes-pr'].outputs.e2e || needs['changes-dispatch'].outputs.e2e }}
+      carbon_live: ${{ needs['changes-pr'].outputs.carbon_live || needs['changes-dispatch'].outputs.carbon_live }}
       runner_pool: ${{ needs['changes-pr'].outputs.runner_pool || needs['changes-dispatch'].outputs.runner_pool }}
     steps:
       - name: Require the classifier for this event
@@ -377,7 +380,7 @@ jobs:
 
   e2e-smoke:
     needs: [changes, carbon-live-e2e]
-    if: ${{ always() && !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') && (needs.carbon-live-e2e.result == 'success' || (needs.carbon-live-e2e.result == 'skipped' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)) }}
+    if: ${{ always() && !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') && (needs.carbon-live-e2e.result == 'success' || (needs.carbon-live-e2e.result == 'skipped' && (needs.changes.outputs.carbon_live != 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)))) }}
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 35
     steps:
@@ -390,7 +393,7 @@ jobs:
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Restore Fresh-Docker 4-tier qualification receipt
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: needs.changes.outputs.carbon_live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: ./.github/actions/download-ci-evidence
         with:
           name: carbon-live-e2e-${{ github.run_id }}-${{ github.run_attempt }}
@@ -400,7 +403,7 @@ jobs:
       - name: Run declared lane and retain receipt
         id: lane
         env:
-          JOPE_CARBON_LIVE_CI_RECEIPT: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('{0}/target/ci-carbon-live-download/{1}/{2}/carbon-live-e2e-{1}-{2}/live-ci-4tier-docker.json', github.workspace, github.run_id, github.run_attempt) || '' }}
+          JOPE_CARBON_LIVE_CI_RECEIPT: ${{ (needs.changes.outputs.carbon_live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) && format('{0}/target/ci-carbon-live-download/{1}/{2}/carbon-live-e2e-{1}-{2}/live-ci-4tier-docker.json', github.workspace, github.run_id, github.run_attempt) || '' }}
         run: |
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
@@ -502,7 +505,7 @@ jobs:
 
   carbon-live-e2e:
     needs: changes
-    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.carbon_live == 'true') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
     uses: ./.github/workflows/carbon-live-e2e.yml
@@ -696,7 +699,7 @@ jobs:
           name: export-parity-verified-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-export-parity/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect Fresh-Docker Carbon 4-tier live qualification evidence
-        if: always() && needs.changes.outputs.e2e == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: always() && needs.changes.outputs.carbon_live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: ./.github/actions/download-ci-evidence
         with:
           name: carbon-live-e2e-${{ github.run_id }}-${{ github.run_attempt }}
@@ -704,7 +707,7 @@ jobs:
           layout: name
           into: target/ci-carbon-live-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Verify exact-source Fresh-Docker Carbon 4-tier receipt and spec PDF binding
-        if: always() && needs.changes.outputs.e2e == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: always() && needs.changes.outputs.carbon_live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           CARBON_LIVE_E2E_RESULT: ${{ needs.carbon-live-e2e.result }}
           E2E_SMOKE_RESULT: ${{ needs.e2e-smoke.result }}
@@ -722,7 +725,7 @@ jobs:
         if: always()
         env:
           CARBON_LIVE_E2E_RESULT: ${{ needs.carbon-live-e2e.result }}
-          CARBON_LIVE_E2E_REQUIRED: ${{ needs.changes.outputs.e2e == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+          CARBON_LIVE_E2E_REQUIRED: ${{ needs.changes.outputs.carbon_live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
           EXPORT_RESULT: ${{ needs.export-parity.result }}
           EXPORT_REQUIRED: ${{ github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
           GO_RESULT: ${{ needs.go.result }}

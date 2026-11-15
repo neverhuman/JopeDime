@@ -884,17 +884,30 @@ pub fn export_champion_standalone_source(
                 feat_math::c17::emit(&genome, &feat_math::transpile::EmitOptions::default())?;
             return Ok(serde_json::to_string_pretty(&serde_json::json!({
                 "schema": "carbon.c17_bundle.v1",
+                "artifact_kind": "gp_feature_basis",
+                "note": "C17 bundle emits the discovered GP feature-basis kernel; apply feature_min/feature_max/feature_fill scaling before calling and use --lang python, rust, rust-refittable, or js for full end-to-end fitted head + calibration export.",
                 "build": feat_math::c17::BUILD,
                 "target": target,
                 "features": fitted.features,
+                "feature_min": fitted.min,
+                "feature_max": fitted.max,
+                "feature_fill": fitted.fill,
+                "target_min": fitted.target_min,
+                "target_scale": fitted.target_scale,
+                "calibration": fitted.calibration,
                 "files": emitted.files,
             }))?);
         }
         CarbonExportLangWire::Cpp => {
-            return feat_math::transpile::emit_cpp17(
+            let mut cpp = feat_math::transpile::emit_cpp17(
                 &genome,
                 &feat_math::transpile::EmitOptions::default(),
+            )?;
+            cpp.insert_str(
+                0,
+                "// NOTE: C++17 export emits the discovered GP feature-basis kernel (normalized [0,1] inputs).\n// Use `--lang python`, `--lang rust`, `--lang rust-refittable`, or `--lang js` for full fitted head + output calibration.\n",
             );
+            return Ok(cpp);
         }
         _ => {}
     }
@@ -949,19 +962,29 @@ pub fn export_champion_standalone_source(
             Ok(src)
         }
         CarbonExportLangWire::Rust => {
-            ensure!(
-                lower_clamp.is_none(),
-                "standalone fitted Rust export does not yet wrap positive-domain floor clamping; use python or --calibration none"
-            );
-            jope_runtime::fitted_rs::emit_pipeline(&pipeline)
+            let mut src = jope_runtime::fitted_rs::emit_pipeline(&pipeline)?;
+            if let Some(lb) = lower_clamp {
+                const TARGET_SNIPPET: &str = "if !value.is_finite() { return Err(\"prediction failed: non-finite target prediction\".into()); }\n        Ok(value)";
+                ensure!(
+                    src.contains(TARGET_SNIPPET),
+                    "fitted Rust emitter missing expected target return snippet for lower_clamp"
+                );
+                let clamped = format!(
+                    "if !value.is_finite() {{ return Err(\"prediction failed: non-finite target prediction\".into()); }}\n        let value = value.max({lb:?});\n        Ok(value)"
+                );
+                src = src.replacen(TARGET_SNIPPET, &clamped, 1);
+            }
+            Ok(src)
         }
         CarbonExportLangWire::RustRefittable => pipeline.export_refittable_rust(),
         CarbonExportLangWire::Js => {
-            ensure!(
-                lower_clamp.is_none(),
-                "standalone JavaScript export does not yet wrap positive-domain floor clamping; use python or --calibration none"
-            );
-            Ok(String::from_utf8(pipeline.export_javascript()?)?)
+            let mut src = String::from_utf8(pipeline.export_javascript()?)?;
+            if let Some(lb) = lower_clamp {
+                src.push_str(&format!(
+                    "\nconst _carbonUnclampedPredictRows = predictRows;\npredictRows = function(rows) {{ return _carbonUnclampedPredictRows(rows).map(v => Math.max(v, {lb:?})); }};\nif (typeof module !== \"undefined\" && module.exports) module.exports = {{ MODEL_COLUMNS, predictRows }};\n"
+                ));
+            }
+            Ok(src)
         }
         CarbonExportLangWire::C | CarbonExportLangWire::Cpp => unreachable!(),
     }

@@ -32,6 +32,8 @@ pub struct CarbonRawTable {
     pub rows: Vec<Vec<Option<String>>>,
     pub delimiter: char,
     pub had_header: bool,
+    pub extra_na_tokens: Vec<String>,
+    pub inf_as_nan: bool,
 }
 
 /// `CarbonFeatureTransform` is an enum describing how one raw input column maps to numeric features.
@@ -79,6 +81,10 @@ pub struct CarbonTabularEncoder {
     pub target_column: String,
     pub delimiter: char,
     pub had_header: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extra_na_tokens: Vec<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inf_as_nan: bool,
 }
 
 /// `CarbonTrainingPrepOptions` configures split strategy, calibration, custom objectives, and hygiene checks.
@@ -662,6 +668,8 @@ fn parse_jsonl_str(
         rows,
         delimiter: ',',
         had_header: true,
+        extra_na_tokens: extra_na.to_vec(),
+        inf_as_nan,
     })
 }
 
@@ -827,6 +835,8 @@ pub fn parse_delimited_str_with_options(
         rows: norm_rows,
         delimiter: delim,
         had_header: has_header,
+        extra_na_tokens: extra_na_values.to_vec(),
+        inf_as_nan,
     })
 }
 
@@ -1415,6 +1425,8 @@ pub fn prepare_encoded_training_set_with_options(
         target_column: target_col,
         delimiter: table.delimiter,
         had_header: table.had_header,
+        extra_na_tokens: table.extra_na_tokens.clone(),
+        inf_as_nan: table.inf_as_nan,
     };
 
     Ok(CarbonEncodedTrainingSet {

@@ -22,7 +22,8 @@ use jope_carbon::observability::{
 };
 use jope_carbon::{
     load_delimited_table_with_options, parse_flexible_numeric_f64,
-    prepare_encoded_training_set_with_options, CarbonFeatureTransform, CarbonTrainingPrepOptions,
+    prepare_encoded_training_set_with_options, resolve_clouds_redirect_target,
+    CarbonFeatureTransform, CarbonThinClient, CarbonTrainingPrepOptions,
 };
 use jope_prep::objective::ObjectiveSpec;
 
@@ -407,6 +408,105 @@ fn thin_cli_observability_secret_redaction_fitness_and_error_json() {
         .output()
         .expect("whoami expired");
     assert_eq!(whoami_exp.status.code(), Some(i32::from(EXIT_AUTH_EXPIRED)));
+
+    // 6. Plaintext non-loopback HTTP endpoint & private/CGNAT/ULA SSRF redirect rejection
+    let http_err = CarbonThinClient::connect_fastest(vec!["http://example.com".to_owned()])
+        .expect_err("non-loopback plaintext HTTP must fail closed");
+    assert!(
+        http_err.to_ascii_lowercase().contains("https://"),
+        "unexpected plaintext HTTP error: {http_err}"
+    );
+    for ssrf_loc in [
+        "https://10.0.0.1/clouds.json",
+        "https://100.64.0.1/clouds.json",
+        "https://[::1]/clouds.json",
+        "https://[fd00::1]/clouds.json",
+        "http://github.com/clouds.json",
+    ] {
+        assert!(
+            resolve_clouds_redirect_target(
+                "https://downloads.neverhuman.org/carbon/clouds.json",
+                ssrf_loc
+            )
+            .is_err(),
+            "SSRF / insecure redirect location must fail closed: {ssrf_loc}"
+        );
+    }
+    assert!(
+        resolve_clouds_redirect_target(
+            "https://downloads.neverhuman.org/carbon/clouds.json",
+            "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.1.0/carbon-clouds.json"
+        )
+        .is_ok()
+    );
+
+    // 7. `self-verify`: bare config dir passes, unsigned local `carbon-clouds.json` fails closed unless `--binary-only`
+    let sv_cfg = tmp.path().join("sv_cfg");
+    fs::create_dir_all(&sv_cfg).expect("mkdir sv_cfg");
+    let sv_bare = Command::new(&bin)
+        .args(["self-verify"])
+        .env("CARBON_CONFIG_DIR", &sv_cfg)
+        .output()
+        .expect("self-verify bare");
+    assert!(
+        sv_bare.status.success(),
+        "bare empty config dir self-verify failed: {}",
+        String::from_utf8_lossy(&sv_bare.stderr)
+    );
+    fs::write(
+        sv_cfg.join("carbon-clouds.json"),
+        r#"{"schema":"jope.carbon.clouds.v1","generated_epoch_ms":1760000000000,"clouds":{}}"#,
+    )
+    .expect("write unsigned manifest");
+    let sv_unsigned = Command::new(&bin)
+        .args(["self-verify"])
+        .env("CARBON_CONFIG_DIR", &sv_cfg)
+        .output()
+        .expect("self-verify unsigned manifest");
+    assert!(
+        !sv_unsigned.status.success(),
+        "self-verify must fail closed when carbon-clouds.json lacks SHA256SUMS.txt"
+    );
+    let sv_bin_only = Command::new(&bin)
+        .args(["self-verify", "--binary-only"])
+        .env("CARBON_CONFIG_DIR", &sv_cfg)
+        .output()
+        .expect("self-verify --binary-only");
+    assert!(
+        sv_bin_only.status.success(),
+        "self-verify --binary-only failed: {}",
+        String::from_utf8_lossy(&sv_bin_only.stderr)
+    );
+
+    // 8. Pre-upload target-domain validation (`--objective rmsle` on negative y fails before network I/O)
+    let neg_rmsle_csv = tmp.path().join("neg_rmsle.csv");
+    let mut neg_body = String::from("x1,y\n");
+    for i in 0..24 {
+        let y = if i == 5 { -2.5 } else { f64::from(i) + 1.0 };
+        neg_body.push_str(&format!("{i}.0,{y}\n"));
+    }
+    fs::write(&neg_rmsle_csv, &neg_body).expect("write neg_rmsle_csv");
+    let neg_rmsle_out = Command::new(&bin)
+        .args([
+            "fit",
+            neg_rmsle_csv.to_str().expect("utf8"),
+            "--target",
+            "y",
+            "--objective",
+            "rmsle",
+            "--dry-run",
+            "--endpoint",
+            "http://127.0.0.1:9",
+            "--json",
+        ])
+        .output()
+        .expect("fit negative rmsle");
+    assert_eq!(
+        neg_rmsle_out.status.code(),
+        Some(i32::from(EXIT_DATA_VALIDATION)),
+        "negative RMSLE target must fail pre-upload with EXIT_DATA_VALIDATION (stderr: {})",
+        String::from_utf8_lossy(&neg_rmsle_out.stderr)
+    );
 }
 
 #[test]
@@ -1196,12 +1296,16 @@ mod full_stack {
                 target_column: "y".to_owned(),
                 delimiter: ',',
                 had_header: true,
+                extra_na_tokens: Vec::new(),
+                inf_as_nan: false,
             },
             fit_rows: 100,
             holdout_rows: 25,
             holdout_rmse: Some(0.25),
             holdout_mae: Some(0.20),
             holdout_r2: Some(0.95),
+            objective_name: None,
+            objective_direction: None,
             feature_importances: Vec::new(),
         };
         persist_model_handle_with_options(&handle, Some(&save_file), false)
@@ -1222,6 +1326,59 @@ mod full_stack {
         assert!(fs::read_to_string(&save_embedded)
             .expect("read embedded")
             .contains("ctk1.secret_payload"));
+
+        // 7. Cross-endpoint token isolation: stored `prod` credential must NEVER attach to a rogue handle endpoint!
+        let prod_claims_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"tenant_id":"tenant_strip","tier":"pro","exp_epoch_secs":4102444800,"admin":false}"#,
+        );
+        let prod_tok = format!("ctk1.{prod_claims_b64}.{}", "cd".repeat(32));
+        jope_carbon::save_stored_cloud_token(
+            "prod",
+            "https://us-east-2.carbon.neverhuman.org",
+            &prod_tok,
+        )
+        .expect("save stored prod token");
+        let rogue_listener = TcpListener::bind("127.0.0.1:0").expect("bind rogue listener");
+        let rogue_addr = rogue_listener.local_addr().expect("rogue local_addr");
+        let captured_headers = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+        let captured_clone = Arc::clone(&captured_headers);
+        let rogue_thread = thread::spawn(move || {
+            for _ in 0..2 {
+                let (mut stream, _) = rogue_listener.accept().expect("accept rogue req");
+                let mut req_buf = [0u8; 4096];
+                let n = stream.read(&mut req_buf).unwrap_or(0);
+                let req_str = String::from_utf8_lossy(&req_buf[..n]).to_string();
+                let is_ping = req_str.contains("/v1/carbon/ping");
+                captured_clone.lock().expect("lock").push(req_str);
+                let body = if is_ping {
+                    r#"{"region":"rogue","healthy":true,"server_epoch_ms":"1760000000000","enterprise_self_hosted":false}"#
+                } else {
+                    r#"{"version":"1.2.0","release_tag":"carbon-cli-v1.1.0","git_sha":"00000000","build_target":"x86_64-unknown-linux-gnu","region":"rogue","enterprise_self_hosted":false,"server_epoch_ms":"1760000000000"}"#
+                };
+                let resp = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                );
+                let _ = stream.write_all(resp.as_bytes());
+            }
+        });
+        let mut rogue_handle = handle.clone();
+        rogue_handle.cloud = Some("prod".to_owned());
+        rogue_handle.endpoint = format!("http://{rogue_addr}");
+        rogue_handle.engine_kek_pubkey_b64 = None;
+        rogue_handle.capability_token = None;
+        let rogue_client =
+            jope_carbon::build_client_for_handle(&rogue_handle, None).expect("build rogue client");
+        let _ = rogue_client.fetch_server_version();
+        rogue_thread.join().expect("join rogue listener");
+        for seen_req in captured_headers.lock().expect("lock").iter() {
+            assert!(
+                !seen_req.contains(&prod_tok)
+                    && !seen_req.to_ascii_lowercase().contains("authorization:"),
+                "stored prod credential leaked to unverified endpoint!\n{seen_req}"
+            );
+        }
         std::env::remove_var("CARBON_CONFIG_DIR");
     }
 
@@ -1458,6 +1615,46 @@ mod full_stack {
             shred_out.status.success(),
             "carbon shred failed: {}",
             String::from_utf8_lossy(&shred_out.stderr)
+        );
+
+        // 6. Maximization objective (`--objective r2`) preserves positive sign & `"maximize"` direction!
+        let r2_out = Command::new(&carbon_bin)
+            .args([
+                "run",
+                "--csv",
+                train_csv.to_str().expect("utf8"),
+                "--target",
+                "y",
+                "--effort",
+                "fast",
+                "--objective",
+                "r2",
+                "--endpoint",
+                &emu.base_url(),
+                "--token",
+                &pro_token,
+            ])
+            .env("HOME", &home_dir)
+            .env("USERPROFILE", &home_dir)
+            .env("CARBON_CONFIG_DIR", home_dir.join(".config/jopedime"))
+            .output()
+            .expect("carbon run --objective r2");
+        assert!(
+            r2_out.status.success(),
+            "carbon run --objective r2 failed:\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&r2_out.stdout),
+            String::from_utf8_lossy(&r2_out.stderr)
+        );
+        let r2_json: serde_json::Value =
+            serde_json::from_slice(&r2_out.stdout).expect("parse r2 json");
+        assert_eq!(r2_json["objective_direction"], "maximize");
+        assert!(
+            r2_json["best_cv_score"].as_f64().unwrap_or(0.0) > 0.5,
+            "expected positive R^2 best_cv_score, got: {r2_json}"
+        );
+        assert!(
+            r2_json["outer_holdout_score"].as_f64().unwrap_or(0.0) > 0.5,
+            "expected positive R^2 outer_holdout_score, got: {r2_json}"
         );
 
         emu.shutdown();

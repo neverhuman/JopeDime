@@ -91,7 +91,7 @@ pub trait CarbonCasStore: Send + Sync {
         self.put_raw_blob(Some(sc), &expected_lower, bytes)
     }
 
-    /// Read `blobs/<scope>/<expected_sha256>`, falling back to unscoped `blobs/<expected_sha256>` when `scope` is `None` or `404`.
+    /// Read `blobs/<scope>/<expected_sha256>`, or unscoped `blobs/<expected_sha256>` only when `scope` is `None`.
     fn get_scoped_blob_verified(
         &self,
         scope: Option<&str>,
@@ -113,7 +113,9 @@ pub trait CarbonCasStore: Send + Sync {
                 }
                 Ok(bytes)
             }
-            None => self.get_blob_verified(expected_sha256),
+            None => Err(format!(
+                "scoped CAS blob {expected_lower} not found in scope {sc}"
+            )),
         }
     }
 

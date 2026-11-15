@@ -17,9 +17,12 @@ use crate::{
     cli::{
         client::{
             list_stored_cloud_tokens, load_stored_cloud_token, resolve_clouds_redirect_target,
+            resolve_public_cloud_endpoint, validate_endpoint_transport,
             verified_absolute_jopedime_config_dir, CarbonPublicCloudsManifest, CarbonThinClient,
         },
-        tabular::{load_delimited_table, CarbonTabularEncoder},
+        tabular::{
+            load_delimited_table_with_options, parse_flexible_numeric_f64, CarbonTabularEncoder,
+        },
     },
     observability::{telemetry_minimized, write_stdout_line},
     role::CarbonProductTier,
@@ -75,6 +78,10 @@ pub struct CarbonSavedModelHandle {
     pub holdout_rmse: Option<f64>,
     pub holdout_mae: Option<f64>,
     pub holdout_r2: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_direction: Option<String>,
     #[serde(default)]
     pub feature_importances: Vec<CarbonFeatureImportanceEntry>,
 }
@@ -135,6 +142,7 @@ fn runs_registry_dir() -> Result<PathBuf, String> {
 }
 
 fn write_secret_json_0600(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    static SECRET_TMP_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             fs::create_dir_all(parent)
@@ -148,31 +156,51 @@ fn write_secret_json_0600(path: &Path, bytes: &[u8]) -> Result<(), String> {
             }
         }
     }
-    let tmp_path = path.with_extension(format!("tmp.{}", std::process::id()));
+    let seq = SECRET_TMP_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let tmp_path = path.with_extension(format!("tmp.{}.{}", std::process::id(), seq));
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt;
         let mut f = fs::OpenOptions::new()
-            .create(true)
-            .truncate(true)
+            .create_new(true)
             .write(true)
             .mode(0o600)
             .open(&tmp_path)
             .map_err(|e| format!("open {} (0600): {e}", tmp_path.display()))?;
-        f.write_all(bytes)
-            .map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
-        f.sync_all()
-            .map_err(|e| format!("sync {}: {e}", tmp_path.display()))?;
+        if let Err(e) = f.write_all(bytes).and_then(|()| f.sync_all()) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(format!("write {}: {e}", tmp_path.display()));
+        }
     }
     #[cfg(not(unix))]
     {
-        fs::write(&tmp_path, bytes).map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
+        let mut f = fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&tmp_path)
+            .map_err(|e| format!("open {}: {e}", tmp_path.display()))?;
+        if let Err(e) = f.write_all(bytes).and_then(|()| f.sync_all()) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(format!("write {}: {e}", tmp_path.display()));
+        }
+        #[cfg(windows)]
+        {
+            let _ = std::process::Command::new("icacls")
+                .arg(&tmp_path)
+                .args(["/inheritance:r", "/grant:r", "*S-1-3-4:(F)"])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status();
+        }
     }
-    fs::rename(&tmp_path, path).map_err(|e| format!("atomic rename -> {}: {e}", path.display()))?;
+    if let Err(e) = fs::rename(&tmp_path, path) {
+        let _ = fs::remove_file(&tmp_path);
+        return Err(format!("atomic rename -> {}: {e}", path.display()));
+    }
     Ok(())
 }
 
-fn shred_local_file(path: &Path) -> Result<bool, String> {
+pub(crate) fn shred_local_file(path: &Path) -> Result<bool, String> {
     if !path.is_file() {
         return Ok(false);
     }
@@ -343,20 +371,26 @@ fn resolve_fallback_token_for_handle(handle: &CarbonSavedModelHandle) -> Option<
             }
         }
     }
+    let norm_ep = handle.endpoint.trim().trim_end_matches('/');
     if let Some(cloud_name) = handle.cloud.as_deref() {
         if let Ok(Some(cred)) = load_stored_cloud_token(cloud_name) {
-            if cred.tenant_id == handle.tenant_id && !cred.capability_token.trim().is_empty() {
+            let cred_ep = cred.endpoint.trim().trim_end_matches('/');
+            let endpoint_belongs_to_cloud = cred_ep == norm_ep
+                || resolve_public_cloud_endpoint(cloud_name, None)
+                    .map(|entry| entry.candidate_endpoints().iter().any(|ep| ep == norm_ep))
+                    .unwrap_or(false);
+            if cred.tenant_id == handle.tenant_id
+                && endpoint_belongs_to_cloud
+                && !cred.capability_token.trim().is_empty()
+            {
                 return Some(cred.capability_token);
             }
         }
     }
     if let Ok(all_creds) = list_stored_cloud_tokens() {
-        let norm_ep = handle.endpoint.trim().trim_end_matches('/');
         for cred in all_creds.values() {
             let cred_ep = cred.endpoint.trim().trim_end_matches('/');
-            if (cred.tenant_id == handle.tenant_id || cred_ep == norm_ep)
-                && !cred.capability_token.trim().is_empty()
-            {
+            if cred_ep == norm_ep && !cred.capability_token.trim().is_empty() {
                 return Some(cred.capability_token.clone());
             }
         }
@@ -480,7 +514,13 @@ pub fn execute_predict_csv_with_handle(
     } else {
         handle.encoder.had_header
     };
-    let table = load_delimited_table(csv_path, delimiter_override, has_header)?;
+    let table = load_delimited_table_with_options(
+        csv_path,
+        delimiter_override,
+        has_header,
+        &handle.encoder.extra_na_tokens,
+        handle.encoder.inf_as_nan,
+    )?;
     let encoded_rows = handle.encoder.encode_prediction_table(&table)?;
     if encoded_rows.is_empty() {
         return Err(format!(
@@ -528,12 +568,7 @@ pub fn execute_predict_csv_with_handle(
         .and_then(|t_idx| {
             let mut y_true = Vec::with_capacity(table.rows.len());
             for r in &table.rows {
-                let val = r[t_idx]
-                    .as_deref()?
-                    .trim()
-                    .parse::<f64>()
-                    .ok()
-                    .filter(|v| v.is_finite())?;
+                let val = parse_flexible_numeric_f64(r[t_idx].as_deref()?)?;
                 y_true.push(val);
             }
             compute_residual_quantiles(&y_true, &all_predictions, None)
@@ -977,8 +1012,10 @@ pub fn execute_self_upgrade_with_options(
         if !url.starts_with("https://") && !url.starts_with("http://") {
             return fs::read(url).map_err(|e| format!("read local upgrade asset {url}: {e}"));
         }
+        validate_endpoint_transport(url)?;
         let mut current = url.to_owned();
         for _hop in 0..=5 {
+            validate_endpoint_transport(&current)?;
             let mut resp = crate::tls::carbon_https_agent()
                 .get(&current)
                 .config()
@@ -1135,14 +1172,37 @@ pub fn execute_self_upgrade_with_options(
         ));
     }
 
-    let stage_path = exe_path.with_extension(format!("upgrade.{}", std::process::id()));
-    fs::write(&stage_path, &bin_bytes)
-        .map_err(|e| format!("stage {}: {e}", stage_path.display()))?;
-    #[cfg(unix)]
+    static UPGRADE_STAGE_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let stage_seq = UPGRADE_STAGE_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let stage_path =
+        exe_path.with_extension(format!("upgrade.{}.{}", std::process::id(), stage_seq));
     {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&stage_path, fs::Permissions::from_mode(0o755))
-            .map_err(|e| format!("chmod 0755 {}: {e}", stage_path.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            let mut sf = fs::OpenOptions::new()
+                .create_new(true)
+                .write(true)
+                .mode(0o755)
+                .open(&stage_path)
+                .map_err(|e| format!("stage {}: {e}", stage_path.display()))?;
+            if let Err(e) = sf.write_all(&bin_bytes).and_then(|()| sf.sync_all()) {
+                let _ = fs::remove_file(&stage_path);
+                return Err(format!("stage {}: {e}", stage_path.display()));
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            let mut sf = fs::OpenOptions::new()
+                .create_new(true)
+                .write(true)
+                .open(&stage_path)
+                .map_err(|e| format!("stage {}: {e}", stage_path.display()))?;
+            if let Err(e) = sf.write_all(&bin_bytes).and_then(|()| sf.sync_all()) {
+                let _ = fs::remove_file(&stage_path);
+                return Err(format!("stage {}: {e}", stage_path.display()));
+            }
+        }
     }
     if let Err(rename_err) = fs::rename(&stage_path, &exe_path) {
         #[cfg(windows)]
