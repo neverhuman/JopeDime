@@ -477,6 +477,27 @@ fn thin_cli_observability_secret_redaction_fitness_and_error_json() {
         "self-verify --binary-only failed: {}",
         String::from_utf8_lossy(&sv_bin_only.stderr)
     );
+    let crlf_pub_path = tmp.path().join("signing_crlf.pub");
+    let repo_pub = fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/release/signing.pub"),
+    )
+    .expect("read docs/release/signing.pub");
+    fs::write(&crlf_pub_path, repo_pub.replace('\n', "\r\n")).expect("write crlf pub");
+    let sv_crlf = Command::new(&bin)
+        .args([
+            "self-verify",
+            "--binary-only",
+            "--allow-test-pubkey",
+            crlf_pub_path.to_str().expect("utf8"),
+        ])
+        .env("CARBON_CONFIG_DIR", &sv_cfg)
+        .output()
+        .expect("self-verify crlf pubkey");
+    assert!(
+        sv_crlf.status.success(),
+        "self-verify with CRLF pubkey failed: {}",
+        String::from_utf8_lossy(&sv_crlf.stderr)
+    );
 
     // 8. Pre-upload target-domain validation (`--objective rmsle` on negative y fails before network I/O)
     let neg_rmsle_csv = tmp.path().join("neg_rmsle.csv");

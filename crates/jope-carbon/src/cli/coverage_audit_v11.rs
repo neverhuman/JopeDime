@@ -426,7 +426,8 @@ fn check_self_verify_trust_roots(
     checks: &mut Vec<CarbonCoverageCheckResult>,
 ) -> Result<(), String> {
     let t = Instant::now();
-    let pub_sha = sha256_lower_hex(inp.signing_pub_pem.as_bytes());
+    let canonical_pub_pem = inp.signing_pub_pem.replace("\r\n", "\n");
+    let pub_sha = sha256_lower_hex(canonical_pub_pem.as_bytes());
     let pub_match = pub_sha == EXPECTED_SIGNING_PUB_SHA256;
     let kek_ok = decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).is_ok();
     let exe_sha_ok = std::env::current_exe()
@@ -434,7 +435,7 @@ fn check_self_verify_trust_roots(
         .map(|b| sha256_lower_hex(&b).len() == 64)
         .unwrap_or(false);
     let bogus_refused = verify_ecdsa_p256_spki_pem_signature(
-        inp.signing_pub_pem,
+        &canonical_pub_pem,
         b"carbon-self-verify-probe",
         &[0x30, 0x06, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01],
     )

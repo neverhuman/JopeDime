@@ -1051,12 +1051,14 @@ pub fn execute_ci_live_4tier_docker(
     fs::write(&md_path, render_markdown_summary(&receipt).as_bytes())
         .map_err(|e| format!("write {}: {e}", md_path.display()))?;
     let digest_hex = sha256_hex(rendered.as_bytes());
-    let manifest_path = opts.out_dir.join("MANIFEST.sha256");
+    // Do not name this file `MANIFEST.sha256`: `deploy/ci/retain-local-evidence.sh` generates
+    // and verifies `MANIFEST.sha256` across all files in `$out_dir` during CI publication.
+    let digest_sidecar_path = opts.out_dir.join("live-ci-4tier-docker.sha256");
     fs::write(
-        &manifest_path,
+        &digest_sidecar_path,
         format!("{digest_hex}  {LIVE_CI_4TIER_FILENAME}\n").as_bytes(),
     )
-    .map_err(|e| format!("write {}: {e}", manifest_path.display()))?;
+    .map_err(|e| format!("write {}: {e}", digest_sidecar_path.display()))?;
     Ok(receipt)
 }
 

@@ -85,6 +85,10 @@ const EMBEDDED_RELEASE_SIGNING_PUB_PEM: &str = include_str!("../../../../docs/re
 const EXPECTED_SIGNING_PUB_SHA256: &str =
     "de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e";
 
+fn canonical_embedded_release_signing_pub_pem() -> String {
+    EMBEDDED_RELEASE_SIGNING_PUB_PEM.replace("\r\n", "\n")
+}
+
 #[derive(Debug, Parser)]
 #[command(
     name = "carbon",
@@ -1359,7 +1363,8 @@ fn execute_self_verify_command(
     };
     let exe_sha256 = sha256_lower_hex(&exe_bytes);
 
-    let embedded_pub_sha = sha256_lower_hex(EMBEDDED_RELEASE_SIGNING_PUB_PEM.as_bytes());
+    let canonical_embedded_pub_pem = canonical_embedded_release_signing_pub_pem();
+    let embedded_pub_sha = sha256_lower_hex(canonical_embedded_pub_pem.as_bytes());
     if embedded_pub_sha != EXPECTED_SIGNING_PUB_SHA256 {
         eprintln!(
             "error: embedded release public key SHA-256 mismatch (got {embedded_pub_sha}, expected {EXPECTED_SIGNING_PUB_SHA256})"
@@ -1369,7 +1374,7 @@ fn execute_self_verify_command(
 
     let (pubkey_pem, using_test_pubkey) = if let Some(test_pub) = &allow_test_pubkey {
         match fs::read_to_string(test_pub) {
-            Ok(pem) => (pem, true),
+            Ok(pem) => (pem.replace("\r\n", "\n"), true),
             Err(e) => {
                 eprintln!(
                     "error: read --allow-test-pubkey {}: {e}",
@@ -1379,7 +1384,7 @@ fn execute_self_verify_command(
             }
         }
     } else {
-        (EMBEDDED_RELEASE_SIGNING_PUB_PEM.to_owned(), false)
+        (canonical_embedded_pub_pem, false)
     };
 
     let config_dir_opt = verified_absolute_jopedime_config_dir().ok();
@@ -3386,12 +3391,13 @@ fn run_cli_main() -> ExitCode {
                     }
                 }
             } else {
-                let fp = sha256_lower_hex(EMBEDDED_RELEASE_SIGNING_PUB_PEM.as_bytes());
+                let canonical_pub_pem = canonical_embedded_release_signing_pub_pem();
+                let fp = sha256_lower_hex(canonical_pub_pem.as_bytes());
                 if fp != EXPECTED_SIGNING_PUB_SHA256 {
                     eprintln!("error: embedded signing key fingerprint mismatch");
                     return ExitCode::from(1);
                 }
-                EMBEDDED_RELEASE_SIGNING_PUB_PEM.to_owned()
+                canonical_pub_pem
             };
             match execute_self_upgrade_with_options(
                 base_url.as_deref(),
