@@ -67,6 +67,7 @@ P448 = Path("/home/ubuntu/jope_plan/evidence/H448/pulled")
 N_VIEWS, N_REPEATS, K_FOLDS = 4, 2, 7
 XFIT_K = 5
 CLOSURES = ("recall", "skill-xfit5", "fair", "fresh-probe")
+HINT_KINDS = ("ridge", "knn", "gbm")
 PROBE_MARK = "PROBE_BOARD.json"
 FAIR_ALLOWLIST = P.EVIDENCE / "trackD" / "FAIR_CKPT_ALLOWLIST.json"
 SHORT = {"icl_e8_cw12_robridge_cv7": "rr", "icl_e8_cw12_yj_cv7": "yj", "icl_e8_rankgauss_duan_cv7": "rg"}
@@ -157,6 +158,56 @@ def build_context(cid: str, xs, xa, y, lab, model_sets, dev, arm: str, n_repeats
     with builder_overrides(arm, int(np.asarray(xs).shape[1])):
         prepped = C._prep_full_context_worker((0, cid, xs, xa, y, lab, None, P418, P448, None, N_VIEWS, int(n_repeats), K_FOLDS))
         return [C._eval_prepped_context_gpu(prepped, mw, dev) for mw in model_sets]
+
+
+def hint_columns(xs: np.ndarray, xa: np.ndarray, y: np.ndarray, lab: np.ndarray, kinds: list[str]) -> tuple[np.ndarray, np.ndarray]:
+    """Label-derived hint columns, one per kind: what a ridge, a k-nearest-neighbour mean or a small boosted-tree model
+    says about each row, to be appended to a model's input ("hints": explicit computation handed to the prior).
+
+    SEARCH rows get every hint out of fold on `lab`: a row's hint comes from a fit on the other folds, so it never saw
+    the row's own label. Audit-slot rows get the mean of the fold models. Features are median-imputed and standardised
+    on the fitting rows only.
+
+    What stays dishonest: a column that a model then predicts for SEARCH rows is not out of fold as a whole, because a
+    context row's hint comes from fits that saw the query fold. Only the audit-slot predictions are clean. A block
+    built with hints is a fresh-row probe block and is never stacked.
+    """
+    from sklearn.ensemble import HistGradientBoostingRegressor
+    from sklearn.linear_model import RidgeCV
+    from sklearn.neighbors import KNeighborsRegressor
+
+    xs, xa, y = np.asarray(xs, dtype=np.float64), np.asarray(xa, dtype=np.float64), np.asarray(y, dtype=np.float64)
+    lab = np.asarray(lab, dtype=np.int64)
+    if any(k not in HINT_KINDS for k in kinds) or not kinds:
+        raise ValueError(f"hint kinds {kinds}: choose from {HINT_KINDS}")
+    folds = sorted(set(lab.tolist()))
+    if len(folds) < 2:
+        raise ValueError("hints need at least two folds")
+    h_s = np.full((xs.shape[0], len(kinds)), np.nan)
+    h_a = np.zeros((xa.shape[0], len(kinds)))
+    for f in folds:
+        tr, te = lab != f, lab == f
+        med = np.nanmedian(xs[tr], axis=0)
+        med = np.where(np.isfinite(med), med, 0.0)
+        fill = lambda m: np.where(np.isfinite(m), m, med)  # noqa: E731
+        x_tr, x_te, x_au = fill(xs[tr]), fill(xs[te]), fill(xa)
+        sd = x_tr.std(axis=0)
+        sd = np.where(sd > 0, sd, 1.0)
+        mu = x_tr.mean(axis=0)
+        z_tr, z_te, z_au = (x_tr - mu) / sd, (x_te - mu) / sd, (x_au - mu) / sd
+        for j, kind in enumerate(kinds):
+            if kind == "ridge":
+                m = RidgeCV(alphas=np.logspace(-3, 3, 13)).fit(z_tr, y[tr])
+            elif kind == "knn":
+                m = KNeighborsRegressor(n_neighbors=min(16, int(tr.sum())), weights="distance").fit(z_tr, y[tr])
+            else:
+                m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06, max_leaf_nodes=15, min_samples_leaf=10, l2_regularization=1.0,
+                                                  early_stopping=False, random_state=458).fit(z_tr, y[tr])
+            h_s[te, j] = m.predict(z_te)
+            h_a[:, j] += m.predict(z_au) / len(folds)
+    if not (np.isfinite(h_s).all() and np.isfinite(h_a).all()):
+        raise ValueError("non-finite hint")
+    return h_s, h_a
 
 
 def crossfit_merge(per_k: list[dict[str, np.ndarray]], s_search: np.ndarray, s_audit: np.ndarray) -> dict[str, np.ndarray]:
@@ -444,8 +495,10 @@ def check_checkpoint(path: Path, key: str, closure: str, arm: str, stratum: int 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--closure", choices=CLOSURES, required=True)
-    ap.add_argument("--probe-role", choices=("specialist", "init", "foreign"), default="specialist",
-                    help="closure fresh-probe: the specialist, its pre-fine-tune checkpoint, or (foreign) the random-slot specialist of ANOTHER table as a control")
+    ap.add_argument("--probe-role", choices=("specialist", "init", "foreign", "hint"), default="specialist",
+                    help="closure fresh-probe: the specialist, its pre-fine-tune checkpoint, (foreign) the random-slot specialist of ANOTHER table as a control, "
+                         "or (hint) no model at all: the one hint named by --hints written as the block's columns")
+    ap.add_argument("--hints", default="", help=f"closure fresh-probe, arm rand: comma list of {HINT_KINDS}; out-of-fold hint columns appended to the model's input")
     ap.add_argument("--ckpt", default="", help="one checkpoint (every closure but skill-xfit5)")
     ap.add_argument("--xfit-ckpts", default="", help="five comma-separated checkpoints; the k-th was trained without stratum k")
     ap.add_argument("--ckpt-key", default="ema")
@@ -476,11 +529,19 @@ def main() -> None:
     if a.arm not in ("rand", "canon"):
         raise SystemExit("--arm rand or canon is required")
     xfit = a.closure == "skill-xfit5"
-    paths = [Path(p) for p in (a.xfit_ckpts if xfit else a.ckpt).split(",") if p]
-    if len(paths) != (XFIT_K if xfit else 1) or bool(a.xfit_ckpts) != xfit or bool(a.ckpt) == xfit:
+    hints = [k for k in a.hints.split(",") if k]
+    hint_role = a.probe_role == "hint"
+    if any(k not in HINT_KINDS for k in hints):
+        raise SystemExit(f"--hints takes a comma list of {HINT_KINDS}")
+    if hints and (a.closure != "fresh-probe" or a.arm != "rand"):
+        raise SystemExit("--hints goes with closure 'fresh-probe' and arm 'rand': a hinted block is a probe block, and canonical slots have no slot for a hint column")
+    if hint_role and (len(hints) != 1 or a.ckpt or a.xfit_ckpts):
+        raise SystemExit("role 'hint' writes one hint as the block's columns: exactly one kind in --hints and no checkpoint")
+    paths = [] if hint_role else [Path(p) for p in (a.xfit_ckpts if xfit else a.ckpt).split(",") if p]
+    if not hint_role and (len(paths) != (XFIT_K if xfit else 1) or bool(a.xfit_ckpts) != xfit or bool(a.ckpt) == xfit):
         raise SystemExit("closure skill-xfit5 takes --xfit-ckpts with five checkpoints; the other closures take --ckpt")
     torch.set_num_threads(max(1, a.threads))
-    dev = torch.device(a.device)
+    dev = torch.device("cpu" if hint_role else a.device)
     if dev.type == "cuda":
         torch.cuda.set_per_process_memory_fraction(float(a.cuda_vram_frac))
     out_dir = P.guard_write_path(Path(a.out_dir))
@@ -522,6 +583,8 @@ def main() -> None:
     fixed = {"closure": a.closure, "cross_fitted": xfit, "arm": a.arm, "size": a.size, "ckpt_key": a.ckpt_key, "pool_sha256": pool.sha256}
     if fresh:  # keys that exist only on probe blocks, so earlier board sidecars stay comparable
         fixed.update({"probe_role": a.probe_role, "bank_sha256": board["probe_bank_sha256"], **board})  # bank_sha256: the key the probe scorer checks
+    if hints:  # present only on hinted blocks; such a directory never mixes hint settings
+        fixed["hints"] = hints
     call_id = f"{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{os.getpid()}"
     t0, done = time.time(), []
     for cid in cids:
@@ -530,8 +593,17 @@ def main() -> None:
             raise SystemExit(f"{dst} exists: a block directory is written once per context")
         d = bank[cid]
         t_c = time.time()
-        per_model = build_context(cid, d["Xs"], d["Xa"], d["y"], d["lab"], [[(m, 1.0)] for m in models], dev, a.arm)
-        arrays = crossfit_merge(per_model, FP.feature_stratum(d["Xs"], XFIT_K), FP.feature_stratum(d["Xa"], XFIT_K)) if xfit else per_model[0]
+        xs_in, xa_in = d["Xs"], d["Xa"]
+        if hints:
+            h_s, h_a = hint_columns(d["Xs"], d["Xa"], d["y"], d["lab"], hints)
+            xs_in, xa_in = np.hstack([d["Xs"], h_s]), np.hstack([d["Xa"], h_a])
+        if hint_role:  # the hint itself as a predictor, under each of the three column names, so that the probe's merge and scorer read it unchanged
+            arrays = {"ok": np.array(True)}
+            for col in COLUMNS:
+                arrays["q_" + col], arrays["bag_" + col], arrays["ref_" + col] = h_s[:, 0], h_a[:, 0], h_a[:, 0]
+        else:
+            per_model = build_context(cid, xs_in, xa_in, d["y"], d["lab"], [[(m, 1.0)] for m in models], dev, a.arm)
+            arrays = crossfit_merge(per_model, FP.feature_stratum(d["Xs"], XFIT_K), FP.feature_stratum(d["Xa"], XFIT_K)) if xfit else per_model[0]
         tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
         np.savez(tmp, **pack_block(arrays, time.time() - t_c))
         verify_block_file(tmp, len(d["y"]), d["Xa"].shape[0])

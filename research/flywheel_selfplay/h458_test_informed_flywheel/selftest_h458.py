@@ -456,6 +456,24 @@ def gate_block_closures(ctx) -> dict:
     same_w = [f for f in others if int(np.asarray(pool.table(f)).shape[1]) - 1 == xs.shape[1]]
     if same_w:
         assert CB.require_rows_foreign(pool, same_w[:1], cid, xs, fresh) == [0.0, 0.0], "another family's table holds this context's rows"
+    # hint columns: a SEARCH row's hint never saw the row's own label; audit-slot rows get the mean of the fold models
+    hr = np.random.default_rng(11)
+    hx = hr.normal(size=(120, 4))
+    hx[3, 1] = np.nan
+    hy = hx[:, 0] * 2.0 + np.sin(hx[:, 2]) + 0.1 * hr.normal(size=120)
+    hlab = np.arange(120) % 5
+    hxa = hr.normal(size=(30, 4))
+    h_s, h_a = CB.hint_columns(hx, hxa, hy, hlab, ["ridge", "knn", "gbm"])
+    assert h_s.shape == (120, 3) and h_a.shape == (30, 3) and np.isfinite(h_s).all() and np.isfinite(h_a).all()
+    h_s2, h_a2 = CB.hint_columns(hx, hxa, hy, hlab, ["ridge", "knn", "gbm"])
+    assert np.array_equal(h_s, h_s2) and np.array_equal(h_a, h_a2), "hints are not deterministic"
+    hy2 = hy.copy()
+    hy2[7] += 1000.0  # row 7 is in fold 2: its own hint must not move, hints of other folds and of the audit slot must
+    p_s, p_a = CB.hint_columns(hx, hxa, hy2, hlab, ["ridge", "knn", "gbm"])
+    assert np.array_equal(p_s[hlab == 2], h_s[hlab == 2]), "a SEARCH row's hint read a label of its own fold"
+    assert not np.allclose(p_s[hlab != 2], h_s[hlab != 2]) and not np.allclose(p_a, h_a)
+    assert float(np.corrcoef(h_s[:, 0], hy)[0, 1]) > 0.8 and float(np.corrcoef(h_a[:, 0], hxa[:, 0] * 2.0 + np.sin(hxa[:, 2]))[0, 1]) > 0.8
+    assert _refused(CB.hint_columns, hx, hxa, hy, hlab, ["forest"]) and _refused(CB.hint_columns, hx, hxa, hy, np.zeros(120, dtype=int), ["ridge"])
     # sidecar bookkeeping: one entry per run, files and sidecar agree, a second closure in the same directory is refused
     blk = root / "block"
     blk.mkdir()
@@ -509,7 +527,7 @@ def gate_block_closures(ctx) -> dict:
         same = CB._struct_cols_same_width(lambda a_, y_, q_, **k_: (a_, q_, None, None, None))
         assert same(xs[:8], d["y"][:8], xa[:4])[0].shape[1] == xs.shape[1]
     assert C.REL.build_h450_struct_cols is before, "the struct-column function was not restored"
-    return {"checks": 46, "dir": str(root)}
+    return {"checks": 55, "dir": str(root)}
 
 
 class _LookupEngine:
