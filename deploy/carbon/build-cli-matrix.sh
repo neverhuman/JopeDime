@@ -30,9 +30,24 @@ elif [[ "$MATRIX_LABEL" == "darwin-universal" ]]; then
   codesign --force -s - target/carbon-matrix/carbon-darwin-arm64
   codesign --force -s - target/carbon-matrix/carbon-darwin-x86_64
   codesign --force -s - target/carbon-matrix/carbon-darwin-universal
+  for darwin_slice in carbon-darwin-arm64 carbon-darwin-x86_64 carbon-darwin-universal; do
+    stage_slice="target/carbon-matrix/.stage-$darwin_slice"
+    rm -rf "$stage_slice"
+    mkdir -p "$stage_slice"
+    cp "target/carbon-matrix/$darwin_slice" "$stage_slice/carbon"
+    tar -C "$stage_slice" -czf "target/carbon-matrix/${darwin_slice}.tar.gz" carbon
+    rm -rf "$stage_slice"
+  done
   target/carbon-matrix/carbon-darwin-universal --version
 else
   rustup target add "$MATRIX_TARGET"
+  if [[ "$MATRIX_TARGET" == *-pc-windows-msvc ]]; then
+    if ! command -v nasm >/dev/null 2>&1; then
+      export AWS_LC_SYS_NO_ASM=1
+    fi
+    export CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS="${CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS:+$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS }-C target-feature=+crt-static"
+    export CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS="${CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS:+$CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS }-C target-feature=+crt-static"
+  fi
   cargo build --locked --profile carbon-cli --target "$MATRIX_TARGET" \
     -p jope-carbon --no-default-features --features cli --bin carbon
   cp "target/$MATRIX_TARGET/carbon-cli/carbon.exe" "target/carbon-matrix/$MATRIX_ASSET"

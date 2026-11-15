@@ -12,6 +12,7 @@ case "${1:-}" in
     git diff --check
     cargo fmt --all --check
     cargo check --locked -p feat-math -p jope-cli -p jope-pipeline --no-default-features --all-targets
+    cargo check --locked -p jope-prep --target wasm32-unknown-unknown
     ;;
   qualify) bash deploy/ci/typescript/qualify.sh ;;
   browser) bash deploy/ci/typescript/browser-tools.sh ;;

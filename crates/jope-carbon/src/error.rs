@@ -132,7 +132,7 @@ impl CarbonError {
                     "subsample rows or select features within the Free/Pro tier ceiling",
                     "upgrade to Pro (<= 100,000 rows, <= 512 cols, high/ultra) or Enterprise (no_limit)",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_core tier_admission`",
+                "inspect dataset shape with `carbon inspect <CSV>` or upgrade via `--tier pro` / `carbon serve`",
             ),
             Self::InvalidPlanInput { .. } | Self::WorkingSetExceedsLambdaClass { .. } => (
                 "right-size stateless Lambda memory classes within physical container limits",
@@ -140,7 +140,7 @@ impl CarbonError {
                     "pass non-zero fit_rows, features, and candidate counts",
                     "route multi-gigabyte tables to self-hosted Enterprise `carbon serve`",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_core adaptive_planner`",
+                "check dataset dimensions with `carbon inspect <CSV>` or preview routing via `carbon plan --help`",
             ),
             Self::SealAuthenticationFailed { .. } => (
                 "prevent cleartext exposure, domain confusion, or cross-tenant replay of sealed state",
@@ -148,7 +148,7 @@ impl CarbonError {
                     "open the envelope with the exact master secret, seal domain, tenant_id, run_id, and U_DEK",
                     "verify transport or storage did not alter sealed_checkpoint.enc or sealed_champion.enc",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_core seal_envelope`",
+                "verify the saved `--model <FILE>` handle matches this run and check `carbon doctor`",
             ),
             Self::UserEnvelopeFailed { .. } => (
                 "enforce per-user zero-knowledge ECDH-P256 + HKDF-SHA256 + AES-256-GCM encryption",
@@ -156,7 +156,7 @@ impl CarbonError {
                     "supply the exact per-run wrapped U_DEK (CUDK v1) matching carbon-engine's P-256 KEK",
                     "ensure CUEN v1 payload slots (FitJmat, HoldoutJmat, LandmarkJlmb, Predict) are not swapped or modified",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_redteam`",
+                "run `carbon self-verify` and `carbon doctor` to check regional KEK pins and envelope keys",
             ),
             Self::CapabilityAuthFailed { .. } => (
                 "authenticate tenant capability tokens and isolate tenant namespaces at the edge",
@@ -164,7 +164,7 @@ impl CarbonError {
                     "acquire a Free token via POST /v1/carbon/auth/anonymous or pass a signed Pro Bearer token",
                     "ensure tenant_id matches ^[A-Za-z0-9_-]{3,64}$ and matches the token's bound tenant_id",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_redteam`",
+                "check active token status with `carbon whoami` or register a Free token with `carbon register`",
             ),
             Self::InvalidRoleOrCommand { .. } => (
                 "dispatch only recognized Carbon cell roles and CLI subcommands",
@@ -172,7 +172,7 @@ impl CarbonError {
                     "set CARBON_ROLE to edge, engine, eval, serve, or emu",
                     "run `carbon --help` or `carbon-edge --healthcheck`",
                 ],
-                "rerun `cargo test -p jope-carbon --test carbon_core cli_smoke`",
+                "run `carbon --help` to list valid commands (`fit`, `predict`, `inspect`, `explain`, `export`, `doctor`)",
             ),
         };
         CarbonGuidance {

@@ -1736,7 +1736,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     }
     assert!(dev_receipt.all_passed);
     assert_eq!(dev_receipt.total_checks, 33);
-    assert_eq!(dev_receipt.redteam_passed, 16);
+    assert_eq!(dev_receipt.redteam_passed, 17);
     assert_eq!(dev_receipt.residual_unshredded_runs, 0);
 
     let prod_receipt = execute_cloud_product_coverage_audit(&CarbonCloudCoverageInput {
@@ -1763,7 +1763,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     }
     assert!(prod_receipt.all_passed);
     assert_eq!(prod_receipt.total_checks, 33);
-    assert_eq!(prod_receipt.redteam_passed, 16);
+    assert_eq!(prod_receipt.redteam_passed, 17);
     assert_eq!(prod_receipt.residual_unshredded_runs, 0);
 
     emu_dev.shutdown();
@@ -2317,6 +2317,240 @@ fn two_step_fit_predict_inspect_runs_status_shred_and_signed_upgrade_e2e() {
     assert!(
         !upg_tampered.status.success(),
         "carbon upgrade must fail closed when ECDSA-P256 signature is forged"
+    );
+
+    // 8. Real `carbon upgrade` binary swap (`check == false`) on an isolated copied executable
+    //    packaged inside a deterministic `.tar.gz` bundle!
+    let slot_dir = root.path().join("bin_slot");
+    std::fs::create_dir_all(&slot_dir).unwrap();
+    let copied_exe = slot_dir.join("carbon");
+    std::fs::copy(&carbon_bin, &copied_exe).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&copied_exe, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let rel_swap_dir = root.path().join("upgrade_swap_targz");
+    std::fs::create_dir_all(&rel_swap_dir).unwrap();
+    let swap_payload = b"#!/bin/sh\nprintf 'carbon 1.2.1-e2e-swapped\\n'\n".to_vec();
+    let swap_sha = jope_carbon::sha256_lower_hex(&swap_payload);
+    let targz_name = format!("{asset_name}.tar.gz");
+    let targz_bytes = jope_carbon::build_deterministic_single_bin_targz("carbon", &swap_payload)
+        .expect("build targz");
+    std::fs::write(rel_swap_dir.join(&targz_name), &targz_bytes).unwrap();
+    let targz_sha = jope_carbon::sha256_lower_hex(&targz_bytes);
+    let swap_sums = rel_swap_dir.join("SHA256SUMS.txt");
+    std::fs::write(
+        &swap_sums,
+        format!("{swap_sha}  {asset_name}\n{targz_sha}  {targz_name}\n"),
+    )
+    .unwrap();
+    let swap_sig = Command::new("openssl")
+        .args(["dgst", "-sha256", "-sign"])
+        .arg(&priv_pem)
+        .arg(&swap_sums)
+        .output()
+        .unwrap();
+    assert!(swap_sig.status.success());
+    std::fs::write(
+        rel_swap_dir.join("SHA256SUMS.txt.sig"),
+        format!(
+            "{}\n",
+            base64::engine::general_purpose::STANDARD.encode(&swap_sig.stdout)
+        ),
+    )
+    .unwrap();
+
+    let upg_apply = Command::new(&copied_exe)
+        .arg("upgrade")
+        .arg("--base-url")
+        .arg(&rel_swap_dir)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon upgrade apply");
+    assert!(
+        upg_apply.status.success(),
+        "real carbon upgrade swap failed: {}",
+        String::from_utf8_lossy(&upg_apply.stderr)
+    );
+    let apply_json: serde_json::Value = serde_json::from_slice(&upg_apply.stdout).unwrap();
+    assert_eq!(apply_json["check_only"], false);
+    assert_eq!(apply_json["signature_verified"], true);
+    let replaced_bytes = std::fs::read(&copied_exe).unwrap();
+    assert_eq!(
+        jope_carbon::sha256_lower_hex(&replaced_bytes),
+        swap_sha,
+        "installed binary must match extracted payload SHA-256 after atomic rename"
+    );
+    let post_swap_ver = Command::new(&copied_exe)
+        .arg("--version")
+        .output()
+        .expect("upgraded binary --version");
+    assert!(post_swap_ver.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&post_swap_ver.stdout).trim(),
+        "carbon 1.2.1-e2e-swapped"
+    );
+}
+
+#[test]
+fn carbon_serve_cli_subprocess_refusal_gates_and_latest_labeled_predict_e2e() {
+    use std::net::TcpListener;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    let root = tempfile::tempdir().expect("tempdir");
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let data_dir = root.path().join("serve_data");
+    let cfg_dir = root.path().join("serve_cfg");
+    std::fs::create_dir_all(&cfg_dir).unwrap();
+
+    // 1. Non-loopback bind without `--allow-local-fs-dev` + `--dev-ephemeral` MUST fail closed!
+    let refused = Command::new(&carbon_bin)
+        .args(["serve", "--listen", "0.0.0.0:0", "--data-dir"])
+        .arg(&data_dir)
+        .output()
+        .expect("carbon serve non-loopback refusal");
+    assert!(
+        !refused.status.success(),
+        "carbon serve on 0.0.0.0 without explicit dev flags must fail closed"
+    );
+
+    // 2. Reserve an ephemeral loopback port and boot `carbon serve` as a real child process!
+    let port = {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind ephemeral port");
+        listener.local_addr().unwrap().port()
+    };
+    let listen_addr = format!("127.0.0.1:{port}");
+    let base_url = format!("http://{listen_addr}");
+    let auth_hex = "77".repeat(32);
+
+    let mut child = Command::new(&carbon_bin)
+        .args([
+            "serve",
+            "--listen",
+            &listen_addr,
+            "--region",
+            "vpc-e2e-1",
+            "--enable-user-envelope",
+            "--data-dir",
+        ])
+        .arg(&data_dir)
+        .env("CARBON_AUTH_SECRET_HEX", &auth_hex)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn carbon serve subprocess");
+
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let mut connected_client = None;
+    while Instant::now() < deadline {
+        if let Ok((client, probed)) = CarbonThinClient::connect_fastest(vec![base_url.clone()]) {
+            if let Ok(ping) = client.ping_active() {
+                if ping.healthy
+                    && ping.enterprise_self_hosted
+                    && ping.region == "vpc-e2e-1"
+                    && probed[0].enterprise_self_hosted
+                {
+                    connected_client = Some(client);
+                    break;
+                }
+            }
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let Some(client) = connected_client else {
+        let _ = child.kill();
+        let out = child.wait_with_output().unwrap();
+        panic!(
+            "carbon serve subprocess did not become healthy on {base_url}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    };
+
+    let ver = client
+        .fetch_server_version()
+        .expect("GET /v1/carbon/version")
+        .expect("version endpoint present");
+    assert_eq!(ver.version, jope_carbon::CARBON_PKG_VERSION);
+    assert!(ver.enterprise_self_hosted);
+
+    // 3. Fit a dataset against the live `carbon serve` subprocess, then run
+    //    `carbon predict <LABELED_CSV> --run latest --include-inputs --out scored.csv --json`!
+    let csv_path = root.path().join("labeled.csv");
+    let mut csv_text = String::from("x1,x2,target\n");
+    for i in 0..48usize {
+        let x1 = (i as f64) * 0.25;
+        let x2 = ((i % 7) as f64) * 1.1;
+        let y = 3.0 * x1 - 0.8 * x2 + 4.0;
+        csv_text.push_str(&format!("{x1:.4},{x2:.4},{y:.4}\n"));
+    }
+    std::fs::write(&csv_path, csv_text.as_bytes()).unwrap();
+
+    let fit_res = Command::new(&carbon_bin)
+        .arg("fit")
+        .arg(&csv_path)
+        .args([
+            "--target",
+            "target",
+            "--tier",
+            "enterprise",
+            "--endpoint",
+            &base_url,
+            "--json",
+            "--quiet",
+        ])
+        .env("CARBON_AUTH_SECRET_HEX", &auth_hex)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "2")
+        .output()
+        .expect("carbon fit against carbon serve");
+    assert!(
+        fit_res.status.success(),
+        "fit against carbon serve failed: {}",
+        String::from_utf8_lossy(&fit_res.stderr)
+    );
+
+    let scored_csv = root.path().join("scored_with_inputs.csv");
+    let pred_res = Command::new(&carbon_bin)
+        .arg("predict")
+        .arg(&csv_path)
+        .args(["--run", "latest", "--include-inputs", "--out"])
+        .arg(&scored_csv)
+        .arg("--json")
+        .env("CARBON_AUTH_SECRET_HEX", &auth_hex)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon predict --run latest --include-inputs");
+
+    let _ = child.kill();
+    let _ = child.wait();
+
+    assert!(
+        pred_res.status.success(),
+        "predict --run latest --include-inputs failed: {}",
+        String::from_utf8_lossy(&pred_res.stderr)
+    );
+    let pred_val: serde_json::Value = serde_json::from_slice(&pred_res.stdout).unwrap();
+    assert_eq!(pred_val["rows_scored"], 48);
+    assert!(
+        pred_val["evaluation_if_labeled"]["rmse"].as_f64().is_some(),
+        "labeled CSV passed to carbon predict must auto-compute evaluation_if_labeled.rmse: {pred_val}"
+    );
+    let header_line = std::fs::read_to_string(&scored_csv)
+        .unwrap()
+        .lines()
+        .next()
+        .unwrap()
+        .to_owned();
+    assert!(
+        header_line.contains("x1")
+            && header_line.contains("x2")
+            && header_line.contains("prediction"),
+        "--include-inputs CSV must preserve input columns plus prediction (got '{header_line}')"
     );
 }
 

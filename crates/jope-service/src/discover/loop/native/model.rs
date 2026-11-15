@@ -1,4 +1,4 @@
-use super::evaluate::{numeric_rows, NativeFolds, UndefinedFitness};
+use super::evaluate::{aux_columns_for_rows, numeric_rows, NativeFolds, UndefinedFitness};
 use super::*;
 
 #[derive(Serialize, Deserialize)]
@@ -81,8 +81,37 @@ impl NativeModel {
             target_min,
             target_scale,
             model,
+            calibration: None,
         })
     }
+
+    pub(crate) fn fit_with_calibration(
+        features: &[String],
+        dsl: &str,
+        x: &feat_math::Rows,
+        y: &[f64],
+        objective: &RegressionObjective,
+        calibration_family: jope_runtime::calibration::Calibration,
+        train_aux_cols: &jope_runtime::fitness::Columns,
+    ) -> Result<Self> {
+        let mut fitted = Self::fit(features, dsl, x, y)?;
+        if calibration_family != jope_runtime::calibration::Calibration::None {
+            let raw_preds = fitted.predict(x)?;
+            let transform = jope_runtime::calibration::fit(
+                objective.fitness(),
+                calibration_family,
+                y,
+                &raw_preds,
+                train_aux_cols,
+            );
+            transform.validate()?;
+            if !transform.is_identity() {
+                fitted.calibration = Some(transform);
+            }
+        }
+        Ok(fitted)
+    }
+
     pub(crate) fn predict(&self, x: &feat_math::Rows) -> Result<Vec<f64>> {
         ensure!(
             x.iter().all(|r| r.len() == self.features.len()),
@@ -108,7 +137,13 @@ impl NativeModel {
             .model
             .predict(&tx)?
             .into_iter()
-            .map(|p| p * self.target_scale + self.target_min)
+            .map(|p| {
+                let uncalibrated = p * self.target_scale + self.target_min;
+                match &self.calibration {
+                    Some(cal) => cal.apply(uncalibrated),
+                    None => uncalibrated,
+                }
+            })
             .collect();
         ensure!(
             values.iter().all(|v| v.is_finite()),
@@ -125,6 +160,7 @@ pub(super) fn native_refit<B: AsRef<[u8]>>(
     matrix: &Matrix<B>,
     spec: &NativeFolds,
     objective: &RegressionObjective,
+    calibration_family: jope_runtime::calibration::Calibration,
     output: &Path,
     maximum: u64,
 ) -> Result<worker::Scores> {
@@ -141,15 +177,20 @@ pub(super) fn native_refit<B: AsRef<[u8]>>(
         fs::symlink_metadata(parent)?.is_dir() && fs::canonicalize(parent)? == parent,
         "private fit directory must be canonical"
     );
-    let (x, y) = numeric_rows(
-        matrix,
-        &spec.target,
-        &spec.features,
-        &(0..matrix.rows()).collect::<Vec<_>>(),
-    )?;
+    let all_rows: Vec<usize> = (0..matrix.rows()).collect();
+    let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &all_rows)?;
+    let aux_cols = aux_columns_for_rows(matrix, &objective.columns(), &all_rows)?;
     let train_t0 = std::time::Instant::now();
-    let fitted =
-        NativeModel::fit(&spec.features, &request.dsl, &x, &y).map_err(|_| UndefinedFitness)?;
+    let fitted = NativeModel::fit_with_calibration(
+        &spec.features,
+        &request.dsl,
+        &x,
+        &y,
+        objective,
+        calibration_family,
+        &aux_cols,
+    )
+    .map_err(|_| UndefinedFitness)?;
     let train_secs = train_t0.elapsed().as_secs_f64();
     let infer_t0 = std::time::Instant::now();
     let predictions = fitted.predict(&x).map_err(|_| UndefinedFitness)?;
@@ -171,12 +212,7 @@ pub(super) fn native_refit<B: AsRef<[u8]>>(
         inference_rows: x.len(),
     };
     let score = objective
-        .evaluate_with_telemetry(
-            &y,
-            &predictions,
-            &jope_runtime::fitness::Columns::new(),
-            &telemetry,
-        )
+        .evaluate_with_telemetry(&y, &predictions, &aux_cols, &telemetry)
         .map_err(|_| UndefinedFitness)?;
     let surrogate = RegressionObjective::parse("rmse")?
         .evaluate(&y, &predictions)

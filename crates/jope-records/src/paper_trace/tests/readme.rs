@@ -32,13 +32,13 @@ fn readme_glance_drift_fails() {
 | `jope` with no arguments | prints `jope 0.3.0` <sup>1</sup> |
 | Workspace | 26 members: 19 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` |
 | Emit targets | 6: `python` |
-| Rust tests | 4,189 listed in 26 packages, 66 of them ignored |
-| Python tests | 182, found by a static scan |
+| Rust tests | tracked in `docs/parity/test-inventory.json` across 26 packages; a listing, not a run |
+| Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families |
-| Coverage map | 678 items over 24 lanes |
+| Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 24 lanes |
 | Capability matrix | 824 rows: 353 moved, 61 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each) and 10 test datasets |
-| Python still tracked | 1,184 `.py` files, 159 of them under `python/` |
+| Python still tracked | exception register in `PYTHON_EXCEPTIONS.md` and migration plan in `PY_TO_RUST_PLAN.md` |
 | Architecture decision records | 6 <sup>10</sup> |
 # jope 0.3.0
 source of v0.3.0; the release
@@ -47,7 +47,9 @@ forty generated synthetic fixtures and ten tiny test datasets.
 The 26 workspace members, by directory.
 ";
     assert_eq!(check_readme(readme, &g), Vec::<String>::new());
-    let stale = readme.replace("4,189 listed", "4,100 listed");
+    let stale = readme.replace("across 26 packages", "across 25 packages");
+    assert!(!check_readme(&stale, &g).is_empty());
+    let stale = readme.replace("over 24 lanes", "over 23 lanes");
     assert!(!check_readme(&stale, &g).is_empty());
     let stale = readme.replace("nine jobs", "eight jobs");
     assert!(!check_readme(&stale, &g).is_empty());

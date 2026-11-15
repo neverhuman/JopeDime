@@ -458,13 +458,13 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 40 members: 33 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | 6,139 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
-| Python tests | 210, found by a static scan, not collected or run <sup>5</sup> |
-| CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 1,776 items over 35 lanes |
-| Capability matrix | 849 rows: 353 moved, 86 new, 1 pending, 402 dropped, 7 lost |
+| Rust tests | tracked in `docs/parity/test-inventory.json` across 35 packages; a listing, not a run <sup>5</sup> |
+| Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) <sup>5</sup> |
+| CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
+| Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 35 lanes <sup>7</sup> |
+| Capability matrix | 849 rows: 353 moved, 86 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 5,581 `.py` files, 318 of them under `python/` |
+| Python still tracked | exception register in `PYTHON_EXCEPTIONS.md` and migration plan in `PY_TO_RUST_PLAN.md` <sup>10</sup> |
 | Architecture decision records | 7 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -527,7 +527,7 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-CI is temporarily manual under the owner-directed 2026-10-23 emergency integration.
+Pull-request CI runs automatically on non-draft pull requests (`opened`, `synchronize`, `reopened`, `ready_for_review`) and supports manual dispatch on `main`.
 The configured pull-request CI is `.github/workflows/ci.yml`: seventeen jobs declared at the top
 level expand to twenty jobs, including both Rust shards, both TypeScript runtimes,
 two Go versions and two native Go platform jobs. Existing lanes use self-hosted

@@ -48,6 +48,18 @@ pub struct PrepColumn {
     present: u64,
 }
 
+impl PrepColumn {
+    /// Byte offset of this column's aligned value array inside the JMAT v1 buffer.
+    pub fn values_offset(&self) -> u64 {
+        self.values
+    }
+
+    /// Byte offset of this column's aligned presence bitmap inside the JMAT v1 buffer.
+    pub fn present_offset(&self) -> u64 {
+        self.present
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct JmatMetadata {
@@ -124,6 +136,148 @@ pub fn split_and_encode_jmat_v1(
         holdout_jmat,
         holdout_sha256,
     })
+}
+
+/// Partition an already-parsed dense numeric matrix strictly according to `plan` and encode
+/// `fit.jmat` and `holdout.jmat` directly in IEEE-754 little-endian `f64` bytes with zero
+/// string formatting, zero row clones, and zero `str::parse::<f64>()` round-trips.
+pub fn split_and_encode_numeric_jmat_v1(
+    headers: &[String],
+    rows: &[Vec<f64>],
+    plan: &SplitPlan,
+) -> PrepResult<SplitJmatArtifacts> {
+    plan.validate_for_table(rows.len())?;
+    let fit_jmat = encode_indexed_numeric_jmat_v1(headers, rows, plan.fit_rows())?;
+    let holdout_jmat = encode_indexed_numeric_jmat_v1(headers, rows, plan.holdout_rows())?;
+    let fit_sha256: [u8; 32] = Sha256::digest(&fit_jmat).into();
+    let holdout_sha256: [u8; 32] = Sha256::digest(&holdout_jmat).into();
+    Ok(SplitJmatArtifacts {
+        fit_jmat,
+        fit_sha256,
+        holdout_jmat,
+        holdout_sha256,
+    })
+}
+
+/// Encode a dense finite `f64` matrix directly into canonical JMAT v1 bytes without string round-trips.
+pub fn encode_numeric_jmat_v1(headers: &[String], rows: &[Vec<f64>]) -> PrepResult<Vec<u8>> {
+    let indices: Vec<usize> = (0..rows.len()).collect();
+    encode_indexed_numeric_jmat_v1(headers, rows, &indices)
+}
+
+/// Encode the subset of `rows` selected by `indices` directly into canonical JMAT v1 bytes.
+pub fn encode_indexed_numeric_jmat_v1(
+    headers: &[String],
+    rows: &[Vec<f64>],
+    indices: &[usize],
+) -> PrepResult<Vec<u8>> {
+    if headers.is_empty()
+        || headers.iter().any(|name| name.trim().is_empty())
+        || headers.iter().collect::<BTreeSet<_>>().len() != headers.len()
+    {
+        return Err(PrepError::InvalidJmat {
+            reason: "headers must be unique and non-empty",
+        });
+    }
+    for &idx in indices {
+        let row = rows.get(idx).ok_or(PrepError::InvalidSplitIndex {
+            index: idx,
+            total_rows: rows.len(),
+        })?;
+        if row.len() != headers.len() {
+            return Err(PrepError::InvalidJmat {
+                reason: "numeric row width does not match header count",
+            });
+        }
+        if row.iter().any(|v| !v.is_finite()) {
+            return Err(PrepError::InvalidJmat {
+                reason: "numeric column cell is not finite",
+            });
+        }
+    }
+
+    let mut metadata = JmatMetadata {
+        columns: headers
+            .iter()
+            .map(|name| PrepColumn {
+                name: name.clone(),
+                kind: PrepColumnKind::Numeric,
+                dictionary: Vec::new(),
+                values: 0,
+                present: 0,
+            })
+            .collect(),
+    };
+    let preliminary = serde_json::to_vec(&metadata).map_err(|_| PrepError::InvalidJmat {
+        reason: "failed to serialize preliminary column metadata",
+    })?;
+    let reserve = metadata
+        .columns
+        .len()
+        .checked_mul(1024)
+        .ok_or(PrepError::ArithmeticOverflow)?;
+    let row_ids = aligned(
+        HEADER
+            .checked_add(preliminary.len())
+            .and_then(|n| n.checked_add(reserve))
+            .ok_or(PrepError::ArithmeticOverflow)?,
+    )?;
+
+    let selected_len = indices.len();
+    let mut bytes = vec![0u8; row_ids];
+    for row in 0..selected_len {
+        bytes.extend_from_slice(&(row as u64).to_le_bytes());
+    }
+    for (col_idx, column) in metadata.columns.iter_mut().enumerate() {
+        bytes.resize(aligned(bytes.len())?, 0);
+        column.values = bytes.len() as u64;
+        bytes.reserve(selected_len.saturating_mul(8));
+        for &row_idx in indices {
+            let value = rows[row_idx][col_idx];
+            bytes.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        bytes.resize(aligned(bytes.len())?, 0);
+        column.present = bytes.len() as u64;
+        bytes.resize(
+            bytes
+                .len()
+                .checked_add(selected_len)
+                .ok_or(PrepError::ArithmeticOverflow)?,
+            1u8,
+        );
+    }
+
+    let metadata_bytes = serde_json::to_vec(&metadata).map_err(|_| PrepError::InvalidJmat {
+        reason: "failed to serialize finalized column metadata",
+    })?;
+    if HEADER
+        .checked_add(metadata_bytes.len())
+        .ok_or(PrepError::ArithmeticOverflow)?
+        > row_ids
+    {
+        return Err(PrepError::InvalidJmat {
+            reason: "metadata exceeded reserved header region",
+        });
+    }
+    let total = bytes
+        .len()
+        .checked_add(CHECKSUM)
+        .ok_or(PrepError::ArithmeticOverflow)?;
+    bytes[..8].copy_from_slice(MAGIC);
+    for (offset, value) in [
+        (8, 1usize),
+        (16, total),
+        (24, metadata_bytes.len()),
+        (32, selected_len),
+        (40, headers.len()),
+        (48, row_ids),
+    ] {
+        bytes[offset..offset + 8].copy_from_slice(&(value as u64).to_le_bytes());
+    }
+    bytes[HEADER..HEADER + metadata_bytes.len()].copy_from_slice(&metadata_bytes);
+    let checksum = Sha256::digest(&bytes);
+    bytes.extend_from_slice(&checksum);
+    Ok(bytes)
 }
 
 fn aligned(value: usize) -> PrepResult<usize> {
@@ -281,6 +435,7 @@ pub struct PrepMatrix<B> {
     metadata: JmatMetadata,
     rows: usize,
     row_ids: usize,
+    sha256_hex: String,
 }
 
 impl<B: AsRef<[u8]>> PrepMatrix<B> {
@@ -356,6 +511,10 @@ impl<B: AsRef<[u8]>> PrepMatrix<B> {
             if usize::try_from(column.values).map_err(|_| PrepError::ArithmeticOverflow)? != start
                 || (column.kind == PrepColumnKind::Numeric && !column.dictionary.is_empty())
                 || column.dictionary.windows(2).any(|w| w[0] >= w[1])
+                || column
+                    .dictionary
+                    .iter()
+                    .any(|v| v.trim_matches(|c: char| c.is_ascii_whitespace()).is_empty())
             {
                 return Err(PrepError::InvalidJmat {
                     reason: "invalid column value offset or unsorted dictionary",
@@ -421,12 +580,30 @@ impl<B: AsRef<[u8]>> PrepMatrix<B> {
                 reason: "trailing unreferenced bytes before checksum",
             });
         }
+        let sha256_hex = format!("{:x}", Sha256::digest(bytes));
         Ok(Self {
             storage,
             metadata,
             rows,
             row_ids,
+            sha256_hex,
         })
+    }
+
+    /// Lowercase 64-character SHA-256 hex digest of the validated full JMAT v1 buffer.
+    pub fn sha256_hex(&self) -> &str {
+        &self.sha256_hex
+    }
+
+    /// Deconstruct into validated storage, columns, row count, `row_ids` offset, and SHA-256 digest.
+    pub fn into_parts(self) -> (B, Vec<PrepColumn>, usize, usize, String) {
+        (
+            self.storage,
+            self.metadata.columns,
+            self.rows,
+            self.row_ids,
+            self.sha256_hex,
+        )
     }
 
     /// Number of rows in the matrix.

@@ -43,6 +43,24 @@ fn current_mapping() {
 }
 
 #[test]
+fn unknown_top_level_key_fails() {
+    let mut m = mapping();
+    let discovered = recorded(&m);
+    m.as_dict_mut().unwrap().insert(
+        "python:research/misplaced_root_entry.py".to_owned(),
+        Value::Dict(super::discovery::kind("python-family")),
+    );
+    let errs = validate(&m, &discovered).unwrap();
+    assert!(
+        errs.contains(
+            &"unexpected top-level coverage key: python:research/misplaced_root_entry.py"
+                .to_owned()
+        ),
+        "expected unexpected top-level coverage key error, got {errs:?}"
+    );
+}
+
+#[test]
 fn each_unassigned_kind_fails() {
     let m = mapping();
     for kind in [

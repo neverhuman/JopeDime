@@ -1,7 +1,7 @@
 #!/bin/sh
 # Carbon Zero-Knowledge Serverless CLI Installer (POSIX sh: Linux glibc/musl + macOS arm64/x86_64).
 #
-# One-line install (official HTTPS mirror or GitHub Releases Latest):
+# One-line install (official HTTPS endpoint with GitHub Releases failover):
 #   curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh
 #   curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh
 #
@@ -13,7 +13,7 @@
 
 set -eu
 
-DEFAULT_TAG="carbon-cli-v1.2.0"
+DEFAULT_TAG="carbon-cli-v1.1.0"
 SIGNING_PUB_FINGERPRINT="de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
 
 TAG="$DEFAULT_TAG"
@@ -24,6 +24,8 @@ EXPLICIT_BASE_URL=0
 SOURCE_DIR=""
 TEST_PUBKEY_FILE=""
 SKIP_PING=0
+MODIFY_PATH=0
+UNINSTALL=0
 
 say() {
   printf '[carbon-install] %s\n' "$*" >&2
@@ -71,18 +73,33 @@ while [ "$#" -gt 0 ]; do
       SKIP_PING=1
       shift 1
       ;;
+    --modify-path)
+      MODIFY_PATH=1
+      shift 1
+      ;;
+    --no-modify-path)
+      MODIFY_PATH=0
+      shift 1
+      ;;
+    --uninstall)
+      UNINSTALL=1
+      shift 1
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: install.sh [OPTIONS]
 
 Options:
-  --version <TAG>              Release tag (default: carbon-cli-v1.2.0)
+  --version <TAG>              Release tag (default: carbon-cli-v1.1.0)
   --bin-dir <ABS_DIR>          Binary destination (default: $HOME/.local/bin)
   --config-dir <ABS_DIR>       Config destination (default: $HOME/.config/jopedime)
   --base-url <URL>             Override HTTPS release download prefix
   --source-dir <DIR>           Install from a local verified release directory (offline)
   --allow-test-pubkey <FILE>   Override ECDSA-P256 public key for CI/E2E test fixtures only
   --skip-ping                  Skip post-install live `/v1/carbon/ping` probe
+  --modify-path                Append --bin-dir export to shell profile if missing from PATH
+  --no-modify-path             Do not edit shell profile files (default)
+  --uninstall                  Remove installed Carbon binary and release manifests
 EOF
       exit 0
       ;;
@@ -112,6 +129,21 @@ case "$CONFIG_DIR" in
   *) die "--config-dir must be an absolute path (got '$CONFIG_DIR')" ;;
 esac
 
+if [ "$UNINSTALL" -eq 1 ]; then
+  if [ -f "$BIN_DIR/carbon" ]; then
+    rm -f "$BIN_DIR/carbon"
+    say "Removed $BIN_DIR/carbon"
+  fi
+  for cfg_asset in "carbon-clouds.json" "SHA256SUMS.txt" "SHA256SUMS.txt.sig"; do
+    if [ -f "$CONFIG_DIR/$cfg_asset" ]; then
+      rm -f "$CONFIG_DIR/$cfg_asset"
+      say "Removed $CONFIG_DIR/$cfg_asset"
+    fi
+  done
+  say "Uninstall complete (saved zero-knowledge run keys under $CONFIG_DIR/runs were preserved)."
+  exit 0
+fi
+
 check_writable_target_dir() {
   target_dir="$1"
   flag_name="$2"
@@ -139,33 +171,42 @@ case "$OS_NAME" in
       x86_64|amd64)
         CANDIDATE_ASSETS="carbon-linux-x86_64-musl"
         ;;
-      aarch64|arm64)
-        CANDIDATE_ASSETS="carbon-linux-aarch64-musl"
+      aarch64|arm64|armv8*)
+        USERLAND_BITS="$(getconf LONG_BIT 2>/dev/null || printf '64')"
+        if [ "$ARCH_RAW" = "armv8l" ] || [ "$USERLAND_BITS" = "32" ]; then
+          CANDIDATE_ASSETS="carbon-linux-armv7-musleabihf carbon-linux-aarch64-musl"
+        else
+          CANDIDATE_ASSETS="carbon-linux-aarch64-musl carbon-linux-armv7-musleabihf"
+        fi
         ;;
       armv7l|armv7|armhf)
         CANDIDATE_ASSETS="carbon-linux-armv7-musleabihf"
         ;;
       *)
-        die "unsupported Linux CPU architecture '$ARCH_RAW' (expected x86_64, aarch64, or armv7l)"
+        die "unsupported Linux CPU architecture '$ARCH_RAW' (expected x86_64, aarch64, armv8l, or armv7l)"
         ;;
     esac
     ;;
   Darwin)
-    # Detect Apple Silicon even when invoked inside an x86_64 Rosetta 2 shell.
+    # Detect Apple Silicon even when invoked inside an x86_64 Rosetta 2 shell or minimal PATH.
     IS_APPLE_ARM64=0
     if [ "$ARCH_RAW" = "arm64" ] || [ "$ARCH_RAW" = "aarch64" ]; then
       IS_APPLE_ARM64=1
+    elif [ -x /usr/sbin/sysctl ]; then
+      if [ "$(/usr/sbin/sysctl -n hw.optional.arm64 2>/dev/null || printf '0')" = "1" ]; then
+        IS_APPLE_ARM64=1
+      fi
     elif command -v sysctl >/dev/null 2>&1; then
       if [ "$(sysctl -n hw.optional.arm64 2>/dev/null || printf '0')" = "1" ]; then
         IS_APPLE_ARM64=1
       fi
     fi
     if [ "$IS_APPLE_ARM64" -eq 1 ]; then
-      CANDIDATE_ASSETS="carbon-darwin-universal carbon-darwin-arm64"
+      CANDIDATE_ASSETS="carbon-darwin-arm64 carbon-darwin-universal"
     else
       case "$ARCH_RAW" in
         x86_64|amd64)
-          CANDIDATE_ASSETS="carbon-darwin-universal carbon-darwin-x86_64"
+          CANDIDATE_ASSETS="carbon-darwin-x86_64 carbon-darwin-universal"
           ;;
         *)
           die "unsupported macOS CPU architecture '$ARCH_RAW' (expected arm64 or x86_64)"
@@ -184,8 +225,26 @@ esac
 for req_cmd in openssl awk grep; do
   command -v "$req_cmd" >/dev/null 2>&1 || die "required command '$req_cmd' is not installed"
 done
+
+DOWNLOADER=""
 if [ -z "$SOURCE_DIR" ]; then
-  command -v curl >/dev/null 2>&1 || die "required command 'curl' is not installed"
+  if command -v curl >/dev/null 2>&1; then
+    DOWNLOADER="curl"
+  elif command -v wget >/dev/null 2>&1; then
+    DOWNLOADER="wget"
+  else
+    die "neither 'curl' nor 'wget' is installed (required for HTTPS download)"
+  fi
+fi
+
+TELEMETRY_OPTOUT=0
+if [ "${DO_NOT_TRACK:-0}" = "1" ] || [ "${CARBON_NO_TELEMETRY:-0}" = "1" ]; then
+  TELEMETRY_OPTOUT=1
+fi
+if [ "$TELEMETRY_OPTOUT" -eq 1 ]; then
+  INSTALLER_UA="jope-carbon-installer/1"
+else
+  INSTALLER_UA="jope-carbon-installer/1 ($TAG; $OS_NAME-$ARCH_RAW)"
 fi
 
 compute_sha256() {
@@ -218,9 +277,16 @@ decode_base64_file() {
 }
 
 if [ -z "$BASE_URL" ]; then
-  BASE_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
+  if [ "$TELEMETRY_OPTOUT" -eq 1 ]; then
+    BASE_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
+    MIRROR_URL="https://downloads.neverhuman.org/carbon/releases/$TAG"
+  else
+    BASE_URL="https://downloads.neverhuman.org/carbon/releases/$TAG"
+    MIRROR_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
+  fi
+else
+  MIRROR_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
 fi
-MIRROR_URL="https://downloads.neverhuman.org/carbon/releases/$TAG"
 
 STAGE_PARENT="${CARBON_INSTALL_STAGE_ROOT:-}"
 if [ -z "$STAGE_PARENT" ]; then
@@ -244,7 +310,7 @@ trap 'rm -rf "$STAGE_DIR"' EXIT INT TERM
 if [ -n "$TEST_PUBKEY_FILE" ]; then
   [ -f "$TEST_PUBKEY_FILE" ] || die "missing test public key file '$TEST_PUBKEY_FILE'"
   say "WARNING: using test public key override ($TEST_PUBKEY_FILE) — NOT for production installs"
-  cp "$TEST_PUBKEY_FILE" "$STAGE_DIR/signing.pub"
+  tr -d '\r' < "$TEST_PUBKEY_FILE" > "$STAGE_DIR/signing.pub"
 else
   cat > "$STAGE_DIR/signing.pub" <<'EOF'
 -----BEGIN PUBLIC KEY-----
@@ -257,6 +323,16 @@ EOF
   [ "$GOT_PUB_SHA" = "$SIGNING_PUB_FINGERPRINT" ] || die "embedded release public key fingerprint mismatch ($GOT_PUB_SHA)"
 fi
 
+http_download_one() {
+  src_url="$1"
+  dst_file="$2"
+  if [ "$DOWNLOADER" = "curl" ]; then
+    curl -fsSL --retry 3 --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+  else
+    wget -q -T 15 -t 3 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+  fi
+}
+
 fetch_asset() {
   asset_name="$1"
   dest_path="$2"
@@ -264,12 +340,12 @@ fetch_asset() {
     [ -f "$SOURCE_DIR/$asset_name" ] || die "missing $SOURCE_DIR/$asset_name"
     cp "$SOURCE_DIR/$asset_name" "$dest_path"
   elif [ "$EXPLICIT_BASE_URL" -eq 1 ]; then
-    curl -fsSL --retry 3 --connect-timeout 10 "${BASE_URL%/}/$asset_name" -o "$dest_path" \
+    http_download_one "${BASE_URL%/}/$asset_name" "$dest_path" \
       || die "download failed: ${BASE_URL%/}/$asset_name"
   else
-    if ! curl -fsSL --retry 3 --connect-timeout 10 "${BASE_URL%/}/$asset_name" -o "$dest_path" 2>/dev/null; then
-      say "Primary download unavailable for $asset_name; trying official mirror ($MIRROR_URL)..."
-      curl -fsSL --retry 3 --connect-timeout 10 "${MIRROR_URL%/}/$asset_name" -o "$dest_path" \
+    if ! http_download_one "${BASE_URL%/}/$asset_name" "$dest_path" 2>/dev/null; then
+      say "Primary download unavailable for $asset_name; failing over to $MIRROR_URL..."
+      http_download_one "${MIRROR_URL%/}/$asset_name" "$dest_path" \
         || die "download failed from both ${BASE_URL%/}/$asset_name and ${MIRROR_URL%/}/$asset_name"
     fi
   fi
@@ -366,16 +442,29 @@ for required_asset in "$DOWNLOAD_ASSET" "carbon-clouds.json"; do
     || die "SHA-256 mismatch for $required_asset (expected $expected_hex, got $actual_hex)"
 done
 
+# Two-step decompression so POSIX `/bin/sh` never masks decompressor exit codes across a pipe.
 mkdir -p "$STAGE_DIR/extracted"
 case "$ARCHIVE_KIND" in
   tar.zst)
-    zstd -dc "$STAGE_DIR/$DOWNLOAD_ASSET" | tar -xf - -C "$STAGE_DIR/extracted"
+    zstd -dc "$STAGE_DIR/$DOWNLOAD_ASSET" > "$STAGE_DIR/payload.tar" \
+      || die "zstd decompression failed for $DOWNLOAD_ASSET"
+    tar -xf "$STAGE_DIR/payload.tar" -C "$STAGE_DIR/extracted" \
+      || die "tar extraction failed for $DOWNLOAD_ASSET"
+    rm -f "$STAGE_DIR/payload.tar"
     ;;
   tar.xz)
-    xz -dc "$STAGE_DIR/$DOWNLOAD_ASSET" | tar -xf - -C "$STAGE_DIR/extracted"
+    xz -dc "$STAGE_DIR/$DOWNLOAD_ASSET" > "$STAGE_DIR/payload.tar" \
+      || die "xz decompression failed for $DOWNLOAD_ASSET"
+    tar -xf "$STAGE_DIR/payload.tar" -C "$STAGE_DIR/extracted" \
+      || die "tar extraction failed for $DOWNLOAD_ASSET"
+    rm -f "$STAGE_DIR/payload.tar"
     ;;
   tar.gz)
-    gzip -dc "$STAGE_DIR/$DOWNLOAD_ASSET" | tar -xf - -C "$STAGE_DIR/extracted"
+    gzip -dc "$STAGE_DIR/$DOWNLOAD_ASSET" > "$STAGE_DIR/payload.tar" \
+      || die "gzip decompression failed for $DOWNLOAD_ASSET"
+    tar -xf "$STAGE_DIR/payload.tar" -C "$STAGE_DIR/extracted" \
+      || die "tar extraction failed for $DOWNLOAD_ASSET"
+    rm -f "$STAGE_DIR/payload.tar"
     ;;
   raw)
     cp "$STAGE_DIR/$DOWNLOAD_ASSET" "$STAGE_DIR/extracted/carbon"
@@ -397,10 +486,18 @@ if [ "$ARCHIVE_KIND" != "raw" ] && manifest_has_asset "$SELECTED_BASE"; then
     || die "extracted binary SHA-256 mismatch against $SELECTED_BASE (expected $expected_bin_hex, got $actual_bin_hex)"
 fi
 
+if [ "$OS_NAME" = "Darwin" ] && command -v xattr >/dev/null 2>&1; then
+  xattr -d com.apple.quarantine "$EXTRACTED_BIN" 2>/dev/null || true
+fi
+
+chmod 0755 "$EXTRACTED_BIN"
+if ! CARBON_CONFIG_DIR="$STAGE_DIR" "$EXTRACTED_BIN" version >/dev/null 2>&1; then
+  die "staged executable '$DOWNLOAD_ASSET' failed smoke execution on ($OS_NAME / $ARCH_RAW)"
+fi
+
 mkdir -p "$BIN_DIR" "$CONFIG_DIR"
 chmod 0700 "$CONFIG_DIR" 2>/dev/null || true
 
-chmod 0755 "$EXTRACTED_BIN"
 cp "$EXTRACTED_BIN" "$BIN_DIR/.carbon.new.$$"
 chmod 0755 "$BIN_DIR/.carbon.new.$$"
 mv -f "$BIN_DIR/.carbon.new.$$" "$BIN_DIR/carbon"
@@ -421,10 +518,43 @@ if [ "$SKIP_PING" -eq 0 ]; then
   CARBON_CONFIG_DIR="$CONFIG_DIR" "$BIN_DIR/carbon" ping --cloud prod >&2
 fi
 
+if [ "$OS_NAME" = "Linux" ] && { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; }; then
+  if command -v carbon.exe >/dev/null 2>&1; then
+    say "NOTE: Windows 'carbon.exe' is also visible on WSL PATH; invoke Linux 'carbon' (not 'carbon.exe') inside WSL."
+  fi
+fi
+
 case ":${PATH:-}:" in
   *":$BIN_DIR:"*) ;;
   *)
-    say "NOTE: Add $BIN_DIR to your PATH: export PATH=\"$BIN_DIR:\$PATH\""
+    SHELL_BASE="$(basename "${SHELL:-sh}")"
+    if [ "$MODIFY_PATH" -eq 1 ] && [ -n "${HOME:-}" ]; then
+      case "$SHELL_BASE" in
+        zsh)
+          RC_FILE="$HOME/.zshrc"
+          RC_LINE="export PATH=\"$BIN_DIR:\$PATH\""
+          ;;
+        fish)
+          RC_FILE="$HOME/.config/fish/config.fish"
+          RC_LINE="fish_add_path \"$BIN_DIR\""
+          mkdir -p "$(dirname "$RC_FILE")"
+          ;;
+        *)
+          RC_FILE="$HOME/.profile"
+          RC_LINE="export PATH=\"$BIN_DIR:\$PATH\""
+          ;;
+      esac
+      if [ ! -f "$RC_FILE" ] || ! grep -F "$BIN_DIR" "$RC_FILE" >/dev/null 2>&1; then
+        printf '\n# Added by Carbon CLI installer\n%s\n' "$RC_LINE" >> "$RC_FILE"
+        say "Added $BIN_DIR to $RC_FILE (open a new shell or source it to activate)"
+      fi
+    else
+      case "$SHELL_BASE" in
+        zsh)  say "NOTE: Add $BIN_DIR to PATH: echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> ~/.zshrc && source ~/.zshrc" ;;
+        fish) say "NOTE: Add $BIN_DIR to PATH: fish_add_path \"$BIN_DIR\"" ;;
+        *)    say "NOTE: Add $BIN_DIR to PATH: export PATH=\"$BIN_DIR:\$PATH\"" ;;
+      esac
+    fi
     ;;
 esac
 

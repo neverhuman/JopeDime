@@ -1383,7 +1383,10 @@ pub fn run_ci_quickstart_qualification(
         let rt_json = parse_cli_json(&rt_out.stdout, "carbon redteam --cloud prod")?;
         let vecs = j_slice(&rt_json, "vectors");
         let passed_vecs = vecs.iter().filter(|v| v["passed"] == true).count();
-        let ok = rt_out.status.success() && rt_json["all_passed"] == true && passed_vecs == 16;
+        let ok = rt_out.status.success()
+            && rt_json["all_passed"] == true
+            && passed_vecs >= 16
+            && passed_vecs == vecs.len();
         let mut vec_lines = Vec::new();
         for v in vecs {
             let vid = j_str(v, "vector_id").to_owned();

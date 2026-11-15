@@ -20,6 +20,7 @@ COSIGN_SHA256="caaad125acef1cb81d58dcdc454a1e429d09a750d1e9e2b3ed1aed8964454708"
 EXTRA_ASSETS_DIR=""
 SKIP_DEPLOY=0
 SKIP_GH_RELEASE=0
+ALLOW_PARTIAL_MATRIX=0
 
 die() {
   printf '[carbon-release] ERROR: %s\n' "$*" >&2
@@ -40,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --extra-assets-dir) EXTRA_ASSETS_DIR="$2"; shift 2 ;;
     --skip-deploy) SKIP_DEPLOY=1; shift 1 ;;
     --skip-gh-release) SKIP_GH_RELEASE=1; shift 1 ;;
+    --allow-partial-matrix) ALLOW_PARTIAL_MATRIX=1; shift 1 ;;
     *) die "unknown argument '$1'" ;;
   esac
 done
@@ -97,6 +99,21 @@ fi
 
 cp deploy/carbon/install.sh "$OUT_DIR/install.sh"
 cp deploy/carbon/install.ps1 "$OUT_DIR/install.ps1"
+python3 - "$OUT_DIR/install.sh" "$OUT_DIR/install.ps1" "$TAG" <<'PY'
+import re, sys
+sh_path, ps1_path, tag = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(sh_path, "r", encoding="utf-8") as fh:
+    sh = fh.read()
+sh = re.sub(r'^DEFAULT_TAG="[^"]+"', f'DEFAULT_TAG="{tag}"', sh, count=1, flags=re.M)
+sh = re.sub(r'\(default: carbon-cli-v[^)]+\)', f'(default: {tag})', sh, count=1)
+with open(sh_path, "w", encoding="utf-8") as fh:
+    fh.write(sh)
+with open(ps1_path, "r", encoding="utf-8") as fh:
+    ps1 = fh.read()
+ps1 = re.sub(r'(\[string\]\$Version\s*=\s*)"[^"]+"', rf'\1"{tag}"', ps1, count=1)
+with open(ps1_path, "w", encoding="utf-8") as fh:
+    fh.write(ps1)
+PY
 
 if [[ -n "$EXTRA_ASSETS_DIR" ]]; then
   [[ -d "$EXTRA_ASSETS_DIR" ]] || die "missing --extra-assets-dir '$EXTRA_ASSETS_DIR'"
@@ -180,6 +197,13 @@ ROOT
   rm -f "$OUT_DIR/SHA256SUMS.txt.sig.der"
 
   if [[ "$SKIP_GH_RELEASE" -eq 0 ]]; then
+    if [[ "$ALLOW_PARTIAL_MATRIX" -eq 0 ]]; then
+      compgen -G "$OUT_DIR/carbon-linux-x86_64-musl*" >/dev/null || die "missing Linux x86_64 CLI asset in $OUT_DIR"
+      compgen -G "$OUT_DIR/carbon-linux-aarch64-musl*" >/dev/null || die "missing Linux aarch64 CLI asset in $OUT_DIR"
+      compgen -G "$OUT_DIR/carbon-darwin-*" >/dev/null || die "missing macOS Darwin CLI asset in $OUT_DIR (pass --extra-assets-dir or --allow-partial-matrix)"
+      compgen -G "$OUT_DIR/carbon-windows-x86_64-msvc*" >/dev/null || die "missing Windows x86_64 CLI asset in $OUT_DIR (pass --extra-assets-dir or --allow-partial-matrix)"
+      compgen -G "$OUT_DIR/carbon-windows-aarch64-msvc*" >/dev/null || die "missing Windows ARM64 CLI asset in $OUT_DIR (pass --extra-assets-dir or --allow-partial-matrix)"
+    fi
     GH_ROLE_CMD="${GH_ROLE_BIN:-$(command -v gh-role || printf '%s/.local/bin/gh-role' "$HOME")}"
     say "Publishing immutable GitHub Release '$TAG'..."
     (

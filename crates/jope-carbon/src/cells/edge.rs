@@ -13,6 +13,7 @@ use base64::Engine as _;
 use jope_api::{
     carbon::{
         CarbonCreateRunRequest, CarbonEarlyStopRequest, CarbonExecutionModeWire,
+        CarbonExplainRequest, CarbonExplainResponse, CarbonExportRequest, CarbonExportResponse,
         CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
         CarbonPreparePredictRequest, CarbonPreparePredictResponse, CarbonPrepareUploadRequest,
         CarbonPrepareUploadResponse, CarbonPresignedTarget, CarbonPublicWaveProgress,
@@ -25,6 +26,7 @@ use jope_api::{
 use jope_prep::{
     conditioning::FitLandmarkBundle,
     cuen::{parse_cudk_v1, parse_cuen_v1, CuenPayloadKind},
+    objective::ObjectiveSpec,
 };
 use serde::{Deserialize, Serialize};
 
@@ -45,7 +47,9 @@ use crate::{
         },
         sigv4::CarbonPresigner,
     },
-    storage::cas::{canonical_blob_scope, canonical_run_state_key, CarbonCasStore},
+    storage::cas::{
+        canonical_blob_scope, canonical_run_state_key, sha256_lower_hex, CarbonCasStore,
+    },
 };
 
 const MAX_LANDMARK_WIRE_BYTES: usize = 16_384;
@@ -254,6 +258,29 @@ impl CarbonEdgeRouter {
         resp
     }
 
+    fn finalize_gateway_response(
+        &self,
+        req_id: &str,
+        is_sensitive_route: bool,
+        mut resp: CarbonGatewayResponse,
+    ) -> CarbonGatewayResponse {
+        resp = self
+            .attach_provenance_headers(resp)
+            .with_header("x-carbon-request-id", req_id)
+            .with_header(
+                "strict-transport-security",
+                "max-age=63072000; includeSubDomains",
+            )
+            .with_header("x-content-type-options", "nosniff");
+        if is_sensitive_route && !resp.headers.contains_key("cache-control") {
+            resp = resp.with_header("cache-control", "no-store");
+        }
+        if resp.status == 429 && !resp.headers.contains_key("retry-after") {
+            resp = resp.with_header("retry-after", "1");
+        }
+        resp
+    }
+
     pub fn handle_lambda_invocation(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
         let value: serde_json::Value = serde_json::from_slice(payload)
             .map_err(|e| format!("invalid edge Lambda JSON payload: {e}"))?;
@@ -269,11 +296,22 @@ impl CarbonEdgeRouter {
     }
 
     pub fn handle(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        let req_id = crate::observability::generate_or_sanitize_request_id(
+            req.header_ci("x-carbon-request-id"),
+        );
         let method = req.method.to_ascii_uppercase();
         let path = req.path.trim_end_matches('/');
         let clean_path = if path.is_empty() { "/" } else { path };
+        let is_sensitive_route = clean_path.starts_with("/v1/carbon/auth")
+            || clean_path.starts_with("/v1/carbon/uploads")
+            || clean_path.starts_with("/v1/carbon/runs")
+            || clean_path.starts_with("/v1/carbon/cas")
+            || clean_path.starts_with("/v1/carbon/advisor");
 
         let resp = match (method.as_str(), clean_path) {
+            ("GET" | "HEAD", p) if p == "/carbon" || p.starts_with("/carbon/") => {
+                self.handle_passive_download_redirect(&method, clean_path, &req_id, req)
+            }
             ("GET", "/.well-known/carbon-regions.json") => {
                 let mut cat = self.config.catalog.clone();
                 for entry in &mut cat.regions {
@@ -325,38 +363,93 @@ impl CarbonEdgeRouter {
                 let rest = &clean_path["/v1/carbon/runs/".len()..];
                 if let Some(run_id) = rest.strip_suffix("/events") {
                     if method == "GET" {
-                        return self.attach_provenance_headers(self.handle_run_events(run_id, req));
+                        self.handle_run_events(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
                 } else if let Some(run_id) = rest.strip_suffix("/stop") {
                     if method == "POST" {
-                        return self.attach_provenance_headers(self.handle_early_stop(run_id, req));
+                        self.handle_early_stop(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
                 } else if let Some(run_id) = rest.strip_suffix("/resume") {
                     if method == "POST" {
-                        return self.attach_provenance_headers(self.handle_resume(run_id, req));
+                        self.handle_resume(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
                 } else if let Some(run_id) = rest.strip_suffix("/predict/prepare") {
                     if method == "POST" {
-                        return self
-                            .attach_provenance_headers(self.handle_prepare_predict(run_id, req));
+                        self.handle_prepare_predict(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
                 } else if let Some(run_id) = rest.strip_suffix("/predict") {
                     if method == "POST" {
-                        return self.attach_provenance_headers(self.handle_predict(run_id, req));
+                        self.handle_predict(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
+                    }
+                } else if let Some(run_id) = rest.strip_suffix("/explain") {
+                    if method == "POST" {
+                        self.handle_explain(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
+                    }
+                } else if let Some(run_id) = rest.strip_suffix("/export") {
+                    if method == "POST" {
+                        self.handle_export(run_id, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
                 } else if !rest.contains('/') {
                     if method == "GET" {
-                        return self.attach_provenance_headers(self.handle_get_run(rest, req));
+                        self.handle_get_run(rest, req)
+                    } else if method == "DELETE" {
+                        self.handle_shred_run(rest, req)
+                    } else {
+                        CarbonGatewayResponse::error_json(
+                            404,
+                            "not_found",
+                            "unknown Carbon run route",
+                        )
                     }
-                    if method == "DELETE" {
-                        return self.attach_provenance_headers(self.handle_shred_run(rest, req));
-                    }
+                } else {
+                    CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon run route")
                 }
-                CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon run route")
             }
             _ => CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon endpoint"),
         };
-        self.attach_provenance_headers(resp)
+        self.finalize_gateway_response(&req_id, is_sensitive_route, resp)
     }
 
     fn requires_cloud_encryption(&self) -> bool {
@@ -865,6 +958,54 @@ impl CarbonEdgeRouter {
             );
         }
 
+        if let Err(err) = ObjectiveSpec::parse(&create.objective) {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "invalid_objective",
+                &format!("invalid fitness objective: {err}"),
+            );
+        }
+        if let Some(ref mode) = create.split_mode {
+            if !matches!(mode.as_str(), "random" | "forward") {
+                return CarbonGatewayResponse::error_json(
+                    400,
+                    "invalid_split_mode",
+                    "split_mode must be 'random' or 'forward'",
+                );
+            }
+        }
+        if let Some(ref cal) = create.calibration_mode {
+            if !matches!(cal.as_str(), "auto" | "none" | "shift" | "affine") {
+                return CarbonGatewayResponse::error_json(
+                    400,
+                    "invalid_calibration_mode",
+                    "calibration_mode must be 'auto', 'none', 'shift', or 'affine'",
+                );
+            }
+        }
+        if create.aux_column_names.len() > 16 {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "too_many_aux_columns",
+                "at most 16 auxiliary fitness columns are permitted",
+            );
+        }
+        for (idx, aux_col) in create.aux_column_names.iter().enumerate() {
+            if aux_col.trim().is_empty()
+                || aux_col == &create.target_name
+                || create.feature_names.contains(aux_col)
+                || create.aux_column_names[..idx].contains(aux_col)
+            {
+                return CarbonGatewayResponse::error_json(
+                    400,
+                    "invalid_aux_column",
+                    &format!(
+                        "auxiliary fitness column '{aux_col}' must be non-empty, unique, and disjoint from feature_names and target_name"
+                    ),
+                );
+            }
+        }
+
         let tier = wire_to_product_tier(create.tier);
         let effort = map_api_effort(create.effort);
         let total_rows = (create.fit_rows as usize).saturating_add(create.holdout_rows as usize);
@@ -1049,6 +1190,7 @@ impl CarbonEdgeRouter {
             elapsed_ms: DecimalU64(0),
             region: self.config.region.clone(),
             failure_message: None,
+            eval_fallback_shards: None,
         };
         let Ok(status_key) = canonical_run_state_key(&create.tenant_id, &run_str, "status.json")
         else {
@@ -1632,7 +1774,7 @@ impl CarbonEdgeRouter {
                 .unwrap_or(0);
             if current_calls >= max_calls {
                 return CarbonGatewayResponse::error_json(
-                    429,
+                    403,
                     "predict_quota_exceeded",
                     &format!(
                         "{} tier admits at most {max_calls} /predict calls per run",
@@ -1890,6 +2032,347 @@ impl CarbonEdgeRouter {
         CarbonGatewayResponse::json_ok(200, &verdict)
     }
 
+    fn handle_explain(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        let Ok(body) = req.body_bytes() else {
+            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
+        };
+        if body.len() > MAX_CONTROL_JSON_BYTES {
+            return CarbonGatewayResponse::error_json(
+                413,
+                "payload_too_large",
+                "explain payload exceeds 64 KiB limit",
+            );
+        }
+        let Ok(explain_req) = serde_json::from_slice::<CarbonExplainRequest>(&body) else {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "invalid_json",
+                "invalid CarbonExplainRequest",
+            );
+        };
+        if let Err(resp) = self.authorize_tenant(req, &explain_req.tenant_id, None) {
+            return resp;
+        }
+        let now_secs = now_epoch_ms() / 1_000;
+        if !self.rate_limiter.check_and_record(
+            &format!("explain:{}", explain_req.tenant_id),
+            now_secs,
+            120,
+        ) {
+            return CarbonGatewayResponse::error_json(
+                429,
+                "rate_limited",
+                "explain rate limit exceeded",
+            );
+        }
+        if validate_strict_run_id(run_id).is_err()
+            || self.is_run_shredded(&explain_req.tenant_id, run_id)
+        {
+            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
+        }
+        let Ok(req_key) = canonical_run_state_key(&explain_req.tenant_id, run_id, "request.json")
+        else {
+            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+        };
+        let stored_create = match self.cas.get_state_object(&req_key) {
+            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
+                Ok(c) => c,
+                Err(_) => {
+                    return CarbonGatewayResponse::error_json(
+                        500,
+                        "corrupt_request",
+                        "corrupt stored request",
+                    );
+                }
+            },
+            Ok(None) => {
+                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
+            }
+            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        };
+        if stored_create.encrypted_cuen
+            && (explain_req.client_response_pubkey_b64.is_none()
+                || explain_req.wrapped_u_dek_b64.is_none())
+        {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "encrypted_explain_required",
+                "encrypted runs require client_response_pubkey_b64 and wrapped_u_dek_b64 on /explain",
+            );
+        }
+
+        let cmd = CarbonEngineWireCommand::Explain {
+            run_id: run_id.to_owned(),
+            explain: explain_req,
+        };
+        match self.engine.invoke_engine(&cmd) {
+            Ok(bytes) => match serde_json::from_slice::<CarbonExplainResponse>(&bytes) {
+                Ok(resp) => CarbonGatewayResponse::json_ok(200, &resp),
+                Err(_) => CarbonGatewayResponse::error_json(
+                    500,
+                    "invalid_engine_response",
+                    "malformed explain response",
+                ),
+            },
+            Err(err) => CarbonGatewayResponse::error_json(502, "engine_explain_failed", &err),
+        }
+    }
+
+    fn handle_export(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        let Ok(body) = req.body_bytes() else {
+            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
+        };
+        if body.len() > MAX_CONTROL_JSON_BYTES {
+            return CarbonGatewayResponse::error_json(
+                413,
+                "payload_too_large",
+                "export payload exceeds 64 KiB limit",
+            );
+        }
+        let Ok(export_req) = serde_json::from_slice::<CarbonExportRequest>(&body) else {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "invalid_json",
+                "invalid CarbonExportRequest",
+            );
+        };
+        if let Err(resp) = self.authorize_tenant(req, &export_req.tenant_id, None) {
+            return resp;
+        }
+        let now_secs = now_epoch_ms() / 1_000;
+        if !self.rate_limiter.check_and_record(
+            &format!("export:{}", export_req.tenant_id),
+            now_secs,
+            120,
+        ) {
+            return CarbonGatewayResponse::error_json(
+                429,
+                "rate_limited",
+                "export rate limit exceeded",
+            );
+        }
+        if validate_strict_run_id(run_id).is_err()
+            || self.is_run_shredded(&export_req.tenant_id, run_id)
+        {
+            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
+        }
+        let Ok(req_key) = canonical_run_state_key(&export_req.tenant_id, run_id, "request.json")
+        else {
+            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+        };
+        let stored_create = match self.cas.get_state_object(&req_key) {
+            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
+                Ok(c) => c,
+                Err(_) => {
+                    return CarbonGatewayResponse::error_json(
+                        500,
+                        "corrupt_request",
+                        "corrupt stored request",
+                    );
+                }
+            },
+            Ok(None) => {
+                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
+            }
+            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        };
+        if stored_create.encrypted_cuen
+            && (export_req.client_response_pubkey_b64.is_none()
+                || export_req.wrapped_u_dek_b64.is_none())
+        {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "encrypted_export_required",
+                "encrypted runs require client_response_pubkey_b64 and wrapped_u_dek_b64 on /export",
+            );
+        }
+
+        let cmd = CarbonEngineWireCommand::Export {
+            run_id: run_id.to_owned(),
+            export: export_req,
+        };
+        match self.engine.invoke_engine(&cmd) {
+            Ok(bytes) => match serde_json::from_slice::<CarbonExportResponse>(&bytes) {
+                Ok(resp) => CarbonGatewayResponse::json_ok(200, &resp),
+                Err(_) => CarbonGatewayResponse::error_json(
+                    500,
+                    "invalid_engine_response",
+                    "malformed export response",
+                ),
+            },
+            Err(err) => CarbonGatewayResponse::error_json(502, "engine_export_failed", &err),
+        }
+    }
+
+    fn handle_passive_download_redirect(
+        &self,
+        method: &str,
+        clean_path: &str,
+        req_id: &str,
+        req: &CarbonGatewayRequest,
+    ) -> CarbonGatewayResponse {
+        let raw_path = req.header_ci("x-carbon-raw-path").unwrap_or(&req.path);
+        let raw_lc = raw_path.to_ascii_lowercase();
+        if raw_path.contains("..")
+            || raw_lc.contains("%2e")
+            || raw_lc.contains("%2f")
+            || raw_lc.contains("%5c")
+            || raw_path.contains('\\')
+            || raw_path.bytes().any(|b| b <= 0x20 || b == 0x7f)
+        {
+            return CarbonGatewayResponse::error_json(
+                400,
+                "invalid_download_target",
+                "download path contains disallowed traversal or encoded characters",
+            )
+            .with_header("cache-control", "private, no-store");
+        }
+
+        let default_pub_tag = std::env::var("CARBON_PUBLISHED_INSTALLER_TAG")
+            .ok()
+            .map(|v| v.trim().to_owned())
+            .filter(|v| is_valid_release_tag(v) && v != "latest")
+            .unwrap_or_else(|| "carbon-cli-v1.1.0".to_owned());
+
+        let (tag, asset, target_url) = match clean_path {
+            "/carbon/install.sh" => (
+                default_pub_tag.clone(),
+                "install.sh".to_owned(),
+                format!(
+                    "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.sh"
+                ),
+            ),
+            "/carbon/install.ps1" => (
+                default_pub_tag.clone(),
+                "install.ps1".to_owned(),
+                format!(
+                    "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.ps1"
+                ),
+            ),
+            "/carbon/carbon-clouds.json" => (
+                "latest".to_owned(),
+                "carbon-clouds.json".to_owned(),
+                "https://github.com/neverhuman/JopeDime/releases/latest/download/carbon-clouds.json"
+                    .to_owned(),
+            ),
+            p if p.starts_with("/carbon/releases/") => {
+                let rem = &p["/carbon/releases/".len()..];
+                let Some((tag_part, asset_part)) = rem.split_once('/') else {
+                    return CarbonGatewayResponse::error_json(
+                        400,
+                        "invalid_download_target",
+                        "expected /carbon/releases/{tag}/{asset}",
+                    )
+                    .with_header("cache-control", "private, no-store");
+                };
+                if asset_part.contains('/')
+                    || !is_valid_release_tag(tag_part)
+                    || !is_valid_release_asset(asset_part)
+                {
+                    return CarbonGatewayResponse::error_json(
+                        400,
+                        "invalid_download_target",
+                        "requested release tag or asset is not on the Carbon download allowlist",
+                    )
+                    .with_header("cache-control", "private, no-store");
+                }
+                let url = if tag_part == "latest" {
+                    format!(
+                        "https://github.com/neverhuman/JopeDime/releases/latest/download/{asset_part}"
+                    )
+                } else {
+                    format!(
+                        "https://github.com/neverhuman/JopeDime/releases/download/{tag_part}/{asset_part}"
+                    )
+                };
+                (tag_part.to_owned(), asset_part.to_owned(), url)
+            }
+            _ => {
+                return CarbonGatewayResponse::error_json(
+                    400,
+                    "invalid_download_target",
+                    "unknown Carbon download route",
+                )
+                .with_header("cache-control", "private, no-store");
+            }
+        };
+
+        let now_ms = now_epoch_ms();
+        let now_secs = now_ms / 1_000;
+        let source_ip = req.trusted_caller_ip("unknown");
+        let ip_day_hmac = self
+            .config
+            .presigner
+            .daily_ip_pseudonym_hex(now_secs, source_ip);
+        let mut client_hdr_names: Vec<&str> = req
+            .headers
+            .keys()
+            .map(String::as_str)
+            .filter(|k| {
+                !k.eq_ignore_ascii_case("x-carbon-trusted-source-ip")
+                    && !k.eq_ignore_ascii_case("x-carbon-raw-path")
+            })
+            .collect();
+        client_hdr_names.sort_unstable();
+        let header_names_hash =
+            sha256_lower_hex(client_hdr_names.join(",").as_bytes())[..16].to_owned();
+        let ua = sanitize_download_log_field(req.header_ci("user-agent"), 256);
+        let accept_lang = sanitize_download_log_field(req.header_ci("accept-language"), 128);
+        let sec_ch_ua = sanitize_download_log_field(req.header_ci("sec-ch-ua"), 128);
+        let sec_ch_platform = sanitize_download_log_field(req.header_ci("sec-ch-ua-platform"), 64);
+        let sec_ch_arch = sanitize_download_log_field(req.header_ci("sec-ch-ua-arch"), 64);
+        let viewer_country = sanitize_download_log_field(
+            req.header_ci("cloudfront-viewer-country")
+                .or_else(|| req.header_ci("cf-ipcountry")),
+            16,
+        );
+        let viewer_asn = sanitize_download_log_field(req.header_ci("cloudfront-viewer-asn"), 32);
+        let tls_version = sanitize_download_log_field(
+            req.header_ci("x-amzn-tls-version")
+                .or_else(|| req.header_ci("cloudfront-viewer-tls")),
+            64,
+        );
+        let dnt = matches!(req.header_ci("dnt"), Some("1"))
+            || matches!(req.header_ci("sec-gpc"), Some("1"));
+        let (inf_os, inf_arch, inf_libc, inf_archive) =
+            infer_download_platform(&asset, ua.as_deref().unwrap_or(""));
+
+        let telemetry_event = serde_json::json!({
+            "schema": "carbon.download.v1",
+            "ts_ms": now_ms,
+            "request_id": req_id,
+            "region": self.config.region,
+            "method": method,
+            "path": clean_path,
+            "tag": tag,
+            "asset": asset,
+            "target_url": target_url,
+            "source_ip": source_ip,
+            "ip_day_hmac": ip_day_hmac,
+            "header_names_hash": header_names_hash,
+            "user_agent": ua,
+            "accept_language": accept_lang,
+            "sec_ch_ua": sec_ch_ua,
+            "sec_ch_ua_platform": sec_ch_platform,
+            "sec_ch_ua_arch": sec_ch_arch,
+            "viewer_country": viewer_country,
+            "viewer_asn": viewer_asn,
+            "tls_version": tls_version,
+            "dnt": dnt,
+            "inferred_os": inf_os,
+            "inferred_arch": inf_arch,
+            "inferred_libc": inf_libc,
+            "inferred_archive": inf_archive,
+        });
+        if let Ok(line) = serde_json::to_string(&telemetry_event) {
+            eprintln!("{line}");
+        }
+
+        CarbonGatewayResponse::bytes_ok(302, "text/plain; charset=utf-8", b"")
+            .with_header("location", target_url)
+            .with_header("cache-control", "private, no-store")
+    }
+
     fn is_run_shredded(&self, tenant_id: &str, run_id: &str) -> bool {
         canonical_run_state_key(tenant_id, run_id, "shredded.json")
             .ok()
@@ -1937,6 +2420,178 @@ fn is_valid_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
+fn is_valid_release_tag(tag: &str) -> bool {
+    if tag == "latest" {
+        return true;
+    }
+    if tag.is_empty() || tag.len() > 64 || tag.contains("..") {
+        return false;
+    }
+    let semver_part = if let Some(rest) = tag.strip_prefix("carbon-cli-v") {
+        rest
+    } else if let Some(rest) = tag.strip_prefix('v') {
+        rest
+    } else {
+        return false;
+    };
+    let (core, prerelease) = match semver_part.split_once('-') {
+        Some((c, pre)) => (c, Some(pre)),
+        None => (semver_part, None),
+    };
+    let mut nums = core.split('.');
+    let (Some(maj), Some(min), Some(pat), None) =
+        (nums.next(), nums.next(), nums.next(), nums.next())
+    else {
+        return false;
+    };
+    let digits_ok = [maj, min, pat].iter().all(|part| {
+        !part.is_empty() && part.len() <= 8 && part.bytes().all(|b| b.is_ascii_digit())
+    });
+    if !digits_ok {
+        return false;
+    }
+    if let Some(pre) = prerelease {
+        if pre.is_empty()
+            || !pre
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+        {
+            return false;
+        }
+    }
+    true
+}
+
+fn is_valid_release_asset(asset: &str) -> bool {
+    if asset.is_empty()
+        || asset.len() > 128
+        || asset.contains("..")
+        || !asset
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+    {
+        return false;
+    }
+    if matches!(
+        asset,
+        "SHA256SUMS.txt"
+            | "SHA256SUMS.txt.sig"
+            | "carbon-clouds.json"
+            | "install.sh"
+            | "install.ps1"
+            | "carbon-linux-x86_64-musl"
+            | "carbon-linux-aarch64-musl"
+            | "carbon-linux-armv7-musleabihf"
+            | "carbon-darwin-arm64"
+            | "carbon-darwin-x86_64"
+            | "carbon-darwin-universal"
+    ) {
+        return true;
+    }
+    let has_os_prefix = asset.starts_with("carbon-linux-")
+        || asset.starts_with("carbon-darwin-")
+        || asset.starts_with("carbon-windows-");
+    let has_archive_suffix = asset.ends_with(".tar.zst")
+        || asset.ends_with(".tar.xz")
+        || asset.ends_with(".tar.gz")
+        || asset.ends_with(".zip")
+        || asset.ends_with(".exe");
+    has_os_prefix && has_archive_suffix
+}
+
+fn sanitize_download_log_field(raw: Option<&str>, max_chars: usize) -> Option<String> {
+    let text = raw?.trim();
+    if text.is_empty() {
+        return None;
+    }
+    let redacted = crate::observability::redact_secrets(text);
+    let cleaned: String = redacted
+        .chars()
+        .filter(|c| !c.is_control())
+        .take(max_chars)
+        .collect();
+    if cleaned.is_empty() {
+        None
+    } else {
+        Some(cleaned)
+    }
+}
+
+fn infer_download_platform(
+    asset: &str,
+    user_agent: &str,
+) -> (&'static str, &'static str, &'static str, &'static str) {
+    let archive = if asset.ends_with(".tar.zst") {
+        "tar.zst"
+    } else if asset.ends_with(".tar.gz") {
+        "tar.gz"
+    } else if asset.ends_with(".zip") {
+        "zip"
+    } else if asset.ends_with(".ps1") {
+        "ps1"
+    } else if asset.ends_with(".sh") {
+        "sh"
+    } else {
+        "meta"
+    };
+
+    let ua_lc = user_agent.to_ascii_lowercase();
+    let os = if asset.starts_with("carbon-linux-") || ua_lc.contains("linux") {
+        "linux"
+    } else if asset.starts_with("carbon-darwin-")
+        || ua_lc.contains("darwin")
+        || ua_lc.contains("macintosh")
+        || ua_lc.contains("mac os")
+    {
+        "macos"
+    } else if asset.starts_with("carbon-windows-")
+        || asset.ends_with(".ps1")
+        || ua_lc.contains("windows")
+        || ua_lc.contains("powershell")
+    {
+        "windows"
+    } else {
+        "unknown"
+    };
+
+    let arch = if asset.contains("arm64")
+        || asset.contains("aarch64")
+        || ua_lc.contains("aarch64")
+        || ua_lc.contains("arm64")
+    {
+        "arm64"
+    } else if asset.contains("armv7") || ua_lc.contains("armv7") {
+        "armv7"
+    } else if asset.contains("x86_64")
+        || asset.contains("amd64")
+        || ua_lc.contains("x86_64")
+        || ua_lc.contains("win64")
+        || ua_lc.contains("x64")
+    {
+        "x86_64"
+    } else if asset.contains("universal") {
+        "universal"
+    } else {
+        "unknown"
+    };
+
+    let libc = if asset.contains("musleabihf") {
+        "musleabihf"
+    } else if asset.contains("musl") {
+        "musl"
+    } else if asset.contains("msvc") || os == "windows" {
+        "msvc"
+    } else if os == "macos" {
+        "libsystem"
+    } else if os == "linux" {
+        "gnu_or_musl"
+    } else {
+        "unknown"
+    };
+
+    (os, arch, libc, archive)
+}
+
 fn join_s3_scoped_prefix(prefix: &str, scope: Option<&str>, sha_lower: &str) -> String {
     let rel = match scope {
         Some(sc) if !sc.is_empty() => format!("blobs/{sc}/{sha_lower}"),
@@ -1981,8 +2636,10 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
     let mut headers = BTreeMap::new();
     if let Some(hdr_map) = event.get("headers").and_then(serde_json::Value::as_object) {
         for (k, v) in hdr_map {
-            // Never trust client-supplied `x-carbon-trusted-source-ip` (`GAP-SEC-4`).
-            if k.eq_ignore_ascii_case("x-carbon-trusted-source-ip") {
+            // Never trust client-supplied `x-carbon-trusted-source-ip` or `x-carbon-raw-path` (`GAP-SEC-4`).
+            if k.eq_ignore_ascii_case("x-carbon-trusted-source-ip")
+                || k.eq_ignore_ascii_case("x-carbon-raw-path")
+            {
                 continue;
             }
             if let Some(text) = v.as_str() {
@@ -1990,6 +2647,7 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
             }
         }
     }
+    headers.insert("x-carbon-raw-path".to_owned(), path.clone());
     if let Some(src_ip) = event
         .pointer("/requestContext/http/sourceIp")
         .and_then(serde_json::Value::as_str)

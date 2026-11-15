@@ -1,0 +1,98 @@
+name: jain-cli-qualification
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'jain-cli-v*'
+      - 'carbon-cli-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jain-cli-qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify-jain-cli:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_BUILD_JOBS: '2'
+      JOPE_SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Build and qualify isolated public CLIs on ephemeral GitHub-hosted runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/qualify-jain-cli"
+          mkdir -p "$evidence"
+          git rev-parse HEAD > "$evidence/source-sha.txt"
+          test "$(cat "$evidence/source-sha.txt")" = "$JOPE_SOURCE_SHA"
+
+          # 1. Lite client appliance profile + zero-engine normal dependency graph check
+          cargo build --locked -p jope-appliance --no-default-features --features client
+          cargo tree --locked -p jope-appliance --no-default-features --features client -e normal --prefix none --format '{p}' > "$evidence/lite-cargo-tree.txt"
+          python3 - "$evidence/lite-cargo-tree.txt" <<'PY'
+          import pathlib
+          import sys
+          packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
+          banned = {"jope-service", "feat-math", "candle-core", "tokio", "tch", "torch-sys", "rusqlite", "pyo3"}
+          found = sorted(packages & banned)
+          if found:
+              raise SystemExit(f"lite client normal graph contains forbidden server packages: {found}")
+          if "jope-client" not in packages:
+              raise SystemExit("lite client normal graph missing jope-client")
+          PY
+
+          # 2. Public Carbon thin CLI (`--no-default-features --features cli --bin carbon`) + smoke
+          carbon_exe=$(cargo build --locked -p jope-carbon --no-default-features --features cli --bin carbon --message-format=json \
+            | python3 -c 'import json,sys; print([m["executable"] for l in sys.stdin if l.strip() for m in [json.loads(l)] if m.get("reason")=="compiler-artifact" and m.get("target",{}).get("name")=="carbon" and m.get("executable")][-1])')
+          cargo tree --locked -p jope-carbon --no-default-features --features cli -e normal --prefix none --format '{p}' > "$evidence/carbon-cli-cargo-tree.txt"
+          python3 - "$evidence/carbon-cli-cargo-tree.txt" <<'PY'
+          import pathlib
+          import sys
+          packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
+          banned = {"jope-service", "feat-math", "candle-core", "tokio", "tch", "torch-sys", "rusqlite", "pyo3"}
+          found = sorted(packages & banned)
+          if found:
+              raise SystemExit(f"carbon thin CLI normal graph contains forbidden server packages: {found}")
+          PY
+          "$carbon_exe" --version > "$evidence/carbon-version.txt"
+          "$carbon_exe" self-verify > "$evidence/carbon-self-verify.json"
+          sha256sum "$carbon_exe" > "$evidence/carbon-binary.sha256"
+
+          python3 - "$evidence" "$JOPE_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" <<'PY'
+          import json
+          import pathlib
+          import sys
+          ev = pathlib.Path(sys.argv[1])
+          sha_line = (ev / "carbon-binary.sha256").read_text().strip().split()[0]
+          self_verify = json.loads((ev / "carbon-self-verify.json").read_text())
+          receipt = {
+              "schema": "jope.hosted-public-cli-qualification/v1",
+              "issue": 2162,
+              "runner": "ubuntu-24.04",
+              "source_sha": sys.argv[2],
+              "run_id": sys.argv[3],
+              "run_attempt": int(sys.argv[4]),
+              "carbon_cli_sha256": sha_line,
+              "carbon_version": (ev / "carbon-version.txt").read_text().strip(),
+              "self_verify": self_verify,
+          }
+          (ev / "qualification-receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+          PY
+      - name: Retain hosted qualification receipt without GitHub artifact storage
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: jain-cli-qualification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/qualify-jain-cli/

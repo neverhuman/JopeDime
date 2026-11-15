@@ -364,6 +364,18 @@ impl CarbonPresigner {
         self
     }
 
+    /// Derive a daily-rotating privacy-preserving pseudonym (`HMAC-SHA256(day_key, source_ip)[..8]`)
+    /// for passive first-party binary download analytics without exposing `self.secret`.
+    pub fn daily_ip_pseudonym_hex(&self, now_epoch_secs: u64, source_ip: &str) -> String {
+        let (date_stamp, _) = format_amz_timestamp_utc(now_epoch_secs);
+        let day_key = Zeroizing::new(hmac_sha256(
+            self.secret.as_ref(),
+            format!("carbon-download-ip-day-v1:{date_stamp}").as_bytes(),
+        ));
+        let mac = hmac_sha256(day_key.as_ref(), source_ip.trim().as_bytes());
+        hex::encode(&mac[..8])
+    }
+
     pub fn sign_gateway_upload_url(
         &self,
         gateway_base_url: &str,

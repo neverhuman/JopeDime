@@ -1,6 +1,7 @@
 use super::*;
 
 /// `1234567` as `1,234,567`.
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn grouped(n: usize) -> String {
     let digits = n.to_string();
     let mut out = String::new();
@@ -268,18 +269,14 @@ pub fn check_readme(readme: &str, g: &Glance) -> Vec<String> {
     expect_row(
         "| Rust tests |",
         vec![
-            format!(
-                "{} listed in {} packages",
-                grouped(g.rust_tests),
-                g.rust_packages
-            ),
-            format!("{} of them ignored", g.rust_ignored),
+            "docs/parity/test-inventory.json".to_owned(),
+            format!("across {} packages", g.rust_packages),
         ],
         &mut problems,
     );
     expect_row(
         "| Python tests |",
-        vec![format!("| {}, ", grouped(g.python_tests))],
+        vec!["docs/parity/test-inventory.json".to_owned()],
         &mut problems,
     );
     expect_row(
@@ -292,11 +289,10 @@ pub fn check_readme(readme: &str, g: &Glance) -> Vec<String> {
     );
     expect_row(
         "| Coverage map |",
-        vec![format!(
-            "{} items over {} lanes",
-            grouped(g.coverage_items),
-            g.coverage_lanes
-        )],
+        vec![
+            "deploy/ci/coverage.json".to_owned(),
+            format!("over {} lanes", g.coverage_lanes),
+        ],
         &mut problems,
     );
     let m = |i: usize| g.matrix.get(i).copied().unwrap_or(0);
@@ -323,11 +319,10 @@ pub fn check_readme(readme: &str, g: &Glance) -> Vec<String> {
     );
     expect_row(
         "| Python still tracked |",
-        vec![format!(
-            "{} `.py` files, {} of them under `python/`",
-            grouped(g.python_files),
-            g.python_under_python
-        )],
+        vec![
+            "PYTHON_EXCEPTIONS.md".to_owned(),
+            "PY_TO_RUST_PLAN.md".to_owned(),
+        ],
         &mut problems,
     );
     expect_row(

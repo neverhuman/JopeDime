@@ -14,8 +14,15 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use base64::Engine as _;
-use clap::{Parser, Subcommand};
-use jope_api::{carbon::CarbonTierWire, Effort};
+use clap::{ArgAction, Parser, Subcommand};
+use jope_api::{
+    carbon::{CarbonExplainResponse, CarbonExportLangWire, CarbonTierWire},
+    Effort,
+};
+use jope_carbon::observability::{
+    emit_cli_error, init_cli_observability, install_sigint_flag, write_stdout_line,
+    CarbonColorMode, CarbonLogFormat, EXIT_AUTH_EXPIRED,
+};
 #[cfg(any(
     feature = "engine",
     feature = "eval",
@@ -24,14 +31,16 @@ use jope_api::{carbon::CarbonTierWire, Effort};
 ))]
 use jope_carbon::CarbonRole;
 use jope_carbon::{
-    decode_p256_pubkey_b64, estimate_ms_per_candidate_1vcpu, evaluate_spot_hybrid_gates,
-    execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run_with_ux,
-    execute_carbon_redteam_suite, execute_predict_csv_with_handle,
-    execute_scientific_benchmark_suite, execute_self_upgrade, generate_nonlinear_benchmark_rows,
-    inspect_tabular_file, list_saved_model_handles, list_stored_cloud_tokens,
-    load_model_handle_by_spec, load_stored_cloud_token, now_epoch_ms, plan_carbon_execution,
-    query_handle_status, remove_stored_cloud_token, render_benchmark_markdown,
-    render_pretty_run_scorecard, render_redteam_markdown, render_scientific_benchmark_markdown,
+    build_client_for_handle, decode_p256_pubkey_b64, estimate_ms_per_candidate_1vcpu,
+    evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
+    execute_carbon_cli_run_with_ux, execute_carbon_redteam_suite, execute_predict_csv_with_handle,
+    execute_scientific_benchmark_suite, execute_self_upgrade_with_options,
+    generate_nonlinear_benchmark_rows, inspect_tabular_file_with_tier, list_saved_model_handles,
+    list_stored_cloud_tokens, load_delimited_table, load_model_handle_by_spec,
+    load_stored_cloud_token, now_epoch_ms, parse_flexible_numeric_f64,
+    persist_model_handle_with_options, plan_carbon_execution, query_handle_status,
+    remove_stored_cloud_token, render_benchmark_markdown, render_pretty_run_scorecard,
+    render_redteam_markdown, render_scientific_benchmark_markdown, resolve_objective_argument,
     resolve_public_cloud_endpoint, save_stored_cloud_token, sha256_lower_hex,
     shred_handle_and_local_keys, verified_absolute_jopedime_config_dir,
     verify_ecdsa_p256_spki_pem_signature, CarbonAuthVerifier, CarbonCapabilityClaims,
@@ -57,6 +66,7 @@ use jope_carbon::{
 };
 #[cfg(feature = "serve")]
 use jope_carbon::{CarbonEnterpriseServeConfig, CarbonEnterpriseServer};
+use jope_prep::ObjectiveSpec;
 
 const LONG_VERSION: &str = concat!(
     env!("CARBON_SEMVER"),
@@ -83,13 +93,72 @@ const EXPECTED_SIGNING_PUB_SHA256: &str =
     about = "Carbon zero-knowledge serverless CLI client, benchmark & red-team harness, Lambda runtime, Enterprise server, and CI emulator"
 )]
 struct Cli {
-    /// Positional shorthand (`carbon data.csv`): conditions & encrypts the CSV client-side,
-    /// runs a `fast` zero-knowledge cloud job, decrypts predictions, and shreds remote blobs.
+    /// Increase diagnostic verbosity on stderr (`-v` = debug, `-vv` = trace; overrides `CARBON_LOG`).
+    #[arg(short = 'v', long = "verbose", action = ArgAction::Count, global = true)]
+    verbose: u8,
+
+    /// Suppress interactive progress and diagnostic messages on stderr (`-q` / `--quiet`).
+    #[arg(short = 'q', long = "quiet", global = true)]
+    quiet: bool,
+
+    /// Diagnostic output format on stderr (`text` or `json`).
+    #[arg(long = "log-format", default_value = "text", global = true)]
+    log_format: String,
+
+    /// ANSI color policy (`auto`, `always`, or `never`; respects `NO_COLOR`).
+    #[arg(long = "color", default_value = "auto", global = true)]
+    color: String,
+
+    /// Positional shorthand (`carbon data.csv` / `data.csv.gz` / `data.jsonl` / `-`): conditions & encrypts
+    /// client-side, runs a `fast` zero-knowledge cloud job, decrypts predictions, and shreds remote blobs.
     #[arg(value_name = "CSV_FILE")]
     csv_file: Option<PathBuf>,
 
     #[command(subcommand)]
     command: Option<Command>,
+}
+
+#[derive(Debug, Subcommand)]
+enum FitnessCommand {
+    /// List all 45 built-in regression objectives, directions, order requirements, and descriptions.
+    List {
+        /// Emit pure JSON array instead of formatted table.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Parse, canonicalize, and compute the domain-separated SHA-256 identity of a fitness spec or `@file.json`.
+    Validate {
+        /// Preset (`rmse`, `pinball(0.9)`), inline JSON (`{"metric":...}`), or `@path/to/objective.json`.
+        #[arg(value_name = "SPEC_OR_AT_FILE")]
+        spec: String,
+        /// Emit pure JSON on stdout (default).
+        #[arg(long)]
+        json: bool,
+    },
+    /// Emit the committed `jope.regression-fitness.v1` JSON Schema document.
+    Schema {
+        /// Emit pure JSON on stdout (default).
+        #[arg(long)]
+        json: bool,
+    },
+    /// Score aligned `(target, pred)` columns (plus any `col(...)` auxiliary columns) from a CSV/JSONL file.
+    Evaluate {
+        /// Preset, inline JSON, or `@path/to/objective.json`.
+        #[arg(long, visible_alias = "fitness")]
+        spec: String,
+        /// Input CSV/TSV/JSONL file containing target, prediction, and optional auxiliary columns.
+        #[arg(long)]
+        csv: PathBuf,
+        /// Ground-truth target column name.
+        #[arg(long)]
+        target: String,
+        /// Prediction column name.
+        #[arg(long)]
+        pred: String,
+        /// Emit pure JSON on stdout (default).
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -100,10 +169,10 @@ enum Command {
     /// embedded release public key fingerprint, and ECDSA-P256 `SHA256SUMS.txt.sig` signature.
     SelfVerify {
         /// Optional path to `SHA256SUMS.txt` (defaults to `$CARBON_CONFIG_DIR/SHA256SUMS.txt` if present).
-        #[arg(long)]
+        #[arg(long, alias = "sums")]
         manifest: Option<PathBuf>,
         /// Optional path to base64-encoded ECDSA-P256 `SHA256SUMS.txt.sig` (defaults to `<manifest>.sig`).
-        #[arg(long)]
+        #[arg(long, alias = "sig")]
         signature: Option<PathBuf>,
         /// Optional explicit `carbon-clouds.json` path override.
         #[arg(long)]
@@ -250,6 +319,9 @@ enum Command {
         /// Optional file containing a `ctk1.*` capability token to inspect.
         #[arg(long, conflicts_with = "token")]
         token_file: Option<PathBuf>,
+        /// Emit pure JSON on stdout (default).
+        #[arg(long)]
+        json: bool,
     },
     /// Remove stored capability token(s) from `$HOME/.config/jopedime/carbon-credentials.json`.
     Logout {
@@ -334,7 +406,8 @@ enum Command {
         token_file: Option<PathBuf>,
         #[arg(long, default_value = "fast")]
         effort: String,
-        #[arg(long, default_value = "rmse")]
+        /// Regression objective preset (`rmse`, `mae`, `pinball(0.9)`), inline JSON, or `@file.json` (`--fitness` alias).
+        #[arg(long, visible_alias = "fitness", default_value = "rmse")]
         objective: String,
         #[arg(long, default_value_t = 42)]
         seed: u64,
@@ -350,9 +423,27 @@ enum Command {
         /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`; auto-detected when omitted).
         #[arg(long)]
         delimiter: Option<String>,
+        /// Holdout split strategy (`random` deterministic hash split, or `forward` chronological tail split).
+        #[arg(long)]
+        split: Option<String>,
+        /// Fold-safe post-hoc prediction calibration (`auto`, `none`, `shift`, or `affine`).
+        #[arg(long)]
+        calibration: Option<String>,
+        /// Additional comma-separated custom missing-value tokens (`--na-values -999,MISSING`).
+        #[arg(long, value_delimiter = ',')]
+        na_values: Vec<String>,
+        /// Coerce `Inf` / `-Inf` cells to missing (`NaN`) instead of failing closed.
+        #[arg(long)]
+        inf_as_nan: bool,
         /// Persist a `0600` zero-knowledge model handle (`model.carbon.json`) for subsequent `carbon predict`.
         #[arg(long)]
         save: Option<PathBuf>,
+        /// Embed the active `ctk1.*` capability token inside an explicit `--save` file (default strips token outside `$CARBON_CONFIG_DIR/runs/`).
+        #[arg(long)]
+        embed_token: bool,
+        /// Validate conditioning, objective, admission limits, and execution cost locally with zero network I/O.
+        #[arg(long)]
+        dry_run: bool,
         /// Output format on stdout (`auto`, `json`, or `pretty`).
         #[arg(long, default_value = "json")]
         format: String,
@@ -363,16 +454,13 @@ enum Command {
         #[arg(long)]
         shred: bool,
         /// Force live wave progress and human summary card on stderr even when stderr is not a TTY.
-        #[arg(long, conflicts_with = "quiet")]
+        #[arg(long)]
         progress: bool,
-        /// Suppress interactive stderr progress and summary card (stdout remains pure JSON).
-        #[arg(long, conflicts_with = "progress")]
-        quiet: bool,
     },
-    /// Train a persistent zero-knowledge Carbon model on a CSV/TSV file and save a `0600` local handle
+    /// Train a persistent zero-knowledge Carbon model on a CSV/TSV/JSONL file and save a `0600` local handle
     /// (`--save model.carbon.json` and `$HOME/.config/jopedime/runs/<run_id>.json`) for `carbon predict`.
     Fit {
-        /// Path to training CSV/TSV file (supports RFC-4180 quotes, missing cells, categoricals, booleans).
+        /// Path to training CSV/TSV/JSONL/compressed file (or `-` for stdin).
         #[arg(value_name = "CSV_FILE")]
         csv: PathBuf,
         /// Target column name (or `-1` / `last` when `--no-header` is set).
@@ -381,6 +469,12 @@ enum Command {
         /// Output path for the `0600` zero-knowledge model handle (e.g. `model.carbon.json`).
         #[arg(long, short = 's')]
         save: Option<PathBuf>,
+        /// Embed the active `ctk1.*` capability token inside an explicit `--save` file.
+        #[arg(long)]
+        embed_token: bool,
+        /// Validate conditioning, objective, admission limits, and execution cost locally with zero network I/O.
+        #[arg(long)]
+        dry_run: bool,
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
         /// Named public Carbon cloud (`dev` or `prod`; defaults to `prod` when no endpoint/env is given).
@@ -408,7 +502,8 @@ enum Command {
         token_file: Option<PathBuf>,
         #[arg(long, default_value = "fast")]
         effort: String,
-        #[arg(long, default_value = "rmse")]
+        /// Regression objective preset (`rmse`, `mae`, `pinball(0.9)`), inline JSON, or `@file.json` (`--fitness` alias).
+        #[arg(long, visible_alias = "fitness", default_value = "rmse")]
         objective: String,
         #[arg(long, default_value_t = 42)]
         seed: u64,
@@ -418,15 +513,24 @@ enum Command {
         /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`).
         #[arg(long)]
         delimiter: Option<String>,
+        /// Holdout split strategy (`random` deterministic hash split, or `forward` chronological tail split).
+        #[arg(long)]
+        split: Option<String>,
+        /// Fold-safe post-hoc prediction calibration (`auto`, `none`, `shift`, or `affine`).
+        #[arg(long)]
+        calibration: Option<String>,
+        /// Additional comma-separated custom missing-value tokens (`--na-values -999,MISSING`).
+        #[arg(long, value_delimiter = ',')]
+        na_values: Vec<String>,
+        /// Coerce `Inf` / `-Inf` cells to missing (`NaN`) instead of failing closed.
+        #[arg(long)]
+        inf_as_nan: bool,
         /// Output format on stdout (`auto`, `pretty`, or `json`).
         #[arg(long, default_value = "auto")]
         format: String,
         /// Emit pure JSON on stdout (`--format json` shorthand).
         #[arg(long)]
         json: bool,
-        /// Suppress interactive stderr progress and summary card.
-        #[arg(long)]
-        quiet: bool,
     },
     /// Score an unlabeled (or labeled) CSV/TSV file in zero-knowledge mode using a saved model handle.
     Predict {
@@ -506,6 +610,8 @@ enum Command {
         token: Option<String>,
         #[arg(long, conflicts_with = "token")]
         token_file: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
     },
     /// Cryptographically shred remote S3/CAS objects (`DELETE /v1/carbon/runs/{id}`) AND zero-overwrite local key handles.
     Shred {
@@ -517,12 +623,88 @@ enum Command {
         token: Option<String>,
         #[arg(long, conflicts_with = "token")]
         token_file: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Inspect, validate, emit schema, or locally evaluate regression objectives (`--fitness`).
+    Fitness {
+        #[command(subcommand)]
+        action: FitnessCommand,
+    },
+    /// Compute zero-knowledge holdout permutation feature importances (`POST /v1/carbon/runs/{id}/explain`).
+    Explain {
+        /// Path to a saved `0600` model handle (`--save model.carbon.json` from `carbon fit`).
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        /// Saved `run_id` (or `latest`) from `$HOME/.config/jopedime/runs/` when `--model` is omitted.
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        /// Maximum number of top features to return (`1..=64`, defaults to `12`).
+        #[arg(long)]
+        top_k: Option<u32>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        /// Output format on stdout (`auto`, `pretty`, or `json`).
+        #[arg(long, default_value = "auto")]
+        format: String,
+        /// Emit pure JSON on stdout.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Export the winning symbolic GP champion to standalone zero-dependency predictor source code (`POST /v1/carbon/runs/{id}/export`).
+    Export {
+        /// Path to a saved `0600` model handle (`--save model.carbon.json` from `carbon fit`).
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        /// Saved `run_id` (or `latest`) from `$HOME/.config/jopedime/runs/` when `--model` is omitted.
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        /// Target standalone language (`python`, `rust`, `rust-refittable`, `js`, `c`, or `cpp`).
+        #[arg(long, default_value = "python")]
+        lang: String,
+        /// Optional output file path (or `-` to write source code to stdout).
+        #[arg(long, short = 'o')]
+        out: Option<PathBuf>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        /// Emit structured JSON receipt on stdout instead of raw source text.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resume a paused multi-wave zero-knowledge Carbon run (`POST /v1/carbon/runs/{id}/resume`).
+    Resume {
+        /// Path to a saved `0600` model handle (`--save model.carbon.json` from `carbon fit`).
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        /// Saved `run_id` (or `latest`) from `$HOME/.config/jopedime/runs/` when `--model` is omitted.
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        /// Optional updated search effort (`fast`, `medium`, `high`, or `ultra`).
+        #[arg(long)]
+        effort: Option<String>,
+        /// Optional additional waves to run.
+        #[arg(long)]
+        additional_waves: Option<u32>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        /// Emit pure JSON on stdout.
+        #[arg(long)]
+        json: bool,
     },
     /// Check or install ECDSA-P256 cryptographically signed Carbon CLI updates (`SHA256SUMS.txt.sig`).
     Upgrade {
         /// Verify signature and check whether a newer binary is available without modifying disk.
         #[arg(long)]
         check: bool,
+        /// Force replacement even when running an operator/engine build (by default refuses downgrading operator builds to thin CLI).
+        #[arg(long)]
+        force: bool,
         /// Optional release tag to target (defaults to `latest`).
         #[arg(long)]
         version: Option<String>,
@@ -713,9 +895,6 @@ enum Command {
         /// Keep remote encrypted run artifacts instead of cryptographically shredding upon completion.
         #[arg(long)]
         no_shred: bool,
-        /// Suppress interactive step-by-step walkthrough lines on stderr.
-        #[arg(long)]
-        quiet: bool,
     },
     /// Generate the publication-grade Carbon engineering & testing specification HTML + CI quickstart receipts.
     #[cfg(feature = "emu")]
@@ -1388,15 +1567,20 @@ fn execute_self_verify_command(
     ExitCode::SUCCESS
 }
 
-fn execute_positional_csv_shorthand(csv_path: PathBuf) -> ExitCode {
-    let looks_like_tabular_path = csv_path
-        .extension()
-        .and_then(|s| s.to_str())
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv") || ext.eq_ignore_ascii_case("tsv"))
+fn execute_positional_csv_shorthand(csv_path: PathBuf, global_quiet: bool) -> ExitCode {
+    let is_stdin_dash = csv_path.as_os_str() == "-";
+    let lower_str = csv_path.to_string_lossy().to_ascii_lowercase();
+    let looks_like_tabular_path = is_stdin_dash
+        || lower_str.ends_with(".csv")
+        || lower_str.ends_with(".tsv")
+        || lower_str.ends_with(".jsonl")
+        || lower_str.ends_with(".ndjson")
+        || lower_str.ends_with(".gz")
+        || lower_str.ends_with(".zst")
         || csv_path.to_string_lossy().contains('/')
         || csv_path.to_string_lossy().contains('\\');
 
-    if !csv_path.is_file() {
+    if !is_stdin_dash && !csv_path.is_file() {
         if looks_like_tabular_path {
             eprintln!("error: CSV file '{}' does not exist", csv_path.display());
         } else {
@@ -1431,7 +1615,7 @@ fn execute_positional_csv_shorthand(csv_path: PathBuf) -> ExitCode {
             return code;
         }
     };
-    let show_stderr_progress = std::io::stderr().is_terminal();
+    let show_stderr_progress = !global_quiet && std::io::stderr().is_terminal();
     let opts = CarbonCliRunOptions {
         endpoints: resolved.endpoints,
         csv_path: Some(csv_path),
@@ -1511,7 +1695,7 @@ fn execute_doctor_command(
         match verified_absolute_jopedime_config_dir() {
             Ok(dir) => {
                 let mut dir_mode_ok = true;
-                let mut dir_mode_octal = None;
+                let mut dir_mode_octal: Option<String> = None;
                 if dir.exists() {
                     #[cfg(unix)]
                     {
@@ -1527,7 +1711,7 @@ fn execute_doctor_command(
                 }
                 let cred_path = dir.join("carbon-credentials.json");
                 let mut cred_ok = true;
-                let mut cred_mode_octal = None;
+                let mut cred_mode_octal: Option<String> = None;
                 if cred_path.is_file() {
                     #[cfg(unix)]
                     {
@@ -2127,11 +2311,31 @@ fn write_optional_outputs(
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    if let Some(csv_path) = cli.csv_file {
-        return execute_positional_csv_shorthand(csv_path);
-    }
+    let log_format = match cli.log_format.trim().to_ascii_lowercase().as_str() {
+        "text" | "" => CarbonLogFormat::Text,
+        "json" => CarbonLogFormat::Json,
+        other => {
+            eprintln!("error: unsupported --log-format `{other}` (expected `text` or `json`)");
+            return ExitCode::from(2);
+        }
+    };
+    let color_mode = match cli.color.trim().to_ascii_lowercase().as_str() {
+        "auto" | "" => CarbonColorMode::Auto,
+        "always" => CarbonColorMode::Always,
+        "never" => CarbonColorMode::Never,
+        other => {
+            eprintln!(
+                "error: unsupported --color `{other}` (expected `auto`, `always`, or `never`)"
+            );
+            return ExitCode::from(2);
+        }
+    };
+    init_cli_observability(cli.verbose, cli.quiet, log_format, color_mode);
+    let _sigint_flag = install_sigint_flag();
+    let global_quiet = cli.quiet;
+
     #[cfg(feature = "engine")]
-    if cli.command.is_none() {
+    if cli.csv_file.is_none() && cli.command.is_none() {
         let (rt_res, is_aws_prod) = resolve_lambda_runtime_api();
         if let Ok(runtime_api) = rt_res {
             let work_dir = match env::var("CARBON_WORK_DIR") {
@@ -2151,6 +2355,14 @@ fn main() -> ExitCode {
                 }
             };
         }
+    }
+
+    if let Err(tls_err) = jope_carbon::tls::validate_tls_env_config() {
+        return emit_cli_error(false, &tls_err);
+    }
+
+    if let Some(csv_path) = cli.csv_file {
+        return execute_positional_csv_shorthand(csv_path, global_quiet);
     }
 
     match cli.command.unwrap_or(Command::Version) {
@@ -2450,6 +2662,7 @@ fn main() -> ExitCode {
             clouds_manifest,
             token,
             token_file,
+            json: _,
         } => {
             let now_secs = now_epoch_ms() / 1_000;
             let ep = resolve_public_cloud_endpoint(&cloud, clouds_manifest.as_deref())
@@ -2479,9 +2692,8 @@ fn main() -> ExitCode {
                 match CarbonCapabilityClaims::decode_unverified(&tok) {
                     Ok(claims) => {
                         let expired = now_secs > claims.exp_epoch_secs;
-                        println!(
-                            "{}",
-                            serde_json::to_string_pretty(&serde_json::json!({
+                        let _ = write_stdout_line(
+                            &serde_json::to_string_pretty(&serde_json::json!({
                                 "cloud": cloud.trim().to_ascii_lowercase(),
                                 "endpoint": ep,
                                 "auth_mode": if expired { "expired_token" } else { "capability_token" },
@@ -2493,9 +2705,13 @@ fn main() -> ExitCode {
                                 "exp_epoch_secs": claims.exp_epoch_secs,
                                 "ttl_remaining_secs": claims.exp_epoch_secs.saturating_sub(now_secs),
                             }))
-                            .unwrap_or_default()
+                            .unwrap_or_default(),
                         );
-                        ExitCode::SUCCESS
+                        if expired {
+                            ExitCode::from(EXIT_AUTH_EXPIRED)
+                        } else {
+                            ExitCode::SUCCESS
+                        }
                     }
                     Err(e) => {
                         eprintln!("error: {e}");
@@ -2660,53 +2876,77 @@ fn main() -> ExitCode {
             predict_rows,
             no_header,
             delimiter,
+            split,
+            calibration,
+            na_values,
+            inf_as_nan,
             save,
+            embed_token,
+            dry_run,
             format,
             json,
             shred,
             progress,
-            quiet,
         } => {
+            if global_quiet && progress {
+                return emit_cli_error(json, "--quiet and --progress cannot be combined");
+            }
             if shred && save.is_some() {
-                eprintln!("error: --shred and --save cannot be combined (a shredded run cannot be queried by `carbon predict`)");
-                return ExitCode::from(2);
+                return emit_cli_error(
+                    json,
+                    "--shred and --save cannot be combined (a shredded run cannot be queried by `carbon predict`)",
+                );
             }
             let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
                 Ok(d) => d,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
                 Ok(t) => t,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let Ok(effort_val) = parse_api_effort(&effort) else {
-                eprintln!("error: invalid --effort `{effort}`");
-                return ExitCode::from(2);
+                return emit_cli_error(json, &format!("invalid --effort `{effort}`"));
             };
             let cloud_clone = cloud.clone();
-            let resolved = match resolve_cli_target_and_auth(
-                endpoint,
-                cloud,
-                clouds_manifest.as_deref(),
-                environment.as_deref(),
-                &region,
-                explicit_tier,
-                tenant,
-                "cli_tenant",
-                token,
-                token_file,
-                CarbonTierWire::Pro,
-            ) {
-                Ok(r) => r,
-                Err((code, msg)) => {
-                    eprintln!("error: {msg}");
-                    return code;
+            let (endpoints, pinned_keks, pre_probed, tenant_id, eff_tier, auth_token) = if dry_run {
+                (
+                    Vec::new(),
+                    BTreeMap::new(),
+                    None,
+                    tenant.unwrap_or_else(|| "dry_run_tenant".to_owned()),
+                    explicit_tier.unwrap_or(CarbonTierWire::Free),
+                    None,
+                )
+            } else {
+                match resolve_cli_target_and_auth(
+                    endpoint,
+                    cloud,
+                    clouds_manifest.as_deref(),
+                    environment.as_deref(),
+                    &region,
+                    explicit_tier,
+                    tenant,
+                    "cli_tenant",
+                    token,
+                    token_file,
+                    CarbonTierWire::Pro,
+                ) {
+                    Ok(r) => (
+                        r.endpoints,
+                        r.pinned_keks,
+                        Some((r.probed_client, r.first_probe)),
+                        r.tenant_id,
+                        r.tier,
+                        r.auth_token,
+                    ),
+                    Err((code, msg)) => {
+                        if json {
+                            return emit_cli_error(true, &msg);
+                        }
+                        eprintln!("error: {msg}");
+                        return code;
+                    }
                 }
             };
             let target_was_explicit = target.is_some();
@@ -2719,15 +2959,15 @@ fn main() -> ExitCode {
             });
             let pretty_stdout = !json && format.trim().eq_ignore_ascii_case("pretty");
             let show_stderr_progress =
-                !quiet && !pretty_stdout && (progress || std::io::stderr().is_terminal());
+                !global_quiet && !pretty_stdout && (progress || std::io::stderr().is_terminal());
             let opts = CarbonCliRunOptions {
-                endpoints: resolved.endpoints,
+                endpoints,
                 csv_path: csv,
                 target_column,
                 synthetic_rows,
                 synthetic_features: features,
-                tenant_id: resolved.tenant_id,
-                tier: resolved.tier,
+                tenant_id,
+                tier: eff_tier,
                 effort: effort_val,
                 objective,
                 seed,
@@ -2735,48 +2975,50 @@ fn main() -> ExitCode {
                 stop_after_ms,
                 resume_after_stop: resume,
                 predict_rows,
-                auth_token: resolved.auth_token,
+                auth_token,
                 shred_after_run: shred,
             };
             let ux = CarbonCliRunUxConfig {
-                pinned_keks: resolved.pinned_keks,
-                pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+                pinned_keks,
+                pre_probed,
                 target_was_explicit,
                 show_stderr_progress,
                 delimiter_override: delim_override,
                 no_header,
-                persist_handle: save.is_some(),
-                save_model_path: save,
+                persist_handle: !dry_run && save.is_some(),
+                save_model_path: if dry_run { None } else { save },
                 cloud_name: cloud_clone,
+                split_mode: split,
+                calibration_mode: calibration,
+                extra_na_values: na_values,
+                inf_as_nan,
+                embed_token,
+                dry_run,
             };
             match execute_carbon_cli_run_with_ux(&opts, &ux) {
                 Ok(receipt) => {
                     if pretty_stdout {
-                        println!("{}", render_pretty_run_scorecard(&receipt));
+                        let _ = write_stdout_line(&render_pretty_run_scorecard(&receipt));
                         ExitCode::SUCCESS
                     } else {
                         match serde_json::to_string_pretty(&receipt) {
                             Ok(s) => {
-                                println!("{s}");
+                                let _ = write_stdout_line(&s);
                                 ExitCode::SUCCESS
                             }
-                            Err(e) => {
-                                eprintln!("error: serialize receipt: {e}");
-                                ExitCode::from(1)
-                            }
+                            Err(e) => emit_cli_error(json, &format!("serialize receipt: {e}")),
                         }
                     }
                 }
-                Err(err) => {
-                    eprintln!("error: carbon run failed: {err}");
-                    ExitCode::from(1)
-                }
+                Err(err) => emit_cli_error(json, &format!("carbon run failed: {err}")),
             }
         }
         Command::Fit {
             csv,
             target,
             save,
+            embed_token,
+            dry_run,
             endpoint,
             cloud,
             clouds_manifest,
@@ -2793,46 +3035,65 @@ fn main() -> ExitCode {
             seed,
             no_header,
             delimiter,
+            split,
+            calibration,
+            na_values,
+            inf_as_nan,
             format,
             json,
-            quiet,
         } => {
+            let pretty_stdout = should_emit_pretty_stdout(&format, json);
+            let json_mode = !pretty_stdout;
             let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
                 Ok(d) => d,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
                 Ok(t) => t,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let Ok(effort_val) = parse_api_effort(&effort) else {
-                eprintln!("error: invalid --effort `{effort}`");
-                return ExitCode::from(2);
+                return emit_cli_error(json, &format!("invalid --effort `{effort}`"));
             };
             let cloud_clone = cloud.clone();
-            let resolved = match resolve_cli_target_and_auth(
-                endpoint,
-                cloud,
-                clouds_manifest.as_deref(),
-                environment.as_deref(),
-                &region,
-                explicit_tier,
-                tenant,
-                "cli_tenant",
-                token,
-                token_file,
-                CarbonTierWire::Pro,
-            ) {
-                Ok(r) => r,
-                Err((code, msg)) => {
-                    eprintln!("error: {msg}");
-                    return code;
+            let (endpoints, pinned_keks, pre_probed, tenant_id, eff_tier, auth_token) = if dry_run {
+                (
+                    Vec::new(),
+                    BTreeMap::new(),
+                    None,
+                    tenant.unwrap_or_else(|| "dry_run_tenant".to_owned()),
+                    explicit_tier.unwrap_or(CarbonTierWire::Free),
+                    None,
+                )
+            } else {
+                match resolve_cli_target_and_auth(
+                    endpoint,
+                    cloud,
+                    clouds_manifest.as_deref(),
+                    environment.as_deref(),
+                    &region,
+                    explicit_tier,
+                    tenant,
+                    "cli_tenant",
+                    token,
+                    token_file,
+                    CarbonTierWire::Pro,
+                ) {
+                    Ok(r) => (
+                        r.endpoints,
+                        r.pinned_keks,
+                        Some((r.probed_client, r.first_probe)),
+                        r.tenant_id,
+                        r.tier,
+                        r.auth_token,
+                    ),
+                    Err((code, msg)) => {
+                        if json {
+                            return emit_cli_error(true, &msg);
+                        }
+                        eprintln!("error: {msg}");
+                        return code;
+                    }
                 }
             };
             let target_was_explicit = target.is_some();
@@ -2843,16 +3104,16 @@ fn main() -> ExitCode {
                     "y".to_owned()
                 }
             });
-            let pretty_stdout = should_emit_pretty_stdout(&format, json);
-            let show_stderr_progress = !quiet && !pretty_stdout && std::io::stderr().is_terminal();
+            let show_stderr_progress =
+                !global_quiet && !pretty_stdout && std::io::stderr().is_terminal();
             let opts = CarbonCliRunOptions {
-                endpoints: resolved.endpoints,
+                endpoints,
                 csv_path: Some(csv),
                 target_column,
                 synthetic_rows: 240,
                 synthetic_features: 6,
-                tenant_id: resolved.tenant_id,
-                tier: resolved.tier,
+                tenant_id,
+                tier: eff_tier,
                 effort: effort_val,
                 objective,
                 seed,
@@ -2860,42 +3121,42 @@ fn main() -> ExitCode {
                 stop_after_ms: None,
                 resume_after_stop: false,
                 predict_rows: 5,
-                auth_token: resolved.auth_token,
+                auth_token,
                 shred_after_run: false,
             };
             let ux = CarbonCliRunUxConfig {
-                pinned_keks: resolved.pinned_keks,
-                pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+                pinned_keks,
+                pre_probed,
                 target_was_explicit,
                 show_stderr_progress,
                 delimiter_override: delim_override,
                 no_header,
-                persist_handle: true,
-                save_model_path: save,
+                persist_handle: !dry_run,
+                save_model_path: if dry_run { None } else { save },
                 cloud_name: cloud_clone,
+                split_mode: split,
+                calibration_mode: calibration,
+                extra_na_values: na_values,
+                inf_as_nan,
+                embed_token,
+                dry_run,
             };
             match execute_carbon_cli_run_with_ux(&opts, &ux) {
                 Ok(receipt) => {
                     if pretty_stdout {
-                        println!("{}", render_pretty_run_scorecard(&receipt));
+                        let _ = write_stdout_line(&render_pretty_run_scorecard(&receipt));
                         ExitCode::SUCCESS
                     } else {
                         match serde_json::to_string_pretty(&receipt) {
                             Ok(s) => {
-                                println!("{s}");
+                                let _ = write_stdout_line(&s);
                                 ExitCode::SUCCESS
                             }
-                            Err(e) => {
-                                eprintln!("error: serialize receipt: {e}");
-                                ExitCode::from(1)
-                            }
+                            Err(e) => emit_cli_error(json_mode, &format!("serialize receipt: {e}")),
                         }
                     }
                 }
-                Err(err) => {
-                    eprintln!("error: carbon fit failed: {err}");
-                    ExitCode::from(1)
-                }
+                Err(err) => emit_cli_error(json, &format!("carbon fit failed: {err}")),
             }
         }
         Command::Predict {
@@ -2944,7 +3205,10 @@ fn main() -> ExitCode {
                 override_tok,
             ) {
                 Ok(receipt) => {
-                    if should_emit_pretty_stdout(&format, json) {
+                    let streamed_stdout_csv = out.as_deref().is_some_and(|p| p.as_os_str() == "-");
+                    if streamed_stdout_csv {
+                        ExitCode::SUCCESS
+                    } else if should_emit_pretty_stdout(&format, json) {
                         println!("┌─ Carbon Zero-Knowledge Batch Prediction ───────────────────────────────┐");
                         println!(
                             "  Run & Region : {} | {} (CUEN\\x01={})",
@@ -2982,20 +3246,16 @@ fn main() -> ExitCode {
                     } else {
                         match serde_json::to_string_pretty(&receipt) {
                             Ok(s) => {
-                                println!("{s}");
+                                let _ = write_stdout_line(&s);
                                 ExitCode::SUCCESS
                             }
                             Err(e) => {
-                                eprintln!("error: serialize predict receipt: {e}");
-                                ExitCode::from(1)
+                                emit_cli_error(json, &format!("serialize predict receipt: {e}"))
                             }
                         }
                     }
                 }
-                Err(err) => {
-                    eprintln!("error: carbon predict failed: {err}");
-                    ExitCode::from(1)
-                }
+                Err(err) => emit_cli_error(json, &format!("carbon predict failed: {err}")),
             }
         }
         Command::Inspect {
@@ -3009,37 +3269,35 @@ fn main() -> ExitCode {
         } => {
             let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
                 Ok(d) => d,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
-            let Ok(_ptier) = parse_product_tier(&tier) else {
-                eprintln!("error: invalid --tier `{tier}`");
-                return ExitCode::from(2);
+            let Ok(ptier) = parse_product_tier(&tier) else {
+                return emit_cli_error(json, &format!("invalid --tier `{tier}`"));
             };
-            match inspect_tabular_file(&csv, target.as_deref(), delim_override, !no_header) {
+            match inspect_tabular_file_with_tier(
+                &csv,
+                target.as_deref(),
+                delim_override,
+                !no_header,
+                ptier,
+            ) {
                 Ok(report) => {
                     if should_emit_pretty_stdout(&format, json) {
-                        println!("{}", render_pretty_inspect_report(&report));
+                        let _ = write_stdout_line(&render_pretty_inspect_report(&report));
                         ExitCode::SUCCESS
                     } else {
                         match serde_json::to_string_pretty(&report) {
                             Ok(s) => {
-                                println!("{s}");
+                                let _ = write_stdout_line(&s);
                                 ExitCode::SUCCESS
                             }
                             Err(e) => {
-                                eprintln!("error: serialize inspect report: {e}");
-                                ExitCode::from(1)
+                                emit_cli_error(json, &format!("serialize inspect report: {e}"))
                             }
                         }
                     }
                 }
-                Err(err) => {
-                    eprintln!("error: carbon inspect failed: {err}");
-                    ExitCode::from(1)
-                }
+                Err(err) => emit_cli_error(json, &format!("carbon inspect failed: {err}")),
             }
         }
         Command::Runs { json } => match list_saved_model_handles() {
@@ -3078,32 +3336,24 @@ fn main() -> ExitCode {
             run,
             token,
             token_file,
+            json,
         } => {
             let override_tok = match read_cli_token_source(token, token_file) {
                 Ok(t) => t,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
                 Ok(pair) => pair,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             match query_handle_status(&handle, override_tok) {
                 Ok(status) => {
                     if let Ok(s) = serde_json::to_string_pretty(&status) {
-                        println!("{s}");
+                        let _ = write_stdout_line(&s);
                     }
                     ExitCode::SUCCESS
                 }
-                Err(err) => {
-                    eprintln!("error: carbon status failed: {err}");
-                    ExitCode::from(1)
-                }
+                Err(err) => emit_cli_error(json, &format!("carbon status failed: {err}")),
             }
         }
         Command::Shred {
@@ -3111,49 +3361,215 @@ fn main() -> ExitCode {
             run,
             token,
             token_file,
+            json,
         } => {
             let override_tok = match read_cli_token_source(token, token_file) {
                 Ok(t) => t,
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    return ExitCode::from(2);
-                }
+                Err(e) => return emit_cli_error(json, &e),
             };
             let (handle, resolved_path) =
                 match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
                     Ok(pair) => pair,
-                    Err(e) => {
-                        eprintln!("error: {e}");
-                        return ExitCode::from(2);
-                    }
+                    Err(e) => return emit_cli_error(json, &e),
                 };
             let explicit_opt = model.as_deref().or(Some(resolved_path.as_path()));
             match shred_handle_and_local_keys(&handle, explicit_opt, override_tok) {
                 Ok((remote, local_deleted)) => {
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&serde_json::json!({
+                    let _ = write_stdout_line(
+                        &serde_json::to_string_pretty(&serde_json::json!({
                             "run_id": remote.run_id,
                             "remote_shredded": remote.shredded,
                             "remote_objects_deleted": remote.objects_deleted,
                             "local_key_handle_shredded": local_deleted,
                         }))
-                        .unwrap_or_default()
+                        .unwrap_or_default(),
                     );
                     ExitCode::SUCCESS
                 }
-                Err(err) => {
-                    eprintln!("error: carbon shred failed: {err}");
-                    ExitCode::from(1)
+                Err(err) => emit_cli_error(json, &format!("carbon shred failed: {err}")),
+            }
+        }
+        Command::Fitness { action } => execute_fitness_command(action),
+        Command::Explain {
+            model,
+            run,
+            top_k,
+            token,
+            token_file,
+            format,
+            json,
+        } => {
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                Ok(pair) => pair,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let client = match build_client_for_handle(&handle, override_tok) {
+                Ok(c) => c,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            match client.explain_run(&handle.tenant_id, &handle.run_id, top_k) {
+                Ok(resp) => {
+                    if should_emit_pretty_stdout(&format, json) {
+                        let _ = write_stdout_line(&render_pretty_explain_response(&resp));
+                        ExitCode::SUCCESS
+                    } else {
+                        match serde_json::to_string_pretty(&resp) {
+                            Ok(s) => {
+                                let _ = write_stdout_line(&s);
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                emit_cli_error(json, &format!("serialize explain response: {e}"))
+                            }
+                        }
+                    }
                 }
+                Err(err) => emit_cli_error(json, &format!("carbon explain failed: {err}")),
+            }
+        }
+        Command::Export {
+            model,
+            run,
+            lang,
+            out,
+            token,
+            token_file,
+            json,
+        } => {
+            let lang_wire = match parse_export_lang(&lang) {
+                Ok(l) => l,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                Ok(pair) => pair,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let client = match build_client_for_handle(&handle, override_tok) {
+                Ok(c) => c,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            match client.export_run(&handle.tenant_id, &handle.run_id, lang_wire) {
+                Ok(resp) => {
+                    let src_code = resp.source_code.clone().unwrap_or_default();
+                    if let Some(out_path) = &out {
+                        if out_path.as_os_str() == "-" {
+                            let _ = write_stdout_line(src_code.trim_end_matches('\n'));
+                            return ExitCode::SUCCESS;
+                        }
+                        if let Some(parent) = out_path.parent() {
+                            if !parent.as_os_str().is_empty() {
+                                let _ = fs::create_dir_all(parent);
+                            }
+                        }
+                        if let Err(e) = fs::write(out_path, src_code.as_bytes()) {
+                            return emit_cli_error(
+                                json,
+                                &format!("write export source {}: {e}", out_path.display()),
+                            );
+                        }
+                        if json {
+                            if let Ok(s) = serde_json::to_string_pretty(&resp) {
+                                let _ = write_stdout_line(&s);
+                            }
+                        } else {
+                            let _ = write_stdout_line(
+                                &serde_json::to_string_pretty(&serde_json::json!({
+                                    "run_id": resp.run_id,
+                                    "lang": resp.lang,
+                                    "output_path": out_path,
+                                    "source_sha256": resp.source_sha256,
+                                    "bytes": src_code.len(),
+                                    "encrypted_cuen": resp.encrypted_export_cuen_b64.is_some(),
+                                }))
+                                .unwrap_or_default(),
+                            );
+                        }
+                        ExitCode::SUCCESS
+                    } else if json {
+                        match serde_json::to_string_pretty(&resp) {
+                            Ok(s) => {
+                                let _ = write_stdout_line(&s);
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                emit_cli_error(true, &format!("serialize export response: {e}"))
+                            }
+                        }
+                    } else {
+                        let _ = write_stdout_line(src_code.trim_end_matches('\n'));
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(err) => emit_cli_error(json, &format!("carbon export failed: {err}")),
+            }
+        }
+        Command::Resume {
+            model,
+            run,
+            effort,
+            additional_waves,
+            token,
+            token_file,
+            json,
+        } => {
+            let effort_opt = match effort.as_deref() {
+                Some(raw) => match parse_api_effort(raw) {
+                    Ok(e) => Some(e),
+                    Err(msg) => return emit_cli_error(json, &msg),
+                },
+                None => None,
+            };
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let (mut handle, resolved_path) =
+                match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                    Ok(pair) => pair,
+                    Err(e) => return emit_cli_error(json, &e),
+                };
+            let client = match build_client_for_handle(&handle, override_tok) {
+                Ok(c) => c,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            match client.resume_run(
+                &handle.tenant_id,
+                &handle.run_id,
+                effort_opt,
+                additional_waves,
+            ) {
+                Ok(progress) => {
+                    if let Some(loss) = progress.outer_holdout_loss {
+                        handle.holdout_rmse = Some(loss);
+                        let explicit_save = model.as_deref().or(Some(resolved_path.as_path()));
+                        let has_embedded = handle.capability_token.is_some();
+                        let _ =
+                            persist_model_handle_with_options(&handle, explicit_save, has_embedded);
+                    }
+                    if let Ok(s) = serde_json::to_string_pretty(&progress) {
+                        let _ = write_stdout_line(&s);
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(err) => emit_cli_error(json, &format!("carbon resume failed: {err}")),
             }
         }
         Command::Upgrade {
             check,
+            force,
             version,
             base_url,
             allow_test_pubkey,
         } => {
+            let using_test_pubkey = allow_test_pubkey.is_some();
             let pub_pem = if let Some(p) = allow_test_pubkey {
                 match fs::read_to_string(&p) {
                     Ok(s) => s,
@@ -3170,10 +3586,16 @@ fn main() -> ExitCode {
                 }
                 EMBEDDED_RELEASE_SIGNING_PUB_PEM.to_owned()
             };
-            match execute_self_upgrade(base_url.as_deref(), version.as_deref(), &pub_pem, check) {
+            match execute_self_upgrade_with_options(
+                base_url.as_deref(),
+                version.as_deref(),
+                &pub_pem,
+                check,
+                force || using_test_pubkey,
+            ) {
                 Ok(receipt) => {
                     if let Ok(s) = serde_json::to_string_pretty(&receipt) {
-                        println!("{s}");
+                        let _ = write_stdout_line(&s);
                     }
                     ExitCode::SUCCESS
                 }
@@ -3596,7 +4018,6 @@ fn main() -> ExitCode {
             endpoint,
             effort,
             no_shred,
-            quiet,
         } => run_quickstart_command(
             emit_csv,
             csv_only,
@@ -3605,7 +4026,7 @@ fn main() -> ExitCode {
             endpoint,
             &effort,
             no_shred,
-            quiet,
+            global_quiet,
         ),
         #[cfg(feature = "emu")]
         Command::SpecReport {
@@ -3818,6 +4239,201 @@ fn render_pretty_inspect_report(report: &CarbonTabularInspectReport) -> String {
     out
 }
 
+fn parse_export_lang(raw: &str) -> Result<CarbonExportLangWire, String> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "python" | "py" => Ok(CarbonExportLangWire::Python),
+        "rust" | "rs" => Ok(CarbonExportLangWire::Rust),
+        "rust-refittable" | "rust_refittable" => Ok(CarbonExportLangWire::RustRefittable),
+        "js" | "javascript" | "ts" => Ok(CarbonExportLangWire::Js),
+        "c" => Ok(CarbonExportLangWire::C),
+        "cpp" | "c++" | "cxx" => Ok(CarbonExportLangWire::Cpp),
+        other => Err(format!(
+            "unsupported --lang `{other}` (expected `python`, `rust`, `rust-refittable`, `js`, `c`, or `cpp`)"
+        )),
+    }
+}
+
+fn render_pretty_explain_response(resp: &CarbonExplainResponse) -> String {
+    let mut out = String::with_capacity(1_024);
+    let cuen = resp.encrypted_explain_cuen_b64.is_some();
+    out.push_str("┌─ Carbon Zero-Knowledge Champion Explanation (`carbon explain`) ───────────┐\n");
+    out.push_str(&format!(
+        "  Run & Method  : {} | {} (CUEN\\x01={cuen})\n",
+        resp.run_id, resp.method
+    ));
+    out.push_str(&format!(
+        "  Baseline Loss : {:.6}\n\n",
+        resp.baseline_holdout_loss
+    ));
+    out.push_str(&format!(
+        "  {:<26}  {:>12}  {:>14}\n",
+        "FEATURE", "IMPORTANCE%", "DELTA_LOSS"
+    ));
+    for f in &resp.feature_importances {
+        out.push_str(&format!(
+            "  {:<26}  {:>11.2}%  {:>+14.6}\n",
+            f.feature,
+            f.importance * 100.0,
+            f.delta_loss
+        ));
+    }
+    out.push_str("└───────────────────────────────────────────────────────────────────────────┘");
+    out
+}
+
+fn execute_fitness_command(action: FitnessCommand) -> ExitCode {
+    match action {
+        FitnessCommand::List { json } => {
+            let catalog = ObjectiveSpec::catalog();
+            if !json && std::io::stdout().is_terminal() {
+                let mut out = String::with_capacity(3_072);
+                out.push_str(&format!(
+                    "{:<24}  {:<9}  {:<6}  {}\n",
+                    "OBJECTIVE", "DIRECTION", "ORDER?", "DESCRIPTION"
+                ));
+                for entry in &catalog {
+                    out.push_str(&format!(
+                        "{:<24}  {:<9}  {:<6}  {}\n",
+                        entry.name,
+                        entry.direction.as_str(),
+                        if entry.requires_order { "yes" } else { "no" },
+                        entry.description
+                    ));
+                }
+                let _ = write_stdout_line(out.trim_end_matches('\n'));
+            } else if let Ok(s) = serde_json::to_string_pretty(&catalog) {
+                let _ = write_stdout_line(&s);
+            }
+            ExitCode::SUCCESS
+        }
+        FitnessCommand::Validate { spec, json } => match resolve_objective_argument(&spec) {
+            Ok((wire, parsed)) => {
+                let aux: Vec<String> = parsed.columns().into_iter().collect();
+                let res: Vec<String> = parsed.resources().into_iter().collect();
+                let payload = serde_json::json!({
+                    "valid": true,
+                    "name": parsed.name(),
+                    "direction": parsed.direction(),
+                    "requires_order": parsed.requires_order(),
+                    "uses_execution_telemetry": parsed.uses_execution_telemetry(),
+                    "benefits_from_post_hoc_calibration": parsed.benefits_from_post_hoc_calibration(),
+                    "aux_columns": aux,
+                    "resources": res,
+                    "fitness_sha256": parsed.identity_sha256(),
+                    "wire_objective": wire,
+                    "canonical_spec": parsed.as_value(),
+                });
+                if let Ok(s) = serde_json::to_string_pretty(&payload) {
+                    let _ = write_stdout_line(&s);
+                }
+                ExitCode::SUCCESS
+            }
+            Err(err) => emit_cli_error(json, &err),
+        },
+        FitnessCommand::Schema { json: _ } => {
+            if let Ok(s) = serde_json::to_string_pretty(&ObjectiveSpec::schema_json()) {
+                let _ = write_stdout_line(&s);
+            }
+            ExitCode::SUCCESS
+        }
+        FitnessCommand::Evaluate {
+            spec,
+            csv,
+            target,
+            pred,
+            json,
+        } => {
+            let (_, parsed_spec) = match resolve_objective_argument(&spec) {
+                Ok(v) => v,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let table = match load_delimited_table(&csv, None, true) {
+                Ok(t) => t,
+                Err(e) => return emit_cli_error(json, &e),
+            };
+            let find_col = |name: &str| -> Result<usize, String> {
+                table.headers.iter().position(|h| h == name).ok_or_else(|| {
+                    format!(
+                        "column '{name}' not found in {} (headers: [{}])",
+                        csv.display(),
+                        table.headers.join(", ")
+                    )
+                })
+            };
+            let t_idx = match find_col(&target) {
+                Ok(i) => i,
+                Err(e) => return emit_cli_error(false, &e),
+            };
+            let p_idx = match find_col(&pred) {
+                Ok(i) => i,
+                Err(e) => return emit_cli_error(false, &e),
+            };
+            let mut aux_indices = Vec::new();
+            for aux_name in parsed_spec.columns() {
+                match find_col(&aux_name) {
+                    Ok(i) => aux_indices.push((aux_name, i)),
+                    Err(e) => return emit_cli_error(false, &e),
+                }
+            }
+            let mut y_vec = Vec::with_capacity(table.rows.len());
+            let mut p_vec = Vec::with_capacity(table.rows.len());
+            let mut aux_map: BTreeMap<String, Vec<f64>> = aux_indices
+                .iter()
+                .map(|(n, _)| (n.clone(), Vec::with_capacity(table.rows.len())))
+                .collect();
+            for (r_idx, row) in table.rows.iter().enumerate() {
+                let parse_cell = |col_i: usize, label: &str| -> Result<f64, String> {
+                    let raw = row.get(col_i).and_then(|c| c.as_deref()).unwrap_or("");
+                    parse_flexible_numeric_f64(raw)
+                        .filter(|v| v.is_finite())
+                        .ok_or_else(|| {
+                            format!(
+                                "row {} column '{label}' ('{raw}') is not a finite number",
+                                r_idx + 2
+                            )
+                        })
+                };
+                let yv = match parse_cell(t_idx, &target) {
+                    Ok(v) => v,
+                    Err(e) => return emit_cli_error(false, &e),
+                };
+                let pv = match parse_cell(p_idx, &pred) {
+                    Ok(v) => v,
+                    Err(e) => return emit_cli_error(false, &e),
+                };
+                for (aux_name, aux_i) in &aux_indices {
+                    let av = match parse_cell(*aux_i, aux_name) {
+                        Ok(v) => v,
+                        Err(e) => return emit_cli_error(false, &e),
+                    };
+                    if let Some(slot) = aux_map.get_mut(aux_name) {
+                        slot.push(av);
+                    }
+                }
+                y_vec.push(yv);
+                p_vec.push(pv);
+            }
+            match parsed_spec.evaluate(&y_vec, &p_vec, &aux_map) {
+                Ok(score) => {
+                    let payload = serde_json::json!({
+                        "rows_scored": y_vec.len(),
+                        "objective": parsed_spec.name(),
+                        "value": score.value,
+                        "loss": score.loss,
+                        "direction": score.direction,
+                        "fitness_sha256": score.fitness_sha256,
+                    });
+                    if let Ok(s) = serde_json::to_string_pretty(&payload) {
+                        let _ = write_stdout_line(&s);
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(e) => emit_cli_error(false, &e),
+            }
+        }
+    }
+}
+
 fn emit_shell_completions(shell: &str) -> Result<String, String> {
     let subcommands = [
         "version",
@@ -3831,6 +4447,10 @@ fn emit_shell_completions(shell: &str) -> Result<String, String> {
         "inspect",
         "fit",
         "predict",
+        "explain",
+        "export",
+        "resume",
+        "fitness",
         "runs",
         "status",
         "shred",

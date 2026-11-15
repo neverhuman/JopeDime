@@ -9,6 +9,7 @@ pub mod cuen;
 pub mod error;
 pub mod jmat_lite;
 pub mod landmarks;
+pub mod objective;
 pub mod split;
 
 pub use conditioning::{FitLandmarkBundle, FIT_LANDMARK_WIRE_BYTES};
@@ -21,5 +22,9 @@ pub use error::{PrepError, PrepGuidance, PrepResult, PREP_DOCS_URL};
 pub use jmat_lite::{
     encode_jmat_v1, split_and_encode_jmat_v1, PrepCell, PrepColumn, PrepColumnKind, PrepMatrix,
     PrepTable, SplitJmatArtifacts,
+};
+pub use objective::{
+    ObjectiveCatalogEntry, ObjectiveDirection, ObjectiveScore, ObjectiveSpec,
+    MAX_OBJECTIVE_COLUMNS, MAX_OBJECTIVE_EXPR_NODES, MAX_OBJECTIVE_SPEC_BYTES, OBJECTIVE_VERSION,
 };
 pub use split::{SplitPlan, DEFAULT_HOLDOUT_FRACTION, MAX_LANDMARK_FIT_ROWS};

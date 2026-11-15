@@ -3,11 +3,12 @@
 **Status:** accepted 2026-09-18 · **Scope:** `crates/jope-campaigns/src/evaluation_v2.rs`
 
 ## Context
-`JopeDimeEvaluatorIdentity.v1` hashes ~30 feat-math sources, the crate manifest and the workspace `Cargo.lock`
-(`compute_implementation_sha256`). Its `validate()` compared a receipt's recorded identity with the *current
+`JopeDimeEvaluatorIdentity.v1` hashes ~30 feat-math sources, the crate manifest and the canonical scientific
+evaluator `Cargo.lock` subgraph (`compute_implementation_sha256` and `evaluator_cargo_lock_subgraph_bytes`,
+scoped in 2026-11-14 from the whole-workspace lockfile to `feat-math` plus the evaluator runtime crates). Its
+`validate()` compared a receipt's recorded identity with the *current
 build* and rejected anything else, so every persisted `JopeDimeSemanticEvaluationReceipt.v2` became invalid the
-moment feat-math was reformatted or the lockfile changed — which the single-workspace port does by construction
-(one `Cargo.lock` for the whole repository).
+moment feat-math was reformatted or an evaluator dependency changed.
 
 ## Decision
 `validate()` still requires the DSL ABI to match, but accepts an implementation/lockfile pair that is either the
@@ -21,6 +22,31 @@ the current identity. A row is appended only together with the receipt path that
 Old receipts remain verifiable and auditable under the identity that produced them; a new feat-math byte change
 (WP2's `gpr.rs`, `registry.rs`) creates a new current identity without invalidating history. Reviewers see every
 accepted historical identity in one file.
+
+## Current identity transition: canonical evaluator Cargo.lock subgraph scoping (2026-11-14)
+
+`crates/jope-campaigns/src/campaign_evaluator.rs` now hashes the canonical 59-crate
+scientific evaluator `Cargo.lock` subgraph (`feat-math` plus `jope-dime-regressor`'s
+evaluator runtime dependencies `anyhow`, `hex`, `libc`, `rayon`, `serde`,
+`serde_json`, and `sha2`) instead of the raw 586-crate workspace lockfile. Unrelated
+workspace dependency edits (`jope-carbon`, `jope-comparators`, `jope-service`, TUI,
+S3 object stores, dev-only `jope-arena`) no longer churn `EvaluatorIdentityV1`, while
+any `feat-math` or evaluator runtime dependency change still advances both
+`cargo_lock_sha256` and `implementation_sha256`. `implementation_sha256` changes from
+`806322b53c80e6552981aa059f31ab35bcfd09040eb2830c14cd276eb6f93d7d` to
+`c6924bd3e0a80f42ebe2b86a816cef480777b89ac3aaba1258e190035e07abd2`;
+`cargo_lock_sha256` changes from
+`8356f6cc113abcb7e99ac83fb627766d95e4a9d974f655e49518784b36106b36` to
+`aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045`; and
+`identity_digest` changes from
+`e4fe2b6ac9f109eeb9a93c30e04eb452c6eacdb5ea4db45f67d58e16052e518e` to
+`2d586706d326766231ff64be8d1cf8865639872761f8ae9ffe694eab1d8bcd59`. The DSL ABI
+is unchanged. The regeneration ran
+`JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=31700dfb3003a8815040f130f22396953e43d390 cargo nextest run --locked -P pr -p feat-math --test compat_freeze`
+(13/13 passed). The append-only historical chain records both fixture successors in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/adr0004_evaluator_subgraph_lockfile_identity_rebaseline.v1.json`.
+The append-only known-identity table gains no row because this identity has no
+shipped receipt.
 
 ## Current identity transition: Carbon v1.2.0 comparators CLI lockfile edge (2026-11-14)
 

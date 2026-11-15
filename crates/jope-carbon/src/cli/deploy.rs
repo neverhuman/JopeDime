@@ -214,9 +214,22 @@ struct CellSecretDocument {
     engine_kek_pubkey_b64: String,
 }
 
+#[derive(Serialize, Deserialize)]
+struct EdgeSecretDocument {
+    presign_secret_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_presign_secret_hex: Option<String>,
+    auth_secret_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_auth_secret_hex: Option<String>,
+    engine_kek_pubkey_b64: String,
+}
+
 struct VaultSecretBinding {
     secret_arn: String,
     version_id: String,
+    edge_secret_arn: String,
+    edge_version_id: String,
     engine_kek_pubkey_b64: String,
     auth_secret_hex: Zeroizing<String>,
 }
@@ -367,18 +380,48 @@ pub fn build_deterministic_zip_bytes(mut entries: Vec<CarbonZipEntry>) -> Result
     Ok(archive)
 }
 
+/// Verify that a 64-bit little-endian Linux ELF executable is statically linked (zero `PT_INTERP`
+/// dynamic loader segment), preventing accidental glibc linkage in Lambda or musl CLI artifacts (`DEP-SEC-03`).
+pub fn verify_static_linux_elf(bytes: &[u8]) -> Result<(), String> {
+    if bytes.len() < 64 || &bytes[0..4] != b"\x7fELF" {
+        return Err("binary is not a valid 64-bit ELF executable".to_owned());
+    }
+    if bytes[4] != 2 || bytes[5] != 1 {
+        return Err("ELF binary must be 64-bit little-endian".to_owned());
+    }
+    let e_phoff = u64::from_le_bytes([
+        bytes[32], bytes[33], bytes[34], bytes[35], bytes[36], bytes[37], bytes[38], bytes[39],
+    ]) as usize;
+    let e_phentsize = u16::from_le_bytes([bytes[54], bytes[55]]) as usize;
+    let e_phnum = u16::from_le_bytes([bytes[56], bytes[57]]) as usize;
+    if e_phnum > 0 && e_phentsize >= 56 {
+        let end = e_phoff.saturating_add(e_phnum.saturating_mul(e_phentsize));
+        if end > bytes.len() {
+            return Err("ELF program header table exceeds file length".to_owned());
+        }
+        for idx in 0..e_phnum {
+            let off = e_phoff + idx * e_phentsize;
+            let p_type =
+                u32::from_le_bytes([bytes[off], bytes[off + 1], bytes[off + 2], bytes[off + 3]]);
+            // PT_INTERP == 3 indicates a dynamically linked ELF requiring ld-linux.so
+            if p_type == 3 {
+                return Err(
+                    "ELF binary contains PT_INTERP dynamic loader segment (must be statically linked musl)"
+                        .to_owned(),
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Verify an ELF64 `aarch64` (`EM_AARCH64 == 0xB7`) binary and optionally enforce `CT3` edge
 /// isolation (zero embedded `r882` / `jope-service` / `feat-math` symbols).
 pub fn verify_arm64_lambda_binary(
     bytes: &[u8],
     enforce_ct3_edge_fence: bool,
 ) -> Result<(), String> {
-    if bytes.len() < 64 || &bytes[0..4] != b"\x7fELF" {
-        return Err("Lambda bootstrap binary is not a valid 64-bit ELF executable".to_owned());
-    }
-    if bytes[4] != 2 || bytes[5] != 1 {
-        return Err("Lambda bootstrap ELF must be 64-bit little-endian".to_owned());
-    }
+    verify_static_linux_elf(bytes)?;
     let e_machine = u16::from_le_bytes([bytes[18], bytes[19]]);
     if e_machine != 0x00B7 {
         return Err(format!(
@@ -996,6 +1039,7 @@ pub fn execute_carbon_package(
             fs::read(&x64_bin_path).map_err(|e| format!("read {}: {e}", x64_bin_path.display()))?;
         let arm_bytes =
             fs::read(&arm_bin_path).map_err(|e| format!("read {}: {e}", arm_bin_path.display()))?;
+        verify_static_linux_elf(&x64_bytes)?;
         verify_arm64_lambda_binary(&arm_bytes, true)?;
 
         let mut sum_lines = Vec::new();
@@ -1246,12 +1290,137 @@ fn format_uuid_from_random_hex(tok_hex: &str) -> String {
     )
 }
 
+fn ensure_edge_secrets_in_vault(
+    creds: &CarbonAwsCredentials,
+    region: &str,
+    environment: &str,
+    cell_doc: &CellSecretDocument,
+    dry_run: bool,
+) -> Result<(String, String), String> {
+    let secret_id = format!("jopedime/carbon/{environment}/edge-secrets");
+    let desired = EdgeSecretDocument {
+        presign_secret_hex: cell_doc.presign_secret_hex.clone(),
+        previous_presign_secret_hex: cell_doc.previous_presign_secret_hex.clone(),
+        auth_secret_hex: cell_doc.auth_secret_hex.clone(),
+        previous_auth_secret_hex: cell_doc.previous_auth_secret_hex.clone(),
+        engine_kek_pubkey_b64: cell_doc.engine_kek_pubkey_b64.clone(),
+    };
+    let desired_json = Zeroizing::new(
+        serde_json::to_string(&desired)
+            .map_err(|e| format!("serialize EdgeSecretDocument: {e}"))?,
+    );
+
+    let get_req = serde_json::to_vec(&serde_json::json!({
+        "SecretId": secret_id,
+        "VersionStage": "AWSCURRENT",
+    }))
+    .map_err(|e| e.to_string())?;
+    let (status, body) = call_secrets_manager_rpc(creds, region, "GetSecretValue", &get_req)?;
+    if status == 200 {
+        let val: serde_json::Value = serde_json::from_slice(&body)
+            .map_err(|e| format!("parse EdgeSecrets GetSecretValue response: {e}"))?;
+        let arn = val
+            .get("ARN")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| "EdgeSecrets response missing ARN".to_owned())?
+            .to_owned();
+        let mut version_id = val
+            .get("VersionId")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| "EdgeSecrets response missing VersionId".to_owned())?
+            .to_owned();
+        let cur_str = Zeroizing::new(
+            val.get("SecretString")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_owned(),
+        );
+        let in_sync = serde_json::from_str::<EdgeSecretDocument>(&cur_str)
+            .map(|cur| {
+                cur.presign_secret_hex == desired.presign_secret_hex
+                    && cur.previous_presign_secret_hex == desired.previous_presign_secret_hex
+                    && cur.auth_secret_hex == desired.auth_secret_hex
+                    && cur.previous_auth_secret_hex == desired.previous_auth_secret_hex
+                    && cur.engine_kek_pubkey_b64 == desired.engine_kek_pubkey_b64
+            })
+            .unwrap_or(false);
+        if !in_sync && !dry_run {
+            let tok_hex = random_32byte_hex()?;
+            let put_payload = Zeroizing::new(
+                serde_json::to_vec(&serde_json::json!({
+                    "SecretId": secret_id,
+                    "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
+                    "SecretString": &*desired_json,
+                }))
+                .map_err(|e| e.to_string())?,
+            );
+            let (p_status, p_body) =
+                call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
+            if p_status != 200 {
+                return Err(format!(
+                    "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status})"
+                ));
+            }
+            let put_val: serde_json::Value = serde_json::from_slice(&p_body)
+                .map_err(|e| format!("parse EdgeSecrets PutSecretValue response: {e}"))?;
+            version_id = put_val
+                .get("VersionId")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "EdgeSecrets PutSecretValue missing VersionId".to_owned())?
+                .to_owned();
+        }
+        return Ok((arn, version_id));
+    }
+
+    let body_text = String::from_utf8_lossy(&body);
+    if !body_text.contains("ResourceNotFoundException") {
+        return Err(format!(
+            "SecretsManager GetSecretValue '{secret_id}' failed (HTTP {status})"
+        ));
+    }
+    if dry_run {
+        return Ok((String::new(), String::new()));
+    }
+
+    let tok_hex = random_32byte_hex()?;
+    let create_payload = Zeroizing::new(
+        serde_json::to_vec(&serde_json::json!({
+            "Name": secret_id,
+            "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
+            "Description": format!("JopeDime Carbon {environment} isolated edge secrets (zero engine KEK / seal keys)"),
+            "SecretString": &*desired_json,
+        }))
+        .map_err(|e| e.to_string())?,
+    );
+    let (c_status, c_body) =
+        call_secrets_manager_rpc(creds, region, "CreateSecret", &create_payload)?;
+    if c_status != 200 {
+        return Err(format!(
+            "SecretsManager CreateSecret '{secret_id}' failed (HTTP {c_status})"
+        ));
+    }
+    let created: serde_json::Value = serde_json::from_slice(&c_body)
+        .map_err(|e| format!("parse EdgeSecrets CreateSecret response: {e}"))?;
+    let arn = created
+        .get("ARN")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "EdgeSecrets CreateSecret missing ARN".to_owned())?
+        .to_owned();
+    let version_id = created
+        .get("VersionId")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "EdgeSecrets CreateSecret missing VersionId".to_owned())?
+        .to_owned();
+    Ok((arn, version_id))
+}
+
 fn ensure_cell_secrets_in_vault(
     creds: &CarbonAwsCredentials,
     region: &str,
     environment: &str,
     bootstrap_if_missing: bool,
     required_auth_secret_hex: Option<&str>,
+    dry_run: bool,
 ) -> Result<VaultSecretBinding, String> {
     let secret_id = format!("jopedime/carbon/{environment}/cell-secrets");
     let get_req = serde_json::to_vec(&serde_json::json!({
@@ -1283,7 +1452,7 @@ fn ensure_cell_secrets_in_vault(
         let mut parsed_doc: CellSecretDocument = serde_json::from_str(&secret_str)
             .map_err(|e| format!("invalid CellSecretDocument schema in '{secret_id}': {e}"))?;
         if let Some(req_auth) = required_auth_secret_hex {
-            if parsed_doc.auth_secret_hex != req_auth.trim() {
+            if parsed_doc.auth_secret_hex != req_auth.trim() && !dry_run {
                 let prior_auth =
                     std::mem::replace(&mut parsed_doc.auth_secret_hex, req_auth.trim().to_owned());
                 if !prior_auth.trim().is_empty() {
@@ -1306,8 +1475,7 @@ fn ensure_cell_secrets_in_vault(
                     call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
                 if p_status != 200 {
                     return Err(format!(
-                        "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status}): {}",
-                        String::from_utf8_lossy(&p_body)
+                        "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status})"
                     ));
                 }
                 let put_val: serde_json::Value = serde_json::from_slice(&p_body)
@@ -1319,9 +1487,13 @@ fn ensure_cell_secrets_in_vault(
                     .to_owned();
             }
         }
+        let (edge_arn, edge_vid) =
+            ensure_edge_secrets_in_vault(creds, region, environment, &parsed_doc, dry_run)?;
         return Ok(VaultSecretBinding {
             secret_arn: arn,
             version_id,
+            edge_secret_arn: edge_arn,
+            edge_version_id: edge_vid,
             engine_kek_pubkey_b64: parsed_doc.engine_kek_pubkey_b64,
             auth_secret_hex: Zeroizing::new(parsed_doc.auth_secret_hex),
         });
@@ -1330,7 +1502,7 @@ fn ensure_cell_secrets_in_vault(
     let body_text = String::from_utf8_lossy(&body);
     if !body_text.contains("ResourceNotFoundException") {
         return Err(format!(
-            "SecretsManager GetSecretValue '{secret_id}' failed (HTTP {status}): {body_text}"
+            "SecretsManager GetSecretValue '{secret_id}' failed (HTTP {status})"
         ));
     }
     if !bootstrap_if_missing {
@@ -1338,9 +1510,22 @@ fn ensure_cell_secrets_in_vault(
             "secret '{secret_id}' does not exist in {region} (re-run with --bootstrap-secrets to initialize)"
         ));
     }
+    if dry_run {
+        let (_, pubkey_b64, auth_hex) = generate_cell_secret_document(required_auth_secret_hex)?;
+        return Ok(VaultSecretBinding {
+            secret_arn: String::new(),
+            version_id: String::new(),
+            edge_secret_arn: String::new(),
+            edge_version_id: String::new(),
+            engine_kek_pubkey_b64: pubkey_b64,
+            auth_secret_hex: auth_hex,
+        });
+    }
 
     let (secret_json, pubkey_b64, auth_hex) =
         generate_cell_secret_document(required_auth_secret_hex)?;
+    let parsed_doc: CellSecretDocument = serde_json::from_str(&secret_json)
+        .map_err(|e| format!("parse generated CellSecretDocument: {e}"))?;
     let tok_hex = random_32byte_hex()?;
     let client_req_token = format_uuid_from_random_hex(&tok_hex);
     let create_payload = Zeroizing::new(
@@ -1356,8 +1541,7 @@ fn ensure_cell_secrets_in_vault(
         call_secrets_manager_rpc(creds, region, "CreateSecret", &create_payload)?;
     if c_status != 200 {
         return Err(format!(
-            "SecretsManager CreateSecret '{secret_id}' failed (HTTP {c_status}): {}",
-            String::from_utf8_lossy(&c_body)
+            "SecretsManager CreateSecret '{secret_id}' failed (HTTP {c_status})"
         ));
     }
     let created: serde_json::Value =
@@ -1372,10 +1556,14 @@ fn ensure_cell_secrets_in_vault(
         .and_then(|v| v.as_str())
         .ok_or_else(|| "CreateSecret response missing VersionId".to_owned())?
         .to_owned();
+    let (edge_arn, edge_vid) =
+        ensure_edge_secrets_in_vault(creds, region, environment, &parsed_doc, false)?;
 
     Ok(VaultSecretBinding {
         secret_arn: arn,
         version_id,
+        edge_secret_arn: edge_arn,
+        edge_version_id: edge_vid,
         engine_kek_pubkey_b64: pubkey_b64,
         auth_secret_hex: auth_hex,
     })
@@ -1502,8 +1690,13 @@ pub fn resolve_cell_stack_public_endpoint(
     ))
 }
 
-fn ensure_artifacts_bucket(region: &str, bucket: &str) -> Result<(), String> {
-    if run_aws_allow_missing(region, &["s3api", "head-bucket", "--bucket", bucket])?.is_none() {
+fn ensure_artifacts_bucket(region: &str, bucket: &str, dry_run: bool) -> Result<bool, String> {
+    let exists =
+        run_aws_allow_missing(region, &["s3api", "head-bucket", "--bucket", bucket])?.is_some();
+    if dry_run {
+        return Ok(exists);
+    }
+    if !exists {
         if region == "us-east-1" {
             let _ = run_aws_json(region, &["s3api", "create-bucket", "--bucket", bucket])?;
         } else {
@@ -1602,7 +1795,7 @@ fn ensure_artifacts_bucket(region: &str, bucket: &str) -> Result<(), String> {
             &policy_doc,
         ],
     )?;
-    Ok(())
+    Ok(true)
 }
 
 fn s3_stage_object_verified(
@@ -1612,21 +1805,24 @@ fn s3_stage_object_verified(
     key: &str,
     local_file: &Path,
     expected_sha256_hex: &str,
-) -> Result<(), String> {
+    dry_run: bool,
+) -> Result<bool, String> {
     let bytes = fs::read(local_file).map_err(|e| format!("read {}: {e}", local_file.display()))?;
-    let actual_sha = sha256_lower_hex(&bytes);
+    let digest = Sha256::digest(&bytes);
+    let actual_sha = hex::encode(digest);
     if actual_sha != expected_sha256_hex.to_ascii_lowercase() {
         return Err(format!(
             "artifact {} SHA-256 mismatch against release-manifest.json",
             local_file.display()
         ));
     }
+    let expected_sha_b64 = base64::engine::general_purpose::STANDARD.encode(digest);
 
     let host = format!("{bucket}.s3.{region}.amazonaws.com");
     let uri = format!("/{}", key.trim_start_matches('/'));
     let url = format!("https://{host}{uri}");
 
-    // Check HEAD first so content-addressed re-deploys are idempotent and fast
+    // Check HEAD first (with x-amz-checksum-mode: ENABLED) so content-addressed re-deploys verify SHA-256!
     let head_headers = sign_aws_v4_headers_with_extra(
         creds,
         region,
@@ -1637,7 +1833,7 @@ fn s3_stage_object_verified(
         "",
         b"",
         now_epoch_ms() / 1_000,
-        &[],
+        &[("x-amz-checksum-mode", "ENABLED")],
     );
     let mut head_req = carbon_https_agent()
         .head(&url)
@@ -1655,10 +1851,20 @@ fn s3_stage_object_verified(
                 .and_then(|v| v.to_str().ok())
                 .and_then(|s| s.parse::<usize>().ok())
                 == Some(bytes.len());
-            if len_ok {
-                return Ok(());
+            let checksum_ok = resp
+                .headers()
+                .get("x-amz-checksum-sha256")
+                .and_then(|v| v.to_str().ok())
+                .map(|hdr| hdr.trim() == expected_sha_b64)
+                .unwrap_or(true);
+            if len_ok && checksum_ok {
+                return Ok(true);
             }
         }
+    }
+
+    if dry_run {
+        return Ok(false);
     }
 
     let put_headers = sign_aws_v4_headers_with_extra(
@@ -1671,7 +1877,10 @@ fn s3_stage_object_verified(
         "",
         &bytes,
         now_epoch_ms() / 1_000,
-        &[("content-type", "application/zip")],
+        &[
+            ("content-type", "application/zip"),
+            ("x-amz-checksum-sha256", expected_sha_b64.as_str()),
+        ],
     );
     let mut put_req = carbon_https_agent()
         .put(&url)
@@ -1693,7 +1902,7 @@ fn s3_stage_object_verified(
             String::from_utf8_lossy(&err_body)
         ));
     }
-    Ok(())
+    Ok(true)
 }
 
 fn decommission_unstacked_prototype_resources(
@@ -2011,18 +2220,19 @@ fn deploy_single_region(
         .clone()
         .unwrap_or_else(|| format!("jopedime-carbon-artifacts-{account_id}-{region}"));
 
-    // 1. Ensure regional secrets exist in AWS Secrets Manager with global `auth_secret_hex` sync
-    //    and strictly isolated per-region `engine_kek`, `seal_secret`, `presign_secret`, & `internal_token`!
+    // 1. Ensure regional secrets exist in AWS Secrets Manager with global `auth_secret_hex` sync,
+    //    dedicated `edge-secrets` (`DEP-SEC-01`), and strictly read-only `--dry-run` (`DEP-SEC-02`)!
     let vault = ensure_cell_secrets_in_vault(
         creds,
         region,
         &opts.environment,
         opts.bootstrap_secrets,
         Some(global_auth_secret_hex),
+        opts.dry_run,
     )?;
 
-    // 2. Stage content-addressed release ZIPs to regional S3 bucket
-    ensure_artifacts_bucket(region, &artifacts_bucket)?;
+    // 2. Stage content-addressed release ZIPs to regional S3 bucket (read-only HEAD check in --dry-run)
+    let bucket_exists = ensure_artifacts_bucket(region, &artifacts_bucket, opts.dry_run)?;
     let edge_key = format!(
         "releases/{}/{}",
         manifest.release_id, manifest.edge_zip_file
@@ -2036,30 +2246,34 @@ fn deploy_single_region(
         manifest.release_id, manifest.r882_layer_zip_file
     );
 
-    s3_stage_object_verified(
+    let edge_staged = s3_stage_object_verified(
         creds,
         region,
         &artifacts_bucket,
         &edge_key,
         &manifest_dir.join(&manifest.edge_zip_file),
         &manifest.edge_zip_sha256_hex,
+        opts.dry_run,
     )?;
-    s3_stage_object_verified(
+    let worker_staged = s3_stage_object_verified(
         creds,
         region,
         &artifacts_bucket,
         &worker_key,
         &manifest_dir.join(&manifest.worker_zip_file),
         &manifest.worker_zip_sha256_hex,
+        opts.dry_run,
     )?;
-    s3_stage_object_verified(
+    let layer_staged = s3_stage_object_verified(
         creds,
         region,
         &artifacts_bucket,
         &layer_key,
         &manifest_dir.join(&manifest.r882_layer_zip_file),
         &manifest.r882_layer_sha256_hex,
+        opts.dry_run,
     )?;
+    let all_artifacts_staged = bucket_exists && edge_staged && worker_staged && layer_staged;
 
     // 3. Determine existing stack state & capture previous :live alias versions for <1s rollback
     let existing_stack = read_stack_outputs_map(region, &stack_name)?;
@@ -2070,7 +2284,7 @@ fn deploy_single_region(
     let previous_versions = if !is_fresh_or_review {
         read_current_live_aliases(region, &stack_name)
     } else {
-        if opts.decommission_unstacked_prototype {
+        if opts.decommission_unstacked_prototype && !opts.dry_run {
             decommission_unstacked_prototype_resources(region, &stack_name)?;
         }
         None
@@ -2096,7 +2310,7 @@ fn deploy_single_region(
         Some(_) => "UPDATE",
     };
 
-    // 4. Synthesize release-bound CloudFormation template & create ChangeSet
+    // 4. Synthesize release-bound CloudFormation template & validate / create ChangeSet
     let synthesized_json = synthesize_cell_template_for_release(&manifest.release_id)?;
     let synth_path = manifest_dir.join(format!(
         "synthesized-{stack_name}-{region}-{}.json",
@@ -2105,6 +2319,58 @@ fn deploy_single_region(
     fs::write(&synth_path, &synthesized_json)
         .map_err(|e| format!("write {}: {e}", synth_path.display()))?;
     let template_arg = format!("file://{}", synth_path.display());
+
+    // In `--dry-run`, if the stack does not yet exist (`CREATE` would leave/delete a REVIEW_IN_PROGRESS
+    // stack) or artifacts/secrets are not yet created in AWS, validate the synthesized template strictly
+    // read-only (`cloudformation validate-template`) with zero AWS resource mutations (`DEP-SEC-02`).
+    if opts.dry_run && (cs_type == "CREATE" || !all_artifacts_staged || vault.secret_arn.is_empty())
+    {
+        let val_res = run_aws_json(
+            region,
+            &[
+                "cloudformation",
+                "validate-template",
+                "--template-body",
+                &template_arg,
+            ],
+        );
+        let _ = fs::remove_file(&synth_path);
+        val_res?;
+        let tpl_val: serde_json::Value =
+            serde_json::from_str(&synthesized_json).map_err(|e| e.to_string())?;
+        let planned_resources: Vec<String> = tpl_val
+            .get("Resources")
+            .and_then(|r| r.as_object())
+            .map(|m| {
+                m.iter()
+                    .map(|(lid, obj)| {
+                        let rtype = obj.get("Type").and_then(|t| t.as_str()).unwrap_or("?");
+                        format!("Plan {lid} ({rtype})")
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        return Ok(CarbonRegionDeployReceipt {
+            region: region.to_owned(),
+            stack_name,
+            environment: opts.environment.clone(),
+            release_id: manifest.release_id.clone(),
+            dry_run: true,
+            change_set_action_count: planned_resources.len(),
+            change_set_summary: planned_resources,
+            artifacts_bucket,
+            cas_bucket: None,
+            edge_endpoint_url: None,
+            public_edge_endpoint_url: None,
+            engine_kek_pubkey_b64: Some(vault.engine_kek_pubkey_b64),
+            live_versions: previous_versions.clone(),
+            previous_versions,
+            r882_layer_version_arn: None,
+            redteam_passed_vectors: None,
+            redteam_total_vectors: None,
+            wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+        });
+    }
 
     let cas_expire_days = if opts.environment == "prod" { "7" } else { "1" };
     let log_retention_days = if opts.environment == "prod" {
@@ -2146,6 +2412,14 @@ fn deploy_single_region(
         format!(
             "ParameterKey=SecretsVersionId,ParameterValue={}",
             vault.version_id
+        ),
+        format!(
+            "ParameterKey=EdgeSecretsArn,ParameterValue={}",
+            vault.edge_secret_arn
+        ),
+        format!(
+            "ParameterKey=EdgeSecretsVersionId,ParameterValue={}",
+            vault.edge_version_id
         ),
         format!(
             "ParameterKey=EngineKekPubkeyB64,ParameterValue={}",
@@ -2449,6 +2723,7 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
         &opts.environment,
         opts.bootstrap_secrets,
         None,
+        opts.dry_run,
     )?;
 
     let mut receipts = Vec::with_capacity(target_regions.len());
@@ -2670,7 +2945,8 @@ pub fn generate_public_clouds_manifest(
                     format!("stack '{stack_name}' in {region} missing PublicEdgeEndpointUrl")
                 })?;
             let release_id = snap.outputs.get("ReleaseId").cloned();
-            let vault = ensure_cell_secrets_in_vault(&creds, region, cloud_name, false, None)?;
+            let vault =
+                ensure_cell_secrets_in_vault(&creds, region, cloud_name, false, None, true)?;
             let (_, probed) = CarbonThinClient::connect_fastest(vec![pub_url.clone()])?;
             let first = probed.first().ok_or_else(|| {
                 format!("live /v1/carbon/ping probe returned empty for {pub_url} ({region})")

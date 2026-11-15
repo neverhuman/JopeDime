@@ -17,12 +17,58 @@ use crate::security::auth::{validate_strict_run_id, validate_strict_tenant_id};
 
 /// `CarbonCasStore` is a trait abstracting content-addressed `JMAT`/`CUEN` blobs and run state keys.
 pub trait CarbonCasStore: Send + Sync {
+    /// Backend-specific unverified write at unscoped (`None`) or scoped (`Some(scope)`) blob path.
+    fn put_raw_blob(
+        &self,
+        scope: Option<&str>,
+        sha256_lower: &str,
+        bytes: &[u8],
+    ) -> Result<(), String>;
+    /// Backend-specific unverified read returning `Ok(None)` when absent (`404` / `NotFound`).
+    fn get_raw_blob(
+        &self,
+        scope: Option<&str>,
+        sha256_lower: &str,
+    ) -> Result<Option<Vec<u8>>, String>;
+    /// Backend-specific blob deletion returning `Ok(true)` if removed or `Ok(false)` if already absent.
+    fn delete_raw_blob(&self, scope: Option<&str>, sha256_lower: &str) -> Result<bool, String>;
+
     /// Store `bytes` at `blobs/<expected_sha256>` after verifying `sha256(bytes) == expected_sha256`.
-    fn put_blob_verified(&self, expected_sha256: &str, bytes: &[u8]) -> Result<(), String>;
+    fn put_blob_verified(&self, expected_sha256: &str, bytes: &[u8]) -> Result<(), String> {
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let actual = sha256_lower_hex(bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "CAS blob SHA-256 mismatch: declared {expected_lower}, actual {actual}"
+            ));
+        }
+        self.put_raw_blob(None, &expected_lower, bytes)
+    }
+
     /// Read `blobs/<expected_sha256>` and verify `sha256(bytes) == expected_sha256` before returning.
-    fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String>;
+    fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String> {
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let bytes = self
+            .get_raw_blob(None, &expected_lower)?
+            .ok_or_else(|| format!("missing CAS blob {expected_lower}"))?;
+        let actual = sha256_lower_hex(&bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "corrupted CAS blob {expected_lower}: computed {actual}"
+            ));
+        }
+        Ok(bytes)
+    }
+
     /// Delete `blobs/<expected_sha256>` during `DELETE /v1/carbon/runs/{id}` cryptographic shred.
-    fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String>;
+    fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String> {
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        self.delete_raw_blob(None, &expected_lower)
+    }
+
     /// Store `bytes` at tenant/upload-scoped `blobs/<scope>/<expected_sha256>` (or unscoped when `scope` is `None`).
     fn put_scoped_blob_verified(
         &self,
@@ -30,27 +76,62 @@ pub trait CarbonCasStore: Send + Sync {
         expected_sha256: &str,
         bytes: &[u8],
     ) -> Result<(), String> {
-        let _ = scope;
-        self.put_blob_verified(expected_sha256, bytes)
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.put_blob_verified(expected_sha256, bytes);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let actual = sha256_lower_hex(bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "CAS scoped blob SHA-256 mismatch: declared {expected_lower}, actual {actual}"
+            ));
+        }
+        self.put_raw_blob(Some(sc), &expected_lower, bytes)
     }
-    /// Read `blobs/<scope>/<expected_sha256>`, falling back to unscoped `blobs/<expected_sha256>` when `scope` is `None`.
+
+    /// Read `blobs/<scope>/<expected_sha256>`, falling back to unscoped `blobs/<expected_sha256>` when `scope` is `None` or `404`.
     fn get_scoped_blob_verified(
         &self,
         scope: Option<&str>,
         expected_sha256: &str,
     ) -> Result<Vec<u8>, String> {
-        let _ = scope;
-        self.get_blob_verified(expected_sha256)
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.get_blob_verified(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        match self.get_raw_blob(Some(sc), &expected_lower)? {
+            Some(bytes) => {
+                let actual = sha256_lower_hex(&bytes);
+                if actual != expected_lower {
+                    return Err(format!(
+                        "corrupted scoped CAS blob {expected_lower}: computed {actual}"
+                    ));
+                }
+                Ok(bytes)
+            }
+            None => self.get_blob_verified(expected_sha256),
+        }
     }
+
     /// Delete `blobs/<scope>/<expected_sha256>` without affecting other runs or tenants (`GAP-S3-3`).
     fn delete_scoped_blob(
         &self,
         scope: Option<&str>,
         expected_sha256: &str,
     ) -> Result<bool, String> {
-        let _ = scope;
-        self.delete_blob(expected_sha256)
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.delete_blob(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        self.delete_raw_blob(Some(sc), &expected_lower)
     }
+
     /// Write a run state object (such as `runs/<tenant>/<run_id>/status.json` or `sealed_checkpoint.enc`).
     fn put_state_object(&self, key: &str, bytes: &[u8]) -> Result<(), String>;
     /// Conditionally create a run state object ONLY if `key` does not already exist (`RT-03`).
@@ -184,133 +265,51 @@ impl CarbonFsCas {
         fs::rename(&tmp, dest).map_err(|e| format!("atomic rename object: {e}"))?;
         Ok(())
     }
+    fn blob_fs_path(&self, scope: Option<&str>, sha256_lower: &str) -> PathBuf {
+        match scope {
+            Some(sc) => self.root.join("blobs").join(sc).join(sha256_lower),
+            None => self
+                .root
+                .join("blobs")
+                .join(&sha256_lower[..2])
+                .join(sha256_lower),
+        }
+    }
 }
 
 impl CarbonCasStore for CarbonFsCas {
-    fn put_blob_verified(&self, expected_sha256: &str, bytes: &[u8]) -> Result<(), String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "CAS blob SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let path = self
-            .root
-            .join("blobs")
-            .join(&expected_lower[..2])
-            .join(&expected_lower);
-        if path.is_file() {
-            return Ok(());
-        }
-        Self::atomic_write(&path, bytes)
-    }
-
-    fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let path = self
-            .root
-            .join("blobs")
-            .join(&expected_lower[..2])
-            .join(&expected_lower);
-        let bytes =
-            fs::read(&path).map_err(|e| format!("missing CAS blob {expected_lower}: {e}"))?;
-        let actual = sha256_lower_hex(&bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "corrupted CAS blob {expected_lower}: computed {actual}"
-            ));
-        }
-        Ok(bytes)
-    }
-
-    fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let path = self
-            .root
-            .join("blobs")
-            .join(&expected_lower[..2])
-            .join(&expected_lower);
-        match fs::remove_file(&path) {
-            Ok(()) => Ok(true),
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
-            Err(err) => Err(format!("delete CAS blob {expected_lower}: {err}")),
-        }
-    }
-
-    fn put_scoped_blob_verified(
+    fn put_raw_blob(
         &self,
         scope: Option<&str>,
-        expected_sha256: &str,
+        sha256_lower: &str,
         bytes: &[u8],
     ) -> Result<(), String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.put_blob_verified(expected_sha256, bytes);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "CAS scoped blob SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+        let path = self.blob_fs_path(scope, sha256_lower);
         if path.is_file() {
             return Ok(());
         }
         Self::atomic_write(&path, bytes)
     }
 
-    fn get_scoped_blob_verified(
+    fn get_raw_blob(
         &self,
         scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<Vec<u8>, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.get_blob_verified(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+        sha256_lower: &str,
+    ) -> Result<Option<Vec<u8>>, String> {
+        let path = self.blob_fs_path(scope, sha256_lower);
         match fs::read(&path) {
-            Ok(bytes) => {
-                let actual = sha256_lower_hex(&bytes);
-                if actual != expected_lower {
-                    return Err(format!(
-                        "corrupted scoped CAS blob {expected_lower}: computed {actual}"
-                    ));
-                }
-                Ok(bytes)
-            }
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-                self.get_blob_verified(expected_sha256)
-            }
-            Err(err) => Err(format!("read scoped CAS blob {expected_lower}: {err}")),
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(err) => Err(format!("read CAS blob {sha256_lower}: {err}")),
         }
     }
 
-    fn delete_scoped_blob(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<bool, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.delete_blob(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+    fn delete_raw_blob(&self, scope: Option<&str>, sha256_lower: &str) -> Result<bool, String> {
+        let path = self.blob_fs_path(scope, sha256_lower);
         match fs::remove_file(&path) {
             Ok(()) => Ok(true),
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
-            Err(err) => Err(format!("delete scoped CAS blob {expected_lower}: {err}")),
+            Err(err) => Err(format!("delete CAS blob {sha256_lower}: {err}")),
         }
     }
 
@@ -493,20 +492,23 @@ impl CarbonS3Cas {
         }
         Err(last_err)
     }
+    fn blob_s3_key(&self, scope: Option<&str>, sha256_lower: &str) -> String {
+        match scope {
+            Some(sc) => self.join_object_key(&format!("blobs/{sc}/{sha256_lower}")),
+            None => self.join_object_key(&format!("blobs/{sha256_lower}")),
+        }
+    }
 }
 
 #[cfg(feature = "edge")]
 impl CarbonCasStore for CarbonS3Cas {
-    fn put_blob_verified(&self, expected_sha256: &str, bytes: &[u8]) -> Result<(), String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "S3 CAS put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let key = self.join_object_key(&format!("blobs/{expected_lower}"));
+    fn put_raw_blob(
+        &self,
+        scope: Option<&str>,
+        sha256_lower: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let key = self.blob_s3_key(scope, sha256_lower);
         let (status, body) = self.s3_request_with_extra("PUT", &key, bytes, &[])?;
         if status >= 300 {
             return Err(format!(
@@ -517,115 +519,27 @@ impl CarbonCasStore for CarbonS3Cas {
         Ok(())
     }
 
-    fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let key = self.join_object_key(&format!("blobs/{expected_lower}"));
-        let (status, body) = self.s3_request_with_extra("GET", &key, &[], &[])?;
-        if status != 200 {
-            return Err(format!(
-                "S3 CAS get blob '{expected_lower}' HTTP {status}: {}",
-                String::from_utf8_lossy(&body)
-            ));
-        }
-        let actual = sha256_lower_hex(&body);
-        if actual != expected_lower {
-            return Err(format!(
-                "S3 CAS blob integrity mismatch: expected {expected_lower}, got {actual}"
-            ));
-        }
-        Ok(body)
-    }
-
-    fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let key = self.join_object_key(&format!("blobs/{expected_lower}"));
-        let (status, body) = self.s3_request_with_extra("DELETE", &key, &[], &[])?;
-        if status == 200 || status == 204 {
-            Ok(true)
-        } else if status == 404 {
-            Ok(false)
-        } else {
-            Err(format!(
-                "S3 CAS delete blob '{expected_lower}' HTTP {status}: {}",
-                String::from_utf8_lossy(&body)
-            ))
-        }
-    }
-
-    fn put_scoped_blob_verified(
+    fn get_raw_blob(
         &self,
         scope: Option<&str>,
-        expected_sha256: &str,
-        bytes: &[u8],
-    ) -> Result<(), String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.put_blob_verified(expected_sha256, bytes);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "S3 CAS scoped put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
-        let (status, body) = self.s3_request_with_extra("PUT", &key, bytes, &[])?;
-        if status >= 300 {
-            return Err(format!(
-                "S3 CAS put scoped blob HTTP {status}: {}",
-                String::from_utf8_lossy(&body)
-            ));
-        }
-        Ok(())
-    }
-
-    fn get_scoped_blob_verified(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<Vec<u8>, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.get_blob_verified(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
+        sha256_lower: &str,
+    ) -> Result<Option<Vec<u8>>, String> {
+        let key = self.blob_s3_key(scope, sha256_lower);
         let (status, body) = self.s3_request_with_extra("GET", &key, &[], &[])?;
         if status == 404 {
-            return self.get_blob_verified(expected_sha256);
+            return Ok(None);
         }
         if status != 200 {
             return Err(format!(
-                "S3 CAS get scoped blob '{expected_lower}' HTTP {status}: {}",
+                "S3 CAS get blob '{sha256_lower}' HTTP {status}: {}",
                 String::from_utf8_lossy(&body)
             ));
         }
-        let actual = sha256_lower_hex(&body);
-        if actual != expected_lower {
-            return Err(format!(
-                "S3 CAS scoped blob integrity mismatch: expected {expected_lower}, got {actual}"
-            ));
-        }
-        Ok(body)
+        Ok(Some(body))
     }
 
-    fn delete_scoped_blob(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<bool, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.delete_blob(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
+    fn delete_raw_blob(&self, scope: Option<&str>, sha256_lower: &str) -> Result<bool, String> {
+        let key = self.blob_s3_key(scope, sha256_lower);
         let (status, body) = self.s3_request_with_extra("DELETE", &key, &[], &[])?;
         if status == 200 || status == 204 {
             Ok(true)
@@ -633,7 +547,7 @@ impl CarbonCasStore for CarbonS3Cas {
             Ok(false)
         } else {
             Err(format!(
-                "S3 CAS delete scoped blob '{expected_lower}' HTTP {status}: {}",
+                "S3 CAS delete blob '{sha256_lower}' HTTP {status}: {}",
                 String::from_utf8_lossy(&body)
             ))
         }
@@ -718,20 +632,26 @@ impl CarbonHttpCas {
             internal_token: internal_token.into(),
         }
     }
+    fn blob_http_url(&self, scope: Option<&str>, sha256_lower: &str) -> String {
+        match scope {
+            Some(sc) => {
+                let enc_sc = crate::security::sigv4::url_encode_component(sc);
+                format!("{}/blobs/{sha256_lower}?scope={enc_sc}", self.base_url)
+            }
+            None => format!("{}/blobs/{sha256_lower}", self.base_url),
+        }
+    }
 }
 
 #[cfg(feature = "edge")]
 impl CarbonCasStore for CarbonHttpCas {
-    fn put_blob_verified(&self, expected_sha256: &str, bytes: &[u8]) -> Result<(), String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "HTTP CAS put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let url = format!("{}/blobs/{expected_lower}", self.base_url);
+    fn put_raw_blob(
+        &self,
+        scope: Option<&str>,
+        sha256_lower: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let url = self.blob_http_url(scope, sha256_lower);
         let resp = self
             .agent
             .put(&url)
@@ -750,10 +670,12 @@ impl CarbonCasStore for CarbonHttpCas {
         Ok(())
     }
 
-    fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let url = format!("{}/blobs/{expected_lower}", self.base_url);
+    fn get_raw_blob(
+        &self,
+        scope: Option<&str>,
+        sha256_lower: &str,
+    ) -> Result<Option<Vec<u8>>, String> {
+        let url = self.blob_http_url(scope, sha256_lower);
         let mut resp = self
             .agent
             .get(&url)
@@ -763,7 +685,11 @@ impl CarbonCasStore for CarbonHttpCas {
             .header("x-carbon-internal-token", &self.internal_token)
             .call()
             .map_err(|e| format!("HTTP CAS get blob failed: {e}"))?;
-        if resp.status().as_u16() != 200 {
+        let code = resp.status().as_u16();
+        if code == 404 {
+            return Ok(None);
+        }
+        if code != 200 {
             return Err(format!("HTTP CAS get blob status {}", resp.status()));
         }
         let mut buf = Vec::new();
@@ -771,19 +697,11 @@ impl CarbonCasStore for CarbonHttpCas {
             .as_reader()
             .read_to_end(&mut buf)
             .map_err(|e| format!("read HTTP CAS blob body: {e}"))?;
-        let actual = sha256_lower_hex(&buf);
-        if actual != expected_lower {
-            return Err(format!(
-                "HTTP CAS blob integrity mismatch: expected {expected_lower}, got {actual}"
-            ));
-        }
-        Ok(buf)
+        Ok(Some(buf))
     }
 
-    fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String> {
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let url = format!("{}/blobs/{expected_lower}", self.base_url);
+    fn delete_raw_blob(&self, scope: Option<&str>, sha256_lower: &str) -> Result<bool, String> {
+        let url = self.blob_http_url(scope, sha256_lower);
         let resp = self
             .agent
             .delete(&url)
@@ -800,118 +718,6 @@ impl CarbonCasStore for CarbonHttpCas {
             Ok(false)
         } else {
             Err(format!("HTTP CAS delete blob status {code}"))
-        }
-    }
-
-    fn put_scoped_blob_verified(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-        bytes: &[u8],
-    ) -> Result<(), String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.put_blob_verified(expected_sha256, bytes);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let actual = sha256_lower_hex(bytes);
-        if actual != expected_lower {
-            return Err(format!(
-                "HTTP CAS scoped put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
-            ));
-        }
-        let enc_sc = crate::security::sigv4::url_encode_component(sc);
-        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
-        let resp = self
-            .agent
-            .put(&url)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .header("x-carbon-internal-token", &self.internal_token)
-            .send(bytes)
-            .map_err(|e| format!("HTTP CAS put scoped blob failed: {e}"))?;
-        if resp.status().as_u16() >= 300 {
-            return Err(format!(
-                "HTTP CAS put scoped blob returned status {}",
-                resp.status()
-            ));
-        }
-        Ok(())
-    }
-
-    fn get_scoped_blob_verified(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<Vec<u8>, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.get_blob_verified(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let enc_sc = crate::security::sigv4::url_encode_component(sc);
-        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
-        let mut resp = self
-            .agent
-            .get(&url)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .header("x-carbon-internal-token", &self.internal_token)
-            .call()
-            .map_err(|e| format!("HTTP CAS get scoped blob failed: {e}"))?;
-        if resp.status().as_u16() == 404 {
-            return self.get_blob_verified(expected_sha256);
-        }
-        if resp.status().as_u16() != 200 {
-            return Err(format!("HTTP CAS get scoped blob status {}", resp.status()));
-        }
-        let mut buf = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut buf)
-            .map_err(|e| format!("read HTTP CAS scoped blob body: {e}"))?;
-        let actual = sha256_lower_hex(&buf);
-        if actual != expected_lower {
-            return Err(format!(
-                "HTTP CAS scoped blob integrity mismatch: expected {expected_lower}, got {actual}"
-            ));
-        }
-        Ok(buf)
-    }
-
-    fn delete_scoped_blob(
-        &self,
-        scope: Option<&str>,
-        expected_sha256: &str,
-    ) -> Result<bool, String> {
-        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
-            return self.delete_blob(expected_sha256);
-        };
-        validate_blob_scope(sc)?;
-        validate_hex_sha256(expected_sha256)?;
-        let expected_lower = expected_sha256.to_ascii_lowercase();
-        let enc_sc = crate::security::sigv4::url_encode_component(sc);
-        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
-        let resp = self
-            .agent
-            .delete(&url)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .header("x-carbon-internal-token", &self.internal_token)
-            .call()
-            .map_err(|e| format!("HTTP CAS delete scoped blob failed: {e}"))?;
-        let code = resp.status().as_u16();
-        if code == 200 || code == 204 {
-            Ok(true)
-        } else if code == 404 {
-            Ok(false)
-        } else {
-            Err(format!("HTTP CAS delete scoped blob status {code}"))
         }
     }
 

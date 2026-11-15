@@ -1,10 +1,10 @@
 //! Persistent `0600` zero-knowledge model handles (`model.carbon.json` & `$CARBON_CONFIG_DIR/runs/`),
 //! two-step `carbon fit` -> `carbon predict` scoring on unlabeled CSVs, `carbon runs` / `status` /
-//! `shred` lifecycle management, and ECDSA-P256 verified `carbon upgrade`.
+//! `explain` / `export` / `shred` lifecycle management, and ECDSA-P256 verified `carbon upgrade`.
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -16,12 +16,14 @@ use zeroize::Zeroizing;
 use crate::{
     cli::{
         client::{
-            resolve_clouds_redirect_target, verified_absolute_jopedime_config_dir, CarbonThinClient,
+            list_stored_cloud_tokens, load_stored_cloud_token, resolve_clouds_redirect_target,
+            verified_absolute_jopedime_config_dir, CarbonPublicCloudsManifest, CarbonThinClient,
         },
         tabular::{load_delimited_table, CarbonTabularEncoder},
     },
+    observability::{telemetry_minimized, write_stdout_line},
     role::CarbonProductTier,
-    security::user_envelope::verify_ecdsa_p256_spki_pem_signature,
+    security::user_envelope::{decode_p256_pubkey_b64, verify_ecdsa_p256_spki_pem_signature},
     storage::cas::sha256_lower_hex,
     CARBON_BUILD_TARGET, CARBON_PKG_VERSION, CARBON_RELEASE_TAG,
 };
@@ -65,7 +67,7 @@ pub struct CarbonSavedModelHandle {
     pub engine_kek_pubkey_b64: Option<String>,
     pub encrypted_cuen: bool,
     pub u_dek_b64: Option<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub capability_token: Option<String>,
     pub encoder: CarbonTabularEncoder,
     pub fit_rows: u32,
@@ -187,12 +189,22 @@ fn shred_local_file(path: &Path) -> Result<bool, String> {
 }
 
 /// Save a `CarbonSavedModelHandle` into `$CARBON_CONFIG_DIR/runs/<run_id>.json` (`0600`) and
-/// optionally also to an explicit user `--save <PATH>` (`0600`).
+/// optionally also to an explicit user `--save <PATH>` (`0600`, stripping `capability_token` by default).
 pub fn persist_model_handle(
     handle: &CarbonSavedModelHandle,
     explicit_save_path: Option<&Path>,
 ) -> Result<PathBuf, String> {
-    let payload = Zeroizing::new(
+    persist_model_handle_with_options(handle, explicit_save_path, false)
+}
+
+/// Save a `CarbonSavedModelHandle` with explicit control over whether `capability_token` is
+/// embedded inside a user-specified `--save <PATH>` file (`--embed-token`).
+pub fn persist_model_handle_with_options(
+    handle: &CarbonSavedModelHandle,
+    explicit_save_path: Option<&Path>,
+    embed_token: bool,
+) -> Result<PathBuf, String> {
+    let reg_payload = Zeroizing::new(
         serde_json::to_vec_pretty(handle).map_err(|e| format!("serialize model handle: {e}"))?,
     );
     let reg_dir = runs_registry_dir()?;
@@ -204,10 +216,20 @@ pub fn persist_model_handle(
         let _ = fs::set_permissions(&reg_dir, fs::Permissions::from_mode(0o700));
     }
     let reg_path = reg_dir.join(format!("{}.json", handle.run_id));
-    write_secret_json_0600(&reg_path, &payload)?;
+    write_secret_json_0600(&reg_path, &reg_payload)?;
 
     if let Some(user_path) = explicit_save_path {
-        write_secret_json_0600(user_path, &payload)?;
+        if embed_token {
+            write_secret_json_0600(user_path, &reg_payload)?;
+        } else {
+            let mut stripped = handle.clone();
+            stripped.capability_token = None;
+            let user_payload = Zeroizing::new(
+                serde_json::to_vec_pretty(&stripped)
+                    .map_err(|e| format!("serialize stripped model handle: {e}"))?,
+            );
+            write_secret_json_0600(user_path, &user_payload)?;
+        }
         return Ok(user_path.to_path_buf());
     }
     Ok(reg_path)
@@ -273,7 +295,7 @@ pub fn list_saved_model_handles() -> Result<Vec<CarbonRunRegistryEntry>, String>
         let path = entry.path();
         if path.extension().and_then(|e| e.to_str()) != Some("json") {
             continue;
-        }
+        };
         let Ok(bytes) = fs::read(&path) else {
             continue;
         };
@@ -303,7 +325,47 @@ pub fn list_saved_model_handles() -> Result<Vec<CarbonRunRegistryEntry>, String>
     Ok(out)
 }
 
-fn build_client_for_handle(
+fn resolve_fallback_token_for_handle(handle: &CarbonSavedModelHandle) -> Option<String> {
+    if let Ok(env_tok) = std::env::var("CARBON_AUTH_TOKEN") {
+        let trimmed = env_tok.trim();
+        if !trimmed.is_empty() {
+            return Some(trimmed.to_owned());
+        }
+    }
+    if let Ok(reg_dir) = runs_registry_dir() {
+        let reg_path = reg_dir.join(format!("{}.json", handle.run_id));
+        if let Ok(raw) = fs::read(&reg_path) {
+            let z_raw = Zeroizing::new(raw);
+            if let Ok(reg_handle) = serde_json::from_slice::<CarbonSavedModelHandle>(&z_raw) {
+                if let Some(tok) = reg_handle.capability_token.filter(|s| !s.trim().is_empty()) {
+                    return Some(tok);
+                }
+            }
+        }
+    }
+    if let Some(cloud_name) = handle.cloud.as_deref() {
+        if let Ok(Some(cred)) = load_stored_cloud_token(cloud_name) {
+            if cred.tenant_id == handle.tenant_id && !cred.capability_token.trim().is_empty() {
+                return Some(cred.capability_token);
+            }
+        }
+    }
+    if let Ok(all_creds) = list_stored_cloud_tokens() {
+        let norm_ep = handle.endpoint.trim().trim_end_matches('/');
+        for cred in all_creds.values() {
+            let cred_ep = cred.endpoint.trim().trim_end_matches('/');
+            if (cred.tenant_id == handle.tenant_id || cred_ep == norm_ep)
+                && !cred.capability_token.trim().is_empty()
+            {
+                return Some(cred.capability_token.clone());
+            }
+        }
+    }
+    None
+}
+
+/// Build a pinned zero-knowledge `CarbonThinClient` initialized with a handle's `U_DEK` and token.
+pub fn build_client_for_handle(
     handle: &CarbonSavedModelHandle,
     override_auth_token: Option<String>,
 ) -> Result<CarbonThinClient, String> {
@@ -316,7 +378,16 @@ fn build_client_for_handle(
     }
     let (mut client, _) =
         CarbonThinClient::connect_fastest_pinned(vec![handle.endpoint.clone()], &pins)?;
-    if let Some(tok) = override_auth_token.or_else(|| handle.capability_token.clone()) {
+    let resolved_token = override_auth_token
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| {
+            handle
+                .capability_token
+                .clone()
+                .filter(|s| !s.trim().is_empty())
+        })
+        .or_else(|| resolve_fallback_token_for_handle(handle));
+    if let Some(tok) = resolved_token {
         client = client.with_capability_token(tok);
     }
     if let Some(dek_b64) = &handle.u_dek_b64 {
@@ -391,7 +462,7 @@ pub fn compute_residual_quantiles(
 }
 
 /// Score an unlabeled (or labeled) CSV file against a saved zero-knowledge Carbon model handle,
-/// transparently chunking batches and writing `--out predictions.csv`.
+/// transparently chunking batches and writing `--out predictions.csv` (or `-` for stdout).
 #[allow(clippy::too_many_arguments)]
 pub fn execute_predict_csv_with_handle(
     handle: &CarbonSavedModelHandle,
@@ -469,12 +540,7 @@ pub fn execute_predict_csv_with_handle(
         });
 
     if let Some(out_path) = output_csv {
-        if let Some(parent) = out_path.parent() {
-            if !parent.as_os_str().is_empty() {
-                fs::create_dir_all(parent)
-                    .map_err(|e| format!("create {}: {e}", parent.display()))?;
-            }
-        }
+        let to_stdout = out_path == Path::new("-");
         let id_idx = match id_column {
             Some(col) => Some(table.headers.iter().position(|h| h == col).ok_or_else(|| {
                 format!(
@@ -523,8 +589,21 @@ pub fn execute_predict_csv_with_handle(
                 csv_buf.push_str(&format!("{pred:.8}\n"));
             }
         }
-        fs::write(out_path, csv_buf.as_bytes())
-            .map_err(|e| format!("write {}: {e}", out_path.display()))?;
+
+        if to_stdout {
+            if let Err(false) = write_stdout_line(csv_buf.trim_end_matches('\n')) {
+                return Err("write predictions CSV to stdout failed".to_owned());
+            }
+        } else {
+            if let Some(parent) = out_path.parent() {
+                if !parent.as_os_str().is_empty() {
+                    fs::create_dir_all(parent)
+                        .map_err(|e| format!("create {}: {e}", parent.display()))?;
+                }
+            }
+            fs::write(out_path, csv_buf.as_bytes())
+                .map_err(|e| format!("write {}: {e}", out_path.display()))?;
+        }
     }
 
     let mut le_bytes = Vec::with_capacity(all_predictions.len() * 8);
@@ -596,14 +675,244 @@ pub struct CarbonUpgradeReceipt {
     pub updated_binary_path: Option<String>,
 }
 
-fn current_release_asset_name() -> Option<&'static str> {
+fn current_release_asset_candidates() -> &'static [&'static str] {
     match CARBON_BUILD_TARGET {
-        t if t.contains("x86_64") && t.contains("linux") => Some("carbon-linux-x86_64-musl"),
-        t if t.contains("aarch64") && t.contains("linux") => Some("carbon-linux-aarch64-musl"),
-        t if t.contains("aarch64") && t.contains("apple-darwin") => Some("carbon-darwin-arm64"),
-        t if t.contains("x86_64") && t.contains("apple-darwin") => Some("carbon-darwin-x86_64"),
-        _ => None,
+        t if t.contains("x86_64") && t.contains("linux") => &["carbon-linux-x86_64-musl"],
+        t if t.contains("aarch64") && t.contains("linux") => &["carbon-linux-aarch64-musl"],
+        t if (t.starts_with("arm") || t.contains("armv7")) && t.contains("linux") => {
+            &["carbon-linux-armv7-musleabihf"]
+        }
+        t if t.contains("aarch64") && t.contains("apple-darwin") => {
+            &["carbon-darwin-arm64", "carbon-darwin-universal"]
+        }
+        t if t.contains("x86_64") && t.contains("apple-darwin") => {
+            &["carbon-darwin-x86_64", "carbon-darwin-universal"]
+        }
+        t if t.contains("x86_64") && t.contains("windows") => &["carbon-windows-x86_64-msvc.exe"],
+        t if t.contains("aarch64") && t.contains("windows") => &["carbon-windows-aarch64-msvc.exe"],
+        _ => &[],
     }
+}
+
+fn extract_carbon_from_tar_reader<R: std::io::Read>(
+    mut reader: R,
+    max_bytes: u64,
+) -> Result<Vec<u8>, String> {
+    let mut consumed: u64 = 0;
+    let mut hdr = [0u8; 512];
+    loop {
+        let mut read_hdr = 0usize;
+        while read_hdr < 512 {
+            let n = reader
+                .read(&mut hdr[read_hdr..])
+                .map_err(|e| format!("read upgrade tar header: {e}"))?;
+            if n == 0 {
+                if read_hdr == 0 {
+                    return Err(
+                        "upgrade tar archive did not contain a 'carbon' regular executable entry"
+                            .to_owned(),
+                    );
+                }
+                return Err("truncated 512-byte header in upgrade tar".to_owned());
+            }
+            read_hdr += n;
+        }
+        consumed = consumed.saturating_add(512);
+        if consumed > max_bytes {
+            return Err("upgrade tar archive exceeded 512 MiB safety bound".to_owned());
+        }
+        if hdr.iter().all(|&b| b == 0) {
+            break;
+        }
+        let raw_name = &hdr[0..100];
+        let name_end = raw_name
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(raw_name.len());
+        let entry_name = std::str::from_utf8(&raw_name[..name_end])
+            .map_err(|_| "non-UTF-8 entry name in upgrade tar".to_owned())?;
+        let size_field = std::str::from_utf8(&hdr[124..136])
+            .map_err(|_| "invalid tar octal size header".to_owned())?
+            .trim_matches(|c: char| c == '\0' || c.is_ascii_whitespace());
+        let size = if size_field.is_empty() {
+            0usize
+        } else {
+            usize::from_str_radix(size_field, 8)
+                .map_err(|e| format!("parse tar octal size '{size_field}': {e}"))?
+        };
+        let size_u64 = u64::try_from(size).map_err(|_| "tar entry size overflow".to_owned())?;
+        if consumed.saturating_add(size_u64) > max_bytes {
+            return Err("upgrade tar archive exceeded 512 MiB safety bound".to_owned());
+        }
+        let typeflag = hdr[156];
+        let base_name = entry_name.rsplit('/').next().unwrap_or(entry_name);
+        if (typeflag == 0 || typeflag == b'0')
+            && (base_name == "carbon" || base_name == "carbon.exe")
+        {
+            let mut payload = vec![0u8; size];
+            reader
+                .read_exact(&mut payload)
+                .map_err(|e| format!("truncated carbon executable in upgrade tar: {e}"))?;
+            return Ok(payload);
+        }
+        let padded = size_u64
+            .checked_add(511)
+            .map(|n| n & !511)
+            .ok_or_else(|| "tar block alignment overflow".to_owned())?;
+        consumed = consumed.saturating_add(padded);
+        if consumed > max_bytes {
+            return Err("upgrade tar archive exceeded 512 MiB safety bound".to_owned());
+        }
+        let skipped = std::io::copy(
+            &mut std::io::Read::take(&mut reader, padded),
+            &mut std::io::sink(),
+        )
+        .map_err(|e| format!("skip non-matching tar entry: {e}"))?;
+        if skipped != padded {
+            return Err("truncated tar entry in upgrade archive".to_owned());
+        }
+    }
+    Err("upgrade tar archive did not contain a 'carbon' regular executable entry".to_owned())
+}
+
+const MAX_DECOMPRESSED_UPGRADE_BYTES: u64 = 512 * 1024 * 1024;
+
+fn extract_carbon_binary_from_targz(targz_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let decoder = flate2::read::GzDecoder::new(targz_bytes);
+    extract_carbon_from_tar_reader(decoder, MAX_DECOMPRESSED_UPGRADE_BYTES)
+}
+
+fn extract_carbon_binary_from_tarzst(tarzst_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let decoder = ruzstd::decoding::StreamingDecoder::new(tarzst_bytes)
+        .map_err(|e| format!("init zstd decoder for upgrade .tar.zst: {e}"))?;
+    extract_carbon_from_tar_reader(decoder, MAX_DECOMPRESSED_UPGRADE_BYTES)
+}
+
+fn extract_carbon_exe_from_zip(zip_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    // Locate End of Central Directory (`PK\x05\x06`) from the tail of `zip_bytes`.
+    if zip_bytes.len() < 22 {
+        return Err("upgrade .zip archive is truncated (< 22 bytes)".to_owned());
+    }
+    let search_start = zip_bytes.len().saturating_sub(65_557);
+    let mut eocd_pos = None;
+    for pos in (search_start..=zip_bytes.len() - 22).rev() {
+        if &zip_bytes[pos..pos + 4] == b"PK\x05\x06" {
+            eocd_pos = Some(pos);
+            break;
+        }
+    }
+    let eocd =
+        eocd_pos.ok_or_else(|| "missing End-of-Central-Directory in upgrade .zip".to_owned())?;
+    let total_entries = u16::from_le_bytes([zip_bytes[eocd + 10], zip_bytes[eocd + 11]]) as usize;
+    let cd_offset = u32::from_le_bytes([
+        zip_bytes[eocd + 16],
+        zip_bytes[eocd + 17],
+        zip_bytes[eocd + 18],
+        zip_bytes[eocd + 19],
+    ]) as usize;
+    let mut cursor = cd_offset;
+    for _ in 0..total_entries {
+        if cursor + 46 > zip_bytes.len() || &zip_bytes[cursor..cursor + 4] != b"PK\x01\x02" {
+            return Err("corrupt Central Directory header in upgrade .zip".to_owned());
+        }
+        let method = u16::from_le_bytes([zip_bytes[cursor + 10], zip_bytes[cursor + 11]]);
+        let comp_size = u32::from_le_bytes([
+            zip_bytes[cursor + 20],
+            zip_bytes[cursor + 21],
+            zip_bytes[cursor + 22],
+            zip_bytes[cursor + 23],
+        ]) as usize;
+        let uncomp_size = u32::from_le_bytes([
+            zip_bytes[cursor + 24],
+            zip_bytes[cursor + 25],
+            zip_bytes[cursor + 26],
+            zip_bytes[cursor + 27],
+        ]) as u64;
+        let name_len =
+            u16::from_le_bytes([zip_bytes[cursor + 28], zip_bytes[cursor + 29]]) as usize;
+        let extra_len =
+            u16::from_le_bytes([zip_bytes[cursor + 30], zip_bytes[cursor + 31]]) as usize;
+        let comment_len =
+            u16::from_le_bytes([zip_bytes[cursor + 32], zip_bytes[cursor + 33]]) as usize;
+        let local_offset = u32::from_le_bytes([
+            zip_bytes[cursor + 42],
+            zip_bytes[cursor + 43],
+            zip_bytes[cursor + 44],
+            zip_bytes[cursor + 45],
+        ]) as usize;
+        let name_end = cursor + 46 + name_len;
+        if name_end > zip_bytes.len() {
+            return Err("truncated filename in upgrade .zip Central Directory".to_owned());
+        }
+        let name = std::str::from_utf8(&zip_bytes[cursor + 46..name_end]).unwrap_or("");
+        let base = name.rsplit(['/', '\\']).next().unwrap_or(name);
+        if base.eq_ignore_ascii_case("carbon.exe") {
+            if uncomp_size > MAX_DECOMPRESSED_UPGRADE_BYTES {
+                return Err("upgrade .zip entry exceeded 512 MiB safety bound".to_owned());
+            }
+            if local_offset + 30 > zip_bytes.len()
+                || &zip_bytes[local_offset..local_offset + 4] != b"PK\x03\x04"
+            {
+                return Err("corrupt Local File Header in upgrade .zip".to_owned());
+            }
+            let l_name_len =
+                u16::from_le_bytes([zip_bytes[local_offset + 26], zip_bytes[local_offset + 27]])
+                    as usize;
+            let l_extra_len =
+                u16::from_le_bytes([zip_bytes[local_offset + 28], zip_bytes[local_offset + 29]])
+                    as usize;
+            let data_start = local_offset + 30 + l_name_len + l_extra_len;
+            let data_end = data_start
+                .checked_add(comp_size)
+                .filter(|&end| end <= zip_bytes.len())
+                .ok_or_else(|| "truncated compressed data in upgrade .zip".to_owned())?;
+            let slice = &zip_bytes[data_start..data_end];
+            return match method {
+                0 => Ok(slice.to_vec()),
+                8 => {
+                    let mut dec = flate2::read::DeflateDecoder::new(slice)
+                        .take(MAX_DECOMPRESSED_UPGRADE_BYTES + 1);
+                    let mut out = Vec::with_capacity(uncomp_size as usize);
+                    dec.read_to_end(&mut out)
+                        .map_err(|e| format!("inflate carbon.exe from .zip: {e}"))?;
+                    if (out.len() as u64) > MAX_DECOMPRESSED_UPGRADE_BYTES {
+                        return Err("upgrade .zip exceeded 512 MiB safety bound".to_owned());
+                    }
+                    Ok(out)
+                }
+                other => Err(format!("unsupported ZIP compression method {other}")),
+            };
+        }
+        cursor = name_end + extra_len + comment_len;
+    }
+    Err("upgrade .zip archive did not contain 'carbon.exe'".to_owned())
+}
+
+fn validate_clouds_manifest_bytes(bytes: &[u8]) -> Result<(), String> {
+    let manifest: CarbonPublicCloudsManifest = serde_json::from_slice(bytes)
+        .map_err(|e| format!("invalid carbon-clouds.json schema: {e}"))?;
+    if manifest.clouds.is_empty() {
+        return Err("carbon-clouds.json contains zero cloud entries".to_owned());
+    }
+    for (name, entry) in &manifest.clouds {
+        if entry.public_endpoint.trim().is_empty() {
+            return Err(format!(
+                "carbon-clouds.json cloud '{name}' has empty public_endpoint"
+            ));
+        }
+        if let Some(kek) = &entry.engine_kek_pubkey_b64 {
+            let _ = decode_p256_pubkey_b64(kek)
+                .map_err(|e| format!("invalid KEK pin for '{name}': {e}"))?;
+        }
+        for reg in &entry.regions {
+            if let Some(kek) = &reg.engine_kek_pubkey_b64 {
+                let _ = decode_p256_pubkey_b64(kek).map_err(|e| {
+                    format!("invalid KEK pin for '{name}' region '{}': {e}", reg.region)
+                })?;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Check or install a cryptographically signed Carbon CLI update (`SHA256SUMS.txt` + ECDSA-P256 `.sig`).
@@ -613,18 +922,58 @@ pub fn execute_self_upgrade(
     signing_pub_pem: &str,
     check_only: bool,
 ) -> Result<CarbonUpgradeReceipt, String> {
-    let asset = current_release_asset_name().ok_or_else(|| {
-        format!("automatic binary upgrade is not supported on target '{CARBON_BUILD_TARGET}'")
-    })?;
-    let base_url = if let Some(b) = base_url_override {
-        b.trim_end_matches('/').to_owned()
+    execute_self_upgrade_with_options(
+        base_url_override,
+        target_tag,
+        signing_pub_pem,
+        check_only,
+        false,
+    )
+}
+
+/// Check or install a cryptographically signed Carbon CLI update with explicit operator-replace guard control.
+pub fn execute_self_upgrade_with_options(
+    base_url_override: Option<&str>,
+    target_tag: Option<&str>,
+    signing_pub_pem: &str,
+    check_only: bool,
+    force_operator_replace: bool,
+) -> Result<CarbonUpgradeReceipt, String> {
+    if !check_only && cfg!(feature = "engine") && !force_operator_replace {
+        return Err(
+            "current binary includes full operator/engine features (`--features engine`); `carbon upgrade` installs the thin public CLI (`--features cli`). Pass `--force` to replace it intentionally or rebuild from source."
+                .to_owned(),
+        );
+    }
+
+    let candidates = current_release_asset_candidates();
+    if candidates.is_empty() {
+        return Err(format!(
+            "automatic binary upgrade is not supported on target '{CARBON_BUILD_TARGET}'"
+        ));
+    }
+
+    let (primary_base_url, fallback_base_url) = if let Some(b) = base_url_override {
+        (b.trim_end_matches('/').to_owned(), None)
     } else if let Some(tag) = target_tag {
-        format!("https://github.com/neverhuman/JopeDime/releases/download/{tag}")
+        let gh = format!("https://github.com/neverhuman/JopeDime/releases/download/{tag}");
+        let dl = format!("https://downloads.neverhuman.org/carbon/releases/{tag}");
+        if telemetry_minimized() {
+            (gh, Some(dl))
+        } else {
+            (dl, Some(gh))
+        }
     } else {
-        "https://github.com/neverhuman/JopeDime/releases/latest/download".to_owned()
+        let gh = "https://github.com/neverhuman/JopeDime/releases/latest/download".to_owned();
+        let dl = "https://downloads.neverhuman.org/carbon/releases/latest".to_owned();
+        if telemetry_minimized() {
+            (gh, Some(dl))
+        } else {
+            (dl, Some(gh))
+        }
     };
 
-    let fetch_bytes = |url: &str| -> Result<Vec<u8>, String> {
+    let fetch_single = |url: &str| -> Result<Vec<u8>, String> {
         if !url.starts_with("https://") && !url.starts_with("http://") {
             return fs::read(url).map_err(|e| format!("read local upgrade asset {url}: {e}"));
         }
@@ -663,8 +1012,25 @@ pub fn execute_self_upgrade(
         Err(format!("GET {url} exceeded maximum 5 redirects"))
     };
 
-    let sums_bytes = fetch_bytes(&format!("{base_url}/SHA256SUMS.txt"))?;
-    let sig_bytes = fetch_bytes(&format!("{base_url}/SHA256SUMS.txt.sig"))?;
+    let fetch_asset = |asset_name: &str| -> Result<Vec<u8>, String> {
+        let primary = format!("{primary_base_url}/{asset_name}");
+        match fetch_single(&primary) {
+            Ok(bytes) => Ok(bytes),
+            Err(primary_err) => {
+                if let Some(fb) = &fallback_base_url {
+                    let secondary = format!("{fb}/{asset_name}");
+                    fetch_single(&secondary).map_err(|fb_err| {
+                        format!("{primary_err}; mirror fallback failed: {fb_err}")
+                    })
+                } else {
+                    Err(primary_err)
+                }
+            }
+        }
+    };
+
+    let sums_bytes = fetch_asset("SHA256SUMS.txt")?;
+    let sig_bytes = fetch_asset("SHA256SUMS.txt.sig")?;
     let sig_b64 = String::from_utf8_lossy(&sig_bytes);
     let sig_der = base64::engine::general_purpose::STANDARD
         .decode(sig_b64.trim())
@@ -673,19 +1039,24 @@ pub fn execute_self_upgrade(
         .map_err(|e| format!("release signature verification failed: {e}"))?;
 
     let sums_text = String::from_utf8_lossy(&sums_bytes);
-    let mut expected_sha = None;
+    let mut verified_sums = BTreeMap::new();
     for line in sums_text.lines() {
         let mut parts = line.split_whitespace();
         if let (Some(sha), Some(name)) = (parts.next(), parts.next()) {
             let clean_name = name.trim_start_matches('*');
-            if clean_name == asset {
-                expected_sha = Some(sha.to_ascii_lowercase());
-                break;
-            }
+            verified_sums.insert(clean_name.to_owned(), sha.to_ascii_lowercase());
         }
     }
-    let expected_sha256 = expected_sha
-        .ok_or_else(|| format!("asset '{asset}' not found in verified SHA256SUMS.txt"))?;
+
+    let (asset, expected_sha256) = candidates
+        .iter()
+        .find_map(|&cand| verified_sums.get(cand).cloned().map(|sha| (cand, sha)))
+        .ok_or_else(|| {
+            format!(
+                "none of candidate assets [{}] found in verified SHA256SUMS.txt",
+                candidates.join(", ")
+            )
+        })?;
 
     let exe_path = std::env::current_exe().map_err(|e| format!("resolve current_exe: {e}"))?;
     let current_sha = fs::read(&exe_path)
@@ -709,7 +1080,54 @@ pub fn execute_self_upgrade(
         });
     }
 
-    let bin_bytes = fetch_bytes(&format!("{base_url}/{asset}"))?;
+    let tarzst_asset = format!("{asset}.tar.zst");
+    let targz_asset = format!("{asset}.tar.gz");
+    let zip_asset = format!("{}.zip", asset.trim_end_matches(".exe"));
+
+    let bin_bytes = if let Some(expected_zst_sha) = verified_sums.get(&tarzst_asset) {
+        match fetch_asset(&tarzst_asset) {
+            Ok(zst_bytes) => {
+                let actual = sha256_lower_hex(&zst_bytes);
+                if &actual != expected_zst_sha {
+                    return Err(format!(
+                        "downloaded {tarzst_asset} SHA-256 mismatch: expected {expected_zst_sha}, got {actual}"
+                    ));
+                }
+                extract_carbon_binary_from_tarzst(&zst_bytes)?
+            }
+            Err(_) => fetch_asset(asset)?,
+        }
+    } else if let Some(expected_tgz_sha) = verified_sums.get(&targz_asset) {
+        match fetch_asset(&targz_asset) {
+            Ok(tgz_bytes) => {
+                let actual = sha256_lower_hex(&tgz_bytes);
+                if &actual != expected_tgz_sha {
+                    return Err(format!(
+                        "downloaded {targz_asset} SHA-256 mismatch: expected {expected_tgz_sha}, got {actual}"
+                    ));
+                }
+                extract_carbon_binary_from_targz(&tgz_bytes)?
+            }
+            Err(_) => fetch_asset(asset)?,
+        }
+    } else if asset.ends_with(".exe") && verified_sums.contains_key(&zip_asset) {
+        let expected_zip_sha = &verified_sums[&zip_asset];
+        match fetch_asset(&zip_asset) {
+            Ok(zip_bytes) => {
+                let actual = sha256_lower_hex(&zip_bytes);
+                if &actual != expected_zip_sha {
+                    return Err(format!(
+                        "downloaded {zip_asset} SHA-256 mismatch: expected {expected_zip_sha}, got {actual}"
+                    ));
+                }
+                extract_carbon_exe_from_zip(&zip_bytes)?
+            }
+            Err(_) => fetch_asset(asset)?,
+        }
+    } else {
+        fetch_asset(asset)?
+    };
+
     let actual_sha = sha256_lower_hex(&bin_bytes);
     if actual_sha != expected_sha256 {
         return Err(format!(
@@ -726,15 +1144,44 @@ pub fn execute_self_upgrade(
         fs::set_permissions(&stage_path, fs::Permissions::from_mode(0o755))
             .map_err(|e| format!("chmod 0755 {}: {e}", stage_path.display()))?;
     }
-    fs::rename(&stage_path, &exe_path)
-        .map_err(|e| format!("atomic replace {}: {e}", exe_path.display()))?;
+    if let Err(rename_err) = fs::rename(&stage_path, &exe_path) {
+        #[cfg(windows)]
+        {
+            let old_locked = exe_path.with_extension(format!("exe.old.{}", std::process::id()));
+            let _ = fs::remove_file(&old_locked);
+            fs::rename(&exe_path, &old_locked).map_err(|e| {
+                format!(
+                    "rename running {} -> {} ({rename_err}): {e}",
+                    exe_path.display(),
+                    old_locked.display()
+                )
+            })?;
+            fs::rename(&stage_path, &exe_path)
+                .map_err(|e| format!("atomic replace {}: {e}", exe_path.display()))?;
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = fs::remove_file(&stage_path);
+            return Err(format!(
+                "atomic replace {}: {rename_err}",
+                exe_path.display()
+            ));
+        }
+    }
 
-    // Best-effort refresh of cached `SHA256SUMS.txt`, `.sig`, and `carbon-clouds.json` in config dir.
+    // Refresh cached `SHA256SUMS.txt`, `.sig`, and cryptographically verified `carbon-clouds.json`.
     if let Ok(cfg_dir) = verified_absolute_jopedime_config_dir() {
         let _ = write_secret_json_0600(&cfg_dir.join("SHA256SUMS.txt"), &sums_bytes);
         let _ = write_secret_json_0600(&cfg_dir.join("SHA256SUMS.txt.sig"), &sig_bytes);
-        if let Ok(clouds_bytes) = fetch_bytes(&format!("{base_url}/carbon-clouds.json")) {
-            let _ = write_secret_json_0600(&cfg_dir.join("carbon-clouds.json"), &clouds_bytes);
+        if let Some(expected_clouds_sha) = verified_sums.get("carbon-clouds.json") {
+            if let Ok(clouds_bytes) = fetch_asset("carbon-clouds.json") {
+                if &sha256_lower_hex(&clouds_bytes) == expected_clouds_sha
+                    && validate_clouds_manifest_bytes(&clouds_bytes).is_ok()
+                {
+                    let _ =
+                        write_secret_json_0600(&cfg_dir.join("carbon-clouds.json"), &clouds_bytes);
+                }
+            }
         }
     }
 
