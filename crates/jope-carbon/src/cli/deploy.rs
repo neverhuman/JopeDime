@@ -1828,8 +1828,7 @@ fn s3_stage_object_verified(
     }
     let expected_sha_b64 = base64::engine::general_purpose::STANDARD.encode(digest);
 
-    let (host, uri, url) =
-        resolve_s3_request_target(bucket, region, key).map_err(str::to_owned)?;
+    let (host, uri, url) = resolve_s3_request_target(bucket, region, key).map_err(str::to_owned)?;
 
     // Check HEAD first (with x-amz-checksum-mode: ENABLED) so content-addressed re-deploys verify SHA-256!
     let head_headers = sign_aws_v4_headers_with_extra(

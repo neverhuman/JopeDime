@@ -1923,31 +1923,29 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         (None, None, None)
     };
 
-    let (code_cov_rcpt_opt, code_cov_sha_opt, code_cov_len_opt) =
-        if let Some(cov_in) = &opts.code_coverage_in {
-            let cov_rcpt = crate::cli::spec_code_coverage::load_and_evaluate_code_coverage(
-                cov_in,
-                &resolved_sha,
-            )?;
-            let cov_bytes = serde_json::to_vec_pretty(&cov_rcpt)
-                .map_err(|e| format!("serialize code-coverage-summary.json: {e}"))?;
-            let cov_text = String::from_utf8(cov_bytes.clone())
-                .map_err(|e| format!("code-coverage-summary.json UTF-8: {e}"))?;
-            assert_no_secret_substrings(
-                crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME,
-                &cov_text,
-            )?;
-            let cov_out = opts
-                .out_dir
-                .join(crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME);
-            fs::write(&cov_out, &cov_bytes)
-                .map_err(|e| format!("write {}: {e}", cov_out.display()))?;
-            let sha = sha256_lower_hex(&cov_bytes);
-            let len = cov_bytes.len();
-            (Some(cov_rcpt), Some(sha), Some(len))
-        } else {
-            (None, None, None)
-        };
+    let (code_cov_rcpt_opt, code_cov_sha_opt, code_cov_len_opt) = if let Some(cov_in) =
+        &opts.code_coverage_in
+    {
+        let cov_rcpt =
+            crate::cli::spec_code_coverage::load_and_evaluate_code_coverage(cov_in, &resolved_sha)?;
+        let cov_bytes = serde_json::to_vec_pretty(&cov_rcpt)
+            .map_err(|e| format!("serialize code-coverage-summary.json: {e}"))?;
+        let cov_text = String::from_utf8(cov_bytes.clone())
+            .map_err(|e| format!("code-coverage-summary.json UTF-8: {e}"))?;
+        assert_no_secret_substrings(
+            crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME,
+            &cov_text,
+        )?;
+        let cov_out = opts
+            .out_dir
+            .join(crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME);
+        fs::write(&cov_out, &cov_bytes).map_err(|e| format!("write {}: {e}", cov_out.display()))?;
+        let sha = sha256_lower_hex(&cov_bytes);
+        let len = cov_bytes.len();
+        (Some(cov_rcpt), Some(sha), Some(len))
+    } else {
+        (None, None, None)
+    };
 
     let mut ledger = Vec::new();
     let deploy_dev =

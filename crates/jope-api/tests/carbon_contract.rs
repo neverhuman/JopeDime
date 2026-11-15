@@ -6,9 +6,9 @@ use jope_api::{
         CarbonPredictRequest, CarbonPredictResponse, CarbonPreparePredictRequest,
         CarbonPreparePredictResponse, CarbonPrepareUploadRequest, CarbonPrepareUploadResponse,
         CarbonPresignedTarget, CarbonPublicWaveProgress, CarbonRegionCatalog,
-        CarbonRegisterFreeRequest, CarbonRegisterFreeResponse, CarbonResumeRunRequest,
-        CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire, CarbonUploadSlotWire,
-        CarbonVersionResponse, CARBON_DEFAULT_REGIONS,
+        CarbonRegionDescriptor, CarbonRegisterFreeRequest, CarbonRegisterFreeResponse,
+        CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire,
+        CarbonUploadSlotWire, CarbonVersionResponse, CARBON_DEFAULT_REGIONS,
     },
     decimal::DecimalU64,
     ids::{DatasetId, RunId},
@@ -533,10 +533,13 @@ fn carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal() {
         );
     }
 
-    assert!(serde_json::from_str::<CarbonRegisterFreeRequest>(r#"{"label":"ok","extra":1}"#).is_err());
-    assert!(serde_json::from_str::<CarbonUploadSlotWire>(
-        &format!(r#"{{"sha256":"{}","bytes":10,"extra":1}}"#, "a".repeat(64))
-    )
+    assert!(
+        serde_json::from_str::<CarbonRegisterFreeRequest>(r#"{"label":"ok","extra":1}"#).is_err()
+    );
+    assert!(serde_json::from_str::<CarbonUploadSlotWire>(&format!(
+        r#"{{"sha256":"{}","bytes":10,"extra":1}}"#,
+        "a".repeat(64)
+    ))
     .is_err());
     assert!(serde_json::from_str::<CarbonPrepareUploadRequest>(
         &format!(
@@ -552,17 +555,25 @@ fn carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal() {
         )
     )
     .is_err());
-    assert!(serde_json::from_str::<CarbonEarlyStopRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
-    assert!(serde_json::from_str::<CarbonResumeRunRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
-    assert!(serde_json::from_str::<CarbonPreparePredictRequest>(
-        &format!(
+    assert!(
+        serde_json::from_str::<CarbonEarlyStopRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err()
+    );
+    assert!(
+        serde_json::from_str::<CarbonResumeRunRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err()
+    );
+    assert!(
+        serde_json::from_str::<CarbonPreparePredictRequest>(&format!(
             r#"{{"tenant_id":"t","predict_cuen":{{"sha256":"{}","bytes":1}},"extra":1}}"#,
             "a".repeat(64)
-        )
-    )
-    .is_err());
-    assert!(serde_json::from_str::<CarbonPredictRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
-    assert!(serde_json::from_str::<CarbonExplainRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err());
+        ))
+        .is_err()
+    );
+    assert!(
+        serde_json::from_str::<CarbonPredictRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err()
+    );
+    assert!(
+        serde_json::from_str::<CarbonExplainRequest>(r#"{"tenant_id":"t","extra":1}"#).is_err()
+    );
     assert!(serde_json::from_str::<CarbonExportRequest>(
         r#"{"tenant_id":"t","lang":"python","extra":1}"#
     )
@@ -571,4 +582,49 @@ fn carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal() {
     let schema_str = serde_json::to_string(&schemars::schema_for!(CarbonVersionResponse))
         .expect("CarbonVersionResponse JsonSchema");
     assert!(schema_str.contains("r882_bundle_digest"));
+
+    macro_rules! assert_carbon_json_schema {
+        ($($ty:ty),+ $(,)?) => {{
+            $(
+                let rendered = serde_json::to_string(&schemars::schema_for!($ty))
+                    .unwrap_or_else(|e| panic!("JsonSchema failed for {}: {e}", stringify!($ty)));
+                assert!(
+                    rendered.contains("\"$schema\""),
+                    "missing $schema root in {}",
+                    stringify!($ty)
+                );
+            )+
+        }};
+    }
+    assert_carbon_json_schema!(
+        CarbonTierWire,
+        CarbonRunStateWire,
+        CarbonExecutionModeWire,
+        CarbonExportLangWire,
+        CarbonAnonymousAuthResponse,
+        CarbonRegisterFreeRequest,
+        CarbonRegisterFreeResponse,
+        CarbonUploadSlotWire,
+        CarbonPrepareUploadRequest,
+        CarbonPresignedTarget,
+        CarbonPrepareUploadResponse,
+        CarbonCreateRunRequest,
+        CarbonEarlyStopRequest,
+        CarbonResumeRunRequest,
+        CarbonPublicWaveProgress,
+        CarbonPreparePredictRequest,
+        CarbonPreparePredictResponse,
+        CarbonPredictRequest,
+        CarbonPredictResponse,
+        CarbonFeatureImportanceWire,
+        CarbonExplainRequest,
+        CarbonExplainResponse,
+        CarbonExportRequest,
+        CarbonExportResponse,
+        CarbonShredRunResponse,
+        CarbonPingResponse,
+        CarbonVersionResponse,
+        CarbonRegionDescriptor,
+        CarbonRegionCatalog,
+    );
 }

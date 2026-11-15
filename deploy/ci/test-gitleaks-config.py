@@ -54,6 +54,19 @@ def cases():
             (f"carbon-public-kek-{name}-same-line-credential", rel, "{" + pubkey_line + ", " + cred_line + "}\n", True),
         ])
     result.append(("carbon-public-kek-unreviewed-file", "unreviewed.json", f'{{"engine_kek_pubkey_b64": "{synthetic_sec1_b64}"}}\n', True))
+    h462_rel = "research/flywheel_selfplay/h462_apex_prism/eval_h462_p1_gpbag_scaling_fitsel.py"
+    h462_lines = (
+        '    hwm_key = "tabcv7_cvrep8_prec48_all"\n'
+        '    k2_all_key = "tabcv7_cvrep8_gpbag_k2_allcol"\n'
+        '    k2_2c_key = "tabcv7_cvrep8_gpbag_k2_2col"\n'
+    )
+    h462_cred = f'    hwm_key = "A7Q9{digest}K3R2"\n'
+    result.extend([
+        ("h462-comparator-column-keys-allowed", h462_rel, h462_lines, False),
+        ("h462-replacement-secret-rejected", h462_rel, h462_cred, True),
+        ("h462-same-line-credential-rejected", h462_rel, f'    hwm_key = "tabcv7_cvrep8_prec48_all"; api_key = "{digest}"\n', True),
+        ("h462-unreviewed-file-rejected", "unreviewed.py", h462_lines, True),
+    ])
     return result
 
 
