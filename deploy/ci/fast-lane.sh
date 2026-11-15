@@ -328,12 +328,57 @@ if [ -n "${JOPE_CARBON_LIVE_CI_RECEIPT:-}" ]; then
   [ -f "$JOPE_CARBON_LIVE_CI_RECEIPT" ] || { echo "missing required live CI 4-tier receipt: $JOPE_CARBON_LIVE_CI_RECEIPT" >&2; exit 1; }
   spec_live_args=(--live-ci-receipt "$JOPE_CARBON_LIVE_CI_RECEIPT")
 fi
+mapfile -t llvm_bins < <(JOPE_LLVM_TOOLS_CACHE="$appliance_target/tool-cache/llvm-tools-1.97.1" bash deploy/ci/install-llvm-tools.sh)
+[ "${#llvm_bins[@]}" -ge 2 ] || { echo "install-llvm-tools.sh did not emit llvm-profdata and llvm-cov paths" >&2; exit 1; }
+cov_work="$appliance_target/carbon-cov-work/${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+cov_target="$appliance_target/carbon-cov-target"
+mkdir -p "$cov_work/profraw" "$cov_work/tmp"
+env -u CARGO_ENCODED_RUSTFLAGS TMPDIR="$cov_work/tmp" \
+  CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 \
+  RUSTFLAGS="-C instrument-coverage" \
+  LLVM_PROFILE_FILE="$cov_work/profraw/carbon-%p-%8m.profraw" \
+  cargo test --locked --target-dir "$cov_target" -p jope-carbon --lib --bins --tests -- --test-threads=4
+env -u CARGO_ENCODED_RUSTFLAGS TMPDIR="$cov_work/tmp" \
+  CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 \
+  RUSTFLAGS="-C instrument-coverage" \
+  cargo test --locked --target-dir "$cov_target" -p jope-carbon --lib --bins --tests --no-run --message-format=json > "$cov_work/cargo-msgs.jsonl"
+mapfile -t cov_objs < <(python3 -c '
+import json, sys
+seen = []
+for line in open(sys.argv[1], encoding="utf-8"):
+    line = line.strip()
+    if not line.startswith("{"):
+        continue
+    msg = json.loads(line)
+    if msg.get("reason") == "compiler-artifact" and msg.get("executable"):
+        exe = msg["executable"]
+        if exe not in seen:
+            seen.append(exe)
+for exe in seen:
+    print(exe)
+' "$cov_work/cargo-msgs.jsonl")
+[ "${#cov_objs[@]}" -ge 1 ] || { echo "no instrumented jope-carbon executables collected" >&2; exit 1; }
+cov_obj_args=()
+for exe in "${cov_objs[@]}"; do
+  cov_obj_args+=(-object "$exe")
+done
+shopt -s nullglob
+profraw_files=("$cov_work"/profraw/*.profraw)
+shopt -u nullglob
+[ "${#profraw_files[@]}" -ge 1 ] || { echo "no .profraw files produced by instrumented jope-carbon tests" >&2; exit 1; }
+"${llvm_bins[0]}" merge -sparse "${profraw_files[@]}" -o "$cov_work/carbon.profdata"
+"${llvm_bins[1]}" export --skip-expansions --skip-functions \
+  --instr-profile="$cov_work/carbon.profdata" \
+  "${cov_obj_args[@]}" \
+  --sources "$PWD/crates/jope-carbon/src" > "$cov_work/llvm-cov-carbon.json"
 cargo run --locked -p jope-carbon --bin carbon -- spec-report \
   --run-ci-qualification \
   "${spec_live_args[@]}" \
+  --code-coverage-export "$cov_work/llvm-cov-carbon.json" \
   --evidence-dir docs/carbon/evidence \
   --source-sha "$spec_source_sha" \
   --out-dir "$spec_dir_abs"
+rm -r -- "$cov_work"
 spec_ui_work="$appliance_target/carbon-spec-ui/${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
 mkdir -p "$spec_ui_work/scripts"
 cp -- web/training-dashboard/package.json web/training-dashboard/package-lock.json "$spec_ui_work/"

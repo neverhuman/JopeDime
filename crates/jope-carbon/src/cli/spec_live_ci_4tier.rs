@@ -98,6 +98,18 @@ fn validate_container_and_install(doc: &Value) -> Result<(), String> {
     {
         return Err("live-ci-4tier-docker.json: production quickstart check did not pass".into());
     }
+    for gate_key in [
+        "live_dev_free_high_gate_status",
+        "live_dev_free_ultra_gate_status",
+        "live_prod_free_ultra_gate_status",
+    ] {
+        if inst.get(gate_key).is_some() && v_u64(inst, gate_key) != 403 {
+            return Err(format!(
+                "live-ci-4tier-docker.json: {gate_key} expected HTTP 403, got {}",
+                v_u64(inst, gate_key)
+            ));
+        }
+    }
     Ok(())
 }
 

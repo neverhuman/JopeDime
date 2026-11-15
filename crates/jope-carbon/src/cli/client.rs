@@ -1743,7 +1743,10 @@ fn send_raw_put_url_with_agent(
 ) -> Result<(u16, Vec<u8>), String> {
     validate_endpoint_transport(url)?;
     let mut req = agent.put(url).config().http_status_as_error(false).build();
-    if include_sha_header && url.contains(".s3.") && url.contains("X-Amz-Signature=") {
+    if include_sha_header
+        && (url.contains(".s3.") || url.contains("x-amz-content-sha256"))
+        && url.contains("X-Amz-Signature=")
+    {
         let sha_hex = sha256_lower_hex(bytes);
         req = req.header("x-amz-content-sha256", &sha_hex);
     }

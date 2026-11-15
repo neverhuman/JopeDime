@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.; RNK-12 CPU arithmetic repair adds five model-free regressions in the existing jope-service library target; full fixture CPU proof is retained separately, CUDA M2 remains unqualified.; kimik3p1_max add-only targeted collection: cargo nextest list --locked -P main -p jope-automl -p jope-bench --message-format json (2026-11-07); four new IDs inserted (three jope-automl lib, one jope-bench lib), no ID removed, every other entry preserved verbatim. Collection is not execution.; agy_carbon add-only targeted collection: cargo nextest list --locked -P main -p jope-carbon -p jope-api -p jope-prep --message-format json (2026-11-15); 112 new IDs inserted, no ID removed, every other entry preserved verbatim.",
-  "count": 6251,
+  "count": 6265,
   "ignored": 84,
   "packages": {
    "battle-gpu": {
@@ -2570,7 +2570,7 @@
     }
    },
    "jope-api": {
-    "count": 56,
+    "count": 57,
     "ignored": 0,
     "binaries": {
      "jope-api": {
@@ -2626,10 +2626,11 @@
      },
      "jope-api::carbon_contract": {
       "kind": "test",
-      "count": 3,
+      "count": 4,
       "ignored": 0,
       "tests": [
        "carbon_region_catalog_covers_all_17_graviton_cells_and_generates_json_schema",
+       "carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal",
        "carbon_wire_round_trip_and_strict_unknown_field_rejection",
        "default_create_run_request_is_byte_compatible_with_frozen_v1_1_0_strict_edge"
       ]
@@ -3103,7 +3104,7 @@
     }
    },
    "jope-carbon": {
-    "count": 45,
+    "count": 58,
     "ignored": 0,
     "binaries": {
      "jope-carbon": {
@@ -3140,7 +3141,7 @@
      },
      "jope-carbon::carbon_core": {
       "kind": "test",
-      "count": 18,
+      "count": 19,
       "ignored": 0,
       "tests": [
        "adaptive_cost_estimator_routes_medium_scale_fast_to_hybrid_fanout",
@@ -3157,6 +3158,7 @@
        "spec_png_and_pdf_verifiers_accept_valid_streams_and_reject_tampering_or_secrets",
        "spec_report_and_verify_bind_live_ci_4tier_docker_receipt_and_reject_tamper",
        "spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_check",
+       "spec_report_section_14_compiler_code_coverage_matrix_and_tamper_refusal",
        "spot_advisor_enforces_three_conjunctive_gates_and_two_month_window",
        "tier_admission_enforces_free_pro_and_enterprise_no_limit",
        "universal_tabular_conditioning_zero_leakage_and_completions",
@@ -3185,9 +3187,21 @@
      },
      "jope-carbon::carbon_redteam": {
       "kind": "test",
-      "count": 2,
+      "count": 14,
       "ignored": 0,
       "tests": [
+       "coverage_closure::cli_commands_and_workers::carbon_edge_carbon_worker_and_cli_lambda_runtime_loops_execute_and_exit_cleanly",
+       "coverage_closure::cli_commands_and_workers::cli_full_model_handle_lifecycle_resume_explain_6lang_export_auth_and_shred",
+       "coverage_closure::cli_commands_and_workers::cli_global_flags_version_completions_plan_spotcheck_and_shorthand_branches",
+       "coverage_closure::cli_commands_and_workers::cli_stdin_shorthand_quickstart_redteam_bench_and_emu_selftest_subprocesses",
+       "coverage_closure::deploy_vault_and_ci_clis::cli_ci_live_4tier_and_spec_report_verify_subprocesses",
+       "coverage_closure::deploy_vault_and_ci_clis::cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audit",
+       "coverage_closure::deploy_vault_and_ci_clis::package_assembly_and_cli_fail_closed_plus_secrets_vault_role_isolation",
+       "coverage_closure::http_api_and_emu_matrix::edge_cors_downloads_spot_advisor_404_headers_and_429_rate_limits",
+       "coverage_closure::http_api_and_emu_matrix::edge_explain_export_prepare_predict_cas_and_emu_internal_negative_branches",
+       "coverage_closure::tier_env_and_s3_serve::enterprise_serve_local_8_cells_and_streaming_precheck_413_parity",
+       "coverage_closure::tier_env_and_s3_serve::loopback_sigv4_s3_cas_and_enterprise_serve_s3_all_8_tier_cells_and_shred",
+       "coverage_closure::tier_env_and_s3_serve::unit_inproc_free_medium_and_local_emu_free_ultra_403_and_anon_medium_close_matrix",
        "redteam_16_vectors_pass_against_isolated_lambda_emulator",
        "rt05_aws_lambda_production_boot_fails_closed_when_secrets_missing"
       ]

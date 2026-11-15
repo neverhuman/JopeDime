@@ -93,7 +93,7 @@ fn canonical_embedded_release_signing_pub_pem() -> String {
 #[command(
     name = "carbon",
     version = LONG_VERSION,
-    args_conflicts_with_subcommands = true,
+    subcommand_precedence_over_arg = true,
     about = "Carbon zero-knowledge serverless CLI client, benchmark & red-team harness, Lambda runtime, Enterprise server, and CI emulator"
 )]
 struct Cli {
@@ -902,6 +902,9 @@ enum Command {
         /// Optional `live-ci-4tier-docker.json` receipt from the `carbon-live-e2e` CI job.
         #[arg(long)]
         live_ci_receipt: Option<PathBuf>,
+        /// Optional `llvm-cov export` JSON or `code-coverage-summary.json` for Section 14 coverage matrix.
+        #[arg(long)]
+        code_coverage_export: Option<PathBuf>,
         /// Optional explicit Git source SHA to bind into the specification receipt.
         #[arg(long)]
         source_sha: Option<String>,
@@ -2349,6 +2352,10 @@ fn main() -> ExitCode {
 #[inline(never)]
 fn run_cli_main() -> ExitCode {
     let cli = Cli::parse();
+    if cli.csv_file.is_some() && cli.command.is_some() {
+        eprintln!("error: positional <CSV_FILE> cannot be combined with a subcommand");
+        return ExitCode::from(2);
+    }
     let log_format = match cli.log_format.trim().to_ascii_lowercase().as_str() {
         "text" | "" => CarbonLogFormat::Text,
         "json" => CarbonLogFormat::Json,
@@ -3882,6 +3889,7 @@ fn run_cli_main() -> ExitCode {
             run_ci_qualification,
             ci_qualification_in,
             live_ci_receipt,
+            code_coverage_export,
             source_sha,
             repo_root,
         } => match execute_carbon_spec_report(&CarbonSpecReportOptions {
@@ -3890,6 +3898,7 @@ fn run_cli_main() -> ExitCode {
             run_ci_qualification,
             ci_qualification_in,
             live_ci_receipt_in: live_ci_receipt,
+            code_coverage_in: code_coverage_export,
             source_sha,
             repo_root,
         }) {
