@@ -1,0 +1,17 @@
+{
+  "wave": "H463",
+  "status": "RUNNING",
+  "script_sha256": "f85ea211a079e3d9687bf7d75e3924d25a623ee77d2e998171e99d5710c2263f",
+  "arms": ["pairnf_z40", "s32_z200", "s32cos_z40", "s32cos_z200"],
+  "control": "pairnf_z40",
+  "seeds": [1, 2, 3],
+  "partitions": ["h452a/", "h452b/"],
+  "folds": 5,
+  "probe": {"ok_utc": "2026-11-15T15:40:00Z", "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814", "max_rss_gb": 6.37},
+  "launch_utc": {"seed1": "2026-11-15T15:41:20Z", "seed2": "2026-11-15T15:51:25Z", "seed3": "2026-11-15T16:01:30Z"},
+  "incumbent_val_utility": 1.1389572403748425,
+  "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "host": "xbabe2",
+  "device": "cpu",
+  "sealed_or_holdout_reads": 0
+}
