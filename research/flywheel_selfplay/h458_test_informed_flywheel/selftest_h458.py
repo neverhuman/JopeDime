@@ -634,8 +634,25 @@ def gate_gp_chain_units(ctx) -> dict:
     assert np.allclose(res_b["stages"][0]["ref"][:10], 1.0 + 0.25 * yy[:10]) and np.allclose(res_b["stages"][0]["ref"][10:], 1.0)
     assert abs(res_b["book"]["u_search_base"] - GC.u_search(0.5 * yy, yy)) < 1e-12
     A.arm = "oof_chain"
-    res_o = GC.run_context((_LookupEngine(), None, None), "ctxd", d, A, work / "base_oof")
-    assert np.allclose(res_o["stages"][-1]["q"], 0.5 * yy), "a held-out row got more than the base column's out-of-fold value"
+    # an out-of-fold arm refuses a base that is only out of fold on all SEARCH rows; with a nested base it runs on the base's own partition
+    assert _refused(GC.run_context, (_LookupEngine(), None, None), "ctxd", d, A, work / "base_oof"), "an out-of-fold arm took a base that is not nested"
+    lab_b = (np.arange(48, dtype=np.int64) + 1) % 4  # not the stub's own outer folds: the base's partition must be the one used
+    nq = np.stack([np.where(lab_b == o, 0.25 * yy, 0.5 * yy) for o in range(4)])
+    full = {"q_stack": 0.5 * yy, "bag_stack": np.ones(15), "ref_stack": np.ones(15), "nest_q_stack": nq, "nest_a_stack": np.ones((4, 15))}
+    np.savez(bdir / "ctxe.npz", nest_lab_stack=lab_b, **full)
+    np.savez(bdir / "ctxf.npz", nest_lab_stack=lab_b % 3, **full)                      # three folds where --outer is four
+    np.savez(bdir / "ctxg.npz", nest_lab_stack=np.where(lab_b == 3, 5, lab_b), **full)  # a fold number outside 0..3
+    np.savez(bdir / "ctxh.npz", nest_lab_stack=lab_b, **{**full, "nest_q_stack": nq[:3]})
+    res_o = GC.run_context((_LookupEngine(), None, None), "ctxe", d, A, work / "base_oof_nested")
+    assert np.array_equal(res_o["outer_lab"], lab_b) and res_o["book"]["outer_partition"] == "from_base", "the arm did not run on the base's partition"
+    assert np.allclose(res_o["stages"][-1]["q"], 0.25 * yy), "a held-out row did not get the nested base's value for its own fold"
+    # the fit saw the nested TRAINING-row values (0.5 y, residual 0.5 y; two stub stages recover 0.375 y of it); an audit row that repeats SEARCH row i
+    # is in the training rows of three of the four fold models
+    assert np.allclose(res_o["stages"][-1]["ref"][:10], 1.0 + 0.75 * 0.375 * yy[:10]) and np.allclose(res_o["stages"][-1]["ref"][10:], 1.0), "the training-row base values did not reach the fit"
+    for cid_bad, why in (("ctxf", "another fold count"), ("ctxg", "a fold number out of range"), ("ctxh", "nested values of the wrong shape")):
+        assert _refused(GC.run_context, (_LookupEngine(), None, None), cid_bad, d, A, work / f"base_oof_{cid_bad}"), f"a nested base with {why} was accepted"
+    res_plain = GC.run_context((_LookupEngine(), None, None), "ctxi", d, type("B", (A,), {"base_block": "", "base_col": ""}), work / "oof_nobase")
+    assert res_plain["book"]["outer_partition"] == "stratified_kfold"
     A.base_block, A.base_col = "", ""
     # packing for a column scorer: names, shapes, nothing but the block layout
     arm_dirs = {}
@@ -803,7 +820,7 @@ def gate_gp_chain_units(ctx) -> dict:
     pb2.mkdir()
     assert _refused(GC.pack_bank, {"ic": f_ic}, pb2, 0, "fair"), "in-corpus-prior programs were packed as fair"
     A.arm, A.stages = "chain", 3
-    return {"checks": 78, "dir": str(work)}
+    return {"checks": 84, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:
