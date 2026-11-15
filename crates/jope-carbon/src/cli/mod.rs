@@ -14,6 +14,8 @@ pub mod runner;
 #[cfg(feature = "emu")]
 pub mod spec_coverage_matrix;
 #[cfg(feature = "emu")]
+pub mod spec_live_ci_4tier;
+#[cfg(feature = "emu")]
 pub mod spec_report;
 #[cfg(feature = "emu")]
 pub mod spec_v110_sections;

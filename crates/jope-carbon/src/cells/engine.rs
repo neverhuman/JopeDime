@@ -1135,11 +1135,7 @@ impl CarbonEngineWorker {
                 elapsed_ms: DecimalU64(t0.elapsed().as_millis() as u64),
                 region: region.to_owned(),
                 failure_message: None,
-                eval_fallback_shards: if use_hybrid || fb_count > 0 {
-                    Some(fb_count)
-                } else {
-                    None
-                },
+                eval_fallback_shards: (fb_count > 0).then_some(fb_count),
             };
             if let Ok(bytes) = serde_json::to_vec(&live_progress) {
                 let _ = self.cas.put_state_object(&status_key, &bytes);
@@ -1368,11 +1364,7 @@ impl CarbonEngineWorker {
             elapsed_ms: DecimalU64(elapsed_ms),
             region: region.to_owned(),
             failure_message: None,
-            eval_fallback_shards: if use_hybrid || eval_fallback_shards > 0 {
-                Some(eval_fallback_shards)
-            } else {
-                None
-            },
+            eval_fallback_shards: (eval_fallback_shards > 0).then_some(eval_fallback_shards),
         };
         let progress_bytes =
             serde_json::to_vec(&progress).map_err(|e| format!("encode final progress: {e}"))?;

@@ -116,6 +116,7 @@ pub struct CarbonSpecReportOptions {
     pub out_dir: PathBuf,
     pub run_ci_qualification: bool,
     pub ci_qualification_in: Option<PathBuf>,
+    pub live_ci_receipt_in: Option<PathBuf>,
     pub source_sha: Option<String>,
     pub repo_root: PathBuf,
 }
@@ -196,6 +197,10 @@ pub struct SpecBundleManifest {
     pub html_sha256: String,
     pub ci_qualification_file: String,
     pub ci_qualification_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub live_ci_qualification_file: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub live_ci_qualification_sha256: Option<String>,
     pub required_screenshots: Vec<(String, String, String)>,
     pub evidence_ledger: Vec<SpecEvidenceEntry>,
 }
@@ -216,6 +221,10 @@ pub struct SpecPdfReceipt {
     pub pdf_page_count: usize,
     pub html_sha256: String,
     pub ci_qualification_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub live_ci_qualification_file: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub live_ci_qualification_sha256: Option<String>,
     pub horizontal_overflow_px: i64,
     pub screenshots: Vec<SpecScreenshotEntry>,
     pub evidence_ledger: Vec<SpecEvidenceEntry>,
@@ -590,6 +599,36 @@ pub fn execute_carbon_spec_verify(
             "ci-quickstart-qualification did not pass all >=8 suites ({}/{})",
             ci_qual.passed_tests, ci_qual.total_tests
         ));
+    }
+
+    if let Some(expected_live_sha) = &receipt.live_ci_qualification_sha256 {
+        let live_leaf = receipt
+            .live_ci_qualification_file
+            .as_deref()
+            .unwrap_or(crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME);
+        if live_leaf != crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME {
+            return Err(format!(
+                "unexpected live_ci_qualification_file '{live_leaf}'"
+            ));
+        }
+        let live_path = opts.dir.join(live_leaf);
+        let live_raw =
+            fs::read(&live_path).map_err(|e| format!("read {}: {e}", live_path.display()))?;
+        let live_text = String::from_utf8(live_raw.clone())
+            .map_err(|e| format!("{} is not UTF-8: {e}", live_path.display()))?;
+        assert_no_secret_substrings(live_leaf, &live_text)?;
+        let actual_live_sha = sha256_lower_hex(&live_raw);
+        if &actual_live_sha != expected_live_sha {
+            return Err(format!(
+                "{live_leaf} SHA-256 mismatch (file={actual_live_sha}, receipt={expected_live_sha})"
+            ));
+        }
+        let live_doc: serde_json::Value = serde_json::from_str(&live_text)
+            .map_err(|e| format!("parse {}: {e}", live_path.display()))?;
+        crate::cli::spec_live_ci_4tier::validate_live_ci_4tier_receipt(
+            &live_doc,
+            opts.expected_source_sha.as_deref(),
+        )?;
     }
 
     Ok(receipt)
@@ -1818,6 +1857,34 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         .map_err(|e| format!("write {}: {e}", ci_qual_out.display()))?;
     let ci_qual_sha = sha256_lower_hex(&ci_qual_bytes);
 
+    let (live_ci_doc_opt, live_ci_sha_opt, live_ci_len_opt) = if let Some(live_in) =
+        &opts.live_ci_receipt_in
+    {
+        let live_raw = fs::read(live_in).map_err(|e| format!("read {}: {e}", live_in.display()))?;
+        let live_text = String::from_utf8(live_raw.clone())
+            .map_err(|e| format!("{} is not UTF-8: {e}", live_in.display()))?;
+        assert_no_secret_substrings(
+            crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME,
+            &live_text,
+        )?;
+        let live_doc: serde_json::Value = serde_json::from_str(&live_text)
+            .map_err(|e| format!("parse {}: {e}", live_in.display()))?;
+        crate::cli::spec_live_ci_4tier::validate_live_ci_4tier_receipt(
+            &live_doc,
+            Some(&resolved_sha),
+        )?;
+        let live_out = opts
+            .out_dir
+            .join(crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME);
+        fs::write(&live_out, &live_raw)
+            .map_err(|e| format!("write {}: {e}", live_out.display()))?;
+        let sha = sha256_lower_hex(&live_raw);
+        let len = live_raw.len();
+        (Some(live_doc), Some(sha), Some(len))
+    } else {
+        (None, None, None)
+    };
+
     let mut ledger = Vec::new();
     let deploy_dev =
         load_tracked_evidence_json(&opts.evidence_dir, "deploy-dev.json", &mut ledger)?;
@@ -1984,6 +2051,10 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
             j_f64(d, "estimated_aws_usd"),
             j_f64(p, "estimated_aws_usd"),
         ));
+    }
+    if let Some(live_doc) = &live_ci_doc_opt {
+        cost_shot_lines
+            .extend(crate::cli::spec_live_ci_4tier::format_live_ci_4tier_shot06_lines(live_doc));
     }
     let shot06 = render_terminal_card(
         "shot-06",
@@ -2340,6 +2411,20 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         ci_qual_sha,
         ci_qual_bytes.len()
     ));
+    if let (Some(live_sha), Some(live_len)) = (&live_ci_sha_opt, live_ci_len_opt) {
+        ledger_rows_html.push_str(&format!(
+            "<tr><td><code>{}</code> (CI Fresh-Docker dev+prod 4-tier live suite)</td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{}</td></tr>\n",
+            crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME,
+            live_sha,
+            live_len
+        ));
+    }
+    let section_4c_html = match &live_ci_doc_opt {
+        Some(live_doc) => {
+            crate::cli::spec_live_ci_4tier::render_live_ci_4tier_section_4c_html(live_doc)
+        }
+        None => String::new(),
+    };
     for e in &ledger {
         ledger_rows_html.push_str(&format!(
             "<tr><td><code>docs/carbon/evidence/{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{}</td></tr>\n",
@@ -2853,6 +2938,8 @@ carbon logout --all</pre>
     </tbody>
   </table>
 
+  {section_4c_html}
+
   <h2>5. Live AWS <code>dev</code> &amp; 5-Region Wave-1 <code>prod</code> CloudFormation Rollout &amp; Atomic Rollback Inventory</h2>
   <p>
     Every Carbon regional cell is provisioned declaratively via <code>deploy/carbon/cloudformation-cell.json</code> in AWS account <code>714044927654</code>. Rollouts publish immutable SHA-addressed Lambda versions (<code>EdgeVersion*</code>, <code>EngineVersion*</code>, <code>EvalVersion*</code>, release ID <code>723b5330e5be328b</code>) and atomically shift the <code>:live</code> alias only after packaging and stack health checks succeed, preserving previous versions for sub-second single-command rollback (<code>carbon rollback</code>). Public traffic enters exclusively through stage-throttled API Gateway HTTP API v2 endpoints (<code>16/16</code> live red-team vectors verified across all <code>6</code> deployed cells = <code>96/96</code> live vectors), while raw Lambda Function URLs are locked down to <code>AuthType: AWS_IAM</code> (refusing unauthenticated HTTP requests with <code>HTTP 403</code>):
@@ -3137,6 +3224,10 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
         html_sha256: html_sha,
         ci_qualification_file: "ci-quickstart-qualification.json".to_owned(),
         ci_qualification_sha256: ci_qual_sha,
+        live_ci_qualification_file: live_ci_sha_opt
+            .as_ref()
+            .map(|_| crate::cli::spec_live_ci_4tier::LIVE_CI_4TIER_FILENAME.to_owned()),
+        live_ci_qualification_sha256: live_ci_sha_opt,
         required_screenshots: REQUIRED_SPEC_SCREENSHOTS
             .iter()
             .map(|(a, b, c)| ((*a).to_owned(), (*b).to_owned(), (*c).to_owned()))

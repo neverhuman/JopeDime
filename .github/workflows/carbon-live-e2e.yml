@@ -1,0 +1,151 @@
+name: carbon-live-e2e
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: Exact 40-char Git commit SHA under qualification
+        required: true
+        type: string
+      use_live_pro_secrets:
+        description: >-
+          One-line switch between Option B (false = zero repo secrets: live AWS fast+medium,
+          dual-cell CarbonLocalLambdaEmulator high+ultra) and Option A (true = all 8 dev+prod
+          tiers live on AWS using CARBON_CI_DEV_PRO_TOKEN + CARBON_CI_PROD_PRO_TOKEN)
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      CARBON_CI_DEV_PRO_TOKEN:
+        required: false
+      CARBON_CI_PROD_PRO_TOKEN:
+        required: false
+permissions:
+  contents: read
+
+concurrency:
+  group: carbon-live-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trust-admission:
+    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    permissions: {}
+    outputs:
+      admitted: ${{ steps.verify.outputs.admitted }}
+    steps:
+      - name: Verify Carbon live E2E workflow caller identity
+        id: verify
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPOSITORY_ID: ${{ github.event.pull_request.head.repo.id }}
+          PR_BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          PR_BASE_REPOSITORY_ID: ${{ github.event.pull_request.base.repo.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          refuse() {
+            echo '::error::Carbon live E2E admission refused; invoke through same-repo ci.yml PR or main dispatch.'
+            exit 1
+          }
+
+          expected_repository='neverhuman/JopeDime'
+          expected_repository_id='1376159324'
+          workflow_prefix='neverhuman/JopeDime/.github/workflows/ci.yml@'
+
+          [[ "${REPOSITORY:-}" == "$expected_repository" ]] || refuse
+          [[ "${REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+          [[ "${WORKFLOW_REF:-}" == "$workflow_prefix"* ]] || refuse
+
+          case "${EVENT_NAME:-}" in
+            pull_request)
+              [[ "${PR_BASE_REPOSITORY:-}" == "$expected_repository" ]] || refuse
+              [[ "${PR_BASE_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+              [[ "${PR_HEAD_REPOSITORY:-}" == "$expected_repository" ]] || refuse
+              [[ "${PR_HEAD_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+              ;;
+            workflow_dispatch)
+              [[ "${REF:-}" == 'refs/heads/main' ]] || refuse
+              ;;
+            *)
+              refuse
+              ;;
+          esac
+
+          [[ -n "${GITHUB_OUTPUT:-}" ]] || refuse
+          printf 'admitted=true\n' >> "$GITHUB_OUTPUT"
+
+  live-docker-4tier:
+    needs: trust-admission
+    if: needs.trust-admission.outputs.admitted == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_DIST_CI_LTO: 'off'
+      CARGO_BUILD_JOBS: '4'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/carbon-live-cargo
+      JOPE_SOURCE_SHA: ${{ inputs.source_sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Prepare run-scoped evidence directory
+        run: mkdir -p "target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+
+      - name: Install repository-pinned Rust toolchain for Option B emulator binary
+        if: ${{ !inputs.use_live_pro_secrets }}
+        env:
+          RUSTUP_HOME: /opt/rust/rustup
+        run: |
+          set -euo pipefail
+          sudo install -d -m 0755 -o "$(id -un)" -g "$(id -gn)" "$RUSTUP_HOME"
+          rustup toolchain install 1.97.1 --profile minimal
+          rustup default 1.97.1
+          printf 'RUSTUP_HOME=%s\n' "$RUSTUP_HOME" >> "$GITHUB_ENV"
+
+      - name: Build Carbon emulator binary for Option B high/ultra cells
+        if: ${{ !inputs.use_live_pro_secrets }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
+          cargo build --locked --profile dist-ci -p jope-carbon --bin carbon
+
+      - name: Execute Fresh-Docker production install and dev+prod 4-tier E2E
+        env:
+          USE_LIVE_PRO: ${{ inputs.use_live_pro_secrets && 'true' || 'false' }}
+          CARBON_CI_DEV_PRO_TOKEN: ${{ inputs.use_live_pro_secrets && secrets.CARBON_CI_DEV_PRO_TOKEN || '' }}
+          CARBON_CI_PROD_PRO_TOKEN: ${{ inputs.use_live_pro_secrets && secrets.CARBON_CI_PROD_PRO_TOKEN || '' }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
+          out_dir="target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+          if [ "$USE_LIVE_PRO" = "true" ]; then
+            python3 deploy/carbon/ci-live-4tier-docker.py \
+              --source-sha "$JOPE_SOURCE_SHA" \
+              --out-dir "$out_dir" \
+              --require-live-pro
+          else
+            python3 deploy/carbon/ci-live-4tier-docker.py \
+              --source-sha "$JOPE_SOURCE_SHA" \
+              --out-dir "$out_dir" \
+              --carbon-emu-bin "$CARGO_TARGET_DIR/dist-ci/carbon"
+          fi
+
+      - name: Retain Fresh-Docker 4-tier qualification receipt
+        if: always()
+        env:
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-carbon-live-evidence
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: carbon-live-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/carbon-live-e2e/${{ github.run_id }}/${{ github.run_attempt }}

@@ -864,13 +864,16 @@ enum Command {
         #[arg(long)]
         enable_user_envelope: bool,
     },
-    /// Boot the local multi-cell Lambda Runtime API + S3 CAS emulator (`--self-test` for CI).
+    /// Boot the local multi-cell Lambda Runtime API + S3 CAS emulator (`--self-test` or `--serve-dual-cells` for CI).
     #[cfg(feature = "emu")]
     Emu {
         #[arg(long)]
         work_dir: PathBuf,
         #[arg(long)]
         self_test: bool,
+        /// Boot isolated `dev` and `prod` local Lambda + CAS emulator cells on `127.0.0.1:0` until `<work_dir>/emu-stop` exists.
+        #[arg(long, conflicts_with = "self_test")]
+        serve_dual_cells: bool,
     },
     /// Generate a sample CSV and/or run a 1-command zero-knowledge E2E live demo (`CUEN\x01` + `r882` + `/predict` + `--shred`).
     Quickstart {
@@ -911,6 +914,9 @@ enum Command {
         /// Optional pre-existing `ci-quickstart-qualification.json` when `--run-ci-qualification` is false.
         #[arg(long)]
         ci_qualification_in: Option<PathBuf>,
+        /// Optional `live-ci-4tier-docker.json` receipt from the `carbon-live-e2e` CI job.
+        #[arg(long)]
+        live_ci_receipt: Option<PathBuf>,
         /// Optional explicit Git source SHA to bind into the specification receipt.
         #[arg(long)]
         source_sha: Option<String>,
@@ -2127,6 +2133,145 @@ fn run_emu_self_test(work_dir: PathBuf) -> Result<(), String> {
             "eval_invocations": telemetry.eval_invocations,
         })
     );
+    Ok(())
+}
+
+#[cfg(feature = "emu")]
+fn write_private_file_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    let tmp_path = path.with_extension("tmp");
+    fs::write(&tmp_path, bytes).map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&tmp_path, fs::Permissions::from_mode(0o600));
+    }
+    fs::rename(&tmp_path, path)
+        .map_err(|e| format!("rename {} -> {}: {e}", tmp_path.display(), path.display()))
+}
+
+#[cfg(feature = "emu")]
+fn count_regular_files_nonrecursive(dir: &std::path::Path) -> usize {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_ok_and(|ft| ft.is_file()))
+        .count()
+}
+
+#[cfg(feature = "emu")]
+fn build_dual_emu_clouds_manifest(
+    emu_dev: &CarbonLocalLambdaEmulator,
+    emu_prod: &CarbonLocalLambdaEmulator,
+) -> CarbonPublicCloudsManifest {
+    use jope_carbon::cli::client::{CarbonCloudCellEntry, CarbonCloudRegionPin};
+    let mut clouds = BTreeMap::new();
+    for (name, emu) in [("dev", emu_dev), ("prod", emu_prod)] {
+        let ep = emu.base_url();
+        let kek = Some(emu.engine_kek_pubkey_b64().to_owned());
+        clouds.insert(
+            name.to_owned(),
+            CarbonCloudCellEntry {
+                environment: name.to_owned(),
+                region: "us-east-2".to_owned(),
+                public_endpoint: ep.clone(),
+                engine_kek_pubkey_b64: kek.clone(),
+                release_id: Some(CARBON_RELEASE_TAG.to_owned()),
+                regions: vec![CarbonCloudRegionPin {
+                    region: "us-east-2".to_owned(),
+                    public_endpoint: ep,
+                    engine_kek_pubkey_b64: kek,
+                    release_id: Some(CARBON_RELEASE_TAG.to_owned()),
+                }],
+            },
+        );
+    }
+    CarbonPublicCloudsManifest {
+        schema: "jope-carbon-clouds-v2".to_owned(),
+        generated_epoch_ms: now_epoch_ms(),
+        clouds,
+    }
+}
+
+#[cfg(feature = "emu")]
+fn run_emu_dual_cells_daemon(work_dir: PathBuf) -> Result<(), String> {
+    fs::create_dir_all(&work_dir).map_err(|e| format!("create work_dir: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&work_dir, fs::Permissions::from_mode(0o700));
+    }
+    let ready_path = work_dir.join("emu-ready.json");
+    let stop_path = work_dir.join("emu-stop");
+    let clouds_path = work_dir.join("emu-clouds.json");
+    let tel_path = work_dir.join("emu-telemetry.json");
+    for stale in [&ready_path, &stop_path, &tel_path] {
+        let _ = fs::remove_file(stale);
+    }
+
+    let mut dev_cfg = CarbonEmuConfig::for_dir(work_dir.join("dev_cell"));
+    dev_cfg.auth_secret = [0x45u8; 32];
+    dev_cfg.engine_kek_scalar = [0x12u8; 32];
+    let mut prod_cfg = CarbonEmuConfig::for_dir(work_dir.join("prod_cell"));
+    prod_cfg.auth_secret = [0x46u8; 32];
+    prod_cfg.engine_kek_scalar = [0x13u8; 32];
+
+    let mut emu_dev = CarbonLocalLambdaEmulator::start(dev_cfg)?;
+    let mut emu_prod = CarbonLocalLambdaEmulator::start(prod_cfg)?;
+    let dev_pro_tok =
+        emu_dev.mint_capability_token("pro_ci_emu_dev", CarbonTierWire::Pro, false)?;
+    let prod_pro_tok =
+        emu_prod.mint_capability_token("pro_ci_emu_prod", CarbonTierWire::Pro, false)?;
+
+    let clouds_manifest = build_dual_emu_clouds_manifest(&emu_dev, &emu_prod);
+    let clouds_bytes = serde_json::to_vec_pretty(&clouds_manifest)
+        .map_err(|e| format!("serialize emu-clouds.json: {e}"))?;
+    write_private_file_atomic(&clouds_path, &clouds_bytes)?;
+
+    let ready_bytes = serde_json::to_vec_pretty(&serde_json::json!({
+        "ready": true,
+        "clouds_manifest_path": clouds_path,
+        "dev_endpoint": emu_dev.base_url(),
+        "prod_endpoint": emu_prod.base_url(),
+        "dev_pro_token": dev_pro_tok,
+        "prod_pro_token": prod_pro_tok,
+    }))
+    .map_err(|e| format!("serialize emu-ready.json: {e}"))?;
+    write_private_file_atomic(&ready_path, &ready_bytes)?;
+
+    for _ in 0..12_000 {
+        if stop_path.exists() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+
+    let _ = fs::remove_file(&ready_path);
+    let tel_dev = emu_dev.telemetry();
+    let tel_prod = emu_prod.telemetry();
+    let rem_dev = count_regular_files_nonrecursive(&emu_dev.cas_root().join("blobs"));
+    let rem_prod = count_regular_files_nonrecursive(&emu_prod.cas_root().join("blobs"));
+    emu_dev.shutdown();
+    emu_prod.shutdown();
+
+    let tel_bytes = serde_json::to_vec_pretty(&serde_json::json!({
+        "dev": {
+            "edge_invocations": tel_dev.edge_invocations,
+            "engine_invocations": tel_dev.engine_invocations,
+            "eval_invocations": tel_dev.eval_invocations,
+            "residual_cas_blobs": rem_dev,
+        },
+        "prod": {
+            "edge_invocations": tel_prod.edge_invocations,
+            "engine_invocations": tel_prod.engine_invocations,
+            "eval_invocations": tel_prod.eval_invocations,
+            "residual_cas_blobs": rem_prod,
+        },
+        "total_residual_cas_blobs": rem_dev + rem_prod,
+    }))
+    .map_err(|e| format!("serialize emu-telemetry.json: {e}"))?;
+    write_private_file_atomic(&tel_path, &tel_bytes)?;
     Ok(())
 }
 
@@ -4022,6 +4167,7 @@ fn run_cli_main() -> ExitCode {
         Command::Emu {
             work_dir,
             self_test,
+            serve_dual_cells,
         } => {
             if self_test {
                 match run_emu_self_test(work_dir) {
@@ -4031,8 +4177,18 @@ fn run_cli_main() -> ExitCode {
                         ExitCode::from(1)
                     }
                 }
+            } else if serve_dual_cells {
+                match run_emu_dual_cells_daemon(work_dir) {
+                    Ok(()) => ExitCode::SUCCESS,
+                    Err(err) => {
+                        eprintln!("error: carbon emu --serve-dual-cells failed: {err}");
+                        ExitCode::from(1)
+                    }
+                }
             } else {
-                eprintln!("error: pass --self-test for automated emulator verification");
+                eprintln!(
+                    "error: pass --self-test or --serve-dual-cells for automated emulator execution"
+                );
                 ExitCode::from(2)
             }
         }
@@ -4060,6 +4216,7 @@ fn run_cli_main() -> ExitCode {
             out_dir,
             run_ci_qualification,
             ci_qualification_in,
+            live_ci_receipt,
             source_sha,
             repo_root,
         } => match execute_carbon_spec_report(&CarbonSpecReportOptions {
@@ -4067,6 +4224,7 @@ fn run_cli_main() -> ExitCode {
             out_dir,
             run_ci_qualification,
             ci_qualification_in,
+            live_ci_receipt_in: live_ci_receipt,
             source_sha,
             repo_root,
         }) {

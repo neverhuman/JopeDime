@@ -613,7 +613,7 @@ class WorkflowAdmissionTests(unittest.TestCase):
         hygiene = self.job(ci, 'hygiene')
         self.assertIn('run: bash tools/security-lane.sh', hygiene)
         self.assertIn('JOPE_LANE_EVIDENCE:', hygiene)
-        for command in ('publication', 'frontend', 'rendered-ux', 'export-parity', 'filter-needs'):
+        for command in ('publication', 'frontend', 'rendered-ux', 'export-parity', 'carbon-live-e2e', 'filter-needs'):
             self.assertIn(f'aggregate-evidence.py {command}', ci)
         self.assertIn('aggregate-evidence.py filter-needs', full)
         self.assertNotIn('JOPE_UI_EVIDENCE', ci)

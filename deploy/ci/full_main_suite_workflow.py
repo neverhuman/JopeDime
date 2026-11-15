@@ -138,6 +138,54 @@ class FullMainTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 aggregate_evidence.verify_export_parity(root, source_sha, '123', '1', 'neverhuman/JopeDime', 'workflow_dispatch')
 
+    def test_carbon_live_e2e_verifier_binds_docker_4tier_receipt_and_spec_pdf(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            base = Path(scratch)
+            live_dir = base / 'live'
+            spec_dir = base / 'spec' / 'ci-123-1-e2e-smoke-pub-1' / 'carbon-spec'
+            live_dir.mkdir(parents=True)
+            spec_dir.mkdir(parents=True)
+            source_sha = 'a' * 40
+            runs = []
+            for cloud in ('dev', 'prod'):
+                for effort in ('fast', 'medium', 'high', 'ultra'):
+                    runs.append({
+                        'cloud': cloud, 'effort': effort,
+                        'execution_target': 'aws_live' if effort in ('fast', 'medium') else 'ci_emulator',
+                        'final_state': 'completed', 'encrypted_cuen': True, 'shredded_after_run': True,
+                        'holdout_r2': 0.999, 'total_wall_ms': 420.0,
+                        'cost_estimate': {'total_estimated_usd': 0.0001, 'runs_per_1_usd': 10000.0},
+                    })
+            payload = json.dumps({
+                'schema': 'jopedime.carbon.live-ci-4tier-docker.v1',
+                'source_sha': source_sha, 'github_run_id': '123', 'github_run_attempt': 1,
+                'pro_secrets_mode': 'zero_secrets_hybrid_live_and_emulator', 'all_passed': True,
+                'container': {'base_image': 'ubuntu:24.04', 'zero_credentials_pre_install': True, 'post_logout_credentials_absent': True},
+                'install': {
+                    'self_verify_verified': True, 'manifest_ecdsa_verified': True, 'kek_pins_verified': 6,
+                    'doctor_healthy': True, 'doctor_dev_healthy_regions': 1, 'doctor_prod_healthy_regions': 5,
+                    'quickstart_passed': True, 'live_anon_high_gate_status': 403,
+                },
+                'runs': runs, 'emulator_cells': {'total_residual_cas_blobs': 0},
+            }).encode()
+            digest = hashlib.sha256(payload).hexdigest()
+            (live_dir / 'live-ci-4tier-docker.json').write_bytes(payload)
+            (live_dir / 'MANIFEST.sha256').write_text(f'{digest}  live-ci-4tier-docker.json\n')
+            (spec_dir / 'live-ci-4tier-docker.json').write_bytes(payload)
+            (spec_dir / 'spec-bundle-manifest.json').write_text(json.dumps({
+                'live_ci_qualification_file': 'live-ci-4tier-docker.json',
+                'live_ci_qualification_sha256': digest,
+            }))
+            (spec_dir / 'spec-pdf-receipt.json').write_text(json.dumps({
+                'live_ci_qualification_sha256': digest,
+            }))
+            aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
+            (spec_dir / 'spec-pdf-receipt.json').write_text(json.dumps({
+                'live_ci_qualification_sha256': '0' * 64,
+            }))
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
+
     def fixture(self, root):
         folder = root / 'full-one'
         folder.mkdir()

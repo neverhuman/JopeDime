@@ -171,6 +171,12 @@ async function main() {
       pdf_page_count: pdfPageCount,
       html_sha256: manifest.html_sha256,
       ci_qualification_sha256: manifest.ci_qualification_sha256,
+      ...(manifest.live_ci_qualification_file
+        ? { live_ci_qualification_file: manifest.live_ci_qualification_file }
+        : {}),
+      ...(manifest.live_ci_qualification_sha256
+        ? { live_ci_qualification_sha256: manifest.live_ci_qualification_sha256 }
+        : {}),
       horizontal_overflow_px: overflowPx,
       screenshots: screenshotEntries,
       evidence_ledger: manifest.evidence_ledger,

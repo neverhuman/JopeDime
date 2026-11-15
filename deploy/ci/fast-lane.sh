@@ -42,6 +42,7 @@ python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
 python3 deploy/ci/test-provenance.py
 python3 deploy/ci/test-full-main.py
+python3 -W error::ResourceWarning deploy/carbon/test_ci_live_4tier_docker.py
     # Split jobs cover the families and rust-test slices of the single jobs they replaced (and,
     # on a pull request, nothing the base declared is missing)
 cargo run -q --locked -p jope-ci -- test-partition static --base "${BASE_SHA:-}" --output "$EVIDENCE/test-partition-static.json"
@@ -323,8 +324,14 @@ spec_source_sha="${JOPE_SOURCE_SHA:-$(git rev-parse HEAD)}"
 spec_dir="$EVIDENCE/carbon-spec"
 mkdir -p "$spec_dir"
 spec_dir_abs=$(realpath "$spec_dir")
+spec_live_args=()
+if [ -n "${JOPE_CARBON_LIVE_CI_RECEIPT:-}" ]; then
+  [ -f "$JOPE_CARBON_LIVE_CI_RECEIPT" ] || { echo "missing required live CI 4-tier receipt: $JOPE_CARBON_LIVE_CI_RECEIPT" >&2; exit 1; }
+  spec_live_args=(--live-ci-receipt "$JOPE_CARBON_LIVE_CI_RECEIPT")
+fi
 cargo run --locked -p jope-carbon --bin carbon -- spec-report \
   --run-ci-qualification \
+  "${spec_live_args[@]}" \
   --evidence-dir docs/carbon/evidence \
   --source-sha "$spec_source_sha" \
   --out-dir "$spec_dir_abs"
