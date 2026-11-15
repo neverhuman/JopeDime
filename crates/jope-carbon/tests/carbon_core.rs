@@ -2532,11 +2532,15 @@ fn spec_report_section_14_compiler_code_coverage_matrix_and_tamper_refusal() {
         },
         files: vec![FileCoverageDelta {
             file: "src/bin/carbon.rs".to_owned(),
-            before_lines_pct: 53.86,
+            before_functions_pct: 60.95,
+            after_functions_covered: 90,
+            after_functions_total: 105,
+            after_functions_pct: 85.71,
+            before_lines_pct: 72.46,
             after_lines_covered: 2_450,
             after_lines_total: 2_855,
             after_lines_pct: 85.81,
-            before_regions_pct: 53.24,
+            before_regions_pct: 70.65,
             after_regions_covered: 3_480,
             after_regions_total: 4_065,
             after_regions_pct: 85.61,
@@ -2603,7 +2607,10 @@ fn spec_report_section_14_compiler_code_coverage_matrix_and_tamper_refusal() {
         "AUTO-EMU-FALLBACK",
         "code-coverage-summary.json",
     ] {
-        assert!(html.contains(needle), "missing '{needle}' in Section 14 HTML");
+        assert!(
+            html.contains(needle),
+            "missing '{needle}' in Section 14 HTML"
+        );
     }
 
     let manifest: serde_json::Value = serde_json::from_slice(

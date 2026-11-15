@@ -174,8 +174,7 @@ fn cli_global_flags_version_completions_plan_spotcheck_and_shorthand_branches() 
         .output()
         .expect("carbon plan");
     assert!(plan_out.status.success());
-    let plan_json: serde_json::Value =
-        serde_json::from_slice(&plan_out.stdout).expect("plan json");
+    let plan_json: serde_json::Value = serde_json::from_slice(&plan_out.stdout).expect("plan json");
     assert!(plan_json["mode"].is_string());
 
     let spot_out = Command::new(&bin)
@@ -685,20 +684,12 @@ fn carbon_edge_carbon_worker_and_cli_lambda_runtime_loops_execute_and_exit_clean
         (&worker_bin, vec!["eval", "--lambda-runtime"], "eval"),
         (
             &cli_bin,
-            vec![
-                "engine",
-                "--work-dir",
-                tmp.path().to_str().expect("utf8"),
-            ],
+            vec!["engine", "--work-dir", tmp.path().to_str().expect("utf8")],
             "engine",
         ),
         (
             &cli_bin,
-            vec![
-                "eval",
-                "--scratch-dir",
-                tmp.path().to_str().expect("utf8"),
-            ],
+            vec!["eval", "--scratch-dir", tmp.path().to_str().expect("utf8")],
             "eval",
         ),
     ] {
@@ -732,7 +723,9 @@ fn carbon_edge_carbon_worker_and_cli_lambda_runtime_loops_execute_and_exit_clean
             admin: true,
         })
         .expect("mint admin");
-    let claims = verifier.verify_token(&admin_tok, 1_800_000_000).expect("verify");
+    let claims = verifier
+        .verify_token(&admin_tok, 1_800_000_000)
+        .expect("verify");
     assert!(claims.admin);
 
     emu.shutdown();

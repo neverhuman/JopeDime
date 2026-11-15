@@ -10,9 +10,10 @@ use jope_api::{
 use jope_carbon::{
     carbon_https_agent, execute_carbon_cli_run, send_raw_edge_http, CarbonAuthVerifier,
     CarbonCapabilityClaims, CarbonCasStore, CarbonCliRunOptions, CarbonEdgeConfig,
-    CarbonEdgeRouter, CarbonEmuConfig, CarbonEngineInvoker, CarbonEngineKek, CarbonEngineWireCommand,
-    CarbonEngineWorker, CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker,
-    CarbonFsCas, CarbonLocalLambdaEmulator, CarbonPresigner, CarbonS3Cas, CarbonSealKey,
+    CarbonEdgeRouter, CarbonEmuConfig, CarbonEngineInvoker, CarbonEngineKek,
+    CarbonEngineWireCommand, CarbonEngineWorker, CarbonEnterpriseServeConfig,
+    CarbonEnterpriseServer, CarbonEvalWorker, CarbonFsCas, CarbonLocalLambdaEmulator,
+    CarbonPresigner, CarbonS3Cas, CarbonSealKey,
 };
 
 use super::{LoopbackMockS3Server, ScopedProcessEnv};
@@ -130,12 +131,9 @@ fn unit_inproc_free_medium_and_local_emu_free_ultra_403_and_anon_medium_close_ma
         method: "POST".to_owned(),
         path: "/v1/carbon/uploads/prepare".to_owned(),
         query: Default::default(),
-        headers: [(
-            "authorization".to_owned(),
-            format!("Bearer {free_tok}"),
-        )]
-        .into_iter()
-        .collect(),
+        headers: [("authorization".to_owned(), format!("Bearer {free_tok}"))]
+            .into_iter()
+            .collect(),
         body_b64: None,
         raw_body: serde_json::to_vec(&jope_api::carbon::CarbonPrepareUploadRequest {
             tenant_id: free_ten,
@@ -158,8 +156,9 @@ fn unit_inproc_free_medium_and_local_emu_free_ultra_403_and_anon_medium_close_ma
     assert_eq!(prep_gw.status, 200);
 
     // 2. `local_emu`: verify `free x medium` (`200` E2E) and `free x ultra` (`403` tier gate)
-    let mut emu = CarbonLocalLambdaEmulator::start(CarbonEmuConfig::for_dir(tmp.path().join("emu")))
-        .expect("start emu");
+    let mut emu =
+        CarbonLocalLambdaEmulator::start(CarbonEmuConfig::for_dir(tmp.path().join("emu")))
+            .expect("start emu");
     let med_rcpt = run_cli_cell(
         &emu.base_url(),
         "anon_free_med",
@@ -221,7 +220,10 @@ fn enterprise_serve_local_8_cells_and_streaming_precheck_413_parity() {
     let base = srv.base_url();
 
     // `serve.rs` streaming guards: `PUT /v1/carbon/cas/*` precheck 401/403 before body read, and 413 >131 KiB on `/v1/carbon/runs`
-    let put_url = format!("{base}/v1/carbon/cas/{}?exp=1&sig=bad&bytes=16", "a".repeat(64));
+    let put_url = format!(
+        "{base}/v1/carbon/cas/{}?exp=1&sig=bad&bytes=16",
+        "a".repeat(64)
+    );
     let put_pre = carbon_https_agent()
         .put(&put_url)
         .config()
@@ -313,7 +315,10 @@ fn loopback_sigv4_s3_cas_and_enterprise_serve_s3_all_8_tier_cells_and_shred() {
         .put_blob_verified(&sha, payload)
         .expect("put_blob_verified to loopback S3");
     assert_eq!(
-        s3_cas.get_raw_blob(None, &sha).expect("get_raw_blob").as_deref(),
+        s3_cas
+            .get_raw_blob(None, &sha)
+            .expect("get_raw_blob")
+            .as_deref(),
         Some(&payload[..])
     );
     assert!(s3_cas
