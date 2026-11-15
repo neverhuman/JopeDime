@@ -313,14 +313,30 @@ def claim_folder(out_dir: Path, fixed: dict) -> None:
     os.replace(tmp, set_p)
 
 
+def clip_bounds(y: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """Bounds of the range guard, built so that no row is ever clipped at its own label.
+
+    Audit-slot rows are clipped at the range of the SEARCH targets (lo, hi). A SEARCH row is clipped at the range of
+    the OTHER SEARCH rows (lo_q, hi_q): the row that holds the minimum is bounded by the second-smallest target and the
+    row that holds the maximum by the second-largest. Clipping a row's cross-fitted value at a range that contains its
+    own target would hand the blend that reads the column a prediction equal to the label on exactly the extreme rows.
+    """
+    y = np.asarray(y, dtype=np.float64)
+    s = np.sort(y)
+    lo_q, hi_q = np.full(len(y), s[0]), np.full(len(y), s[-1])
+    lo_q[int(np.argmin(y))], hi_q[int(np.argmax(y))] = s[1], s[-2]
+    return lo_q, hi_q, float(s[0]), float(s[-1])
+
+
 def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "", clip: bool = False) -> dict:
     """One block directory in the `_load_col_block` layout from several arm folders, for a column scorer.
 
     Column `<tag>` is the arm's column after its last stage and `<tag>_s<j>` the column after stage j. Only contexts
     that every source holds are written. `part` picks the rows of the audit slot: 0 for the bank's own, 1 for the
     appended bank's. With `clip`, every column `<name>` gets a twin `<name>c` whose values are clipped to the range of
-    the context's SEARCH targets (a guard against a program that leaves the observed range on a row). This renames and
-    clips stored predictions; it reads no label outside SEARCH rows.
+    the context's SEARCH targets (a guard against a program that leaves the observed range on a row); a SEARCH row's
+    own value is clipped at the range of the other SEARCH rows (`clip_bounds`). This renames and clips stored
+    predictions; it reads no label outside SEARCH rows.
     """
     books: dict[str, dict] = {}
     for tag, src in sources.items():
@@ -341,15 +357,16 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     if not cids or any(out_dir.iterdir()):
         raise SystemExit("nothing in common to pack, or the output directory is not empty")
     names: list[str] = []
-    y_range: dict[str, tuple[float, float]] = {}
+    y_search: dict[str, np.ndarray] = {}
     if clip:
         first = next(iter(next(iter(books.values())).values()))["settings"]
         if P.digest_file(Path(first["bank"])) != first["bank_sha256"]:
             raise SystemExit("the arms' bank changed")
-        y_range = {c: (float(d["y"].min()), float(d["y"].max())) for c, d in load_bank(Path(first["bank"])).items()}
+        y_search = {c: d["y"] for c, d in load_bank(Path(first["bank"])).items()}
     for cid in cids:
         out: dict[str, np.ndarray] = {"ok": np.array(True)}
         wall = 0.0
+        bounds = clip_bounds(y_search[cid]) if clip else None
         for tag, src in sources.items():
             wall += float(books[tag][cid]["wall_s"])
             parts = parts_of(books[tag][cid])
@@ -361,9 +378,10 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
                         out[f"q_{name}"] = np.asarray(z[f"q_s{j}"], dtype=np.float64)
                         for pre in ("bag", "ref"):
                             out[f"{pre}_{name}"] = np.asarray(z[f"{pre}_s{j}"], dtype=np.float64)[rows]
-                        if clip:
-                            lo, hi = y_range[cid]
-                            for pre in ("q", "bag", "ref"):
+                        if bounds is not None:
+                            lo_q, hi_q, lo, hi = bounds
+                            out[f"q_{name}c"] = np.clip(out[f"q_{name}"], lo_q, hi_q)
+                            for pre in ("bag", "ref"):
                                 out[f"{pre}_{name}c"] = np.clip(out[f"{pre}_{name}"], lo, hi)
                         if cid == cids[0]:
                             names.extend([name, name + "c"] if clip else [name])
@@ -380,7 +398,8 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     label = "fresh-probe" if probe else (closure or ("fair-gp-search-only" if fair_prior else "in-corpus-prior"))
     doc = {
         "names": names, "closure": label, "prior_in_corpus": not fair_prior, "bank_sha256": next(iter(banks)), "contexts": cids,
-        "clipped_twins": "<name>c = <name> clipped to the range of the context's SEARCH targets" if clip else None,
+        "clipped_twins": ("<name>c = <name> clipped to the range of the context's SEARCH targets; a SEARCH row's own value (q_) is clipped "
+                          "at the range of the other SEARCH rows") if clip else None,
         "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
         "priors": priors,
         "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False,
