@@ -378,6 +378,21 @@ def require_probe_rows_fresh(pool: FP.FamilyPool, fam8: str, cid: str, xs: np.nd
     return cov
 
 
+def require_rows_foreign(pool: FP.FamilyPool, trained_fams: list[str], cid: str, xs: np.ndarray, xa: np.ndarray) -> list[float]:
+    """Role "foreign" of closure "fresh-probe": no row of the context, SEARCH or probe, is in a table the checkpoint was fine-tuned on."""
+    if not trained_fams:
+        raise SystemExit(f"{cid}: role 'foreign' needs a specialist with its training families recorded")
+    worst = [0.0, 0.0]
+    for fam in trained_fams:
+        if int(np.asarray(pool.table(fam)).shape[1]) - 1 != xs.shape[1]:
+            continue  # another width: no row of this context can be a row of that table
+        cov = [pool.coverage(fam, xs), pool.coverage(fam, xa)]
+        if max(cov) > 0.0:
+            raise SystemExit(f"{cid}: role 'foreign' refused, the checkpoint's table {fam} holds rows of this context (search {cov[0]:.4f}, probe {cov[1]:.4f})")
+        worst = [max(worst[0], cov[0]), max(worst[1], cov[1])]
+    return worst
+
+
 def fair_allowlist() -> dict[str, str]:
     """sha256 -> note for the checkpoints that may be scored as closure "fair"; empty until someone registers one."""
     if not FAIR_ALLOWLIST.is_file():
@@ -410,6 +425,8 @@ def check_checkpoint(path: Path, key: str, closure: str, arm: str, stratum: int 
         if arm != "rand":
             raise SystemExit("role 'init' is scored with arm 'rand': a checkpoint that was never trained with canonical slots has no canonical path")
         return {}
+    if role == "foreign" and (closure != "fresh-probe" or arm != "rand"):
+        raise SystemExit("role 'foreign' belongs to closure 'fresh-probe' and is scored with arm 'rand': canonical slots tie a specialist to the columns of its own table")
     if trained_pool != pool_sha:
         raise SystemExit(f"{path}: trained on pool {str(trained_pool)[:16]}, scoring against pool {pool_sha[:16]}")
     if cfg is None:
@@ -427,7 +444,8 @@ def check_checkpoint(path: Path, key: str, closure: str, arm: str, stratum: int 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--closure", choices=CLOSURES, required=True)
-    ap.add_argument("--probe-role", choices=("specialist", "init"), default="specialist", help="closure fresh-probe: the specialist, or its pre-fine-tune checkpoint")
+    ap.add_argument("--probe-role", choices=("specialist", "init", "foreign"), default="specialist",
+                    help="closure fresh-probe: the specialist, its pre-fine-tune checkpoint, or (foreign) the random-slot specialist of ANOTHER table as a control")
     ap.add_argument("--ckpt", default="", help="one checkpoint (every closure but skill-xfit5)")
     ap.add_argument("--xfit-ckpts", default="", help="five comma-separated checkpoints; the k-th was trained without stratum k")
     ap.add_argument("--ckpt-key", default="ema")
@@ -485,12 +503,18 @@ def main() -> None:
     for cid in cids:
         fam8 = bank[cid]["family"][4:12]
         for t in trained:
-            if t.get("families") and fam8 not in [str(f)[:8] for f in t["families"]]:
+            own = fam8 in [str(f)[:8] for f in (t.get("families") or [])]
+            if a.probe_role == "foreign":
+                if own or not t.get("families"):
+                    raise SystemExit(f"{cid}: role 'foreign' takes the specialist of another family; this checkpoint was trained on {t.get('families')}")
+            elif t.get("families") and not own:
                 raise SystemExit(f"{cid}: family {fam8} is not what the checkpoint was trained on ({t['families']})")
         if a.closure == "recall":
             coverage[cid] = require_pool_coverage(pool, fam8, cid, bank[cid]["Xs"], bank[cid]["Xa"])
         elif a.closure == "skill-xfit5":
             coverage[cid] = [pool.coverage(fam8, bank[cid]["Xs"]), pool.coverage(fam8, bank[cid]["Xa"])]
+        elif fresh and a.probe_role == "foreign":
+            coverage[cid] = require_rows_foreign(pool, [str(f) for t in trained for f in (t.get("families") or [])], cid, bank[cid]["Xs"], bank[cid]["Xa"])
         elif fresh:
             coverage[cid] = require_probe_rows_fresh(pool, fam8, cid, bank[cid]["Xs"], bank[cid]["Xa"])
     shas = [P.digest_file(p) for p in paths]

@@ -441,6 +441,21 @@ def gate_block_closures(ctx) -> dict:
     assert CB.check_checkpoint(spec, "ema", "fresh-probe", "canon", None, pool.sha256, "specialist")["families"] == [fam8]
     assert _refused(CB.check_checkpoint, spec, "ema", "fresh-probe", "rand", None, pool.sha256, "specialist"), "a canon specialist was accepted with random slots"
     assert _refused(CB.check_checkpoint, plain, "ema", "recall", "canon", None, pool.sha256), "a plain checkpoint was accepted as a recall specialist"
+    # role foreign: the random-slot specialist of ANOTHER table, as a control for what any fine-tune on evaluation-matched episodes gives
+    spec_r = root / "spec_rand.pt"
+    torch.save({"ema": {}, "cfg": {"families": [fam8], "arm": "rand"}, "state": {"pool_sha256": pool.sha256}}, spec_r)
+    assert CB.check_checkpoint(spec_r, "ema", "fresh-probe", "rand", None, pool.sha256, "foreign")["families"] == [fam8]
+    assert _refused(CB.check_checkpoint, spec, "ema", "fresh-probe", "canon", None, pool.sha256, "foreign"), "a canonical-slot specialist was accepted as a foreign control"
+    assert _refused(CB.check_checkpoint, spec_r, "ema", "recall", "rand", None, pool.sha256, "foreign"), "role foreign was accepted outside the fresh-row closure"
+    assert _refused(CB.check_checkpoint, plain, "ema", "fresh-probe", "rand", None, pool.sha256, "foreign"), "a plain checkpoint was accepted as a foreign specialist"
+    assert _refused(CB.require_rows_foreign, pool, [fam8], cid, xs, fresh), "a context was scored as foreign by a specialist of its own table"
+    assert _refused(CB.require_rows_foreign, pool, [], cid, xs, fresh), "a foreign control without recorded training families was accepted"
+    others = [pool.short(i) for i in range(len(pool.families)) if pool.short(i) != fam8]
+    diff_w = [f for f in others if int(np.asarray(pool.table(f)).shape[1]) - 1 != xs.shape[1]]
+    assert diff_w and CB.require_rows_foreign(pool, diff_w[:2], cid, xs, fresh) == [0.0, 0.0]
+    same_w = [f for f in others if int(np.asarray(pool.table(f)).shape[1]) - 1 == xs.shape[1]]
+    if same_w:
+        assert CB.require_rows_foreign(pool, same_w[:1], cid, xs, fresh) == [0.0, 0.0], "another family's table holds this context's rows"
     # sidecar bookkeeping: one entry per run, files and sidecar agree, a second closure in the same directory is refused
     blk = root / "block"
     blk.mkdir()
@@ -494,7 +509,7 @@ def gate_block_closures(ctx) -> dict:
         same = CB._struct_cols_same_width(lambda a_, y_, q_, **k_: (a_, q_, None, None, None))
         assert same(xs[:8], d["y"][:8], xa[:4])[0].shape[1] == xs.shape[1]
     assert C.REL.build_h450_struct_cols is before, "the struct-column function was not restored"
-    return {"checks": 39, "dir": str(root)}
+    return {"checks": 46, "dir": str(root)}
 
 
 class _LookupEngine:
@@ -719,7 +734,58 @@ def gate_gp_chain_units(ctx) -> dict:
     with np.load(s_out / f"{cidr}.npz") as z:
         assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
     assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
-    return {"checks": 60, "dir": str(work)}
+    # the program bank: every exported program as its own column, written from the same snapshots the arms read
+    stub_bank = work / "bank_stub.npz"
+    np.savez(stub_bank, cids=np.array(["ctxp", "ctxq"]), family=np.array(["fam-stubstubstub"] * 2), s_shape=np.array([[48, 4]] * 2), a_shape=np.array([[15, 3]] * 2),
+             search=np.tile(np.hstack([xs, yy[:, None]]).ravel(), 2), audit=np.tile(d["Xa"].ravel(), 2), y64=np.tile(yy, 2))
+    assert np.array_equal(GC.load_bank(stub_bank)["ctxq"]["y"], yy) and np.array_equal(GC.load_bank(stub_bank)["ctxp"]["Xa"], d["Xa"])
+    stub_set = {"bank": str(stub_bank), "bank_sha256": P.digest_file(stub_bank), "prior": "dev91-free", "top_export": 2}
+
+    def stub_arm(tag: str, arm: str, stages: int, cids_: tuple[str, ...], settings: dict) -> tuple[Path, dict]:
+        folder = work / f"bank_arm_{tag}"
+        folder.mkdir()
+        A.arm, A.stages = arm, stages
+        last = {}
+        for c_ in cids_:
+            last = GC.run_context((_LookupEngine(), None, None), c_, d, A, folder / "_engine")
+            np.savez(folder / f"{c_}.npz", outer_lab=last["outer_lab"], **{f"{k}_s{j}": v for j, s_ in enumerate(last["stages"], 1) for k, v in s_.items()})
+            (folder / f"{c_}.json").write_text(json.dumps({**last["book"], "settings": settings}))
+        return folder, last
+
+    f_sg, _ = stub_arm("sg", "single", 1, ("ctxp", "ctxq"), stub_set)
+    f_ch, _ = stub_arm("ch", "chain", 3, ("ctxp",), stub_set)
+    f_of, r_of = stub_arm("of", "oof_single", 1, ("ctxp",), stub_set)
+    pb = work / "packed_bank"
+    pb.mkdir()
+    bdoc = GC.pack_bank({"sg": f_sg, "ch": f_ch, "of": f_of}, pb)
+    assert bdoc["contexts"] == ["ctxp"], "only contexts that every arm holds are packed"
+    assert bdoc["names"] == (["sg_p1", "sg_p2"] + [f"ch_s{j}_p{r}" for j in (1, 2, 3) for r in (1, 2)] + [f"of_o{o}_p{r}" for o in range(4) for r in (1, 2)])
+    assert bdoc["layout"] == "program-bank/v1" and bdoc["closure"] == "fair-gp-search-only" and abs(bdoc["valid_share"] - 0.5) < 1e-12
+    pg = bdoc["programs"]
+    assert pg["ch_s1_p1"]["target"] == "y" and pg["ch_s2_p1"]["target"] == "residual" and pg["of_o2_p1"]["outer_fold"] == 2 and pg["sg_p1"]["outer_fold"] is None
+    lab_of = r_of["outer_lab"]
+    with np.load(pb / "ctxp.npz") as z:
+        assert z["valid"].tolist() == [True, False] * 8 and z["dsl"].tolist() == ["stub", ""] * 8
+        assert np.array_equal(z["q_sg_p1"], 0.5 * yy) and np.array_equal(z["ref_sg_p1"][:10], 0.5 * yy[:10]) and np.allclose(z["ref_sg_p1"][10:], 0.0)
+        assert np.allclose(z["q_ch_s2_p1"], 0.25 * yy) and np.allclose(z["q_ch_s3_p1"], 0.125 * yy), "a later stage's program predicts its residual target"
+        assert np.allclose(z["q_sg_p2"], (yy.sum() - yy) / 47.0) and np.allclose(z["ref_sg_p2"], yy.mean()), "a missing program is the mean of the other rows"
+        assert np.array_equal(z["outer_lab_of"], lab_of)
+        for o in range(4):
+            hold_o = lab_of == o
+            assert np.array_equal(z[f"q_of_o{o}_p1"][hold_o], r_of["stages"][0]["q"][hold_o]), "a held-out row does not carry its fold's all-rows fit"
+            assert np.allclose(z[f"q_of_o{o}_p1"][hold_o], 0.0) and np.allclose(z[f"q_of_o{o}_p1"][~hold_o], 0.5 * yy[~hold_o])
+        assert np.allclose(np.mean([z[f"ref_of_o{o}_p1"] for o in range(4)], axis=0), r_of["stages"][0]["ref"]), "the fold programs do not average to the arm's column"
+        lo_b, hi_b, lo_s, hi_s = GC.clip_bounds(yy)
+        assert np.array_equal(z["range_lo_q"], lo_b) and np.array_equal(z["range_hi_q"], hi_b) and (float(z["range_lo"]), float(z["range_hi"])) == (lo_s, hi_s)
+        assert z["ref_of_o0_p1"].shape == (15,) and z["q_of_o0_p1"].shape == (48,)
+    assert _refused(GC.pack_bank, {"sg": f_sg}, pb), "a program bank was packed into a filled directory"
+    assert _refused(GC.pack_bank, {"cm": cdst}, work / "packed_bank_committee"), "a derived committee folder has no programs of its own"
+    f_ic, _ = stub_arm("ic", "single", 1, ("ctxp",), {k: v for k, v in stub_set.items() if k != "prior"})
+    pb2 = work / "packed_bank_fair_refused"
+    pb2.mkdir()
+    assert _refused(GC.pack_bank, {"ic": f_ic}, pb2, 0, "fair"), "in-corpus-prior programs were packed as fair"
+    A.arm, A.stages = "chain", 3
+    return {"checks": 78, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

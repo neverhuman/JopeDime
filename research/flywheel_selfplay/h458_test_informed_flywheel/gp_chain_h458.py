@@ -328,6 +328,29 @@ def clip_bounds(y: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, float]:
     return lo_q, hi_q, float(s[0]), float(s[-1])
 
 
+def arm_books(sources: dict[str, Path]) -> dict[str, dict]:
+    """The manifests of every finished context of every arm folder, by pack tag."""
+    books: dict[str, dict] = {}
+    for tag, src in sources.items():
+        if not re.fullmatch(r"[a-z][a-z0-9]{0,15}", tag):
+            raise SystemExit(f"pack tag {tag!r}: lower-case letters and digits only")
+        books[tag] = {f.stem: json.loads(f.read_text()) for f in sorted(src.glob("*.json")) if not f.name.startswith(".") and f.name != "SETTINGS.json"}
+        if not books[tag]:
+            raise SystemExit(f"{src}: no finished context")
+    return books
+
+
+def block_label(books: dict[str, dict], bank_sha: str, bank_path: str, closure: str) -> tuple[str, list[str], bool]:
+    """Closure label of a packed block, the priors its arms ran under, and whether all of them were the dev91-free one."""
+    probe = bank_sha in P.KNOWN_PROBE_BANKS or (Path(bank_path).parent / "PROBE_BOARD.json").is_file()
+    # an arm folder from before the driver had --prior ran under the engine's default prior, which is the in-corpus one
+    priors = sorted({str(b["settings"].get("prior") or "in-corpus") for bk in books.values() for b in bk.values()})
+    fair_prior = priors == ["dev91-free"]
+    if closure.startswith("fair") and not fair_prior:
+        raise SystemExit(f"closure {closure!r} refused: the arms ran under priors {priors}, and the in-corpus prior has seen dev91")
+    return "fresh-probe" if probe else (closure or ("fair-gp-search-only" if fair_prior else "in-corpus-prior")), priors, fair_prior
+
+
 def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "", clip: bool = False) -> dict:
     """One block directory in the `_load_col_block` layout from several arm folders, for a column scorer.
 
@@ -338,13 +361,7 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     own value is clipped at the range of the other SEARCH rows (`clip_bounds`). This renames and clips stored
     predictions; it reads no label outside SEARCH rows.
     """
-    books: dict[str, dict] = {}
-    for tag, src in sources.items():
-        if not re.fullmatch(r"[a-z][a-z0-9]{0,15}", tag):
-            raise SystemExit(f"pack tag {tag!r}: lower-case letters and digits only")
-        books[tag] = {f.stem: json.loads(f.read_text()) for f in sorted(src.glob("*.json")) if not f.name.startswith(".") and f.name != "SETTINGS.json"}
-        if not books[tag]:
-            raise SystemExit(f"{src}: no finished context")
+    books = arm_books(sources)
     sha_key, path_key = ("bank_sha256", "bank") if part == 0 else ("extra_audit_bank_sha256", "extra_audit_bank")
     banks = {b["settings"].get(sha_key) for bk in books.values() for b in bk.values()}
     if len(banks) != 1 or None in banks:
@@ -389,13 +406,7 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
         tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
         np.savez(tmp, **out)
         os.replace(tmp, out_dir / f"{cid}.npz")
-    probe = next(iter(banks)) in P.KNOWN_PROBE_BANKS or (Path(next(iter(next(iter(books.values())).values()))["settings"][path_key]).parent / "PROBE_BOARD.json").is_file()
-    # an arm folder from before the driver had --prior ran under the engine's default prior, which is the in-corpus one
-    priors = sorted({str(b["settings"].get("prior") or "in-corpus") for bk in books.values() for b in bk.values()})
-    fair_prior = priors == ["dev91-free"]
-    if closure.startswith("fair") and not fair_prior:
-        raise SystemExit(f"closure {closure!r} refused: the arms ran under priors {priors}, and the in-corpus prior has seen dev91")
-    label = "fresh-probe" if probe else (closure or ("fair-gp-search-only" if fair_prior else "in-corpus-prior"))
+    label, priors, fair_prior = block_label(books, next(iter(banks)), next(iter(next(iter(books.values())).values()))["settings"][path_key], closure)
     doc = {
         "names": names, "closure": label, "prior_in_corpus": not fair_prior, "bank_sha256": next(iter(banks)), "contexts": cids,
         "clipped_twins": ("<name>c = <name> clipped to the range of the context's SEARCH targets; a SEARCH row's own value (q_) is clipped "
@@ -404,6 +415,141 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
         "priors": priors,
         "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False,
         "notes": "H458 S9 staged residual GP columns; q_ is honest only for out-of-fold arms (see each arm's manifest)", **P.DISCLOSURE,
+    }
+    tmp = out_dir / f".SIDECAR.{os.getpid()}.part.json"
+    tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+    os.replace(tmp, out_dir / "SIDECAR.json")
+    return doc
+
+
+def pack_bank(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "") -> dict:
+    """The program bank of several arm folders as one block directory: one column per exported program.
+
+    A column block (`pack_block`) holds what each arm made of its programs. A joint re-fit over a fixed library needs
+    the programs themselves, and every engine call already exported its top ones (`*_cons`). Nothing is run here.
+
+    Names: `<tag>_p<r>` is program r of a single run, `<tag>_s<j>_p<r>` of stage j of a chain, and
+    `<tag>_o<o>_p<r>` / `<tag>_o<o>_s<j>_p<r>` of outer fold o of an out-of-fold arm.
+
+    What a column holds, as the engine exported it:
+      q_    on the SEARCH rows the call saw: the program's cross-fitted prediction of the call's target. The folds are
+            the call's own; the program was still CHOSEN on those rows, so q_ flatters it.
+            On the rows of outer fold o, a program of fold o has its all-rows fit instead: those rows were never seen
+            by its fit or by its selection. `outer_lab_<tag>` gives the fold of every SEARCH row.
+      bag_  the audit slot, fold models averaged;  ref_  the audit slot, fitted on all rows the call saw.
+    A program of a later chain stage predicts a RESIDUAL (the target minus the running column), not the target; the
+    sidecar says which (`target`). A program the engine could not export (fewer than `top_export`, the mean fallback,
+    a non-finite value) is listed with `valid` false and filled with the mean of the SEARCH targets, on a SEARCH row
+    the mean of the other rows.
+
+    Each context file also carries `valid`, `dsl`, `u_cons` (aligned with the sidecar's `names`) and the range guard
+    of `clip_bounds` (`range_lo_q`, `range_hi_q` per SEARCH row, `range_lo`, `range_hi` for the audit slot), so a
+    reader can clamp without ever clipping a row at its own label. Reads SEARCH labels only, for that fill and guard.
+    """
+    books = arm_books(sources)
+    for tag, src in sources.items():
+        if any("pipelines" not in b or b.get("arm") == "single_committee" for b in books[tag].values()):
+            raise SystemExit(f"{src}: not the folder of an arm that ran the engine")
+    sha_key, path_key = ("bank_sha256", "bank") if part == 0 else ("extra_audit_bank_sha256", "extra_audit_bank")
+    banks = {b["settings"].get(sha_key) for bk in books.values() for b in bk.values()}
+    if len(banks) != 1 or None in banks:
+        raise SystemExit("the arms were run on different banks, or without the bank this part needs")
+    cids = sorted(c for c in set.intersection(*(set(bk) for bk in books.values()))
+                  if all((bk[c].get("audit_slot_parts") or [1, 0])[part] > 0 for bk in books.values()))
+    if not cids or any(out_dir.iterdir()):
+        raise SystemExit("nothing in common to pack, or the output directory is not empty")
+    first = next(iter(next(iter(books.values())).values()))["settings"]
+    if P.digest_file(Path(first["bank"])) != first["bank_sha256"]:
+        raise SystemExit("the arms' bank changed")
+    label, priors, fair_prior = block_label(books, next(iter(banks)), first[path_key], closure)  # refuses before anything is written
+    y_search = {c: d["y"] for c, d in load_bank(Path(first["bank"])).items()}
+    names: list[str] = []
+    programs: dict[str, dict] = {}
+    n_valid = 0
+    for cid in cids:
+        y = y_search[cid]
+        n_s = len(y)
+        lo_q, hi_q, lo, hi = clip_bounds(y)
+        fill_q, fill_a = (float(y.sum()) - y) / max(1, n_s - 1), float(y.mean())
+        out: dict[str, np.ndarray] = {"ok": np.array(True), "range_lo_q": lo_q, "range_hi_q": hi_q, "range_lo": np.array(lo), "range_hi": np.array(hi)}
+        here: list[str] = []
+        valid: list[bool] = []
+        dsl_l: list[str] = []
+        u_l: list[float] = []
+        wall = 0.0
+        for tag, src in sources.items():
+            book = books[tag][cid]
+            wall += float(book["wall_s"])
+            parts = book.get("audit_slot_parts")
+            top = int(book["settings"].get("top_export", TOP_EXPORT))
+            k_o = int(book.get("outer_folds") or 0)
+            lab = None
+            if k_o:
+                with np.load(src / f"{cid}.npz", allow_pickle=False) as z:
+                    lab = np.asarray(z["outer_lab"], dtype=np.int64)
+                if lab.shape != (n_s,) or int(lab.max()) + 1 != k_o or len(book["pipelines"]) != k_o:
+                    raise SystemExit(f"{src}/{cid}: the outer folds do not fit the manifest")
+                out[f"outer_lab_{tag}"] = lab
+            elif len(book["pipelines"]) != 1:
+                raise SystemExit(f"{src}/{cid}: more than one pipeline without outer folds")
+            started_on_base = book.get("u_search_base") is not None
+            for o, pipe in enumerate(book["pipelines"]):
+                hold = (lab == o) if lab is not None else np.zeros(n_s, dtype=bool)
+                n_h = int(hold.sum())
+                for j, rec in enumerate(pipe, 1):
+                    key = f"{cid}.o{o}.s{j}" if lab is not None else f"{cid}.s{j}"
+                    with np.load(src / "_engine" / "snap" / f"g{int(rec['generations'])}" / f"{key}.npz", allow_pickle=False) as z:
+                        if "ya" in z.files:
+                            raise SystemExit("audit labels in an engine snapshot")
+                        q, bag, ref = (np.asarray(z[k], dtype=np.float64) for k in ("Q_cons", "AKF_cons", "PA_cons"))
+                        u_c = np.atleast_1d(np.asarray(z["u_cons"], dtype=np.float64))
+                        dsls = [str(v) for v in np.atleast_1d(z["dsls_cons"] if "dsls_cons" in z.files else z["dsls"]).tolist()]
+                    if q.ndim == 1:
+                        q, bag, ref = q[:, None], bag[:, None], ref[:, None]
+                    n_slot = ref.shape[0] - n_h
+                    if q.shape[0] != n_s - n_h or bag.shape[0] != ref.shape[0] or n_slot < 1 or (parts is not None and n_slot != sum(parts)):
+                        raise SystemExit(f"{src}: snapshot {key} does not fit the context ({q.shape}, {ref.shape}, {n_s} SEARCH rows, {n_h} held out)")
+                    rows = slice(None) if parts is None else (slice(0, parts[0]) if part == 0 else slice(parts[0], parts[0] + parts[1]))
+                    for r in range(1, top + 1):
+                        name = tag + (f"_o{o}" if lab is not None else "") + (f"_s{j}" if len(pipe) > 1 else "") + f"_p{r}"
+                        good = r <= q.shape[1] and r <= len(dsls) and dsls[r - 1] != "mean_fallback"
+                        if good:
+                            col_q = np.empty(n_s)
+                            col_q[~hold] = q[:, r - 1]
+                            col_q[hold] = ref[:n_h, r - 1]
+                            col_b, col_r = bag[n_h:, r - 1][rows], ref[n_h:, r - 1][rows]
+                            good = bool(np.isfinite(col_q).all() and np.isfinite(col_b).all() and np.isfinite(col_r).all())
+                        if not good:
+                            n_a = len((bag[n_h:, 0])[rows])
+                            col_q, col_b, col_r = fill_q.copy(), np.full(n_a, fill_a), np.full(n_a, fill_a)
+                        out[f"q_{name}"], out[f"bag_{name}"], out[f"ref_{name}"] = col_q, col_b, col_r
+                        here.append(name)
+                        valid.append(good)
+                        dsl_l.append(dsls[r - 1] if r <= len(dsls) else "")
+                        u_l.append(float(u_c[r - 1]) if good and r <= len(u_c) else float("nan"))
+                        if cid == cids[0]:
+                            programs[name] = {"tag": tag, "arm": book.get("arm"), "outer_fold": o if lab is not None else None, "stage": j, "rank": r,
+                                              "target": "y" if j == 1 and not started_on_base else "residual"}
+        if cid == cids[0]:
+            names = here
+        elif here != names:
+            raise SystemExit(f"{cid}: its arms do not have the layout of {cids[0]} (stages, folds or exported programs differ)")
+        n_valid += int(sum(valid))
+        out.update({"valid": np.array(valid), "dsl": np.array(dsl_l), "u_cons": np.array(u_l), "wall_s": np.array(wall)})
+        tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
+        np.savez(tmp, **out)
+        os.replace(tmp, out_dir / f"{cid}.npz")
+    doc = {
+        "layout": "program-bank/v1", "names": names, "programs": programs, "closure": label, "prior_in_corpus": not fair_prior,
+        "bank_sha256": next(iter(banks)), "contexts": cids, "valid_share": n_valid / max(1, len(names) * len(cids)),
+        "per_context_arrays": ["valid", "dsl", "u_cons", "range_lo_q", "range_hi_q", "range_lo", "range_hi", "outer_lab_<tag> (out-of-fold arms)"],
+        "q_is": ("cross-fitted on the call's own folds, but the program was selected on those rows; on the rows of outer fold o a program of "
+                 "fold o holds a prediction from a fit and a selection that never saw them"),
+        "nested_use": ("to keep a joint fit out of fold: for the rows of outer fold o use only the programs of fold o, with weights fitted on the "
+                       "other rows; the programs of single runs and chains have no such rows"),
+        "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
+        "priors": priors, "producer": "cl_h458 gp_chain_h458.py --pack-bank", "reads_audit_labels": False,
+        "notes": "H458 S9 program bank: the exported programs of every engine call, one column each; no GP is run by the pack step", **P.DISCLOSURE,
     }
     tmp = out_dir / f".SIDECAR.{os.getpid()}.part.json"
     tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
@@ -521,7 +667,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--arm", choices=ARMS, default="")
     ap.add_argument("--pack", default="", help="tag=DIR,tag=DIR: write the arms' columns as one block directory into --out-dir and stop")
-    ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack: 0 = the bank's own audit slot, 1 = the appended bank's")
+    ap.add_argument("--pack-bank", default="", help="tag=DIR,tag=DIR: write every exported program of the arms as its own column (the program bank) into --out-dir and stop")
+    ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack or --pack-bank: 0 = the bank's own audit slot, 1 = the appended bank's")
     ap.add_argument("--pack-clip", action="store_true", help="with --pack: add a twin <name>c of every column, clipped to the context's SEARCH target range")
     ap.add_argument("--pack-closure", default="", help="with --pack: closure label for a block on an evaluation bank (the scorer's owner names it); a probe bank is always fresh-probe")
     ap.add_argument("--stack", default="", help="GPBLOCK,OTHERBLOCK: write stk_base and stk_<gp column> blends into --out-dir (weights from SEARCH rows) and stop")
@@ -559,6 +706,13 @@ def main() -> None:
             raise SystemExit("--pack takes tag=DIR pairs with distinct tags")
         doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure, a.pack_clip)
         print(json.dumps({"packed": len(doc["contexts"]), "names": doc["names"], "closure": doc["closure"]}))
+        return
+    if a.pack_bank:
+        pairs = [kv.split("=", 1) for kv in a.pack_bank.split(",") if kv]
+        if any(len(kv) != 2 for kv in pairs) or len({k for k, _ in pairs}) != len(pairs):
+            raise SystemExit("--pack-bank takes tag=DIR pairs with distinct tags")
+        doc = pack_bank({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure)
+        print(json.dumps({"packed": len(doc["contexts"]), "programs": len(doc["names"]), "valid_share": round(doc["valid_share"], 4), "closure": doc["closure"]}))
         return
     if a.committee_of:
         print(json.dumps({"derived": derive_committee(Path(a.committee_of), out_dir, a.committee), "committee": a.committee, "from": a.committee_of}))
