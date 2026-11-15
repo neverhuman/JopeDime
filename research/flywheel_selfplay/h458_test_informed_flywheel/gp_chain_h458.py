@@ -359,10 +359,16 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
         np.savez(tmp, **out)
         os.replace(tmp, out_dir / f"{cid}.npz")
     probe = next(iter(banks)) in P.KNOWN_PROBE_BANKS or (Path(next(iter(next(iter(books.values())).values()))["settings"][path_key]).parent / "PROBE_BOARD.json").is_file()
+    # an arm folder from before the driver had --prior ran under the engine's default prior, which is the in-corpus one
+    priors = sorted({str(b["settings"].get("prior") or "in-corpus") for bk in books.values() for b in bk.values()})
+    fair_prior = priors == ["dev91-free"]
+    if closure.startswith("fair") and not fair_prior:
+        raise SystemExit(f"closure {closure!r} refused: the arms ran under priors {priors}, and the in-corpus prior has seen dev91")
+    label = "fresh-probe" if probe else (closure or ("fair-gp-search-only" if fair_prior else "in-corpus-prior"))
     doc = {
-        "names": names, "closure": "fresh-probe" if probe else (closure or "fair-gp-search-only"), "bank_sha256": next(iter(banks)), "contexts": cids,
+        "names": names, "closure": label, "prior_in_corpus": not fair_prior, "bank_sha256": next(iter(banks)), "contexts": cids,
         "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
-        "priors": sorted({str(b["settings"].get("prior") or "in-corpus (engine default, before the driver had the option)") for bk in books.values() for b in bk.values()}),
+        "priors": priors,
         "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False,
         "notes": "H458 S9 staged residual GP columns; q_ is honest only for out-of-fold arms (see each arm's manifest)", **P.DISCLOSURE,
     }
@@ -419,8 +425,15 @@ def stack_block(gp_block: Path, other_block: Path, bank_p: Path, out_dir: Path) 
         tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
         np.savez(tmp, **out)
         os.replace(tmp, out_dir / f"{cid}.npz")
+    # the blend is as restricted as its most restricted input
+    rank = {"fair": 0, "fair-gp-search-only": 0, "in-corpus-prior": 1, "in-corpus": 1, "skill-xfit5": 2, "recall": 3, "fresh-probe": 4}
+    ins = {"gp": docs[gp_block], "other": docs[other_block]}
+    strict = max((d.get("closure", "in-corpus") for d in ins.values()), key=lambda c: rank.get(c, 1))
+    in_corpus = bool(docs[gp_block].get("prior_in_corpus", True)) or bool(docs[other_block].get("in_corpus_dev91_disclosure", True))
     doc = {
-        "names": ["stk_base"] + [f"stk_{n}" for n in gp_names], "closure": docs[gp_block]["closure"], "bank_sha256": docs[gp_block]["bank_sha256"], "contexts": cids,
+        "names": ["stk_base"] + [f"stk_{n}" for n in gp_names], "closure": strict, "inputs_in_corpus": in_corpus,
+        "inputs": {k: {f: d.get(f) for f in ("closure", "priors", "prior_in_corpus", "probe_role", "arm", "in_corpus_dev91_disclosure")} for k, d in ins.items()},
+        "bank_sha256": docs[gp_block]["bank_sha256"], "contexts": cids,
         "rule": "non-negative least squares on SEARCH-row column values, weights normalised to sum one, applied to the audit slot",
         "columns_base": other, "weights_by_cid": weights, "gp_weight_mean": {f"stk_{n}": float(np.mean([weights[c][f"stk_{n}"][-1] for c in cids])) for n in gp_names},
         "stacked_from": {"gp": str(gp_block), "gp_sidecar_sha256": P.digest_file(gp_block / "SIDECAR.json"), "other": str(other_block),

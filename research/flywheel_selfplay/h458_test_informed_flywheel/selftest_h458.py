@@ -608,7 +608,23 @@ def gate_gp_chain_units(ctx) -> dict:
     pk = work / "packed"
     pk.mkdir()
     doc = GC.pack_block(arm_dirs, pk)
-    assert doc["names"] == ["single", "chain_s1", "chain_s2", "chain"] and doc["closure"] == "fair-gp-search-only" and doc["contexts"] == ["ctxb"]
+    assert doc["names"] == ["single", "chain_s1", "chain_s2", "chain"] and doc["contexts"] == ["ctxb"]
+    assert doc["closure"] == "in-corpus-prior" and doc["prior_in_corpus"] and doc["priors"] == ["in-corpus"], "arms without a recorded prior ran under the engine default"
+    pkf = work / "packed_fair_refused"
+    pkf.mkdir()
+    assert _refused(GC.pack_block, arm_dirs, pkf, 0, "fair"), "in-corpus-prior arms were packed as fair"
+    fair_dirs = {}
+    for tag, ad in arm_dirs.items():
+        fd = work / f"arm_fair_{tag}"
+        fd.mkdir()
+        with np.load(ad / "ctxb.npz") as zz:
+            np.savez(fd / "ctxb.npz", **{k: zz[k] for k in zz.files})
+        (fd / "ctxb.json").write_text(json.dumps({"wall_s": 1.0, "settings": {"bank_sha256": "b", "bank": str(P.EVAL_BANK), "prior": "dev91-free"}}))
+        fair_dirs[tag] = fd
+    pkg = work / "packed_fair"
+    pkg.mkdir()
+    dfair = GC.pack_block(fair_dirs, pkg, 0, "fair")
+    assert dfair["closure"] == "fair" and not dfair["prior_in_corpus"] and dfair["priors"] == ["dev91-free"]
     with np.load(pk / "ctxb.npz") as z:
         assert sorted(k for k in z.files if k not in ("ok", "wall_s")) == sorted(f"{p_}_{n}" for p_ in ("q", "bag", "ref") for n in doc["names"])
         assert np.array_equal(z["ref_chain"], res["stages"][-1]["ref"]) and np.array_equal(z["q_chain_s1"], res["stages"][0]["q"])
@@ -646,12 +662,13 @@ def gate_gp_chain_units(ctx) -> dict:
     (o_blk / "SIDECAR.json").write_text(json.dumps({"names": ["a", "b"], "closure": "fair", "bank_sha256": bank_sha, "contexts": [cidr]}))
     sdoc = GC.stack_block(g_blk, o_blk, P.EVAL_BANK, s_out)
     assert sdoc["names"] == ["stk_base", "stk_good"] and sdoc["gp_weight_mean"]["stk_good"] > 0.9, sdoc["gp_weight_mean"]
+    assert sdoc["closure"] == "fair" and sdoc["inputs_in_corpus"] and set(sdoc["inputs"]) == {"gp", "other"}, "a blend must carry its inputs' status"
     wts = sdoc["weights_by_cid"][cidr]
     assert abs(sum(wts["stk_base"]) - 1.0) < 1e-9 and abs(sum(wts["stk_good"]) - 1.0) < 1e-9 and min(wts["stk_good"]) >= 0.0
     with np.load(s_out / f"{cidr}.npz") as z:
         assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
     assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
-    return {"checks": 42, "dir": str(work)}
+    return {"checks": 47, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:
