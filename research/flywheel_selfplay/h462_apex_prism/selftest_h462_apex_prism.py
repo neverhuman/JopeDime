@@ -1150,6 +1150,148 @@ def _p0_21_search_only_members_emitter_blocks_ya() -> Dict[str, Any]:
     }
 
 
+def _p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker() -> Dict[str, Any]:
+    """`P0_22`: Verifies `cl_mtc` `G1` + `G2` + `P2 v1.4 §3 / v1.5` `nest_lab_/nest_q_/nest_a_` end-to-end."""
+    from research.flywheel_selfplay.h462_apex_prism.contracts_v3 import verify_nested_oof_fn
+    from research.flywheel_selfplay.h462_apex_prism.emit_gp_runbag6_h462 import build_nested_gpbag_from_fold_elites
+    from research.flywheel_selfplay.h462_apex_prism.emit_p2_p4_members_search_only import (
+        assert_same_outer_folds,
+        build_gpbag_block_from_dirs,
+        load_gp_pack_no_ya,
+        real_stacker_outer_oof_rep,
+    )
+
+    rng = np.random.default_rng(46222)
+    scratch = _scratch_dir()
+    try:
+        n_s, n_a, n_f = 35, 10, 3
+        Xs = rng.normal(size=(n_s, n_f))
+        ys = 1.6 * Xs[:, 0] - 0.8 * Xs[:, 1] + 0.35 * Xs[:, 2] + 0.15 * rng.normal(size=n_s)
+        Xa = rng.normal(size=(n_a, n_f))
+        lab0 = np.arange(n_s, dtype=np.int64) % 5
+
+        # 1. Canary second half: y-ignoring function MUST fail `verify_nested_oof_fn`
+        caught_y_ignoring = False
+        try:
+            verify_nested_oof_fn(lambda X_in, _y_in, _l_in: X_in[:, 0].copy(), Xs, ys, lab0)
+        except PermissionError:
+            caught_y_ignoring = True
+        assert caught_y_ignoring
+
+        # 2. G2: `assert_same_outer_folds` accepts relabeled identical row sets, refuses altered row sets & missing D1 `lab`
+        lab_perm = (4 - lab0).astype(np.int64)
+        fmap = assert_same_outer_folds(lab_perm, lab0, "perm_check")
+        assert all(fmap[fk] == 4 - fk for fk in range(5))
+
+        lab_bad = lab0.copy()
+        lab_bad[0], lab_bad[1] = lab_bad[1], lab_bad[0]
+        caught_bad_lab = False
+        try:
+            assert_same_outer_folds(lab_bad, lab0, "bad_lab_check")
+        except PermissionError:
+            caught_bad_lab = True
+        assert caught_bad_lab
+
+        gp_nolab = scratch / "gp_nolab.npz"
+        np.savez(
+            gp_nolab,
+            Q=np.zeros((n_s, 2)),
+            PA=np.zeros((n_a, 2)),
+            AKF=np.zeros((n_a, 2)),
+            pa_ok=np.ones(2, dtype=bool),
+            ym=np.array(0.0),
+        )
+        caught_missing_gp_lab = False
+        try:
+            load_gp_pack_no_ya(gp_nolab, n_s, n_a, lab0=lab0, require_lab=True)
+        except PermissionError:
+            caught_missing_gp_lab = True
+        assert caught_missing_gp_lab
+
+        # 3. End-to-end `build_nested_gpbag_from_fold_elites` -> `build_gpbag_block_from_dirs` -> `real_stacker_outer_oof_rep`
+        seeds = (46211, 46212)
+
+        def _fit_ridge(X_tr: np.ndarray, y_tr: np.ndarray, X_q: np.ndarray, lam: float) -> np.ndarray:
+            A = np.column_stack([np.ones(len(X_tr)), X_tr])
+            Aq = np.column_stack([np.ones(len(X_q)), X_q])
+            reg = np.diag([1e-8] + [lam] * X_tr.shape[1])
+            beta = np.linalg.solve(A.T @ A + reg, A.T @ y_tr)
+            return Aq @ beta
+
+        Q_gp_fixed = np.column_stack([1.5 * Xs[:, 0] - 0.6 * Xs[:, 1], 1.1 * Xs[:, 0] + 0.2 * Xs[:, 2]])
+
+        def _build_gb_and_run_stacker(X_in: np.ndarray, y_in: np.ndarray, l_in: np.ndarray, use_nest: bool) -> np.ndarray:
+            def _seed_fold_fn(sd: int, _fk: int, X_tr: np.ndarray, y_tr: np.ndarray, l_sub: np.ndarray, X_va: np.ndarray, X_aud: np.ndarray):
+                lams = (0.05, 0.5) if sd == 46211 else (0.15, 1.5)
+                Q_tr = np.empty((len(y_tr), len(lams)), dtype=np.float64)
+                for ifk in sorted(int(k) for k in np.unique(l_sub)):
+                    iva = l_sub == ifk
+                    itr = ~iva
+                    for li, lm in enumerate(lams):
+                        Q_tr[iva, li] = _fit_ridge(X_tr[itr], y_tr[itr], X_tr[iva], lm)
+                P_va = np.column_stack([_fit_ridge(X_tr, y_tr, X_va, lm) for lm in lams])
+                P_aud = np.column_stack([_fit_ridge(X_tr, y_tr, X_aud, lm) for lm in lams])
+                return Q_tr, P_va, P_aud
+
+            nest_d = build_nested_gpbag_from_fold_elites("ctx22", seeds, X_in, Xa, y_in, l_in, _seed_fold_fn)
+            gb_p = scratch / "gpbag_nested.npz"
+            payload = {"ok": np.array(True), "lab": l_in}
+            for si, sd in enumerate(seeds):
+                nm = f"gp_s{si + 1}"
+                # Full-SEARCH cross-fit for `q_<nm>` (couples `SEARCH \ g` across folds if un-nested!)
+                q_cf = np.empty(len(y_in), dtype=np.float64)
+                lm_s = 0.05 if sd == 46211 else 0.15
+                for fk in sorted(int(k) for k in np.unique(l_in)):
+                    va = l_in == fk
+                    tr = ~va
+                    q_cf[va] = _fit_ridge(X_in[tr], y_in[tr], X_in[va], lm_s)
+                payload[f"q_{nm}"] = q_cf
+                payload[f"bag_{nm}"] = np.mean(nest_d[f"nest_a_{nm}"], axis=0)
+                payload[f"ref_{nm}"] = np.mean(nest_d[f"nest_a_{nm}"], axis=0)
+            payload.update(nest_d)
+            np.savez(gb_p, **payload)
+
+            gb_blk, gb_nq = build_gpbag_block_from_dirs(y_in, l_in, [gb_p], len(y_in), n_a, 2, "allcol", cid="ctx22")
+            assert gb_blk is not None and gb_nq is not None and gb_nq.shape == (5, len(y_in), 4)
+            return real_stacker_outer_oof_rep(
+                "ctx22",
+                0,
+                X_in,
+                y_in,
+                l_in,
+                Q_gp_fixed,
+                [True, True],
+                [],
+                None,
+                gb_blk,
+                gpbag_nest_q=gb_nq if use_nest else None,
+            )
+
+        # Negative control: un-nested GPBAG (`gpbag_nest_q=None`) leaks `y[va]` via second-order `SEARCH \ g` coupling
+        caught_unnested_gpbag = False
+        try:
+            verify_nested_oof_fn(lambda X_i, y_i, l_i: _build_gb_and_run_stacker(X_i, y_i, l_i, False), Xs, ys, lab0)
+        except PermissionError:
+            caught_unnested_gpbag = True
+        assert caught_unnested_gpbag
+
+        # Positive proof: `nest_lab_ / nest_q_ / nest_a_` (`gpbag_nest_q=gb_nq`) achieves exact `max_abs_leak == 0.0`!
+        rcpt = verify_nested_oof_fn(lambda X_i, y_i, l_i: _build_gb_and_run_stacker(X_i, y_i, l_i, True), Xs, ys, lab0)
+        assert rcpt["verified"] is True and float(rcpt["max_abs_leak"]) == 0.0
+        assert float(rcpt["min_other_fold_response"]) > 1e-3
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    return {
+        "caught_y_ignoring": caught_y_ignoring,
+        "caught_bad_lab": caught_bad_lab,
+        "caught_missing_gp_lab": caught_missing_gp_lab,
+        "caught_unnested_gpbag": caught_unnested_gpbag,
+        "nested_gpbag_stacker_max_abs_leak": float(rcpt["max_abs_leak"]),
+        "min_other_fold_response": float(rcpt["min_other_fold_response"]),
+    }
+
+
 def run_all_selftests() -> Dict[str, Any]:
     t0 = time.perf_counter()
     results = {
@@ -1174,6 +1316,7 @@ def run_all_selftests() -> Dict[str, Any]:
         "p0_19_edge_certify_partial_top_block_sampling": _p0_19_edge_certify_partial_top_block_sampling(),
         "p0_20_outer_nested_gp_passes_verify_nested_oof_fn": _p0_20_outer_nested_gp_passes_verify_nested_oof_fn(),
         "p0_21_search_only_members_emitter_blocks_ya": _p0_21_search_only_members_emitter_blocks_ya(),
+        "p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker": _p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker(),
     }
     return {
         "all_passed": True,
@@ -1187,7 +1330,7 @@ def run_all_selftests() -> Dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--selftest", action="store_true", help="Run all 12 deterministic H462 APEX-PRISM checks")
+    ap.add_argument("--selftest", action="store_true", help="Run all 22 deterministic H462 APEX-PRISM checks")
     ap.add_argument("--out-json", type=Path, default=None)
     args = ap.parse_args(argv)
     report = run_all_selftests()

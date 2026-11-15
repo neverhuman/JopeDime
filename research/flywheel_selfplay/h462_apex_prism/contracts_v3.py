@@ -396,10 +396,13 @@ def verify_nested_oof_fn(
     folds = sorted(int(k) for k in np.unique(lab))
     max_abs_leak = 0.0
     max_rel_leak = 0.0
+    min_other_fold_response = float("inf")
 
     for fk in folds:
         va = lab == fk
+        tr = ~va
         n_va = int(np.sum(va))
+        n_tr = int(np.sum(tr))
         if n_va == 0:
             continue
         y_poison = y_s.copy()
@@ -422,9 +425,19 @@ def verify_nested_oof_fn(
                 f"(max_abs={abs_err:.3e}, max_rel={rel_err:.3e})"
             )
 
+        if n_tr > 0:
+            other_resp = float(np.max(np.abs(q_poison[tr] - q_clean[tr])))
+            min_other_fold_response = min(min_other_fold_response, other_resp)
+            if other_resp <= max(float(atol), 1e-9):
+                raise PermissionError(
+                    f"H5 canary responsiveness failure on outer fold {fk}: poisoning fold {fk} labels did not "
+                    f"affect any other fold prediction (max_other_resp={other_resp:.3e}); oof_fn may ignore y"
+                )
+
     return {
         "max_abs_leak": max_abs_leak,
         "max_rel_leak": max_rel_leak,
+        "min_other_fold_response": 0.0 if min_other_fold_response == float("inf") else min_other_fold_response,
         "n_folds_checked": len(folds),
         "verified": True,
     }

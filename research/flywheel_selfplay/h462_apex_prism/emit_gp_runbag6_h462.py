@@ -67,6 +67,7 @@ GPBAG6_ALL_COLS = (
 def _load_h452_evolution_runtime():
     from bagged_neural_seed_h452 import BaggedNeuralEncoderH452
     from ultra_gp_evolve_h452 import (
+        C,
         SUPERSET_BIN,
         SUPERSET_SHA,
         _parse_indices,
@@ -74,7 +75,7 @@ def _load_h452_evolution_runtime():
         evolve_single_context,
     )
 
-    return BaggedNeuralEncoderH452, SUPERSET_BIN, SUPERSET_SHA, _parse_indices, _sha256_file, evolve_single_context
+    return C, BaggedNeuralEncoderH452, SUPERSET_BIN, SUPERSET_SHA, _parse_indices, _sha256_file, evolve_single_context
 
 
 def _check_safe_path(p: Path) -> None:
@@ -309,6 +310,159 @@ def run_outer_nested_oof_committee(
     return Q_seeds_oof, q_eq_oof, q_prec_oof
 
 
+def build_nested_gpbag_from_fold_elites(
+    cid: str,
+    seeds: Sequence[int],
+    Xs: np.ndarray,
+    Xa: np.ndarray,
+    ys: np.ndarray,
+    lab5: np.ndarray,
+    seed_fold_elites_with_audit_fn,
+    tau_shrink: float = 0.25,
+) -> Dict[str, np.ndarray]:
+    """Builds `cl_h458` / `P2 v1.4 §3` `nest_lab_<nm>`, `nest_q_<nm>` `(k_o, n_s)`, `nest_a_<nm>` `(k_o, n_a)`.
+
+    For every outer fold `fk in range(k_o)` (`hold = (lab5 == fk)`):
+      - `nest_q_<nm>[fk, ~hold]` is cross-fitted strictly inside `(Xs[~hold], ys[~hold])` (zero rows of `hold` seen),
+      - `nest_q_<nm>[fk, hold]` is the out-of-sample prediction on `Xs[hold]` from the fit on `~hold`,
+      - `nest_a_<nm>[fk, :]` is the audit-slot prediction on `Xa` from the fit on `~hold`.
+    `seed_fold_elites_with_audit_fn(sd, fk, Xs_tr, ys_tr, lab_in, Xs_va, Xa) -> (Q_tr_el, P_va_el, P_aud_el)`.
+    """
+    lab_o = np.asarray(lab5, dtype=np.int64)
+    n_s = int(Xs.shape[0])
+    n_a = int(Xa.shape[0])
+    k_o = int(np.max(lab_o)) + 1
+    k_s = len(seeds)
+    u_w = np.full(k_s, 1.0 / float(k_s), dtype=np.float64)
+
+    nest_q_seeds = np.empty((k_o, n_s, k_s), dtype=np.float64)
+    nest_a_seeds = np.empty((k_o, n_a, k_s), dtype=np.float64)
+    nest_q_eq = np.empty((k_o, n_s), dtype=np.float64)
+    nest_a_eq = np.empty((k_o, n_a), dtype=np.float64)
+    nest_q_pr = np.empty((k_o, n_s), dtype=np.float64)
+    nest_a_pr = np.empty((k_o, n_a), dtype=np.float64)
+
+    def _bcar3(Q_sub: np.ndarray, y_sub: np.ndarray, tag: str, lab_sub: np.ndarray) -> np.ndarray:
+        return (
+            0.50 * bcar_weights_pool_agnostic(Q_sub, y_sub, tag, "fold_log", lab_sub, n_bags=16)
+            + 0.35 * bcar_weights_pool_agnostic(Q_sub, y_sub, tag, "huber", lab_sub, n_bags=16)
+            + 0.15 * bcar_weights_pool_agnostic(Q_sub, y_sub, tag, "br_mse", lab_sub, n_bags=16)
+        )
+
+    def _weights_local(Q_in_sub: np.ndarray, y_sub: np.ndarray) -> np.ndarray:
+        eps_local = 1e-4 * max(float(np.var(y_sub)), 1e-12)
+        mse = np.mean((Q_in_sub - y_sub[:, None]) ** 2, axis=0)
+        prec = 1.0 / (mse + eps_local)
+        sp = float(np.sum(prec))
+        w_raw = (prec / sp) if (sp > 0.0 and np.isfinite(sp)) else u_w
+        w = (1.0 - tau_shrink) * w_raw + tau_shrink * u_w
+        return w / float(np.sum(w))
+
+    for fk in range(k_o):
+        va = lab_o == fk
+        tr = ~va
+        n_va = int(np.sum(va))
+        n_tr = int(np.sum(tr))
+        Xs_tr = np.array(Xs[tr], np.float64, copy=True)
+        ys_tr = np.array(ys[tr], np.float64, copy=True)
+        Xs_va = np.array(Xs[va], np.float64, copy=True)
+        if n_tr < 10:
+            m_tr = float(np.mean(ys_tr)) if n_tr > 0 else 0.0
+            nest_q_seeds[fk, :, :] = m_tr
+            nest_a_seeds[fk, :, :] = m_tr
+            nest_q_eq[fk, :] = m_tr
+            nest_a_eq[fk, :] = m_tr
+            nest_q_pr[fk, :] = m_tr
+            nest_a_pr[fk, :] = m_tr
+            continue
+
+        lo_f, hi_f = _fold_clip_bounds(ys_tr)
+        lab_in = make_stratified_kfold(f"{cid}_onest_comm_f{fk}", ys_tr, k=5, rep=0)
+        Q_in_seeds = np.empty((n_tr, k_s), dtype=np.float64)
+        P_va_seeds = np.empty((n_va, k_s), dtype=np.float64)
+        P_aud_seeds = np.empty((n_a, k_s), dtype=np.float64)
+
+        for si, sd in enumerate(seeds):
+            Q_tr_el, P_va_el, P_aud_el = seed_fold_elites_with_audit_fn(sd, fk, Xs_tr, ys_tr, lab_in, Xs_va, Xa)
+            Q_tr_el = np.asarray(Q_tr_el, dtype=np.float64)
+            P_va_el = np.asarray(P_va_el, dtype=np.float64)
+            P_aud_el = np.asarray(P_aud_el, dtype=np.float64)
+            if Q_tr_el.ndim == 1:
+                Q_tr_el = Q_tr_el[:, None]
+                P_va_el = P_va_el[:, None]
+                P_aud_el = P_aud_el[:, None]
+
+            if Q_tr_el.shape[1] == 1 or n_tr < 14:
+                q_in_s = np.clip(Q_tr_el[:, 0], lo_f, hi_f)
+                p_va_s = np.clip(P_va_el[:, 0], lo_f, hi_f) if n_va > 0 else np.empty(0, dtype=np.float64)
+                p_aud_s = np.clip(P_aud_el[:, 0], lo_f, hi_f)
+            else:
+                q_in_s = np.empty(n_tr, dtype=np.float64)
+                for ifk in sorted(int(x) for x in np.unique(lab_in)):
+                    iva = lab_in == ifk
+                    itr = ~iva
+                    if int(np.sum(iva)) == 0:
+                        continue
+                    if int(np.sum(itr)) < 10:
+                        q_in_s[iva] = np.clip(Q_tr_el[iva, 0], lo_f, hi_f)
+                    else:
+                        lab_in2 = make_stratified_kfold(f"{cid}_onest_s{sd}_f{fk}_i{ifk}", ys_tr[itr], k=4, rep=0)
+                        w_itr = _bcar3(Q_tr_el[itr], ys_tr[itr], f"{cid}_onest_s{sd}_f{fk}_i{ifk}", lab_in2)
+                        sw_i = float(np.sum(w_itr))
+                        raw_iva = (Q_tr_el[iva] @ (w_itr / sw_i)) if sw_i > 1e-12 else Q_tr_el[iva, 0]
+                        q_in_s[iva] = np.clip(raw_iva, lo_f, hi_f)
+                w_tr_s = _bcar3(Q_tr_el, ys_tr, f"{cid}_onest_s{sd}_f{fk}", lab_in)
+                sw_s = float(np.sum(w_tr_s))
+                raw_va = (P_va_el @ (w_tr_s / sw_s)) if (sw_s > 1e-12 and n_va > 0) else (P_va_el[:, 0] if n_va > 0 else np.empty(0, dtype=np.float64))
+                raw_aud = (P_aud_el @ (w_tr_s / sw_s)) if sw_s > 1e-12 else P_aud_el[:, 0]
+                p_va_s = np.clip(raw_va, lo_f, hi_f) if n_va > 0 else np.empty(0, dtype=np.float64)
+                p_aud_s = np.clip(raw_aud, lo_f, hi_f)
+
+            Q_in_seeds[:, si] = q_in_s
+            if n_va > 0:
+                P_va_seeds[:, si] = p_va_s
+            P_aud_seeds[:, si] = p_aud_s
+
+        nest_q_seeds[fk, tr, :] = Q_in_seeds
+        if n_va > 0:
+            nest_q_seeds[fk, va, :] = P_va_seeds
+        nest_a_seeds[fk, :, :] = P_aud_seeds
+
+        nest_q_eq[fk, :] = np.mean(nest_q_seeds[fk], axis=1)
+        nest_a_eq[fk, :] = np.mean(P_aud_seeds, axis=1)
+
+        # Inner cross-fitted precision committee on `tr` + fold-local precision committee on `va` & `audit`
+        q_pr_tr = np.empty(n_tr, dtype=np.float64)
+        for ifk in sorted(int(x) for x in np.unique(lab_in)):
+            iva = lab_in == ifk
+            itr = ~iva
+            if int(np.sum(iva)) == 0:
+                continue
+            w_itr_c = _weights_local(Q_in_seeds[itr], ys_tr[itr]) if int(np.sum(itr)) >= 8 else u_w
+            q_pr_tr[iva] = Q_in_seeds[iva] @ w_itr_c
+        w_comm = _weights_local(Q_in_seeds, ys_tr)
+        nest_q_pr[fk, tr] = q_pr_tr
+        if n_va > 0:
+            nest_q_pr[fk, va] = P_va_seeds @ w_comm
+        nest_a_pr[fk, :] = P_aud_seeds @ w_comm
+
+    out: Dict[str, np.ndarray] = {}
+    for k_i in range(k_s):
+        nm = f"gp_s{k_i + 1}"
+        out[f"nest_lab_{nm}"] = lab_o.copy()
+        out[f"nest_q_{nm}"] = nest_q_seeds[:, :, k_i]
+        out[f"nest_a_{nm}"] = nest_a_seeds[:, :, k_i]
+    eq_nm = "gp_runbag6_eq" if k_s == 6 else f"gp_runbag{k_s}_eq"
+    pr_nm = "gp_runbag6_prec" if k_s == 6 else f"gp_runbag{k_s}_prec"
+    out[f"nest_lab_{eq_nm}"] = lab_o.copy()
+    out[f"nest_q_{eq_nm}"] = nest_q_eq
+    out[f"nest_a_{eq_nm}"] = nest_a_eq
+    out[f"nest_lab_{pr_nm}"] = lab_o.copy()
+    out[f"nest_q_{pr_nm}"] = nest_q_pr
+    out[f"nest_a_{pr_nm}"] = nest_a_pr
+    return out
+
+
 def _precision_combine_oof(
     ys: np.ndarray,
     lab5: np.ndarray,
@@ -359,7 +513,14 @@ def main() -> int:
         type=int,
         choices=(0, 1),
         default=0,
-        help="1 = HNC-1 H5 strict outer-nested GP evolution per outer SEARCH fold for unbiased P2 q_ columns",
+        help="1 = HNC-1 H5 strict outer-nested GP evolution per outer SEARCH fold (emits nest_lab_*, nest_q_*, nest_a_*)",
+    )
+    ap.add_argument(
+        "--resume-stage-v",
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help="1 = call sanctioned common_h317.resume_stage_v() when emitting ya-free SEARCH columns on Stage V bank",
     )
     a = ap.parse_args()
 
@@ -369,6 +530,7 @@ def main() -> int:
         pass
 
     (
+        C_h317,
         BaggedNeuralEncoderH452,
         SUPERSET_BIN,
         SUPERSET_SHA,
@@ -376,6 +538,8 @@ def main() -> int:
         _sha256_file,
         evolve_single_context,
     ) = _load_h452_evolution_runtime()
+    if bool(a.resume_stage_v):
+        C_h317.resume_stage_v()
 
     bank_p = Path(a.bank)
     work_root = Path(a.work_root)
@@ -495,6 +659,7 @@ def main() -> int:
         Xs_tr = np.array(Xs[tr], np.float64, copy=True)
         ys_tr = np.array(ys[tr], np.float64, copy=True)
         Xs_va = np.array(Xs[va], np.float64, copy=True)
+        Xa_joint = np.vstack([Xs_va, Xa])
         lab_in = make_stratified_kfold(f"{c}_onest_s{sd}_f{fk}", ys_tr, k=5, rep=0)
         out_seed_dir = work_root / f"seed_{sd}_f{fk}"
         slot_d = slots_root / f"ctx_{idx:03d}_s{si}_f{fk}"
@@ -502,7 +667,7 @@ def main() -> int:
             cid=c,
             family_id=fam,
             Xs=Xs_tr,
-            Xa=Xs_va,
+            Xa=Xa_joint,
             ys=ys_tr,
             lab5=lab_in,
             anchor_104m=None,
@@ -564,12 +729,32 @@ def main() -> int:
         REF_seeds = np.column_stack(ref_list)
         assert BAG_seeds.shape[0] == Xa.shape[0]
 
+        nest_payload: Dict[str, np.ndarray] = {}
         if outer_nested_q:
-            def _load_seed_fold_elites(sd: int, fk: int, _xtr: np.ndarray, _ytr: np.ndarray, _lin: np.ndarray, _xva: np.ndarray):
+            def _load_seed_fold_elites_with_aud(
+                sd: int,
+                fk: int,
+                _xtr: np.ndarray,
+                _ytr: np.ndarray,
+                _lin: np.ndarray,
+                xva: np.ndarray,
+                xa_aud: np.ndarray,
+            ):
                 sf_p = work_root / f"seed_{sd}_f{fk}" / f"g{gen_snap}" / f"{c}.npz"
+                n_va_f = int(xva.shape[0])
+                n_a_f = int(xa_aud.shape[0])
                 with np.load(sf_p, allow_pickle=False) as zf:
                     q_tr = np.asarray(zf["Q_2xcv7"], np.float64)
-                    p_va = np.asarray(zf["AKF_2xcv7"], np.float64)
+                    akf = np.asarray(zf["AKF_2xcv7"], np.float64)
+                assert akf.shape[0] == n_va_f + n_a_f, f"Nested AKF row mismatch: {akf.shape[0]} vs {n_va_f + n_a_f}"
+                return q_tr, akf[:n_va_f], akf[n_va_f:]
+
+            nest_payload = build_nested_gpbag_from_fold_elites(
+                c, seeds, Xs, Xa, ys, lab5, _load_seed_fold_elites_with_aud
+            )
+
+            def _load_seed_fold_elites(sd: int, fk: int, xtr: np.ndarray, ytr: np.ndarray, lin: np.ndarray, xva: np.ndarray):
+                q_tr, p_va, _p_aud = _load_seed_fold_elites_with_aud(sd, fk, xtr, ytr, lin, xva, Xa)
                 return q_tr, p_va
 
             Q_seeds, q_eq, q_pr = run_outer_nested_oof_committee(c, seeds, Xs, ys, lab5, _load_seed_fold_elites)
@@ -584,9 +769,11 @@ def main() -> int:
 
         payload = {
             "ok": np.array(True),
+            "lab": np.asarray(lab5, dtype=np.int64),
             "outer_nested_q": np.array(outer_nested_q),
             "w_prec": w_pr,
             "seeds": np.array(seeds, dtype=np.int64),
+            **nest_payload,
         }
         for k_i in range(len(seeds)):
             nm = f"gp_s{k_i + 1}"
@@ -602,6 +789,8 @@ def main() -> int:
             payload["ref_gp_runbag6_prec"] = ref_pr
         else:
             q6_pr, b6_pr, r6_pr, _ = _precision_combine_oof(ys, lab5, Q_seeds[:, :6], BAG_seeds[:, :6], REF_seeds[:, :6])
+            if outer_nested_q:
+                _, _, q6_pr = run_outer_nested_oof_committee(c, seeds[:6], Xs, ys, lab5, _load_seed_fold_elites)
             payload["q_gp_runbag6_prec"] = q6_pr
             payload["bag_gp_runbag6_prec"] = b6_pr
             payload["ref_gp_runbag6_prec"] = r6_pr
