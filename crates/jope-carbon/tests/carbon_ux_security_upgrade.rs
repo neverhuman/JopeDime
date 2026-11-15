@@ -900,9 +900,15 @@ fn cross_os_installer_signed_redirect_tamper_and_uninstall() {
                     "-SourceDir",
                     tamper_ps.to_str().expect("utf8"),
                     "-BinDir",
-                    tmp.path().join("ps_bad_bin").to_str().expect("utf8"),
+                    tmp.path()
+                        .join(format!("ps_bad_bin_{shell_slug}"))
+                        .to_str()
+                        .expect("utf8"),
                     "-ConfigDir",
-                    tmp.path().join("ps_bad_cfg").to_str().expect("utf8"),
+                    tmp.path()
+                        .join(format!("ps_bad_cfg_{shell_slug}"))
+                        .to_str()
+                        .expect("utf8"),
                     "-AllowTestPubkey",
                     pubkey_path.to_str().expect("utf8"),
                     "-NoModifyPath",

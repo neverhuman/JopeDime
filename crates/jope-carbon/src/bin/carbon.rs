@@ -1694,35 +1694,45 @@ fn execute_doctor_command(
     let (config_dir_str, config_dir_ok, cred_mode_ok, cached_manifest_exists) =
         match verified_absolute_jopedime_config_dir() {
             Ok(dir) => {
-                let mut dir_mode_ok = true;
-                let mut dir_mode_octal: Option<String> = None;
-                if dir.exists() {
-                    #[cfg(unix)]
-                    {
-                        use std::os::unix::fs::PermissionsExt;
+                #[cfg(unix)]
+                let (dir_mode_ok, dir_mode_octal) = {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut ok = true;
+                    let mut octal = None;
+                    if dir.exists() {
                         if let Ok(meta) = fs::metadata(&dir) {
                             let m = meta.permissions().mode() & 0o777;
-                            dir_mode_octal = Some(format!("{m:04o}"));
+                            octal = Some(format!("{m:04o}"));
                             if (m & 0o077) != 0 {
-                                dir_mode_ok = false;
+                                ok = false;
                             }
                         }
                     }
-                }
+                    (ok, octal)
+                };
+                #[cfg(not(unix))]
+                let (dir_mode_ok, dir_mode_octal): (bool, Option<String>) = (true, None);
+
                 let cred_path = dir.join("carbon-credentials.json");
-                let mut cred_ok = true;
-                let mut cred_mode_octal: Option<String> = None;
-                if cred_path.is_file() {
-                    #[cfg(unix)]
-                    {
-                        use std::os::unix::fs::PermissionsExt;
+                #[cfg(unix)]
+                let (cred_ok, cred_mode_octal) = {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut ok = true;
+                    let mut octal = None;
+                    if cred_path.is_file() {
                         if let Ok(meta) = fs::metadata(&cred_path) {
                             let m = meta.permissions().mode() & 0o777;
-                            cred_mode_octal = Some(format!("{m:04o}"));
-                            cred_ok = m == 0o600;
+                            octal = Some(format!("{m:04o}"));
+                            ok = m == 0o600;
                         }
                     }
-                }
+                    (ok, octal)
+                };
+                #[cfg(not(unix))]
+                let (cred_ok, cred_mode_octal): (bool, Option<String>) = {
+                    let _ = &cred_path;
+                    (true, None)
+                };
                 if !dir_mode_ok || !cred_ok {
                     healthy = false;
                 }
@@ -2310,6 +2320,22 @@ fn write_optional_outputs(
 }
 
 fn main() -> ExitCode {
+    const CLI_MAIN_STACK_BYTES: usize = 16 * 1024 * 1024;
+    match std::thread::Builder::new()
+        .name("carbon-cli".to_owned())
+        .stack_size(CLI_MAIN_STACK_BYTES)
+        .spawn(run_cli_main)
+    {
+        Ok(handle) => match handle.join() {
+            Ok(code) => code,
+            Err(_) => ExitCode::from(101),
+        },
+        Err(_) => run_cli_main(),
+    }
+}
+
+#[inline(never)]
+fn run_cli_main() -> ExitCode {
     let cli = Cli::parse();
     let log_format = match cli.log_format.trim().to_ascii_lowercase().as_str() {
         "text" | "" => CarbonLogFormat::Text,
