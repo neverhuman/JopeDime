@@ -15,7 +15,7 @@ use crate::cli::spec_code_coverage_rows::{
 pub const CODE_COVERAGE_SUMMARY_FILENAME: &str = "code-coverage-summary.json";
 
 const BASELINE_JSON: &str =
-    include_str!("../../../../docs/carbon/code-coverage-baseline-4c454329.json");
+    include_str!("../../../../docs/carbon/code-coverage-baseline-0ff23cc6.json");
 
 /// Per-file or crate-wide coverage counters (`lines`, `regions`, `functions`).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -528,7 +528,11 @@ fn badge_pill_html(badge: &str) -> String {
     }
 }
 
-fn render_before_after_svg(before: &CoverageCounters, after: &CoverageCounters) -> String {
+fn render_before_after_svg(
+    base_sha_short: &str,
+    before: &CoverageCounters,
+    after: &CoverageCounters,
+) -> String {
     let metrics = [
         ("Line Coverage (src/**)", before.lines_pct, after.lines_pct),
         ("MIR Branch-Regions", before.regions_pct, after.regions_pct),
@@ -561,7 +565,7 @@ fn render_before_after_svg(before: &CoverageCounters, after: &CoverageCounters) 
     format!(
         r##"<svg viewBox="0 0 880 182" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before vs After Compiler Coverage">
   <rect x="1" y="1" width="878" height="180" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
-  <text x="16" y="23" fill="#0f172a" font-size="11.0" font-weight="700" font-family="Liberation Sans, sans-serif">Figure 14A — rustc 1.97.1 -C instrument-coverage Before (4c4543295b) vs After Function &amp; Module Closure</text>
+  <text x="16" y="23" fill="#0f172a" font-size="11.0" font-weight="700" font-family="Liberation Sans, sans-serif">Figure 14A — rustc 1.97.1 -C instrument-coverage Before ({base_sha_short}) vs After Remaining Section 14 Gap Closure</text>
   {bars}
 </svg>"##
     )
@@ -572,7 +576,8 @@ pub fn render_code_coverage_section_html(rcpt: &CodeCoverageSummaryReceipt) -> S
     let dl = rcpt.after.lines_pct - rcpt.before.lines_pct;
     let dr = rcpt.after.regions_pct - rcpt.before.regions_pct;
     let df = rcpt.after.functions_pct - rcpt.before.functions_pct;
-    let svg = render_before_after_svg(&rcpt.before, &rcpt.after);
+    let base_sha_short = esc(&rcpt.baseline_sha[..rcpt.baseline_sha.len().min(10)]);
+    let svg = render_before_after_svg(&base_sha_short, &rcpt.before, &rcpt.after);
 
     let cli_body = render_surface_rows_html(&rcpt.cli_rows);
     let api_body = render_surface_rows_html(&rcpt.api_rows);
@@ -583,7 +588,7 @@ pub fn render_code_coverage_section_html(rcpt: &CodeCoverageSummaryReceipt) -> S
         r##"  <div class="page-break"></div>
   <h2>14. Compiler-Instrumented Full Product Code Coverage Matrix (<code>CLI</code>, <code>API</code> &amp; <code>Tier &times; Env</code>)</h2>
   <p>
-    Section 14 binds every shipping Carbon CLI command and binary entrypoint (<strong>{cli_n}</strong> surfaces), every public Edge, Enterprise Serve, and internal Runtime/CAS HTTP endpoint (<strong>{api_n}</strong> routes), and every <code>effort &times; auth_tier &times; environment</code> product cell (<strong>64</strong> cells) to compiler-instrumented <code>rustc 1.97.1 -C instrument-coverage</code> + <code>llvm-cov export</code> function, line, and MIR branch-region counters, comparing baseline <code>origin/main</code> (<code>{base_sha}</code>; evolved from initial baseline <code>7988e2ecd306</code> at <code>45.52%</code> fn / <code>63.42%</code> ln) against exact HEAD (<code>{head_sha}</code>). Live CI <code>high</code> and <code>ultra</code> Pro cells remain explicitly badged <code>AUTO-EMU-FALLBACK</code> under the zero-repo-secret posture:
+    Section 14 binds every shipping Carbon CLI command and binary entrypoint (<strong>{cli_n}</strong> surfaces), every public Edge, Enterprise Serve, and internal Runtime/CAS HTTP endpoint (<strong>{api_n}</strong> routes), and every <code>effort &times; auth_tier &times; environment</code> product cell (<strong>64</strong> cells) to compiler-instrumented <code>rustc 1.97.1 -C instrument-coverage</code> + <code>llvm-cov export</code> function, line, and MIR branch-region counters, comparing baseline <code>origin/main</code> (<code>{base_sha}</code>; cumulative progression from <code>7988e2ecd306</code> at <code>45.52%</code> fn / <code>63.42%</code> ln &rarr; <code>4c4543295b</code> at <code>52.54%</code> fn / <code>73.11%</code> ln &rarr; <code>0ff23cc6ac</code> at <code>60.91%</code> fn / <code>78.46%</code> ln) against exact HEAD (<code>{head_sha}</code>). Live CI <code>high</code> and <code>ultra</code> Pro cells remain explicitly badged <code>AUTO-EMU-FALLBACK</code> under the zero-repo-secret posture:
   </p>
   <div class="kpi-strip">
     <div class="kpi"><div class="kpi-val">{al:.2}% ({dl:+.2} pp)</div><div class="kpi-lbl">Line Coverage: {alc}/{alt} (Before {bl:.2}%: {blc}/{blt})</div></div>
@@ -617,13 +622,14 @@ pub fn render_code_coverage_section_html(rcpt: &CodeCoverageSummaryReceipt) -> S
     <tbody>{te_body}</tbody>
   </table>
 
-  <h3>Table 14D — Per-Module Function, Line &amp; MIR Region Coverage Before (<code>4c4543295b</code>) vs After (<code>crates/jope-carbon/src/**</code>)</h3>
+  <h3>Table 14D — Per-Module Function, Line &amp; MIR Region Coverage Before (<code>{base_sha_short}</code>) vs After (<code>crates/jope-carbon/src/**</code>)</h3>
   <table class="cov-table">
     <thead>
       <tr><th style="width:24%">Source File</th><th class="num" style="width:8%">Before Fn</th><th class="num" style="width:14%">After Functions</th><th class="num" style="width:9%">Delta Fn</th><th class="num" style="width:8%">Before Ln</th><th class="num" style="width:14%">After Lines</th><th class="num" style="width:9%">Delta Ln</th><th class="num" style="width:14%">After MIR Br</th></tr>
     </thead>
     <tbody>{file_body}</tbody>
   </table>"##,
+        base_sha_short = base_sha_short,
         cli_n = rcpt.cli_rows.len(),
         api_n = rcpt.api_rows.len(),
         base_sha = esc(&rcpt.baseline_sha[..rcpt.baseline_sha.len().min(12)]),
