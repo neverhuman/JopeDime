@@ -634,8 +634,16 @@ def gate_gp_chain_units(ctx) -> dict:
     assert np.allclose(res_b["stages"][0]["ref"][:10], 1.0 + 0.25 * yy[:10]) and np.allclose(res_b["stages"][0]["ref"][10:], 1.0)
     assert abs(res_b["book"]["u_search_base"] - GC.u_search(0.5 * yy, yy)) < 1e-12
     A.arm = "oof_chain"
-    res_o = GC.run_context((_LookupEngine(), None, None), "ctxd", d, A, work / "base_oof")
-    assert np.allclose(res_o["stages"][-1]["q"], 0.5 * yy), "a held-out row got more than the base column's out-of-fold value"
+    # an out-of-fold arm refuses a base that is only out of fold on all SEARCH rows, and one nested on other folds; it takes the nested one
+    assert _refused(GC.run_context, (_LookupEngine(), None, None), "ctxd", d, A, work / "base_oof"), "an out-of-fold arm took a base that is not nested on its outer folds"
+    lab4 = np.arange(48, dtype=np.int64) % 4
+    nq = np.stack([np.where(lab4 == o, 0.25 * yy, 0.5 * yy) for o in range(4)])
+    for cid_n, nl in (("ctxe", lab4), ("ctxf", (lab4 + 1) % 4), ("ctxg", np.sort(lab4))):
+        np.savez(bdir / f"{cid_n}.npz", q_stack=0.5 * yy, bag_stack=np.ones(15), ref_stack=np.ones(15), nest_lab_stack=nl, nest_q_stack=nq, nest_a_stack=np.ones((4, 15)))
+    res_o = GC.run_context((_LookupEngine(), None, None), "ctxe", d, A, work / "base_oof_nested")
+    assert np.allclose(res_o["stages"][-1]["q"], 0.25 * yy), "a held-out row did not get the nested base's value for its own fold"
+    assert _refused(GC.run_context, (_LookupEngine(), None, None), "ctxf", d, A, work / "base_oof_shifted"), "a base nested on shifted folds was accepted"
+    assert _refused(GC.run_context, (_LookupEngine(), None, None), "ctxg", d, A, work / "base_oof_other"), "a base nested on another partition was accepted"
     A.base_block, A.base_col = "", ""
     # packing for a column scorer: names, shapes, nothing but the block layout
     arm_dirs = {}
@@ -803,7 +811,7 @@ def gate_gp_chain_units(ctx) -> dict:
     pb2.mkdir()
     assert _refused(GC.pack_bank, {"ic": f_ic}, pb2, 0, "fair"), "in-corpus-prior programs were packed as fair"
     A.arm, A.stages = "chain", 3
-    return {"checks": 78, "dir": str(work)}
+    return {"checks": 80, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:
