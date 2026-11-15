@@ -1,12 +1,16 @@
-//! Universal RFC-4180 CSV/TSV/semicolon reader, zero-leakage `FIT`-only tabular feature encoder
-//! (numeric, boolean, one-hot & smoothed leave-one-out categorical, missing-value imputation),
+//! Universal RFC-4180 CSV/TSV/semicolon/JSONL reader (`.gz`, `.zst`, UTF-16 BOM, `stdin`),
+//! zero-leakage `FIT`-only tabular feature encoder (numeric, currency/percent, boolean, ISO-8601 date,
+//! one-hot & smoothed leave-one-out categorical, missing-value imputation, custom objective `aux` separation),
 //! fuzzy column suggestion, and instant local dataset preflight inspector (`carbon inspect`).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
-use jope_prep::{jmat_lite::split_and_encode_numeric_jmat_v1, FitLandmarkBundle, SplitPlan};
+use jope_prep::{
+    jmat_lite::split_and_encode_numeric_jmat_v1, FitLandmarkBundle, ObjectiveSpec, SplitPlan,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -18,7 +22,10 @@ use crate::{
     role::{CarbonEffortTier, CarbonProductTier},
 };
 
-/// `CarbonRawTable` is a struct holding parsed raw string/missing cells from a delimited file.
+const MAX_DECOMPRESSED_TABLE_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_STDIN_TABLE_BYTES: u64 = 128 * 1024 * 1024;
+
+/// `CarbonRawTable` is a struct holding parsed raw string/missing cells from a delimited or JSONL file.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CarbonRawTable {
     pub headers: Vec<String>,
@@ -31,7 +38,7 @@ pub struct CarbonRawTable {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CarbonFeatureTransform {
-    /// Clean or median-imputed numeric column, optionally paired with a `<col>__isna` indicator.
+    /// Clean or median-imputed numeric column (including `$1,200` / `12.5%`), optionally paired with `<col>__isna`.
     Numeric {
         source_column: String,
         median: f64,
@@ -39,7 +46,14 @@ pub enum CarbonFeatureTransform {
     },
     /// Boolean column (`true`/`false`, `yes`/`no`, `t`/`f`, `1`/`0`) imputed with `mode`.
     Boolean { source_column: String, mode: f64 },
-    /// Low-cardinality categorical expanded into deterministic one-hot indicators `<col>=<cat>`.
+    /// ISO-8601 date/timestamp column expanded into `FIT`-centered days plus calendar components.
+    DateIso {
+        source_column: String,
+        median_epoch_days: f64,
+        emit_calendar_parts: bool,
+        emit_missing_indicator: bool,
+    },
+    /// Low-cardinality categorical expanded into deterministic one-hot indicators `<col>__<cat>`.
     OneHot {
         source_column: String,
         categories: Vec<String>,
@@ -67,8 +81,21 @@ pub struct CarbonTabularEncoder {
     pub had_header: bool,
 }
 
+/// `CarbonTrainingPrepOptions` configures split strategy, calibration, custom objectives, and hygiene checks.
+#[derive(Clone, Copy, Debug)]
+pub struct CarbonTrainingPrepOptions<'a> {
+    pub requested_target: Option<&'a str>,
+    pub seed: u64,
+    pub holdout_fraction: f64,
+    pub max_encoded_features: usize,
+    pub objective_spec: Option<&'a ObjectiveSpec>,
+    pub split_mode: Option<&'a str>,
+    pub calibration_mode: Option<&'a str>,
+    pub reject_constant_target: bool,
+}
+
 /// `CarbonEncodedTrainingSet` is a struct bundling the `CarbonClientPreparedDataset`, split matrices,
-/// and reusable `CarbonTabularEncoder` produced from a raw training table.
+/// auxiliary objective columns, hygiene warnings, and reusable `CarbonTabularEncoder`.
 #[derive(Clone, Debug)]
 pub struct CarbonEncodedTrainingSet {
     pub prepared: CarbonClientPreparedDataset,
@@ -79,6 +106,9 @@ pub struct CarbonEncodedTrainingSet {
     pub fit_y: Vec<f64>,
     pub holdout_x: Vec<Vec<f64>>,
     pub holdout_y: Vec<f64>,
+    pub fit_aux_cols: BTreeMap<String, Vec<f64>>,
+    pub holdout_aux_cols: BTreeMap<String, Vec<f64>>,
+    pub hygiene_warnings: Vec<String>,
 }
 
 /// `CarbonColumnProfile` is a struct summarizing one column in `carbon inspect`.
@@ -136,19 +166,122 @@ pub struct CarbonTabularInspectReport {
     pub effort_previews: Vec<CarbonEffortCostPreview>,
 }
 
-fn is_missing_token(raw: &str) -> bool {
+fn is_missing_token_with_extra(raw: &str, extra_na: &[String]) -> bool {
     let t = raw.trim();
     if t.is_empty() {
         return true;
     }
+    let lower = t.to_ascii_lowercase();
+    if matches!(
+        lower.as_str(),
+        "na" | "n/a"
+            | "nan"
+            | "-nan"
+            | "+nan"
+            | "null"
+            | "none"
+            | "nil"
+            | "?"
+            | "#n/a"
+            | "#value!"
+            | "#div/0!"
+            | "#ref!"
+            | "#name?"
+            | "#num!"
+            | "<na>"
+            | "missing"
+    ) {
+        return true;
+    }
+    extra_na
+        .iter()
+        .any(|tok| !tok.is_empty() && t.eq_ignore_ascii_case(tok.trim()))
+}
+
+fn is_infinity_token(raw: &str) -> bool {
     matches!(
-        t.to_ascii_lowercase().as_str(),
-        "na" | "n/a" | "nan" | "null" | "none" | "nil" | "?" | "#n/a" | "#value!" | "missing"
+        raw.trim().to_ascii_lowercase().as_str(),
+        "inf" | "+inf" | "-inf" | "infinity" | "+infinity" | "-infinity"
     )
 }
 
 fn parse_finite_f64(raw: &str) -> Option<f64> {
     raw.trim().parse::<f64>().ok().filter(|v| v.is_finite())
+}
+
+/// Parse plain finite `f64`, currency/grouped numbers (`$1,200.50`, `($450.00)`), and percentages (`12.5%`).
+pub fn parse_flexible_numeric_f64(raw: &str) -> Option<f64> {
+    if let Some(v) = parse_finite_f64(raw) {
+        return Some(v);
+    }
+    let mut s = raw.trim();
+    if s.len() < 2 {
+        return None;
+    }
+    let mut sign = 1.0_f64;
+    if s.starts_with('(') && s.ends_with(')') && s.len() >= 3 {
+        sign = -1.0;
+        s = s[1..s.len() - 1].trim();
+    } else if let Some(rest) = s.strip_prefix('-') {
+        sign = -1.0;
+        s = rest.trim();
+    } else if let Some(rest) = s.strip_prefix('+') {
+        s = rest.trim();
+    }
+
+    let mut scale = 1.0_f64;
+    let mut had_special = false;
+    if let Some(rest) = s.strip_suffix('%') {
+        scale = 0.01;
+        had_special = true;
+        s = rest.trim();
+    }
+    for sym in ['$', '€', '£', '¥'] {
+        if let Some(rest) = s.strip_prefix(sym) {
+            had_special = true;
+            s = rest.trim();
+            break;
+        }
+        if let Some(rest) = s.strip_suffix(sym) {
+            had_special = true;
+            s = rest.trim();
+            break;
+        }
+    }
+    if let Some(rest) = s.strip_prefix('-') {
+        sign = -sign;
+        s = rest.trim();
+    }
+    if s.contains(',') {
+        let (int_part, frac_part) = match s.split_once('.') {
+            Some((i, f)) => (i, Some(f)),
+            None => (s, None),
+        };
+        let groups: Vec<&str> = int_part.split(',').collect();
+        if groups.len() < 2
+            || groups[0].is_empty()
+            || groups[0].len() > 3
+            || !groups[0].bytes().all(|b| b.is_ascii_digit())
+            || !groups[1..]
+                .iter()
+                .all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()))
+        {
+            return None;
+        }
+        if let Some(fp) = frac_part {
+            if fp.contains(',') || !fp.bytes().all(|b| b.is_ascii_digit()) {
+                return None;
+            }
+        }
+        let cleaned = s.replace(',', "");
+        let v = cleaned.parse::<f64>().ok().filter(|x| x.is_finite())?;
+        return Some(sign * v * scale);
+    }
+    if !had_special {
+        return None;
+    }
+    let v = s.parse::<f64>().ok().filter(|x| x.is_finite())?;
+    Some(sign * v * scale)
 }
 
 fn parse_boolean_token(raw: &str) -> Option<f64> {
@@ -157,6 +290,119 @@ fn parse_boolean_token(raw: &str) -> Option<f64> {
         "false" | "no" | "n" | "f" => Some(0.0),
         _ => None,
     }
+}
+
+fn is_leap_year(y: i32) -> bool {
+    (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)
+}
+
+fn days_in_month(y: i32, m: u32) -> u32 {
+    match m {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            if is_leap_year(y) {
+                29
+            } else {
+                28
+            }
+        }
+        _ => 0,
+    }
+}
+
+fn days_from_civil(y: i32, m: u32, d: u32) -> i64 {
+    let y_adj = i64::from(y) - if m <= 2 { 1 } else { 0 };
+    let era = if y_adj >= 0 { y_adj } else { y_adj - 399 } / 400;
+    let yoe = (y_adj - era * 400) as u64;
+    let m_u64 = u64::from(m);
+    let doy = (153 * (if m_u64 > 2 { m_u64 - 3 } else { m_u64 + 9 }) + 2) / 5 + u64::from(d) - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + (doe as i64) - 719_468
+}
+
+/// Parse ISO-8601 `YYYY-MM-DD` or `YYYY-MM-DD[T ]HH:MM[:SS[.fff]][Z|±HH[:MM]]` into `(epoch_days, month, dow)`.
+fn parse_iso8601_date(raw: &str) -> Option<(f64, f64, f64)> {
+    let s = raw.trim();
+    let bytes = s.as_bytes();
+    if bytes.len() < 10 || bytes.len() > 40 || bytes[4] != b'-' || bytes[7] != b'-' {
+        return None;
+    }
+    let year: i32 = s.get(0..4)?.parse().ok()?;
+    let month: u32 = s.get(5..7)?.parse().ok()?;
+    let day: u32 = s.get(8..10)?.parse().ok()?;
+    if !(1500..=2500).contains(&year)
+        || !(1..=12).contains(&month)
+        || day < 1
+        || day > days_in_month(year, month)
+    {
+        return None;
+    }
+    let base_days = days_from_civil(year, month, day);
+    let dow = base_days.rem_euclid(7) as f64;
+    if bytes.len() == 10 {
+        return Some((base_days as f64, month as f64, dow));
+    }
+    let sep = bytes[10];
+    if !matches!(sep, b'T' | b't' | b' ') {
+        return None;
+    }
+    let rest = s.get(11..)?.trim();
+    if rest.len() < 5 || rest.as_bytes()[2] != b':' {
+        return None;
+    }
+    let hh: u32 = rest.get(0..2)?.parse().ok()?;
+    let mm: u32 = rest.get(3..5)?.parse().ok()?;
+    if hh > 23 || mm > 59 {
+        return None;
+    }
+    let mut cursor = 5usize;
+    let mut secs = (hh * 3600 + mm * 60) as f64;
+    if cursor < rest.len() && rest.as_bytes()[cursor] == b':' {
+        let ss: u32 = rest.get(cursor + 1..cursor + 3)?.parse().ok()?;
+        if ss > 60 {
+            return None;
+        }
+        secs += ss as f64;
+        cursor += 3;
+        if cursor < rest.len() && rest.as_bytes()[cursor] == b'.' {
+            cursor += 1;
+            let frac_start = cursor;
+            while cursor < rest.len() && rest.as_bytes()[cursor].is_ascii_digit() {
+                cursor += 1;
+            }
+            if cursor == frac_start {
+                return None;
+            }
+            let frac_str = &rest[frac_start - 1..cursor];
+            let frac: f64 = format!("0{frac_str}").parse().ok()?;
+            secs += frac;
+        }
+    }
+    let tz_part = rest.get(cursor..)?.trim();
+    let tz_offset_secs: f64 = if tz_part.is_empty() || tz_part.eq_ignore_ascii_case("z") {
+        0.0
+    } else if tz_part.starts_with('+') || tz_part.starts_with('-') {
+        let tz_sign = if tz_part.starts_with('-') { -1.0 } else { 1.0 };
+        let tz_digits = &tz_part[1..];
+        let (tzh, tzm): (u32, u32) = if let Some((h_s, m_s)) = tz_digits.split_once(':') {
+            (h_s.parse().ok()?, m_s.parse().ok()?)
+        } else if tz_digits.len() == 4 {
+            (tz_digits[0..2].parse().ok()?, tz_digits[2..4].parse().ok()?)
+        } else if tz_digits.len() == 2 {
+            (tz_digits.parse().ok()?, 0)
+        } else {
+            return None;
+        };
+        if tzh > 23 || tzm > 59 {
+            return None;
+        }
+        tz_sign * ((tzh * 3600 + tzm * 60) as f64)
+    } else {
+        return None;
+    };
+    let epoch_days = (base_days as f64) + ((secs - tz_offset_secs) / 86_400.0);
+    Some((epoch_days, month as f64, dow))
 }
 
 fn count_unquoted_delim(line: &str, delim: char) -> usize {
@@ -249,18 +495,214 @@ fn parse_rfc4180_records(text: &str, delim: char) -> Result<Vec<Vec<String>>, St
     Ok(rows)
 }
 
-/// Read an RFC-4180 CSV/TSV/semicolon file from disk into a normalized `CarbonRawTable`.
+fn decode_utf8_or_utf16_bytes(bytes: Vec<u8>, label: &str) -> Result<String, String> {
+    if bytes.starts_with(&[0xFF, 0xFE]) {
+        let payload = &bytes[2..];
+        if !payload.len().is_multiple_of(2) {
+            return Err(format!(
+                "UTF-16LE file {label} has odd byte length ({})",
+                bytes.len()
+            ));
+        }
+        let units = payload
+            .chunks_exact(2)
+            .map(|pair| u16::from_le_bytes([pair[0], pair[1]]));
+        char::decode_utf16(units)
+            .collect::<Result<String, _>>()
+            .map_err(|e| format!("decode UTF-16LE {label}: {e}"))
+    } else if bytes.starts_with(&[0xFE, 0xFF]) {
+        let payload = &bytes[2..];
+        if !payload.len().is_multiple_of(2) {
+            return Err(format!(
+                "UTF-16BE file {label} has odd byte length ({})",
+                bytes.len()
+            ));
+        }
+        let units = payload
+            .chunks_exact(2)
+            .map(|pair| u16::from_be_bytes([pair[0], pair[1]]));
+        char::decode_utf16(units)
+            .collect::<Result<String, _>>()
+            .map_err(|e| format!("decode UTF-16BE {label}: {e}"))
+    } else {
+        String::from_utf8(bytes).map_err(|e| {
+            let offset = e.utf8_error().valid_up_to();
+            format!(
+                "file {label} contains invalid UTF-8 at byte offset {offset} (supported encodings: UTF-8, UTF-16LE BOM, UTF-16BE BOM)"
+            )
+        })
+    }
+}
+
+fn read_bounded_bytes<R: Read>(mut reader: R, cap: u64, label: &str) -> Result<Vec<u8>, String> {
+    let mut buf = Vec::new();
+    let mut limited = (&mut reader).take(cap + 1);
+    limited
+        .read_to_end(&mut buf)
+        .map_err(|e| format!("read {label}: {e}"))?;
+    if (buf.len() as u64) > cap {
+        return Err(format!(
+            "{label} exceeded maximum uncompressed table size limit ({} MiB)",
+            cap / (1024 * 1024)
+        ));
+    }
+    Ok(buf)
+}
+
+fn read_decoded_table_text(path: &Path) -> Result<(String, String), String> {
+    let label = path.display().to_string();
+    if path == Path::new("-") {
+        let stdin = std::io::stdin();
+        let bytes = read_bounded_bytes(stdin.lock(), MAX_STDIN_TABLE_BYTES, "stdin ('-')")?;
+        let decoded = decode_utf8_or_utf16_bytes(bytes, "stdin ('-')")?;
+        return Ok((decoded, "-".to_owned()));
+    }
+    let file_name_lc = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if let Some(stem) = file_name_lc.strip_suffix(".gz") {
+        let file = fs::File::open(path).map_err(|e| format!("open {label}: {e}"))?;
+        let decoder = flate2::read::GzDecoder::new(file);
+        let bytes = read_bounded_bytes(decoder, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
+        let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
+        return Ok((decoded, stem.to_owned()));
+    }
+    if let Some(stem) = file_name_lc.strip_suffix(".zst") {
+        let file = fs::File::open(path).map_err(|e| format!("open {label}: {e}"))?;
+        let decoder = ruzstd::decoding::StreamingDecoder::new(file)
+            .map_err(|e| format!("init zstd decoder for {label}: {e}"))?;
+        let bytes = read_bounded_bytes(decoder, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
+        let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
+        return Ok((decoded, stem.to_owned()));
+    }
+    let file = fs::File::open(path).map_err(|e| format!("read {label}: {e}"))?;
+    let bytes = read_bounded_bytes(file, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
+    let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
+    Ok((decoded, file_name_lc))
+}
+
+fn parse_jsonl_str(
+    raw: &str,
+    source_label: &str,
+    extra_na: &[String],
+    inf_as_nan: bool,
+) -> Result<CarbonRawTable, String> {
+    let stripped = raw.strip_prefix('\u{feff}').unwrap_or(raw);
+    let mut headers: Vec<String> = Vec::new();
+    let mut header_idx: BTreeMap<String, usize> = BTreeMap::new();
+    let mut raw_maps: Vec<(usize, serde_json::Map<String, serde_json::Value>)> = Vec::new();
+
+    for (idx, line) in stripped.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let line_no = idx + 1;
+        let val: serde_json::Value = serde_json::from_str(trimmed)
+            .map_err(|e| format!("JSONL {source_label} line {line_no} invalid JSON: {e}"))?;
+        let serde_json::Value::Object(map) = val else {
+            return Err(format!(
+                "JSONL {source_label} line {line_no} must be a flat JSON object (`{{...}}`)"
+            ));
+        };
+        for key in map.keys() {
+            if !header_idx.contains_key(key) {
+                let pos = headers.len();
+                headers.push(key.clone());
+                header_idx.insert(key.clone(), pos);
+            }
+        }
+        raw_maps.push((line_no, map));
+    }
+
+    if headers.is_empty() || raw_maps.is_empty() {
+        return Err(format!("JSONL {source_label} contains zero JSON records"));
+    }
+
+    let mut rows = Vec::with_capacity(raw_maps.len());
+    for (line_no, map) in raw_maps {
+        let mut row = vec![None; headers.len()];
+        for (k, v) in map {
+            let col_idx = header_idx[&k];
+            let cell = match v {
+                serde_json::Value::Null => None,
+                serde_json::Value::Bool(b) => Some(b.to_string()),
+                serde_json::Value::Number(n) => Some(n.to_string()),
+                serde_json::Value::String(s) => {
+                    let t = s.trim();
+                    if is_missing_token_with_extra(t, extra_na) {
+                        None
+                    } else if is_infinity_token(t) {
+                        if inf_as_nan {
+                            None
+                        } else {
+                            return Err(format!(
+                                "JSONL {source_label} line {line_no} column '{k}' contains non-finite value '{t}'; clean upstream or pass --inf-as-nan to treat ±Inf as missing"
+                            ));
+                        }
+                    } else {
+                        Some(t.to_owned())
+                    }
+                }
+                serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                    return Err(format!(
+                        "JSONL {source_label} line {line_no} column '{k}' is a nested array/object; flatten nested fields before running Carbon"
+                    ));
+                }
+            };
+            row[col_idx] = cell;
+        }
+        rows.push(row);
+    }
+
+    Ok(CarbonRawTable {
+        headers,
+        rows,
+        delimiter: ',',
+        had_header: true,
+    })
+}
+
+/// Read an RFC-4180 CSV/TSV/semicolon/JSONL file (or `.gz`/`.zst`/`stdin`) into a `CarbonRawTable`.
 pub fn load_delimited_table(
     path: &Path,
     delimiter_override: Option<char>,
     has_header: bool,
 ) -> Result<CarbonRawTable, String> {
-    let raw = fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
-    parse_delimited_str(
+    load_delimited_table_with_options(path, delimiter_override, has_header, &[], false)
+}
+
+/// Read a tabular file with custom missing-value sentinels (`--na-values`) and `--inf-as-nan` policy.
+pub fn load_delimited_table_with_options(
+    path: &Path,
+    delimiter_override: Option<char>,
+    has_header: bool,
+    extra_na_values: &[String],
+    inf_as_nan: bool,
+) -> Result<CarbonRawTable, String> {
+    let (raw, effective_name) = read_decoded_table_text(path)?;
+    let label = path.display().to_string();
+    let looks_jsonl = effective_name.ends_with(".jsonl")
+        || effective_name.ends_with(".ndjson")
+        || (effective_name == "-"
+            && delimiter_override.is_none()
+            && raw
+                .lines()
+                .map(str::trim)
+                .find(|l| !l.is_empty())
+                .is_some_and(|l| l.starts_with('{') && l.ends_with('}')));
+    if looks_jsonl {
+        return parse_jsonl_str(&raw, &label, extra_na_values, inf_as_nan);
+    }
+    parse_delimited_str_with_options(
         &raw,
-        path.display().to_string().as_str(),
+        &label,
         delimiter_override,
         has_header,
+        extra_na_values,
+        inf_as_nan,
     )
 }
 
@@ -270,6 +712,25 @@ pub fn parse_delimited_str(
     source_label: &str,
     delimiter_override: Option<char>,
     has_header: bool,
+) -> Result<CarbonRawTable, String> {
+    parse_delimited_str_with_options(
+        raw,
+        source_label,
+        delimiter_override,
+        has_header,
+        &[],
+        false,
+    )
+}
+
+/// Parse delimited text with custom `--na-values` and explicit `±Inf` handling.
+pub fn parse_delimited_str_with_options(
+    raw: &str,
+    source_label: &str,
+    delimiter_override: Option<char>,
+    has_header: bool,
+    extra_na_values: &[String],
+    inf_as_nan: bool,
 ) -> Result<CarbonRawTable, String> {
     let stripped = raw.strip_prefix('\u{feff}').unwrap_or(raw);
     let first_non_empty = stripped
@@ -340,17 +801,24 @@ pub fn parse_delimited_str(
                 delim
             ));
         }
-        let row: Vec<Option<String>> = rec
-            .into_iter()
-            .map(|c| {
-                let trimmed = c.trim();
-                if is_missing_token(trimmed) {
-                    None
+        let mut row = Vec::with_capacity(expected_cols);
+        for (c_idx, c) in rec.into_iter().enumerate() {
+            let trimmed = c.trim();
+            if is_missing_token_with_extra(trimmed, extra_na_values) {
+                row.push(None);
+            } else if is_infinity_token(trimmed) {
+                if inf_as_nan {
+                    row.push(None);
                 } else {
-                    Some(trimmed.to_owned())
+                    return Err(format!(
+                        "CSV {source_label} line {line_no} column '{}' contains non-finite value '{trimmed}'; clean upstream or pass --inf-as-nan to treat ±Inf as missing",
+                        headers[c_idx]
+                    ));
                 }
-            })
-            .collect();
+            } else {
+                row.push(Some(trimmed.to_owned()));
+            }
+        }
         norm_rows.push(row);
     }
 
@@ -475,23 +943,113 @@ pub fn prepare_encoded_training_set(
     holdout_fraction: f64,
     max_encoded_features: usize,
 ) -> Result<CarbonEncodedTrainingSet, String> {
+    prepare_encoded_training_set_with_options(
+        table,
+        &CarbonTrainingPrepOptions {
+            requested_target,
+            seed,
+            holdout_fraction,
+            max_encoded_features,
+            objective_spec: None,
+            split_mode: None,
+            calibration_mode: None,
+            reject_constant_target: false,
+        },
+    )
+}
+
+/// Condition & encode a `CarbonRawTable` with explicit split mode, calibration, custom objective
+/// `aux_columns` separation, ISO-8601 date expansion, and pre-upload hygiene checks.
+pub fn prepare_encoded_training_set_with_options(
+    table: &CarbonRawTable,
+    opts: &CarbonTrainingPrepOptions<'_>,
+) -> Result<CarbonEncodedTrainingSet, String> {
     let (target_idx, target_col, _) =
-        resolve_target_column(&table.headers, requested_target, table.had_header)?;
+        resolve_target_column(&table.headers, opts.requested_target, table.had_header)?;
+
+    let normalized_split = match opts.split_mode.map(str::trim).filter(|s| !s.is_empty()) {
+        None | Some("random") => None,
+        Some("forward") => Some("forward".to_owned()),
+        Some(other) => {
+            return Err(format!(
+                "unsupported --split mode '{other}' (expected 'random' or 'forward')"
+            ));
+        }
+    };
+    let normalized_cal = match opts
+        .calibration_mode
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        None | Some("auto") => None,
+        Some(m @ ("none" | "shift" | "affine")) => Some(m.to_owned()),
+        Some(other) => {
+            return Err(format!(
+                "unsupported --calibration mode '{other}' (expected 'auto', 'none', 'shift', or 'affine')"
+            ));
+        }
+    };
+
+    // Resolve any custom-objective auxiliary columns (`col("<name>")`) so they stay out of `X` / `JLMB`
+    // while remaining present in `fit.jmat` / `holdout.jmat` for fold-safe objective evaluation.
+    let mut aux_indices: Vec<(usize, String)> = Vec::new();
+    let mut aux_idx_set = BTreeSet::new();
+    if let Some(spec) = opts.objective_spec {
+        for aux_name in spec.columns() {
+            let idx = table
+                .headers
+                .iter()
+                .position(|h| h == &aux_name)
+                .ok_or_else(|| {
+                    format!(
+                        "custom objective references auxiliary column '{aux_name}' which is missing from CSV headers [{}]",
+                        table.headers.join(", ")
+                    )
+                })?;
+            if idx == target_idx {
+                return Err(format!(
+                    "custom objective auxiliary column '{aux_name}' cannot be the target column '{target_col}'"
+                ));
+            }
+            if aux_idx_set.insert(idx) {
+                aux_indices.push((idx, aux_name));
+            }
+        }
+    }
 
     let mut valid_rows: Vec<&Vec<Option<String>>> = Vec::with_capacity(table.rows.len());
     let mut valid_targets: Vec<f64> = Vec::with_capacity(table.rows.len());
+    let mut valid_aux_rows: Vec<Vec<f64>> = Vec::with_capacity(table.rows.len());
     let mut dropped_target_rows = 0usize;
 
-    for row in &table.rows {
-        match row[target_idx].as_deref().and_then(parse_finite_f64) {
-            Some(y) => {
-                valid_rows.push(row);
-                valid_targets.push(y);
-            }
-            None => {
-                dropped_target_rows += 1;
-            }
+    for (r_idx, row) in table.rows.iter().enumerate() {
+        let Some(y) = row[target_idx]
+            .as_deref()
+            .and_then(parse_flexible_numeric_f64)
+        else {
+            dropped_target_rows += 1;
+            continue;
+        };
+        let mut aux_vals = Vec::with_capacity(aux_indices.len());
+        for (a_idx, a_name) in &aux_indices {
+            let line_no = if table.had_header {
+                r_idx + 2
+            } else {
+                r_idx + 1
+            };
+            let val = row[*a_idx]
+                .as_deref()
+                .and_then(parse_flexible_numeric_f64)
+                .ok_or_else(|| {
+                    format!(
+                        "line {line_no} auxiliary objective column '{a_name}' must contain a finite numeric value"
+                    )
+                })?;
+            aux_vals.push(val);
         }
+        valid_rows.push(row);
+        valid_targets.push(y);
+        valid_aux_rows.push(aux_vals);
     }
 
     if valid_rows.len() < 8 {
@@ -502,16 +1060,34 @@ pub fn prepare_encoded_training_set(
     }
 
     let total_rows = valid_rows.len();
-    let split_plan = SplitPlan::deterministic(total_rows, seed, holdout_fraction)
-        .map_err(|e| format!("split plan failed: {e}"))?;
+    let split_plan = if normalized_split.as_deref() == Some("forward") {
+        SplitPlan::chronological(total_rows, opts.seed, opts.holdout_fraction)
+            .map_err(|e| format!("chronological split plan failed: {e}"))?
+    } else {
+        SplitPlan::deterministic(total_rows, opts.seed, opts.holdout_fraction)
+            .map_err(|e| format!("split plan failed: {e}"))?
+    };
     let fit_indices = split_plan.fit_rows();
     let fit_set: BTreeSet<usize> = fit_indices.iter().copied().collect();
     let n_fit = fit_indices.len().max(1);
     let global_fit_mean =
         fit_indices.iter().map(|&i| valid_targets[i]).sum::<f64>() / (n_fit as f64);
+    let fit_y_var = fit_indices
+        .iter()
+        .map(|&i| {
+            let d = valid_targets[i] - global_fit_mean;
+            d * d
+        })
+        .sum::<f64>()
+        / (n_fit as f64);
+    if opts.reject_constant_target && fit_y_var.sqrt() <= 1e-12 {
+        return Err(format!(
+            "target column '{target_col}' is constant on the training split (value = {global_fit_mean}, std = 0); choose a non-constant `--target` column"
+        ));
+    }
 
     let raw_feature_indices: Vec<usize> = (0..table.headers.len())
-        .filter(|&i| i != target_idx)
+        .filter(|&i| i != target_idx && !aux_idx_set.contains(&i))
         .collect();
     let raw_feature_columns: Vec<String> = raw_feature_indices
         .iter()
@@ -521,7 +1097,7 @@ pub fn prepare_encoded_training_set(
     let mut transforms = Vec::new();
     let mut encoded_feature_names = Vec::new();
     let mut dropped_columns = Vec::new();
-    let max_feats = max_encoded_features.max(1);
+    let max_feats = opts.max_encoded_features.max(1);
 
     for &col_idx in &raw_feature_indices {
         let col_name = &table.headers[col_idx];
@@ -540,13 +1116,17 @@ pub fn prepare_encoded_training_set(
             continue;
         }
 
-        let all_numeric = fit_present
+        let num_parsed_count = fit_present
             .iter()
-            .all(|&(_, s)| parse_finite_f64(s).is_some());
-        if all_numeric {
+            .filter(|&&(_, s)| parse_flexible_numeric_f64(s).is_some())
+            .count();
+        let mostly_numeric = num_parsed_count == fit_present.len()
+            || (fit_present.len() >= 20 && num_parsed_count * 20 >= fit_present.len() * 19);
+
+        if mostly_numeric {
             let ordered_nums: Vec<(usize, f64)> = fit_present
                 .iter()
-                .filter_map(|&(r_i, s)| parse_finite_f64(s).map(|v| (r_i, v)))
+                .filter_map(|&(r_i, s)| parse_flexible_numeric_f64(s).map(|v| (r_i, v)))
                 .collect();
             let missing_in_fit = n_fit.saturating_sub(ordered_nums.len());
             if raw_feature_indices.len() > 1 && missing_in_fit == 0 && !ordered_nums.is_empty() {
@@ -610,6 +1190,37 @@ pub fn prepare_encoded_training_set(
             continue;
         }
 
+        let date_parsed: Vec<f64> = fit_present
+            .iter()
+            .filter_map(|&(_, s)| parse_iso8601_date(s).map(|(d, _, _)| d))
+            .collect();
+        let mostly_iso_date = date_parsed.len() == fit_present.len()
+            || (fit_present.len() >= 10 && date_parsed.len() * 20 >= fit_present.len() * 19);
+        if mostly_iso_date && !date_parsed.is_empty() {
+            let mut days_sorted = date_parsed;
+            let med_days = sorted_median(&mut days_sorted);
+            let missing_in_fit = n_fit.saturating_sub(days_sorted.len());
+            let emit_parts = encoded_feature_names.len() + 3 <= max_feats;
+            let needed_after_parts = if emit_parts { 3 } else { 1 };
+            let emit_na =
+                missing_in_fit > 0 && encoded_feature_names.len() + needed_after_parts < max_feats;
+            encoded_feature_names.push(format!("{col_name}__days"));
+            if emit_parts {
+                encoded_feature_names.push(format!("{col_name}__month"));
+                encoded_feature_names.push(format!("{col_name}__dow"));
+            }
+            if emit_na {
+                encoded_feature_names.push(format!("{col_name}__isna"));
+            }
+            transforms.push(CarbonFeatureTransform::DateIso {
+                source_column: col_name.clone(),
+                median_epoch_days: med_days,
+                emit_calendar_parts: emit_parts,
+                emit_missing_indicator: emit_na,
+            });
+            continue;
+        }
+
         let mut cat_stats: BTreeMap<String, (usize, f64)> = BTreeMap::new();
         for &(r_i, s) in &fit_present {
             let entry = cat_stats.entry(s.to_owned()).or_insert((0, 0.0));
@@ -664,7 +1275,7 @@ pub fn prepare_encoded_training_set(
 
     if encoded_feature_names.is_empty() {
         return Err(
-            "zero usable feature columns remained after removing target, empty, and string-ID columns"
+            "zero usable feature columns remained after removing target, auxiliary, empty, and string-ID columns"
                 .to_owned(),
         );
     }
@@ -677,6 +1288,7 @@ pub fn prepare_encoded_training_set(
         .collect();
 
     let n_enc = encoded_feature_names.len();
+    let n_aux = aux_indices.len();
     let mut full_x_f32 = Vec::with_capacity(total_rows * n_enc);
     let mut full_y_f32 = Vec::with_capacity(total_rows);
     let mut jmat_numeric_rows: Vec<Vec<f64>> = Vec::with_capacity(total_rows);
@@ -695,8 +1307,9 @@ pub fn prepare_encoded_training_set(
             full_x_f32.push(v as f32);
         }
         full_y_f32.push(y_val as f32);
-        let mut jmat_row = Vec::with_capacity(n_enc + 1);
+        let mut jmat_row = Vec::with_capacity(n_enc + n_aux + 1);
         jmat_row.extend_from_slice(&enc_row);
+        jmat_row.extend_from_slice(&valid_aux_rows[r_i]);
         jmat_row.push(y_val);
         jmat_numeric_rows.push(jmat_row);
         all_encoded_rows.push(enc_row);
@@ -711,7 +1324,9 @@ pub fn prepare_encoded_training_set(
     )
     .map_err(|e| format!("FIT-only landmark conditioning failed: {e}"))?;
 
+    let aux_column_names: Vec<String> = aux_indices.iter().map(|(_, n)| n.clone()).collect();
     let mut jmat_headers = encoded_feature_names.clone();
+    jmat_headers.extend(aux_column_names.iter().cloned());
     jmat_headers.push(target_col.clone());
     let artifacts =
         split_and_encode_numeric_jmat_v1(&jmat_headers, &jmat_numeric_rows, &split_plan)
@@ -719,15 +1334,64 @@ pub fn prepare_encoded_training_set(
 
     let mut fit_x = Vec::with_capacity(split_plan.fit_rows().len());
     let mut fit_y = Vec::with_capacity(split_plan.fit_rows().len());
+    let mut fit_aux_cols: BTreeMap<String, Vec<f64>> = aux_column_names
+        .iter()
+        .map(|n| (n.clone(), Vec::with_capacity(split_plan.fit_rows().len())))
+        .collect();
     for &idx in split_plan.fit_rows() {
         fit_x.push(all_encoded_rows[idx].clone());
         fit_y.push(valid_targets[idx]);
+        for (a_pos, a_name) in aux_column_names.iter().enumerate() {
+            if let Some(vec) = fit_aux_cols.get_mut(a_name) {
+                vec.push(valid_aux_rows[idx][a_pos]);
+            }
+        }
     }
+
     let mut holdout_x = Vec::with_capacity(split_plan.holdout_rows().len());
     let mut holdout_y = Vec::with_capacity(split_plan.holdout_rows().len());
+    let mut holdout_aux_cols: BTreeMap<String, Vec<f64>> = aux_column_names
+        .iter()
+        .map(|n| {
+            (
+                n.clone(),
+                Vec::with_capacity(split_plan.holdout_rows().len()),
+            )
+        })
+        .collect();
     for &idx in split_plan.holdout_rows() {
         holdout_x.push(all_encoded_rows[idx].clone());
         holdout_y.push(valid_targets[idx]);
+        for (a_pos, a_name) in aux_column_names.iter().enumerate() {
+            if let Some(vec) = holdout_aux_cols.get_mut(a_name) {
+                vec.push(valid_aux_rows[idx][a_pos]);
+            }
+        }
+    }
+
+    // Pre-upload target-leakage & duplicate-header hygiene diagnostics on `FIT`.
+    let mut hygiene_warnings = Vec::new();
+    if fit_x.len() >= 12 && fit_y_var > 1e-18 {
+        let denom_y = (fit_y_var * (fit_x.len() as f64)).sqrt();
+        for (f_idx, f_name) in encoded_feature_names.iter().enumerate() {
+            let mean_x = fit_x.iter().map(|r| r[f_idx]).sum::<f64>() / (fit_x.len() as f64);
+            let mut cov = 0.0_f64;
+            let mut sxx = 0.0_f64;
+            for (r, &yv) in fit_x.iter().zip(fit_y.iter()) {
+                let dx = r[f_idx] - mean_x;
+                let dy = yv - global_fit_mean;
+                cov += dx * dy;
+                sxx += dx * dx;
+            }
+            if sxx > 1e-18 {
+                let r_abs = (cov / (sxx.sqrt() * denom_y)).abs();
+                if r_abs > 0.9999 {
+                    hygiene_warnings.push(format!(
+                        "Potential target leakage: feature '{f_name}' has |Pearson r| = {r_abs:.5} with target '{target_col}' on FIT."
+                    ));
+                }
+            }
+        }
     }
 
     let prepared = CarbonClientPreparedDataset {
@@ -738,6 +1402,9 @@ pub fn prepare_encoded_training_set(
         artifacts,
         feature_names: encoded_feature_names.clone(),
         target_name: target_col.clone(),
+        aux_column_names,
+        split_mode: normalized_split,
+        calibration_mode: normalized_cal,
     };
 
     let encoder = CarbonTabularEncoder {
@@ -759,6 +1426,9 @@ pub fn prepare_encoded_training_set(
         fit_y,
         holdout_x,
         holdout_y,
+        fit_aux_cols,
+        holdout_aux_cols,
+        hygiene_warnings,
     })
 }
 
@@ -780,7 +1450,7 @@ fn encode_single_row_internal(
                     .get(source_column.as_str())
                     .and_then(|&idx| row.get(idx))
                     .and_then(|v| v.as_deref())
-                    .and_then(parse_finite_f64);
+                    .and_then(parse_flexible_numeric_f64);
                 match cell {
                     Some(v) => {
                         out.push(v);
@@ -804,9 +1474,43 @@ fn encode_single_row_internal(
                     .get(source_column.as_str())
                     .and_then(|&idx| row.get(idx))
                     .and_then(|v| v.as_deref())
-                    .and_then(|s| parse_boolean_token(s).or_else(|| parse_finite_f64(s)))
+                    .and_then(|s| parse_boolean_token(s).or_else(|| parse_flexible_numeric_f64(s)))
                     .unwrap_or(*mode);
                 out.push(val);
+            }
+            CarbonFeatureTransform::DateIso {
+                source_column,
+                median_epoch_days,
+                emit_calendar_parts,
+                emit_missing_indicator,
+            } => {
+                let parsed = col_lookup
+                    .get(source_column.as_str())
+                    .and_then(|&idx| row.get(idx))
+                    .and_then(|v| v.as_deref())
+                    .and_then(parse_iso8601_date);
+                match parsed {
+                    Some((days, month, dow)) => {
+                        out.push(days - *median_epoch_days);
+                        if *emit_calendar_parts {
+                            out.push(month);
+                            out.push(dow);
+                        }
+                        if *emit_missing_indicator {
+                            out.push(0.0);
+                        }
+                    }
+                    None => {
+                        out.push(0.0);
+                        if *emit_calendar_parts {
+                            out.push(6.0);
+                            out.push(3.0);
+                        }
+                        if *emit_missing_indicator {
+                            out.push(1.0);
+                        }
+                    }
+                }
             }
             CarbonFeatureTransform::OneHot {
                 source_column,
@@ -860,7 +1564,7 @@ fn encode_single_row_internal(
 
 impl CarbonTabularEncoder {
     /// Encode an unlabeled (or labeled) prediction table using the exact `FIT`-learned schema.
-    /// Automatically ignores any target column or extra ID columns present in the test CSV.
+    /// Automatically ignores any target column, auxiliary objective columns, or extra ID columns.
     pub fn encode_prediction_table(
         &self,
         table: &CarbonRawTable,
@@ -870,8 +1574,6 @@ impl CarbonTabularEncoder {
             col_lookup.insert(h.as_str(), idx);
         }
 
-        // If the test CSV is headerless and matches either `raw_feature_columns.len()` or
-        // `raw_feature_columns.len() + 1` (when target is also present), bind positionally.
         let positional_headers: Vec<String>;
         if !table.had_header && !self.had_header {
             positional_headers = self.raw_feature_columns.clone();
@@ -887,6 +1589,7 @@ impl CarbonTabularEncoder {
                 let src = match tf {
                     CarbonFeatureTransform::Numeric { source_column, .. }
                     | CarbonFeatureTransform::Boolean { source_column, .. }
+                    | CarbonFeatureTransform::DateIso { source_column, .. }
                     | CarbonFeatureTransform::OneHot { source_column, .. }
                     | CarbonFeatureTransform::TargetFreq { source_column, .. } => source_column,
                 };
@@ -912,7 +1615,7 @@ impl CarbonTabularEncoder {
     }
 }
 
-/// Run a zero-network local preflight inspection on a CSV/TSV dataset (`carbon inspect`).
+/// Run a zero-network local preflight inspection on a CSV/TSV/JSONL dataset (`carbon inspect`).
 pub fn inspect_tabular_file(
     path: &Path,
     requested_target: Option<&str>,
@@ -944,15 +1647,13 @@ pub fn inspect_tabular_file_with_tier(
         None => match resolve_target_column(&table.headers, None, table.had_header) {
             Ok((_, col, _)) => Some(col),
             Err(orig_err) => {
-                // For read-only preflight inspection, fall back to the rightmost numeric column
-                // so `carbon inspect <ANY_CSV>` works zero-config on arbitrary user headers.
                 let rightmost_numeric = (0..table.headers.len()).rev().find(|&c_idx| {
                     let mut present = 0usize;
                     let mut numeric = 0usize;
                     for r in &table.rows {
                         if let Some(s) = r[c_idx].as_deref() {
                             present += 1;
-                            if parse_finite_f64(s).is_some() {
+                            if parse_flexible_numeric_f64(s).is_some() {
                                 numeric += 1;
                             }
                         }
@@ -982,7 +1683,11 @@ pub fn inspect_tabular_file_with_tier(
     let mut y_vals: Vec<f64> = table
         .rows
         .iter()
-        .filter_map(|r| r[target_idx].as_deref().and_then(parse_finite_f64))
+        .filter_map(|r| {
+            r[target_idx]
+                .as_deref()
+                .and_then(parse_flexible_numeric_f64)
+        })
         .collect();
     let n_y = y_vals.len().max(1) as f64;
     let y_mean = y_vals.iter().sum::<f64>() / n_y;
@@ -1024,10 +1729,19 @@ pub fn inspect_tabular_file_with_tier(
         let missing_count = table.rows.len().saturating_sub(present.len());
         let missing_pct = 100.0 * (missing_count as f64) / (table.rows.len().max(1) as f64);
         let distinct_set: BTreeSet<&str> = present.iter().copied().collect();
-        let all_num = !present.is_empty() && present.iter().all(|s| parse_finite_f64(s).is_some());
+        let all_num = !present.is_empty()
+            && present
+                .iter()
+                .all(|s| parse_flexible_numeric_f64(s).is_some());
+        let all_date = !present.is_empty()
+            && !all_num
+            && present.iter().all(|s| parse_iso8601_date(s).is_some());
 
         let (num_min, num_med, num_mean, num_std, num_max, sample_cats) = if all_num {
-            let mut v: Vec<f64> = present.iter().filter_map(|s| parse_finite_f64(s)).collect();
+            let mut v: Vec<f64> = present
+                .iter()
+                .filter_map(|s| parse_flexible_numeric_f64(s))
+                .collect();
             let nv = v.len().max(1) as f64;
             let mn = v.iter().sum::<f64>() / nv;
             let sd = (v.iter().map(|&x| (x - mn) * (x - mn)).sum::<f64>() / nv).sqrt();
@@ -1062,6 +1776,8 @@ pub fn inspect_tabular_file_with_tier(
             "numeric".to_owned()
         } else if present.iter().all(|s| parse_boolean_token(s).is_some()) {
             "boolean".to_owned()
+        } else if all_date {
+            "datetime_iso8601".to_owned()
         } else {
             "categorical".to_owned()
         };
@@ -1107,6 +1823,7 @@ pub fn inspect_tabular_file_with_tier(
     for (col, reason) in &encoded.encoder.dropped_columns {
         warnings.push(format!("Column '{col}' automatically excluded ({reason})."));
     }
+    warnings.extend(encoded.hygiene_warnings);
 
     let fit_rows = encoded.prepared.fit_rows as usize;
     let feat_cnt = encoded.encoder.encoded_feature_names.len();

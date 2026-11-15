@@ -6,14 +6,19 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$root"
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
-cargo build --locked -p jope-appliance
-binary="${CARGO_TARGET_DIR:-$root/target}/debug/jopedime"
-out="$root/target/fitness-example"
+if [ -n "${JOPEDIME_BIN:-}" ]; then
+  binary="$JOPEDIME_BIN"
+else
+  binary=$(cargo build --locked -p jope-appliance --bin jopedime --message-format=json-render-diagnostics \
+    | jq -r 'select(.reason == "compiler-artifact" and .target.name == "jopedime" and .executable != null) | .executable' \
+    | tail -n 1)
+fi
+out="${JOPE_FITNESS_EXAMPLE_OUT:-${CARGO_TARGET_DIR:-$root/target}/fitness-example}"
 mkdir -p "$out"
 fail() { echo "objective examples: $*" >&2; exit 1; }
 
 "$binary" fitness list > "$out/catalog.json"
-[ "$(jq '.fitness | length' "$out/catalog.json")" -eq 38 ] || fail "catalog size changed"
+[ "$(jq '.fitness | length' "$out/catalog.json")" -eq 53 ] || fail "catalog size changed"
 "$binary" fitness validate pinball:quantile=0.9 > "$out/validate.json"
 [ "$(jq -r .specification.quantile "$out/validate.json")" = 0.9 ] || fail "shorthand override"
 "$binary" fitness evaluate --input examples/objectives/evaluation_request.json > "$out/evaluation.json"

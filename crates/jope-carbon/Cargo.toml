@@ -59,7 +59,7 @@ emu = [
     "dep:zstd",
 ]
 # Zero-knowledge public thin CLI (`--no-default-features --features cli --bin carbon`).
-cli = ["edge", "dep:clap", "dep:jope-comparators"]
+cli = ["edge", "dep:clap", "dep:flate2", "dep:ruzstd", "dep:jope-comparators"]
 
 [dependencies]
 anyhow.workspace = true

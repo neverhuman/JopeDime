@@ -15,6 +15,7 @@ use jope_api::{
     Effort,
 };
 use jope_comparators::{rmse as comp_rmse, FeatureMatrix, RidgeModel, RidgeParams};
+use jope_prep::ObjectiveSpec;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -23,19 +24,146 @@ use crate::{
         bench_suite::{compute_quick_run_comparators, CarbonComparatorScore},
         client::{CarbonClientPreparedDataset, CarbonProbedEndpoint, CarbonThinClient},
         model_store::{
-            compute_residual_quantiles, persist_model_handle, CarbonFeatureImportanceEntry,
-            CarbonResidualQuantiles, CarbonSavedModelHandle, CARBON_MODEL_HANDLE_SCHEMA,
+            compute_residual_quantiles, persist_model_handle_with_options,
+            CarbonFeatureImportanceEntry, CarbonResidualQuantiles, CarbonSavedModelHandle,
+            CARBON_MODEL_HANDLE_SCHEMA,
         },
         tabular::{
-            load_delimited_table, prepare_encoded_training_set, CarbonFeatureTransform,
-            CarbonTabularEncoder,
+            load_delimited_table, load_delimited_table_with_options,
+            prepare_encoded_training_set_with_options, CarbonFeatureTransform,
+            CarbonTabularEncoder, CarbonTrainingPrepOptions,
         },
     },
     modes::planner::{
-        compute_live_run_cost, CarbonIngressCostMode, CarbonLiveCostInputs, CarbonRunCostBreakdown,
+        compute_live_run_cost, estimate_ms_per_candidate_1vcpu, plan_carbon_execution,
+        CarbonExecutionMode, CarbonIngressCostMode, CarbonLiveCostInputs, CarbonPlanInput,
+        CarbonRunCostBreakdown,
     },
+    observability::{log_warn, sigint_received, stderr_is_tty},
+    role::{CarbonEffortTier, CarbonProductTier},
     storage::cas::sha256_lower_hex,
 };
+
+/// Resolve `--objective` / `--fitness` CLI input, supporting `@path/to/objective.json` file loading
+/// as well as inline JSON specs and preset names (`rmse`, `mae`, `huber`, `asymmetric_mse`, etc.).
+pub fn resolve_objective_argument(raw: &str) -> Result<(String, ObjectiveSpec), String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        let spec = ObjectiveSpec::parse("rmse").map_err(|e| e.to_string())?;
+        return Ok(("rmse".to_owned(), spec));
+    }
+    let loaded = if let Some(path_part) = trimmed.strip_prefix('@') {
+        let p = path_part.trim();
+        if p.is_empty() {
+            return Err("empty file path after '@' in --objective/--fitness".to_owned());
+        }
+        std::fs::read_to_string(p).map_err(|e| format!("read objective spec file '{p}': {e}"))?
+    } else {
+        trimmed.to_owned()
+    };
+    let spec = ObjectiveSpec::parse(&loaded).map_err(|e| format!("invalid objective spec: {e}"))?;
+    let wire_text = spec.to_wire_objective();
+    if wire_text.len() > 65_536 {
+        return Err(format!(
+            "serialized objective spec exceeds 64 KiB wire limit ({} bytes)",
+            wire_text.len()
+        ));
+    }
+    Ok((wire_text, spec))
+}
+
+struct ShredOnDropGuard {
+    client: CarbonThinClient,
+    tenant_id: String,
+    run_id: String,
+    active: bool,
+}
+
+impl ShredOnDropGuard {
+    fn new(client: CarbonThinClient, tenant_id: String, run_id: String, active: bool) -> Self {
+        Self {
+            client,
+            tenant_id,
+            run_id,
+            active,
+        }
+    }
+
+    fn disarm(&mut self) {
+        self.active = false;
+    }
+}
+
+impl Drop for ShredOnDropGuard {
+    fn drop(&mut self) {
+        if self.active && !self.run_id.is_empty() {
+            let _ = self.client.shred_run(&self.tenant_id, &self.run_id);
+        }
+    }
+}
+
+type SpinnerProgressTuple = (Option<CarbonRunStateWire>, u32, u32, u64, Option<f64>);
+
+struct TtySearchSpinner {
+    stop: Arc<std::sync::atomic::AtomicBool>,
+    handle: Option<thread::JoinHandle<()>>,
+}
+
+impl TtySearchSpinner {
+    fn start(enabled: bool, shared: Arc<Mutex<SpinnerProgressTuple>>) -> Self {
+        let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        if !enabled {
+            return Self { stop, handle: None };
+        }
+        let stop_bg = Arc::clone(&stop);
+        let t0 = Instant::now();
+        let handle = thread::spawn(move || {
+            const FRAMES: &[char] = &['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+            let mut tick = 0usize;
+            while !stop_bg.load(std::sync::atomic::Ordering::Relaxed) {
+                thread::sleep(Duration::from_millis(250));
+                if stop_bg.load(std::sync::atomic::Ordering::Relaxed) {
+                    break;
+                }
+                if let Ok(guard) = shared.lock() {
+                    let (st, w_idx, w_tgt, cands, cv) = *guard;
+                    let frame = FRAMES[tick % FRAMES.len()];
+                    tick = tick.wrapping_add(1);
+                    let st_lbl = st
+                        .map(|s| format!("{s:?}"))
+                        .unwrap_or_else(|| "Starting".to_owned());
+                    let cv_lbl = cv
+                        .map(|v| format!("{v:.4}"))
+                        .unwrap_or_else(|| "-".to_owned());
+                    eprint!(
+                        "\r\x1b[2K[carbon] {frame} Wave {w_idx}/{w_tgt} ({st_lbl}) | candidates={cands} | best_cv={cv_lbl} | {:.1}s",
+                        t0.elapsed().as_secs_f64()
+                    );
+                    let _ = std::io::Write::flush(&mut std::io::stderr());
+                }
+            }
+            eprint!("\r\x1b[2K");
+            let _ = std::io::Write::flush(&mut std::io::stderr());
+        });
+        Self {
+            stop,
+            handle: Some(handle),
+        }
+    }
+
+    fn finish(&mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        if let Some(h) = self.handle.take() {
+            let _ = h.join();
+        }
+    }
+}
+
+impl Drop for TtySearchSpinner {
+    fn drop(&mut self) {
+        self.finish();
+    }
+}
 
 /// `CarbonCliRunUxConfig` is a struct supplying optional pre-probed KEK-pinned client reuse,
 /// explicit `--target` detection, universal CSV options, model-handle persistence, and TTY telemetry.
@@ -50,6 +178,12 @@ pub struct CarbonCliRunUxConfig {
     pub persist_handle: bool,
     pub save_model_path: Option<std::path::PathBuf>,
     pub cloud_name: Option<String>,
+    pub split_mode: Option<String>,
+    pub calibration_mode: Option<String>,
+    pub extra_na_values: Vec<String>,
+    pub inf_as_nan: bool,
+    pub embed_token: bool,
+    pub dry_run: bool,
 }
 
 /// `CarbonCliRunOptions` is a struct configuring a single `carbon run` CLI invocation.
@@ -143,6 +277,8 @@ pub struct CarbonCliRunReceipt {
     pub feature_importances: Vec<CarbonFeatureImportanceEntry>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub saved_model_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub objective_name: Option<String>,
     #[serde(default)]
     pub sample_targets: Vec<f64>,
     pub sample_predictions: Vec<f64>,
@@ -303,6 +439,7 @@ struct PreparedDatasetWithSplitRows {
     fit_y: Vec<f64>,
     holdout_x: Vec<Vec<f64>>,
     holdout_y: Vec<f64>,
+    holdout_aux_cols: BTreeMap<String, Vec<f64>>,
     predict_batch_x: Vec<Vec<f64>>,
     predict_batch_y: Vec<f64>,
     eval_holdout_count: usize,
@@ -498,12 +635,137 @@ fn compute_holdout_feature_drivers(
     entries
 }
 
+#[allow(clippy::too_many_arguments)]
+fn compute_objective_run_comparators(
+    spec: &ObjectiveSpec,
+    is_plain_rmse: bool,
+    fit_x: &[Vec<f64>],
+    fit_y: &[f64],
+    holdout_x: &[Vec<f64>],
+    holdout_y: &[f64],
+    holdout_aux: &BTreeMap<String, Vec<f64>>,
+    seed: u64,
+) -> Vec<CarbonComparatorScore> {
+    if is_plain_rmse {
+        return compute_quick_run_comparators(fit_x, fit_y, holdout_x, holdout_y, seed);
+    }
+    let p = fit_x.first().map(Vec::len).unwrap_or(0);
+    if p == 0
+        || fit_x.len() < 8
+        || holdout_x.is_empty()
+        || fit_x.len() != fit_y.len()
+        || holdout_x.len() != holdout_y.len()
+    {
+        return Vec::new();
+    }
+    let mut fit_flat = Vec::with_capacity(fit_x.len() * p);
+    for r in fit_x {
+        if r.len() != p {
+            return Vec::new();
+        }
+        fit_flat.extend_from_slice(r);
+    }
+    let mut ho_flat = Vec::with_capacity(holdout_x.len() * p);
+    for r in holdout_x {
+        if r.len() != p {
+            return Vec::new();
+        }
+        ho_flat.extend_from_slice(r);
+    }
+    let (Ok(x_tr), Ok(x_ho)) = (
+        jope_comparators::FeatureMatrix::new(&fit_flat, fit_x.len(), p),
+        jope_comparators::FeatureMatrix::new(&ho_flat, holdout_x.len(), p),
+    ) else {
+        return Vec::new();
+    };
+    let fit_mean = fit_y.iter().copied().sum::<f64>() / (fit_y.len() as f64);
+    let sst: f64 = holdout_y
+        .iter()
+        .map(|&y| {
+            let d = y - fit_mean;
+            d * d
+        })
+        .sum();
+    let mut out = Vec::new();
+    let t_ridge = Instant::now();
+    if let Ok(ridge) = RidgeModel::fit(x_tr, fit_y, &RidgeParams { alpha: 1.0 }) {
+        if let Ok(preds) = ridge.predict(x_ho) {
+            if let Ok(obj_score) = spec.evaluate(holdout_y, &preds, holdout_aux) {
+                let r2 = comp_rmse(holdout_y, &preds).ok().and_then(|rm| {
+                    if sst > 1e-18 {
+                        Some(1.0 - (rm * rm * (holdout_y.len() as f64) / sst))
+                    } else {
+                        None
+                    }
+                });
+                out.push(CarbonComparatorScore {
+                    key: "ridge_l2".to_owned(),
+                    label: "Standardized Ridge (alpha=1.0, Rust)".to_owned(),
+                    reference: "Closed-form Cholesky Ridge".to_owned(),
+                    known_gaps: "fixed alpha=1.0".to_owned(),
+                    rmse: obj_score.loss,
+                    mae: 0.0,
+                    r2,
+                    fit_ms: t_ridge.elapsed().as_secs_f64() * 1_000.0,
+                });
+            }
+        }
+    }
+    for cid in [
+        jope_comparators::ComparatorId::RandomForest,
+        jope_comparators::ComparatorId::LightgbmStyle,
+        jope_comparators::ComparatorId::AutogluonStyle,
+    ] {
+        let t0 = Instant::now();
+        let desc = cid.descriptor();
+        let deadline = jope_comparators::Deadline::after(Duration::from_millis(300));
+        if let Ok(model) = jope_comparators::fit_comparator(
+            cid,
+            jope_comparators::ComparatorTier::Medium,
+            x_tr,
+            fit_y,
+            seed,
+            &deadline,
+        ) {
+            if let Ok(preds) = model.predict(x_ho) {
+                if let Ok(obj_score) = spec.evaluate(holdout_y, &preds, holdout_aux) {
+                    let r2 = comp_rmse(holdout_y, &preds).ok().and_then(|rm| {
+                        if sst > 1e-18 {
+                            Some(1.0 - (rm * rm * (holdout_y.len() as f64) / sst))
+                        } else {
+                            None
+                        }
+                    });
+                    out.push(CarbonComparatorScore {
+                        key: desc.key.to_owned(),
+                        label: desc.label.to_owned(),
+                        reference: desc.reference.to_owned(),
+                        known_gaps: desc.known_gaps.to_owned(),
+                        rmse: obj_score.loss,
+                        mae: 0.0,
+                        r2,
+                        fit_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+                    });
+                }
+            }
+        }
+    }
+    out
+}
+
 fn prepare_from_options(
     opts: &CarbonCliRunOptions,
     ux: &CarbonCliRunUxConfig,
+    objective_spec: &ObjectiveSpec,
 ) -> Result<PreparedDatasetWithSplitRows, String> {
     if let Some(csv_path) = &opts.csv_path {
-        let raw_table = load_delimited_table(csv_path, ux.delimiter_override, !ux.no_header)?;
+        let raw_table = load_delimited_table_with_options(
+            csv_path,
+            ux.delimiter_override,
+            !ux.no_header,
+            &ux.extra_na_values,
+            ux.inf_as_nan,
+        )?;
         let requested_target = if ux.target_was_explicit || ux.no_header {
             Some(opts.target_column.as_str())
         } else {
@@ -514,13 +776,22 @@ fn prepare_from_options(
             CarbonTierWire::Pro => 512,
             CarbonTierWire::Enterprise => 2_048,
         };
-        let encoded = prepare_encoded_training_set(
+        let encoded = prepare_encoded_training_set_with_options(
             &raw_table,
-            requested_target,
-            opts.seed,
-            opts.holdout_fraction,
-            max_encoded_features,
+            &CarbonTrainingPrepOptions {
+                requested_target,
+                seed: opts.seed,
+                holdout_fraction: opts.holdout_fraction,
+                max_encoded_features,
+                objective_spec: Some(objective_spec),
+                split_mode: ux.split_mode.as_deref(),
+                calibration_mode: ux.calibration_mode.as_deref(),
+                reject_constant_target: true,
+            },
         )?;
+        for warn_msg in &encoded.hygiene_warnings {
+            log_warn(warn_msg);
+        }
         if ux.show_stderr_progress {
             if !ux.target_was_explicit && encoded.encoder.target_column != opts.target_column {
                 eprintln!(
@@ -579,6 +850,7 @@ fn prepare_from_options(
             fit_y: encoded.fit_y,
             holdout_x: encoded.holdout_x,
             holdout_y: encoded.holdout_y,
+            holdout_aux_cols: encoded.holdout_aux_cols,
             predict_batch_x,
             predict_batch_y,
             eval_holdout_count,
@@ -627,12 +899,15 @@ fn prepare_from_options(
         delimiter: ',',
         had_header: true,
     };
-    let prepared = CarbonThinClient::prepare_numeric_dataset(
+    let prepared = CarbonThinClient::prepare_numeric_dataset_with_options(
         headers,
         &rows,
         &target_col,
+        &[],
         opts.seed,
         opts.holdout_fraction,
+        ux.split_mode.as_deref(),
+        ux.calibration_mode.as_deref(),
     )?;
 
     let mut fit_x = Vec::with_capacity(prepared.split_plan.fit_rows().len());
@@ -673,6 +948,7 @@ fn prepare_from_options(
         fit_y,
         holdout_x,
         holdout_y,
+        holdout_aux_cols: BTreeMap::new(),
         predict_batch_x,
         predict_batch_y,
         eval_holdout_count,
@@ -731,8 +1007,13 @@ pub fn render_pretty_run_scorecard(receipt: &CarbonCliRunReceipt) -> String {
         "  Dataset       : {} rows ({} fit / {} holdout) x {} features\n",
         receipt.total_rows, receipt.fit_rows, receipt.holdout_rows, receipt.feature_count
     ));
+    let obj_lbl = receipt
+        .objective_name
+        .as_deref()
+        .filter(|s| !s.eq_ignore_ascii_case("rmse"))
+        .unwrap_or("RMSE");
     out.push_str(&format!(
-        "  Holdout Score : R^2 = {r2_str} | RMSE = {rmse_str}"
+        "  Holdout Score : R^2 = {r2_str} | {obj_lbl} = {rmse_str}"
     ));
     if let Some(q) = &receipt.residual_quantiles {
         out.push_str(&format!(
@@ -743,17 +1024,19 @@ pub fn render_pretty_run_scorecard(receipt: &CarbonCliRunReceipt) -> String {
     out.push('\n');
 
     if !receipt.comparator_baselines.is_empty() {
-        out.push_str("  Same-Split Leaderboard (Holdout RMSE — lower is better):\n");
+        out.push_str(&format!(
+            "  Same-Split Leaderboard (Holdout {obj_lbl} — lower is better):\n"
+        ));
         if let Some(c_rmse) = receipt.outer_holdout_score {
             out.push_str(&format!(
-                "    * {:<22} RMSE = {:<10.4} R^2 = {}\n",
-                "Carbon (r882 GP)", c_rmse, r2_str
+                "    * {:<22} {:<4} = {:<10.4} R^2 = {}\n",
+                "Carbon (r882 GP)", obj_lbl, c_rmse, r2_str
             ));
             for comp in &receipt.comparator_baselines {
-                let lift = if comp.rmse > 1e-12 {
+                let lift = if comp.rmse.abs() > 1e-12 {
                     format!(
                         "{:+.1}% vs Carbon",
-                        100.0 * (comp.rmse - c_rmse) / comp.rmse
+                        100.0 * (comp.rmse - c_rmse) / comp.rmse.abs()
                     )
                 } else {
                     String::new()
@@ -763,8 +1046,8 @@ pub fn render_pretty_run_scorecard(receipt: &CarbonCliRunReceipt) -> String {
                     .map(|v| format!("{v:.6}"))
                     .unwrap_or_else(|| "n/a".to_owned());
                 out.push_str(&format!(
-                    "      {:<22} RMSE = {:<10.4} R^2 = {:<9} ({lift})\n",
-                    comp.label, comp.rmse, cr2
+                    "      {:<22} {:<4} = {:<10.4} R^2 = {:<9} ({lift})\n",
+                    comp.label, obj_lbl, comp.rmse, cr2
                 ));
             }
         }
@@ -815,6 +1098,160 @@ pub fn execute_carbon_cli_run_with_ux(
     ux: &CarbonCliRunUxConfig,
 ) -> Result<CarbonCliRunReceipt, String> {
     let t_total = Instant::now();
+    let (objective_wire, objective_spec) = resolve_objective_argument(&opts.objective)?;
+    let is_plain_rmse = objective_wire == "rmse";
+    let objective_display_name = if is_plain_rmse {
+        None
+    } else {
+        let spec_name = objective_spec.name();
+        if !spec_name.is_empty() {
+            Some(spec_name)
+        } else if !objective_wire.starts_with('{') {
+            Some(objective_wire.clone())
+        } else {
+            Some("custom_loss".to_owned())
+        }
+    };
+
+    let t_prep = Instant::now();
+    let PreparedDatasetWithSplitRows {
+        prepared,
+        encoder,
+        total_rows,
+        fit_x,
+        fit_y,
+        holdout_x,
+        holdout_y,
+        holdout_aux_cols,
+        predict_batch_x,
+        predict_batch_y,
+        eval_holdout_count,
+        sample_count,
+    } = prepare_from_options(opts, ux, &objective_spec)?;
+    let comparator_baselines = if fit_x.len() <= 2_500 {
+        compute_objective_run_comparators(
+            &objective_spec,
+            is_plain_rmse,
+            &fit_x,
+            &fit_y,
+            &holdout_x,
+            &holdout_y,
+            &holdout_aux_cols,
+            opts.seed,
+        )
+    } else {
+        Vec::new()
+    };
+    let precomputed_ridge = if is_plain_rmse {
+        comparator_baselines
+            .iter()
+            .find(|c| c.key == "ridge_l2")
+            .map(|c| (c.rmse, c.r2))
+    } else {
+        None
+    };
+    let baseline_stats =
+        compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y, precomputed_ridge);
+    let feature_importances = compute_holdout_feature_drivers(
+        &prepared.feature_names,
+        &fit_x,
+        &fit_y,
+        &holdout_x,
+        &holdout_y,
+        opts.seed,
+    );
+    let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
+    let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
+
+    if ux.dry_run {
+        let ptier = match opts.tier {
+            CarbonTierWire::Free => CarbonProductTier::Free,
+            CarbonTierWire::Pro => CarbonProductTier::Pro,
+            CarbonTierWire::Enterprise => CarbonProductTier::Enterprise,
+        };
+        let eff = match opts.effort {
+            Effort::Fast => CarbonEffortTier::Fast,
+            Effort::Medium => CarbonEffortTier::Medium,
+            Effort::High => CarbonEffortTier::High,
+            Effort::Ultra => CarbonEffortTier::Ultra,
+        };
+        ptier
+            .validate_admission(total_rows, prepared.feature_names.len(), eff)
+            .map_err(|e| e.to_string())?;
+        let est_ms = estimate_ms_per_candidate_1vcpu(
+            prepared.fit_rows as usize,
+            prepared.feature_names.len(),
+        );
+        let plan = plan_carbon_execution(&CarbonPlanInput {
+            product_tier: ptier,
+            effort: eff,
+            total_rows,
+            fit_rows: prepared.fit_rows as usize,
+            features: prepared.feature_names.len(),
+            est_ms_per_candidate_1vcpu: est_ms,
+        })
+        .map_err(|e| e.to_string())?;
+        let mode_wire = match plan.mode {
+            CarbonExecutionMode::SoloSingleLambda => CarbonExecutionModeWire::SoloSingleLambda,
+            CarbonExecutionMode::HybridFanOut => CarbonExecutionModeWire::HybridFanOut,
+        };
+        return Ok(CarbonCliRunReceipt {
+            selected_endpoint: "dry-run://local-preflight".to_owned(),
+            selected_region: "dry-run".to_owned(),
+            ping_rtt_ms: 0.0,
+            run_id: "run_dry_run_preflight".to_owned(),
+            dataset_id: "ds_000000000000000000000000".to_owned(),
+            tenant_id: opts.tenant_id.clone(),
+            tier_applied: Some(opts.tier),
+            encrypted_cuen: true,
+            neural_seed_applied: false,
+            neural_guidance_mode: Some("dry_run_validated".to_owned()),
+            bundle_digest: None,
+            shredded_after_run: opts.shred_after_run,
+            total_rows,
+            fit_rows: prepared.fit_rows,
+            holdout_rows: prepared.holdout_rows,
+            feature_count: prepared.feature_names.len(),
+            jlmb_wire_bytes: jlmb_bytes,
+            fit_jmat_bytes: prepared.artifacts.fit_jmat.len(),
+            holdout_jmat_bytes: prepared.artifacts.holdout_jmat.len(),
+            prep_ms,
+            upload_ms: 0.0,
+            search_ms: 0.0,
+            predict_ms: 0.0,
+            total_wall_ms: t_total.elapsed().as_secs_f64() * 1_000.0,
+            final_state: CarbonRunStateWire::Completed,
+            paused_mid_run: false,
+            execution_mode: mode_wire,
+            eval_memory_mb: u32::try_from(plan.eval_class.memory_mb()).unwrap_or(1_769),
+            eval_shards: plan.shards_per_wave,
+            eval_invocations: 0,
+            eval_total_wall_ms: 0,
+            poll_requests: 0,
+            waves_completed: 0,
+            waves_target: plan.planned_waves,
+            candidates_evaluated: 0,
+            best_cv_score: None,
+            outer_holdout_score: None,
+            holdout_r2: None,
+            mean_baseline_rmse: baseline_stats.map(|b| b.mean_baseline_rmse),
+            linear_baseline_rmse: baseline_stats.and_then(|b| b.linear_baseline_rmse),
+            linear_baseline_r2: baseline_stats.and_then(|b| b.linear_baseline_r2),
+            rmse_reduction_vs_mean_pct: None,
+            rmse_reduction_vs_linear_pct: None,
+            e2e_predict_holdout_rmse: None,
+            e2e_predict_holdout_r2: None,
+            cost_estimate: Some(plan.full_dataset_cost_estimate),
+            residual_quantiles: None,
+            comparator_baselines,
+            feature_importances,
+            saved_model_path: None,
+            objective_name: objective_display_name,
+            sample_targets: Vec::new(),
+            sample_predictions: Vec::new(),
+        });
+    }
+
     let (mut client, best_probe) = if let Some((pre_client, pre_probe)) = &ux.pre_probed {
         pre_client.reset_telemetry_counters();
         (pre_client.clone(), pre_probe.clone())
@@ -850,41 +1287,6 @@ pub fn execute_carbon_cli_run_with_ux(
         minted_ephemeral_token = true;
     }
 
-    let t_prep = Instant::now();
-    let PreparedDatasetWithSplitRows {
-        prepared,
-        encoder,
-        total_rows,
-        fit_x,
-        fit_y,
-        holdout_x,
-        holdout_y,
-        predict_batch_x,
-        predict_batch_y,
-        eval_holdout_count,
-        sample_count,
-    } = prepare_from_options(opts, ux)?;
-    let comparator_baselines = if opts.objective == "rmse" && fit_x.len() <= 2_500 {
-        compute_quick_run_comparators(&fit_x, &fit_y, &holdout_x, &holdout_y, opts.seed)
-    } else {
-        Vec::new()
-    };
-    let precomputed_ridge = comparator_baselines
-        .iter()
-        .find(|c| c.key == "ridge_l2")
-        .map(|c| (c.rmse, c.r2));
-    let baseline_stats =
-        compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y, precomputed_ridge);
-    let feature_importances = compute_holdout_feature_drivers(
-        &prepared.feature_names,
-        &fit_x,
-        &fit_y,
-        &holdout_x,
-        &holdout_y,
-        opts.seed,
-    );
-    let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
-    let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
     if ux.show_stderr_progress {
         eprintln!(
             "[carbon] Prepared {} rows ({} fit / {} holdout, {} features, target='{}') in {:.1} ms",
@@ -896,6 +1298,9 @@ pub fn execute_carbon_cli_run_with_ux(
             prep_ms
         );
     }
+
+    let (run_id, ds_id) = mint_run_and_dataset_ids()?;
+    let run_id_str = run_id.to_string();
 
     let t_upload = Instant::now();
     let prep_upload = client.upload_prepared(&effective_tenant, opts.tier, &prepared)?;
@@ -909,9 +1314,47 @@ pub fn execute_carbon_cli_run_with_ux(
         );
     }
 
+    let mut shred_guard = ShredOnDropGuard::new(
+        client.clone(),
+        effective_tenant.clone(),
+        run_id_str.clone(),
+        opts.shred_after_run,
+    );
+
+    let is_tty_progress = ux.show_stderr_progress && stderr_is_tty();
+    let spinner_state = Arc::new(Mutex::new((
+        None::<CarbonRunStateWire>,
+        0u32,
+        0u32,
+        0u64,
+        None::<f64>,
+    )));
     if ux.show_stderr_progress {
         let seen = Arc::new(Mutex::new((None::<CarbonRunStateWire>, u32::MAX)));
+        let spinner_ref = Arc::clone(&spinner_state);
+        let sigint_client = client.clone();
+        let sigint_tenant = effective_tenant.clone();
+        let sigint_run = run_id_str.clone();
         client = client.with_progress_observer(move |p: &CarbonPublicWaveProgress| {
+            if sigint_received() {
+                let _ = sigint_client.signal_early_stop(
+                    &sigint_tenant,
+                    &sigint_run,
+                    Some("cli_sigint".to_owned()),
+                );
+            }
+            if let Ok(mut sp) = spinner_ref.lock() {
+                *sp = (
+                    Some(p.state),
+                    p.wave_index,
+                    p.waves_target,
+                    p.candidates_evaluated.0,
+                    p.best_cv_loss,
+                );
+            }
+            if is_tty_progress {
+                return;
+            }
             let Ok(mut guard) = seen.lock() else {
                 return;
             };
@@ -935,8 +1378,7 @@ pub fn execute_carbon_cli_run_with_ux(
         });
     }
 
-    let (run_id, ds_id) = mint_run_and_dataset_ids()?;
-    let run_id_str = run_id.to_string();
+    let mut tty_spinner = TtySearchSpinner::start(is_tty_progress, spinner_state);
 
     let t_search = Instant::now();
     let mut paused_mid_run = false;
@@ -960,7 +1402,7 @@ pub fn execute_carbon_cli_run_with_ux(
             &effective_tenant,
             opts.tier,
             opts.effort,
-            &opts.objective,
+            &objective_wire,
             opts.seed,
             &prepared,
         )?;
@@ -973,11 +1415,21 @@ pub fn execute_carbon_cli_run_with_ux(
             &effective_tenant,
             opts.tier,
             opts.effort,
-            &opts.objective,
+            &objective_wire,
             opts.seed,
             &prepared,
         )?
     };
+
+    if sigint_received() {
+        tty_spinner.finish();
+        if opts.shred_after_run {
+            let _ = client.shred_run(&effective_tenant, &run_id_str);
+            shred_guard.disarm();
+            return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
+        }
+        return Err("interrupted by SIGINT (Ctrl+C)".to_owned());
+    }
 
     if opts.stop_after_ms.is_some() {
         if progress.state == CarbonRunStateWire::Paused {
@@ -997,6 +1449,7 @@ pub fn execute_carbon_cli_run_with_ux(
             && progress.can_resume
             && progress.wave_index < progress.waves_target
             && engine_search_invocations < 4
+            && !sigint_received()
         {
             paused_mid_run = true;
             engine_search_invocations += 1;
@@ -1012,7 +1465,17 @@ pub fn execute_carbon_cli_run_with_ux(
             )?;
         }
     }
+    tty_spinner.finish();
     let search_ms = t_search.elapsed().as_secs_f64() * 1_000.0;
+
+    if sigint_received() {
+        if opts.shred_after_run {
+            let _ = client.shred_run(&effective_tenant, &run_id_str);
+            shred_guard.disarm();
+            return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
+        }
+        return Err("interrupted by SIGINT (Ctrl+C)".to_owned());
+    }
 
     let predict_inputs: Vec<Vec<Option<f64>>> = predict_batch_x
         .into_iter()
@@ -1031,32 +1494,11 @@ pub fn execute_carbon_cli_run_with_ux(
     if opts.shred_after_run {
         let shred = client.shred_run(&effective_tenant, &run_id_str)?;
         shredded_after_run = shred.shredded;
+        shred_guard.disarm();
     }
     let total_wall_ms = t_total.elapsed().as_secs_f64() * 1_000.0;
 
     let n_holdout_f = (prepared.holdout_rows as f64).max(1.0);
-    let holdout_r2 = match (progress.outer_holdout_loss, baseline_stats) {
-        (Some(ho_rmse), Some(b)) if b.sse_mean > 1e-18 && opts.objective == "rmse" => {
-            let sse_model = ho_rmse * ho_rmse * n_holdout_f;
-            Some(1.0 - (sse_model / b.sse_mean))
-        }
-        _ => None,
-    };
-    let mean_baseline_rmse = baseline_stats.map(|b| b.mean_baseline_rmse);
-    let linear_baseline_rmse = baseline_stats.and_then(|b| b.linear_baseline_rmse);
-    let linear_baseline_r2 = baseline_stats.and_then(|b| b.linear_baseline_r2);
-    let rmse_reduction_vs_mean_pct = match (progress.outer_holdout_loss, mean_baseline_rmse) {
-        (Some(ho), Some(mb)) if mb > 1e-12 && opts.objective == "rmse" => {
-            Some(100.0 * (1.0 - ho / mb))
-        }
-        _ => None,
-    };
-    let rmse_reduction_vs_linear_pct = match (progress.outer_holdout_loss, linear_baseline_rmse) {
-        (Some(ho), Some(lb)) if lb > 1e-12 && opts.objective == "rmse" => {
-            Some(100.0 * (1.0 - ho / lb))
-        }
-        _ => None,
-    };
     let (e2e_predict_holdout_rmse, e2e_predict_holdout_r2) =
         if eval_holdout_count > 0 && pred_resp.predictions.len() >= eval_holdout_count {
             let fit_mean = if !fit_y.is_empty() {
@@ -1087,6 +1529,24 @@ pub fn execute_carbon_cli_run_with_ux(
         } else {
             (None, None)
         };
+    let holdout_r2 = match (progress.outer_holdout_loss, baseline_stats) {
+        (Some(ho_rmse), Some(b)) if b.sse_mean > 1e-18 && is_plain_rmse => {
+            let sse_model = ho_rmse * ho_rmse * n_holdout_f;
+            Some(1.0 - (sse_model / b.sse_mean))
+        }
+        _ => e2e_predict_holdout_r2,
+    };
+    let mean_baseline_rmse = baseline_stats.map(|b| b.mean_baseline_rmse);
+    let linear_baseline_rmse = baseline_stats.and_then(|b| b.linear_baseline_rmse);
+    let linear_baseline_r2 = baseline_stats.and_then(|b| b.linear_baseline_r2);
+    let rmse_reduction_vs_mean_pct = match (progress.outer_holdout_loss, mean_baseline_rmse) {
+        (Some(ho), Some(mb)) if mb > 1e-12 && is_plain_rmse => Some(100.0 * (1.0 - ho / mb)),
+        _ => None,
+    };
+    let rmse_reduction_vs_linear_pct = match (progress.outer_holdout_loss, linear_baseline_rmse) {
+        (Some(ho), Some(lb)) if lb > 1e-12 && is_plain_rmse => Some(100.0 * (1.0 - ho / lb)),
+        _ => None,
+    };
     let residual_quantiles =
         if eval_holdout_count > 0 && pred_resp.predictions.len() >= eval_holdout_count {
             let fit_mean = if !fit_y.is_empty() {
@@ -1136,7 +1596,11 @@ pub fn execute_carbon_cli_run_with_ux(
                 holdout_r2,
                 feature_importances: feature_importances.clone(),
             };
-            let persisted = persist_model_handle(&handle, ux.save_model_path.as_deref())?;
+            let persisted = persist_model_handle_with_options(
+                &handle,
+                ux.save_model_path.as_deref(),
+                ux.embed_token,
+            )?;
             Some(persisted.display().to_string())
         } else {
             None
@@ -1229,6 +1693,7 @@ pub fn execute_carbon_cli_run_with_ux(
         comparator_baselines,
         feature_importances,
         saved_model_path,
+        objective_name: objective_display_name,
         sample_targets,
         sample_predictions,
     };
@@ -1426,6 +1891,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
                 target_was_explicit: true,
                 ..CarbonCliRunUxConfig::default()
             },
+            &ObjectiveSpec::parse("rmse").map_err(|e| e.to_string())?,
         )?;
         let sample_hi: Vec<Vec<f64>> = predict_batch_x.into_iter().take(sample_n_hi).collect();
         let s4_baselines =

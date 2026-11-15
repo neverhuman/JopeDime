@@ -70,6 +70,40 @@ impl SplitPlan {
         })
     }
 
+    /// Construct a forward chronological `FIT` / `HOLDOUT` partition preserving row order:
+    /// `0..(total_rows - holdout_count)` form `FIT`, and the trailing `holdout_count` rows form
+    /// `HOLDOUT` (required for order-dependent objectives such as `mase`, `sharpe`, and `prediction_turnover`).
+    pub fn chronological(total_rows: usize, seed: u64, holdout_fraction: f64) -> PrepResult<Self> {
+        if total_rows < 2 {
+            return Err(PrepError::InsufficientRows { rows: total_rows });
+        }
+        if !holdout_fraction.is_finite() || holdout_fraction <= 0.0 || holdout_fraction >= 1.0 {
+            return Err(PrepError::InvalidHoldoutFraction {
+                fraction: holdout_fraction,
+            });
+        }
+
+        let desired_holdout = ((total_rows as f64) * holdout_fraction).round() as usize;
+        let holdout_count = desired_holdout.clamp(1, total_rows - 1);
+        let fit_end = total_rows - holdout_count;
+
+        let fit_rows: Vec<usize> = (0..fit_end).collect();
+        let holdout_rows: Vec<usize> = (fit_end..total_rows).collect();
+        let sampled_fit_rows = sample_fit_indices(&fit_rows, seed);
+        let fit_row_digest = hash_index_slice("jope.prep.fit_rows.v1", &fit_rows);
+        let holdout_row_digest = hash_index_slice("jope.prep.holdout_rows.v1", &holdout_rows);
+
+        Ok(Self {
+            total_rows,
+            seed,
+            fit_rows,
+            holdout_rows,
+            sampled_fit_rows,
+            fit_row_digest,
+            holdout_row_digest,
+        })
+    }
+
     /// Total row count of the unsplit source table.
     pub fn total_rows(&self) -> usize {
         self.total_rows

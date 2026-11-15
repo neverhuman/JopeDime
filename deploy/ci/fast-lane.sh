@@ -90,6 +90,12 @@ cargo check -p jope-parallel --features telemetry --locked
 cargo check -p jope-carbon --no-default-features --features edge --bin carbon-edge --locked
 cargo check -p jope-carbon --no-default-features --features cli --bin carbon --locked
 cargo check -p jope-carbon --no-default-features --features eval --bin carbon-worker --locked
+if rustup target list --installed | grep -qx wasm32-unknown-unknown; then
+  cargo check -p jope-prep --target wasm32-unknown-unknown --locked
+fi
+if rustup target list --installed | grep -qx x86_64-unknown-linux-musl; then
+  cargo check -p jope-carbon --no-default-features --features cli --bin carbon --target x86_64-unknown-linux-musl --locked
+fi
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)
@@ -306,6 +312,11 @@ mkdir -p "$EVIDENCE/appliance"
 cp -- "$appliance_work"/build/{build,pack-receipt,verify,size,sbom-models}.json \
   "$appliance_work"/clean-host/{clean-host,fit}.json "$EVIDENCE/appliance/"
 rm -r -- "$appliance_work"
+    # Custom fitness / objective end-to-end smoke in an isolated HOME directory
+obj_work="$appliance_target/objectives-lane/${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+mkdir -p "$obj_work/home" "$obj_work/out"
+HOME="$obj_work/home" JOPE_FITNESS_EXAMPLE_OUT="$obj_work/out" bash examples/objectives/run.sh
+rm -r -- "$obj_work"
     # Note: `jope-carbon::carbon_e2e` executes once in `rust-test` (partitioned nextest + JUnit XML).
     # Carbon full engineering & testing specification PDF + 8 2x Retina screenshots + live CI quickstart suite:
 spec_source_sha="${JOPE_SOURCE_SHA:-$(git rev-parse HEAD)}"

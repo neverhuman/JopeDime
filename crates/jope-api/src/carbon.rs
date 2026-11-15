@@ -155,6 +155,22 @@ pub struct CarbonCreateRunRequest {
     /// so `DELETE /v1/carbon/runs/{id}` destroys blobs without cross-run collision (`GAP-S3-3`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub upload_id: Option<String>,
+    /// Optional aligned numeric auxiliary columns read only by custom/weighted fitness objectives
+    /// and strictly excluded from candidate feature matrix `X` and `FitLandmarkBundle`.
+    #[serde(default, skip_serializing_if = "is_empty_vec")]
+    pub aux_column_names: Vec<String>,
+    /// Optional validation/holdout split strategy (`"random"` default omitted on wire; `"forward"`
+    /// for chronological time-ordered validation).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub split_mode: Option<String>,
+    /// Optional fold-safe output calibration mode (`"auto"` default omitted on wire; `"none"` to
+    /// disable post-hoc shift/scale alignment for asymmetric/deviance objectives).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub calibration_mode: Option<String>,
+}
+
+fn is_empty_vec<T>(v: &[T]) -> bool {
+    v.is_empty()
 }
 
 /// `CarbonEarlyStopRequest` is a struct signaling cooperative wave-boundary drain ("see it now").
@@ -223,6 +239,9 @@ pub struct CarbonPublicWaveProgress {
     pub region: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failure_message: Option<String>,
+    /// Count of `HybridFanOut` shard evaluations that degraded to inline `engine` execution.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eval_fallback_shards: Option<u32>,
 }
 
 fn is_false(v: &bool) -> bool {
@@ -287,6 +306,100 @@ pub struct CarbonPredictResponse {
     pub encrypted_predictions_cas_url: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encrypted_predictions_cas_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_cudk_b64: Option<String>,
+}
+
+/// `CarbonFeatureImportanceWire` reports one feature's holdout permutation importance (`Δloss`)
+/// computed directly on the winning `CarbonParsedChampion` inside `carbon-engine`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonFeatureImportanceWire {
+    pub feature: String,
+    pub importance: f64,
+    pub delta_loss: f64,
+}
+
+/// `CarbonExplainRequest` requests holdout permutation feature importances from `POST /v1/carbon/runs/{id}/explain`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonExplainRequest {
+    pub tenant_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_k: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_response_pubkey_b64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wrapped_u_dek_b64: Option<String>,
+}
+
+/// `CarbonExplainResponse` returns champion permutation importances (cleartext in local VPC mode
+/// or sealed inside `CUEN\x01(ExplainOutputs)` under `response_cudk_b64` in zero-knowledge mode).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonExplainResponse {
+    pub run_id: RunId,
+    pub method: String,
+    pub baseline_holdout_loss: f64,
+    #[serde(default)]
+    pub feature_importances: Vec<CarbonFeatureImportanceWire>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_explain_cuen_b64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_cudk_b64: Option<String>,
+}
+
+/// `CarbonExportLangWire` enumerates standalone zero-dependency predictor export languages.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum CarbonExportLangWire {
+    Python,
+    Rust,
+    RustRefittable,
+    Js,
+    C,
+    Cpp,
+}
+
+impl CarbonExportLangWire {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Python => "python",
+            Self::Rust => "rust",
+            Self::RustRefittable => "rust-refittable",
+            Self::Js => "js",
+            Self::C => "c",
+            Self::Cpp => "cpp",
+        }
+    }
+}
+
+/// `CarbonExportRequest` requests standalone source code for a run's winning champion from
+/// `POST /v1/carbon/runs/{id}/export`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonExportRequest {
+    pub tenant_id: String,
+    pub lang: CarbonExportLangWire,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_response_pubkey_b64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wrapped_u_dek_b64: Option<String>,
+}
+
+/// `CarbonExportResponse` returns the standalone predictor source (cleartext in local VPC mode or
+/// sealed inside `CUEN\x01(ExportArtifact)` under `response_cudk_b64` so `carbon-edge` never sees
+/// the fitted equation).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonExportResponse {
+    pub run_id: RunId,
+    pub lang: CarbonExportLangWire,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_code: Option<String>,
+    pub source_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_export_cuen_b64: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_cudk_b64: Option<String>,
 }

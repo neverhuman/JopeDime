@@ -1736,7 +1736,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     }
     assert!(dev_receipt.all_passed);
     assert_eq!(dev_receipt.total_checks, 33);
-    assert_eq!(dev_receipt.redteam_passed, 16);
+    assert_eq!(dev_receipt.redteam_passed, 17);
     assert_eq!(dev_receipt.residual_unshredded_runs, 0);
 
     let prod_receipt = execute_cloud_product_coverage_audit(&CarbonCloudCoverageInput {
@@ -1763,7 +1763,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     }
     assert!(prod_receipt.all_passed);
     assert_eq!(prod_receipt.total_checks, 33);
-    assert_eq!(prod_receipt.redteam_passed, 16);
+    assert_eq!(prod_receipt.redteam_passed, 17);
     assert_eq!(prod_receipt.residual_unshredded_runs, 0);
 
     emu_dev.shutdown();

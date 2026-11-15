@@ -33,8 +33,9 @@ pub struct RunArgs {
     )]
     pub split: String,
     /// Defaults to the task's primary metric: rmse for regression, auroc for binary and log_loss
-    /// for multiclass (#2132).
-    #[arg(long)]
+    /// for multiclass (#2132). Accepts a catalog name, shorthand (`pinball:quantile=0.9`), inline
+    /// JSON, or `@path.json`.
+    #[arg(long, visible_alias = "fitness")]
     pub objective: Option<String>,
     #[arg(long, default_value = "medium")]
     pub effort: String,
@@ -150,7 +151,7 @@ impl RunArgs {
             test_dataset,
             split: parse_json(&self.split)?,
             objective: match &self.objective {
-                Some(objective) => parse_value(objective)?,
+                Some(objective) => parse_objective_arg(objective)?,
                 None => ObjectiveSpec::Name(crate::draft::default_objective(task).into()),
             },
             effort: parse_value(&self.effort)?,
@@ -175,6 +176,16 @@ impl RunArgs {
 
 fn parse_json<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
     serde_json::from_str(raw).map_err(Into::into)
+}
+
+fn parse_objective_arg(raw: &str) -> anyhow::Result<ObjectiveSpec> {
+    let trimmed = raw.trim();
+    if let Some(file_path) = trimmed.strip_prefix('@') {
+        let loaded = std::fs::read_to_string(file_path)
+            .map_err(|e| anyhow::anyhow!("failed to read objective file '{file_path}': {e}"))?;
+        return parse_value(loaded.trim());
+    }
+    parse_value(trimmed)
 }
 
 pub(super) fn parse_value<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {

@@ -231,6 +231,9 @@ fn build_encrypted_create_req(
         landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(lm_cuen),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
+        aux_column_names: Vec::new(),
+        split_mode: None,
+        calibration_mode: None,
     })
     .map_err(|e| e.to_string())
 }

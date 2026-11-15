@@ -831,7 +831,9 @@
       "discovery": {
         "dependencies": [
           "dep:clap",
+          "dep:flate2",
           "dep:jope-comparators",
+          "dep:ruzstd",
           "edge"
         ],
         "kind": "feature"
@@ -15816,6 +15818,22 @@
         "full-default"
       ],
       "scope": "Carbon 16-vector adversarial security and zero-knowledge red-team suite (`V-01`..`V-16` + `RT-05` fail-closed AWS Lambda secret boot): CT3/IP non-disclosure, path traversal and URL-encoded `..%2F`, anonymous Free privilege escalation and row/budget caps, cross-tenant IDOR across status/stop/resume/predict/shred, unencrypted upload refusal, wrong-KEK CUDK v1, cross-slot FitJmat/HoldoutJmat swap, bit-flipped CUEN v1 GCM tag, async 202 stop + E2E encrypted predict, and cryptographic DELETE shred."
+    },
+    "target:jope-carbon/test/carbon_ux_security_upgrade": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/tests/carbon_ux_security_upgrade.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Carbon deployment security split (`edge-secrets` vs `cell-secrets`, `PT_INTERP` static ELF guard, `CARBON_R882_DIGEST` cold-start pin, security headers), stateless allowlisted `302` passive download telemetry redirects, cross-OS `install.sh` and `install.ps1` ECDSA verification/tamper/uninstall contracts, secret redaction, semantic exit codes, compressed/UTF-16/JSONL/currency/ISO-date tabular conditioning, offline `--dry-run`, and end-to-end custom `--fitness` (`aux` weight columns) + `CUEN\\x01` `explain` + standalone `export` + `predict --out -` + `shred`."
     },
     "target:jope-ci/bin/jope-ci": {
       "discovery": {

@@ -20,6 +20,18 @@ if "jope-client" not in packages:
     raise SystemExit("lite normal graph does not contain the HTTP client")
 print("lite graph: HTTP client present; engine and forbidden packages absent")
 PY
+    nice -n 10 cargo build --locked -p jope-carbon --no-default-features --features cli --bin carbon 2>&1 | tee "$evidence/carbon-thin-build.log"
+    nice -n 10 cargo tree --locked -p jope-carbon --no-default-features --features cli -e normal --prefix none --format '{p}' > "$evidence/carbon-thin-cargo-tree.txt"
+    python3 - "$evidence/carbon-thin-cargo-tree.txt" <<'PY'
+import pathlib
+import sys
+packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
+banned = {"jope-service", "jope-runtime", "feat-math", "candle-core", "tokio", "axum"}
+found = sorted(packages & banned)
+if found:
+    raise SystemExit(f"carbon thin-CLI normal graph contains forbidden server packages: {found}")
+print("carbon thin-CLI graph: zero forbidden server packages")
+PY
     ;;
   contracts)
     # The engine feature is confined to the test process; the shipped lite executable stays client-only.

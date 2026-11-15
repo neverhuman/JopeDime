@@ -10,6 +10,8 @@ pub(in crate::discover::r#loop) struct NativeFolds {
     pub(super) folds: Vec<Indices>,
     pub(super) refit_output: Option<PathBuf>,
     pub(super) refit_max_bytes: Option<u64>,
+    #[serde(default)]
+    pub(super) calibration_mode: Option<String>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -85,12 +87,14 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
         matrix.sha256_hex() == spec.matrix_sha256,
         "mapped FIT matrix identity mismatch"
     );
-    let objective = RegressionObjective::parse(
-        request
-            .objective
-            .as_str()
-            .context("objective must be a specification string")?,
-    )?;
+    let objective_raw = request
+        .objective
+        .as_str()
+        .context("objective must be a specification string")?;
+    let objective = RegressionObjective::parse(objective_raw)?;
+    let calibration_family =
+        resolve_calibration_family(spec.calibration_mode.as_deref(), objective_raw)?;
+    let aux_names = objective.columns();
     let parsed_genome = feat_math::GenomeIr::parse(&request.dsl)?;
     let complexity_stages = match &parsed_genome {
         feat_math::GenomeIr::Pipeline(expr) => expr.stages.len() + 1,
@@ -101,7 +105,15 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     };
     match (&spec.refit_output, spec.refit_max_bytes) {
         (Some(path), Some(maximum)) => {
-            return super::model::native_refit(request, matrix, &spec, &objective, path, maximum)
+            return super::model::native_refit(
+                request,
+                matrix,
+                &spec,
+                &objective,
+                calibration_family,
+                path,
+                maximum,
+            )
         }
         (None, None) => {}
         _ => bail!("incomplete private refit handoff"),
@@ -113,7 +125,6 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     let mut values = vec![];
     let mut surrogate = vec![];
     let mut fold_scores = vec![];
-    let empty_cols = jope_runtime::fitness::Columns::new();
     for fold in spec.folds {
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
@@ -127,11 +138,21 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
             "overlapping fold rows"
         );
         let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
+        let train_aux = aux_columns_for_rows(matrix, &aux_names, &fold.train)?;
         let train_t0 = std::time::Instant::now();
-        let fitted =
-            NativeModel::fit(&spec.features, &request.dsl, &x, &y).map_err(|_| UndefinedFitness)?;
+        let fitted = NativeModel::fit_with_calibration(
+            &spec.features,
+            &request.dsl,
+            &x,
+            &y,
+            &objective,
+            calibration_family,
+            &train_aux,
+        )
+        .map_err(|_| UndefinedFitness)?;
         let train_secs = train_t0.elapsed().as_secs_f64();
         let (vx, vy) = numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
+        let val_aux = aux_columns_for_rows(matrix, &aux_names, &fold.validation)?;
         let infer_t0 = std::time::Instant::now();
         let prediction = fitted.predict(&vx).map_err(|_| UndefinedFitness)?;
         let infer_secs = infer_t0.elapsed().as_secs_f64();
@@ -166,7 +187,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
             inference_rows: fold.validation.len(),
         };
         let score = objective
-            .evaluate_with_telemetry(&vy, &prediction, &empty_cols, &telemetry)
+            .evaluate_with_telemetry(&vy, &prediction, &val_aux, &telemetry)
             .map_err(|_| UndefinedFitness)?;
         losses.push(score.loss);
         values.push(score.value);
@@ -236,17 +257,69 @@ pub(in crate::discover::r#loop) fn numeric_rows<B: AsRef<[u8]>>(
     Ok((x, y))
 }
 
+pub(in crate::discover::r#loop) fn aux_columns_for_rows<B: AsRef<[u8]>>(
+    matrix: &Matrix<B>,
+    col_names: &[String],
+    rows: &[usize],
+) -> Result<jope_runtime::fitness::Columns> {
+    let mut out = jope_runtime::fitness::Columns::new();
+    for name in col_names {
+        let col_idx = matrix
+            .columns()
+            .iter()
+            .position(|c| &c.name == name)
+            .with_context(|| format!("unknown auxiliary objective column '{name}'"))?;
+        let mut vals = Vec::with_capacity(rows.len());
+        for &row in rows {
+            match matrix.cell(row, col_idx) {
+                Some(JmatCell::Numeric(v)) if v.is_finite() => vals.push(v),
+                _ => {
+                    bail!("non-finite or missing auxiliary objective column '{name}' in row {row}")
+                }
+            }
+        }
+        out.insert(name.clone(), vals);
+    }
+    Ok(out)
+}
+
+pub(super) fn resolve_calibration_family(
+    mode: Option<&str>,
+    objective_spec: &str,
+) -> Result<jope_runtime::calibration::Calibration> {
+    use jope_runtime::calibration::Calibration;
+    match mode {
+        None | Some("none") => Ok(Calibration::None),
+        Some("shift") => Ok(Calibration::Shift),
+        Some("affine") => Ok(Calibration::Affine),
+        Some("auto") => {
+            let prep_spec = jope_prep::objective::ObjectiveSpec::parse(objective_spec)
+                .map_err(|e| anyhow::anyhow!("invalid objective for calibration check: {e}"))?;
+            if prep_spec.benefits_from_post_hoc_calibration() {
+                Ok(Calibration::Affine)
+            } else {
+                Ok(Calibration::None)
+            }
+        }
+        Some(other) => {
+            bail!("unsupported calibration_mode '{other}'; expected none, auto, shift, or affine")
+        }
+    }
+}
+
 /// Internal CAS fit, deliberately separate from the frozen exported bundle
 /// format. Every preprocessing parameter is fitted inside the training fold.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct NativeModel {
-    pub(super) version: u32,
+    pub(crate) version: u32,
     pub(crate) features: Vec<String>,
-    pub(super) dsl: String,
-    pub(super) min: Vec<f64>,
-    pub(super) max: Vec<f64>,
-    pub(super) fill: Vec<f64>,
-    pub(super) target_min: f64,
-    pub(super) target_scale: f64,
-    pub(super) model: feat_math::Model,
+    pub(crate) dsl: String,
+    pub(crate) min: Vec<f64>,
+    pub(crate) max: Vec<f64>,
+    pub(crate) fill: Vec<f64>,
+    pub(crate) target_min: f64,
+    pub(crate) target_scale: f64,
+    pub(crate) model: feat_math::Model,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) calibration: Option<jope_runtime::calibration::OutputTransform>,
 }

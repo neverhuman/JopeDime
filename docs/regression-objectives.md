@@ -8,7 +8,8 @@ everywhere a model is chosen, tuned or written:
 
 | Where | What the objective changes |
 | --- | --- |
-| `jopedime fit --fitness …` | **Selection**: every native method is scored by your objective on out-of-fold predictions. |
+| `carbon fit --fitness …` / `carbon run … --fitness …` | **End-to-End Encrypted Discovery**: validates locally before CUEN encryption, separates auxiliary scoring columns from candidate features, runs forward chronological folds when required, fits fold-safe post-hoc output calibration, and scores comparators under the same objective. |
+| `jopedime fit --fitness …` / `jopedime run … --fitness …` | **Selection**: every native method is scored by your objective on out-of-fold predictions. |
 | same, `--calibration` (on by default) | **Calibration**: each method's outputs get a monotone map `max(a + b·pred, floor)` learned to minimize your objective, cross-fitted so the score stays honest. A squared-error model becomes a 90th-percentile forecast, an order quantity or a position size. |
 | `jope pipeline run --fitness …`, `jope pipeline invent --fitness …` | **Program search**: every candidate program is ranked by your objective on held-out rows; the receipt records the objective and its identity. |
 | Rust, JSON-RPC (`jopedime api`) and MCP (`jopedime mcp`) | The same specification, the same scorer, the same identity. |
@@ -19,12 +20,19 @@ search ranks by held-out RMSE.
 ## Quick start
 
 ```sh
+# Thin Carbon CLI (zero-knowledge E2EE cloud)
+carbon fitness list                                         # 53 built-ins, defaults, directions
+carbon fitness validate pinball:quantile=0.9                # resolved spec + sha256 identity
+carbon fit examples/objectives/train.csv --target y \
+  --fitness @examples/objectives/grid_underforecast.json --save p90.carbon.json
+
+# Local appliance CLI
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
 cargo build --locked --release -p jope-appliance
 J=target/release/jopedime
 
-$J fitness list                                  # 38 built-ins, defaults, directions
-$J fitness validate pinball:quantile=0.9         # resolved spec + sha256 identity
+$J fitness list                                             # 53 built-ins, defaults, directions
+$J fitness validate pinball:quantile=0.9                    # resolved spec + sha256 identity
 $J fit --train examples/objectives/train.csv --target y --task regression \
   --fitness pinball:quantile=0.9 --output p90.jope --json
 $J predict --model p90.jope --input examples/objectives/predict.csv --output p90.csv

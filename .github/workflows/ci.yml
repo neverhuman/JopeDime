@@ -25,7 +25,7 @@ env:
   BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.draft || false }}
   cancel-in-progress: true
 
 jobs:

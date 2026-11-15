@@ -80,7 +80,12 @@ fn extract_nonempty_zeroized(
 }
 
 /// Parse a `SecretString` JSON object from AWS Secrets Manager into `CarbonRuntimeSecrets`.
-pub fn parse_secret_bundle_json(secret_json: &str) -> Result<CarbonRuntimeSecrets, String> {
+/// When `scrub_engine_secrets` is `true` (e.g., `CARBON_ROLE=edge`), `seal_secret_hex` and
+/// `engine_kek_hex` are never extracted into memory (`DEP-SEC-01` defense-in-depth).
+pub fn parse_secret_bundle_json_for_role(
+    secret_json: &str,
+    scrub_engine_secrets: bool,
+) -> Result<CarbonRuntimeSecrets, String> {
     let val: serde_json::Value = serde_json::from_str(secret_json)
         .map_err(|e| format!("invalid Secrets Manager JSON payload: {e}"))?;
     let obj = val
@@ -95,8 +100,16 @@ pub fn parse_secret_bundle_json(secret_json: &str) -> Result<CarbonRuntimeSecret
         .map(str::to_owned);
 
     Ok(CarbonRuntimeSecrets {
-        seal_secret_hex: extract_nonempty_zeroized(obj, &["seal_secret_hex"]),
-        previous_seal_secret_hex: extract_nonempty_zeroized(obj, &["previous_seal_secret_hex"]),
+        seal_secret_hex: if scrub_engine_secrets {
+            None
+        } else {
+            extract_nonempty_zeroized(obj, &["seal_secret_hex"])
+        },
+        previous_seal_secret_hex: if scrub_engine_secrets {
+            None
+        } else {
+            extract_nonempty_zeroized(obj, &["previous_seal_secret_hex"])
+        },
         presign_secret_hex: extract_nonempty_zeroized(obj, &["presign_secret_hex"]),
         previous_presign_secret_hex: extract_nonempty_zeroized(
             obj,
@@ -104,10 +117,27 @@ pub fn parse_secret_bundle_json(secret_json: &str) -> Result<CarbonRuntimeSecret
         ),
         auth_secret_hex: extract_nonempty_zeroized(obj, &["auth_secret_hex"]),
         previous_auth_secret_hex: extract_nonempty_zeroized(obj, &["previous_auth_secret_hex"]),
-        engine_kek_hex: extract_nonempty_zeroized(obj, &["engine_kek_hex", "engine_kek_priv_hex"]),
-        previous_engine_kek_hex: extract_nonempty_zeroized(obj, &["previous_engine_kek_hex"]),
+        engine_kek_hex: if scrub_engine_secrets {
+            None
+        } else {
+            extract_nonempty_zeroized(obj, &["engine_kek_hex", "engine_kek_priv_hex"])
+        },
+        previous_engine_kek_hex: if scrub_engine_secrets {
+            None
+        } else {
+            extract_nonempty_zeroized(obj, &["previous_engine_kek_hex"])
+        },
         engine_kek_pubkey_b64,
     })
+}
+
+/// Parse a `SecretString` JSON object from AWS Secrets Manager into `CarbonRuntimeSecrets`,
+/// automatically scrubbing engine-only keys when `CARBON_ROLE=edge`.
+pub fn parse_secret_bundle_json(secret_json: &str) -> Result<CarbonRuntimeSecrets, String> {
+    let is_edge = std::env::var("CARBON_ROLE")
+        .map(|r| r.trim().eq_ignore_ascii_case("edge"))
+        .unwrap_or(false);
+    parse_secret_bundle_json_for_role(secret_json, is_edge)
 }
 
 fn infer_region_from_secret_arn(secret_id: &str) -> Option<String> {
@@ -213,10 +243,9 @@ pub fn fetch_secretsmanager_secret_string(
     Err(last_err)
 }
 
-/// Load `CARBON_SECRETS_ARN` once per container cold start (cached in `Zeroizing` RAM), or return
-/// `Ok(None)` when `CARBON_SECRETS_ARN` is unset so local env-var tests and `RT-05` continue working.
-pub fn load_cached_runtime_secrets(
+fn load_cached_runtime_secrets_with_scrub(
     default_region: &str,
+    scrub_engine_secrets: bool,
 ) -> Result<Option<&'static CarbonRuntimeSecrets>, String> {
     static CACHED_SECRETS: OnceLock<CarbonRuntimeSecrets> = OnceLock::new();
     let Some(secret_arn) = std::env::var("CARBON_SECRETS_ARN")
@@ -234,9 +263,21 @@ pub fn load_cached_runtime_secrets(
         .filter(|s| !s.trim().is_empty());
     let raw_secret =
         fetch_secretsmanager_secret_string(default_region, &secret_arn, version_id.as_deref())?;
-    let parsed = parse_secret_bundle_json(&raw_secret)?;
+    let is_edge_env = std::env::var("CARBON_ROLE")
+        .map(|r| r.trim().eq_ignore_ascii_case("edge"))
+        .unwrap_or(false);
+    let parsed =
+        parse_secret_bundle_json_for_role(&raw_secret, scrub_engine_secrets || is_edge_env)?;
     let _ = CACHED_SECRETS.set(parsed);
     Ok(CACHED_SECRETS.get())
+}
+
+/// Load `CARBON_SECRETS_ARN` once per container cold start (cached in `Zeroizing` RAM), or return
+/// `Ok(None)` when `CARBON_SECRETS_ARN` is unset so local env-var tests and `RT-05` continue working.
+pub fn load_cached_runtime_secrets(
+    default_region: &str,
+) -> Result<Option<&'static CarbonRuntimeSecrets>, String> {
+    load_cached_runtime_secrets_with_scrub(default_region, false)
 }
 
 /// Resolve `(CarbonPresigner, Option<CarbonAuthVerifier>, Option<String>)` for `carbon-edge` from
@@ -245,7 +286,7 @@ pub fn resolve_edge_secrets(
     region: &str,
     is_aws_production: bool,
 ) -> Result<(CarbonPresigner, Option<CarbonAuthVerifier>, Option<String>), String> {
-    let vault = load_cached_runtime_secrets(region)?;
+    let vault = load_cached_runtime_secrets_with_scrub(region, true)?;
 
     let presign_hex_opt = std::env::var("CARBON_PRESIGN_SECRET_HEX")
         .ok()
