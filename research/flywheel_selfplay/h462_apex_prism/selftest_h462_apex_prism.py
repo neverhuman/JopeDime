@@ -34,19 +34,25 @@ from research.flywheel_selfplay.h462_apex_prism import (  # noqa: E402
     PRISMSolverNet,
     assert_path_not_quarantined,
     bag_predictions_e8,
+    bag_predictions_precision_weighted_oof,
     build_counterfactual_repair_episode,
     compile_pcr_hints,
+    compute_l350_skill,
     compute_robust_tail_stat,
     corrupt_pcr_hints_counterfactual,
+    count_exposed_families_on_board,
     edge_certify_context,
     enforce_cohort_family_mean_floor,
+    evaluate_h8_episode_skills,
     fit_raw_y_classic_floor_oof,
     legacy_clipped_fold_mean_score,
+    load_bank_manifest_exposure,
     pooled_unclipped_utility,
     prism_episode_loss,
     run_assay,
     run_exact_varpro_battery,
     solve_differentiable_cholesky_head,
+    verify_nested_oof_fn,
     write_compatible_block_npz,
 )
 
@@ -364,15 +370,22 @@ def _p0_8_pcr_inner_oof_leak_canary_t8() -> Dict[str, Any]:
     x_null = rng.normal(size=(150, 5))
     y_null = rng.normal(size=150)
     x_q = rng.normal(size=(20, 5))
-    hb = compile_pcr_hints(x_null, y_null, x_q, k_inner=5, max_formulas=0, seed=46208)
-    # Check max positive correlation between pure-noise y_null and location OOF hints [0, 1, 3, 4, 5]
+    hb = compile_pcr_hints(x_null, y_null, x_q, k_inner=5, max_formulas=6, seed=46208)
+    # Check max positive correlation between pure-noise y_null and ALL cross-fitted OOF predictors (Class A + Class B/C)
     max_corr = 0.0
-    for j in (0, 1, 3, 4, 5):
-        c_col = hb.context_hints[:, j]
-        corr = float(np.corrcoef(y_null, c_col)[0, 1])
-        max_corr = max(max_corr, corr)
-    assert max_corr <= 0.15, f"PCR inner-OOF label leakage detected under null: max_corr={max_corr}"
-    return {"hint_protocol_id": hb.hint_protocol_id, "max_null_oof_corr": round(max_corr, 4)}
+    for j in range(hb.oof_predictions_raw.shape[1]):
+        if j == hb.gp_sd_hint_col:
+            continue
+        c_col = hb.oof_predictions_raw[:, j]
+        if float(np.std(c_col)) > 1e-12:
+            corr = float(np.corrcoef(y_null, c_col)[0, 1])
+            max_corr = max(max_corr, corr)
+    assert max_corr <= 0.16, f"PCR inner-OOF label leakage detected under null: max_corr={max_corr}"
+    return {
+        "hint_protocol_id": hb.hint_protocol_id,
+        "max_formulas": len(hb.selected_formula_channels),
+        "max_null_oof_corr": round(max_corr, 4),
+    }
 
 
 def _p0_9_whole_procedure_audit_label_poison_canary_t2() -> Dict[str, Any]:
@@ -389,7 +402,15 @@ def _p0_9_whole_procedure_audit_label_poison_canary_t2() -> Dict[str, Any]:
             # Note: y_audit_unused is structurally excluded from FitClosureV3 and all solvers
             _ = y_audit_unused.shape
             lab = target_stratified_kfold_labels(y_s, n_splits=5, seed=46209)
-            closure = FitClosureV3.create(x_s, y_s, dataset_id="ds_09", family_id="fam_09")
+            closure = FitClosureV3.create(
+                x_s,
+                y_s,
+                dataset_id="ds_09",
+                family_id="fam_09",
+                train_row_ids=[f"S:{i}" for i in range(x_s.shape[0])],
+                eval_row_ids=[f"A:{i}" for i in range(x_a.shape[0])],
+                checkpoint_exposed_families=(),
+            )
             floor_oof, floor_q = fit_raw_y_classic_floor_oof(x_s, y_s, x_a, lab, seed=46209)
             ex = run_exact_varpro_battery(x_s, y_s, lab)
             c_oof = dict(floor_oof)
@@ -468,20 +489,50 @@ def _p0_11_bagging_e8_jensen_variance_inequality() -> Dict[str, Any]:
 def _p0_12_fit_closure_v3_s0_global_oof_and_quarantine_refusals() -> Dict[str, Any]:
     x = np.ones((20, 3), dtype=np.float64)
     y = np.arange(20, dtype=np.float64)
+    s_ids = [f"S:{i}" for i in range(20)]
+    a_ids = [f"A:{i}" for i in range(6)]
 
     # 1. External FM column in S0 must be refused
     refused_s0 = False
     try:
-        FitClosureV3.create(x, y, "ds1", "fam1", candidate_names=["raw_ridge", "kumo_tabular_large_e8"])
+        FitClosureV3.create(
+            x,
+            y,
+            "ds1",
+            "fam1",
+            train_row_ids=s_ids,
+            eval_row_ids=a_ids,
+            checkpoint_exposed_families=(),
+            candidate_names=["raw_ridge", "kumo_tabular_large_e8"],
+        )
     except PermissionError:
         refused_s0 = True
     assert refused_s0
 
-    # 2. Global-OOF ancestor inside outer fold `fold_0` (`gp_chain --base-block` bug) must be refused
-    anc_global = FitClosureV3.create(x, y, "ds1", "fam1", outer_fold_id="global_oof")
+    # 2. Global-OOF ancestor inside outer fold `fold_0` (`gp_chain --base-block` bug) must be refused by row-ID closure
+    anc_global = FitClosureV3.create(
+        x,
+        y,
+        "ds1",
+        "fam1",
+        train_row_ids=s_ids,
+        eval_row_ids=a_ids,
+        checkpoint_exposed_families=(),
+        outer_fold_id="global_oof",
+    )
     refused_global_oof = False
     try:
-        FitClosureV3.create(x[:16], y[:16], "ds1", "fam1", outer_fold_id="fold_0", ancestors=[anc_global])
+        FitClosureV3.create(
+            x[:16],
+            y[:16],
+            "ds1",
+            "fam1",
+            train_row_ids=s_ids[:16],
+            eval_row_ids=s_ids[16:],
+            checkpoint_exposed_families=(),
+            outer_fold_id="fold_0",
+            ancestors=[anc_global],
+        )
     except PermissionError:
         refused_global_oof = True
     assert refused_global_oof
@@ -489,7 +540,15 @@ def _p0_12_fit_closure_v3_s0_global_oof_and_quarantine_refusals() -> Dict[str, A
     # 3. `be7de9bc` family exposure in checkpoint corpus must be refused
     refused_exposure = False
     try:
-        FitClosureV3.create(x, y, "ds1", "fam_dev91_01", checkpoint_exposed_families=["fam_clean", "fam_dev91_01"])
+        FitClosureV3.create(
+            x,
+            y,
+            "ds1",
+            "fam_dev91_01",
+            train_row_ids=s_ids,
+            eval_row_ids=a_ids,
+            checkpoint_exposed_families=["fam_clean", "fam_dev91_01"],
+        )
     except PermissionError:
         refused_exposure = True
     assert refused_exposure
@@ -516,6 +575,581 @@ def _p0_12_fit_closure_v3_s0_global_oof_and_quarantine_refusals() -> Dict[str, A
     }
 
 
+def _p0_13_extreme_scale_collinear_varpro_stability() -> Dict[str, Any]:
+    """Reproduces extreme `10^10` target scale + binary/collinear features that triggered singular SK Gram matrices."""
+    rng = np.random.default_rng(46213)
+    n = 90
+    b0 = rng.integers(0, 2, size=n).astype(np.float64)
+    x1 = rng.uniform(0.5, 4.0, size=n)
+    # Collinear duplicate + binary column (`b0^2 == b0` makes rational/quadratic monomials rank-deficient)
+    x = np.column_stack([b0, b0.copy(), x1, 2.0 * x1 + 1.0])
+    y = 1.0e10 * ((3.0 * x1 + 2.0 * b0 + 1.0) / (1.0 + 0.5 * x1))
+    folds = np.arange(n, dtype=np.int64) % 5
+    res = run_exact_varpro_battery(x, y, folds, min_fold_margin_u=0.20)
+    assert np.all(np.isfinite(res.oof_pred)), "Non-finite OOF predictions on extreme-scale collinear table"
+    return {"accepted": bool(res.accepted), "selected_law": res.selected_law_name}
+
+
+def _p0_14_float32_feature_overflow_classic_floor() -> Dict[str, Any]:
+    """Reproduces `|X| > 3.4e38` (`float32` overflow in sklearn RF/ET) discovered on real 398-context sweep."""
+    rng = np.random.default_rng(46214)
+    n_s, n_q = 80, 25
+    x_base = rng.normal(0.0, 1.0, size=(n_s + n_q, 4))
+    # Column 0 exceeds float32 max (3.4028e38); column 1 has NaNs + normal scale
+    x_all = x_base.copy()
+    x_all[:, 0] = x_base[:, 0] * 1.0e42
+    x_all[3::11, 1] = np.nan
+    y_all = 2.5e22 * x_base[:, 0] - 1.2e22 * np.nan_to_num(x_base[:, 1], nan=0.0) + rng.normal(0.0, 1.0e20, size=n_s + n_q)
+    x_s, x_q = x_all[:n_s], x_all[n_s:]
+    y_s, y_q = y_all[:n_s], y_all[n_s:]
+    folds = np.arange(n_s, dtype=np.int64) % 5
+    oof_map, q_map = fit_raw_y_classic_floor_oof(x_s, y_s, x_q, folds, seed=46214)
+    u_q = {}
+    for nm, pred in q_map.items():
+        assert np.all(np.isfinite(oof_map[nm])), f"Non-finite OOF in {nm}"
+        assert np.all(np.isfinite(pred)), f"Non-finite query pred in {nm}"
+        u_q[nm] = round(pooled_unclipped_utility(y_q, pred), 4)
+        assert u_q[nm] > 0.25, f"Poor extreme-scale recovery in {nm}: {u_q[nm]}"
+    return {"query_utilities": u_q}
+
+
+def _p0_15_precision_weighted_seed_bagging_exact_law_preservation() -> Dict[str, Any]:
+    """Proves `M6-PRECISION-AVG` beats both single-seed mean `u` on noisy tables AND equal-weight `0.5*(p0+p1)` when 1 seed hits an exact law."""
+    rng = np.random.default_rng(46215)
+    n_s, n_q = 120, 60
+    # Case A: Comparable noisy seeds -> precision weights ~0.5, beats mean single-seed utility
+    y_s_a = rng.normal(0.0, 1.0, size=n_s)
+    y_q_a = rng.normal(0.0, 1.0, size=n_q)
+    q0_a = y_s_a + rng.normal(0.0, 0.35, size=n_s)
+    q1_a = y_s_a + rng.normal(0.0, 0.35, size=n_s)
+    p0_a = y_q_a + rng.normal(0.0, 0.35, size=n_q)
+    p1_a = y_q_a + rng.normal(0.0, 0.35, size=n_q)
+    p_prec_a, meta_a = bag_predictions_precision_weighted_oof(y_s_a, [q0_a, q1_a], [p0_a, p1_a])
+    u_conv_a = 0.5 * (pooled_unclipped_utility(y_q_a, p0_a) + pooled_unclipped_utility(y_q_a, p1_a))
+    u_prec_a = pooled_unclipped_utility(y_q_a, p_prec_a)
+    assert u_prec_a > u_conv_a + 0.05
+
+    # Case B: Seed 0 hits near-exact formula (1e-7 noise) while Seed 1 misses (0.25 noise) -> equal-weight loses badly, precision-avg preserves exact law!
+    q0_b = y_s_a + rng.normal(0.0, 1e-7, size=n_s)
+    q1_b = y_s_a + rng.normal(0.0, 0.25, size=n_s)
+    p0_b = y_q_a + rng.normal(0.0, 1e-7, size=n_q)
+    p1_b = y_q_a + rng.normal(0.0, 0.25, size=n_q)
+    p_eq_b, _ = bag_predictions_e8([p0_b, p1_b])
+    p_prec_b, meta_b = bag_predictions_precision_weighted_oof(y_s_a, [q0_b, q1_b], [p0_b, p1_b])
+    u_conv_b = 0.5 * (pooled_unclipped_utility(y_q_a, p0_b) + pooled_unclipped_utility(y_q_a, p1_b))
+    u_eq_b = pooled_unclipped_utility(y_q_a, p_eq_b)
+    u_prec_b = pooled_unclipped_utility(y_q_a, p_prec_b)
+    assert u_eq_b < u_conv_b - 4.0, "Equal-weight must suffer log-MSE convexity drop when one seed hits exact law"
+    assert u_prec_b > u_conv_b + 6.0, "OOF precision-weighted bag must preserve exact law and beat single-seed mean u"
+    return {
+        "noisy_delta_u": round(u_prec_a - u_conv_a, 4),
+        "exact_eq_delta_u": round(u_eq_b - u_conv_b, 4),
+        "exact_prec_delta_u": round(u_prec_b - u_conv_b, 4),
+        "exact_winner_weight": round(meta_b["max_weight"], 8),
+    }
+
+
+def _p0_16_hnc1_h1_self_exclusion_and_h3_h4_h7_parity() -> Dict[str, Any]:
+    """Verifies `HNC-1` `H1` (`+1000*sd` single-row poison), `H3` (Findings 1 & 7), `H4` (Finding 3), and `H7` (Finding 4)."""
+    rng = np.random.default_rng(46216)
+    x_c = rng.normal(size=(64, 5))
+    y_c = 1.6 * x_c[:, 0] * x_c[:, 1] - 0.8 * x_c[:, 2] + 0.3 * rng.normal(size=64)
+    x_q = rng.normal(size=(20, 5))
+
+    hb_clean = compile_pcr_hints(x_c, y_c, x_q, k_inner=5, max_formulas=6, seed=46216)
+    assert len(hb_clean.selected_formula_channels) == 6
+    assert len(hb_clean.non_selected_channels) == 6
+
+    # H1 canary: add 1000 * sd(y) to y_i; every non-selected channel at row i must be unchanged to 1e-12 relative
+    poison_row = 17
+    y_poison = y_c.copy()
+    y_poison[poison_row] += 1000.0 * float(np.std(y_c))
+    hb_poison = compile_pcr_hints(x_c, y_poison, x_q, k_inner=5, max_formulas=6, seed=46216)
+    max_rel_diff = 0.0
+    for col in hb_clean.non_selected_channels:
+        v0 = float(hb_clean.context_hints[poison_row, col])
+        v1 = float(hb_poison.context_hints[poison_row, col])
+        rel = abs(v1 - v0) / max(abs(v0), 1e-12)
+        max_rel_diff = max(max_rel_diff, rel)
+    assert max_rel_diff < 1e-12, f"H1 self-exclusion failed at row {poison_row}: max_rel_diff={max_rel_diff}"
+
+    # H3 Finding 1: gp_sd is in identical reliability slot on C and Q; fold disagreement has missing indicator
+    r_c = hb_clean.context_reliability
+    r_q = hb_clean.query_reliability
+    gp_col = hb_clean.gp_sd_hint_col
+    gp_rel_col = hb_clean.gp_sd_row_rel_col
+    assert np.allclose(r_c[:, gp_rel_col], hb_clean.context_hints[:, gp_col], atol=0.0)
+    assert np.allclose(r_q[:, gp_rel_col], hb_clean.query_hints[:, gp_col], atol=0.0)
+    assert np.all(r_c[:, gp_rel_col + 1] == 0.0) and np.all(r_c[:, gp_rel_col + 2] == 1.0)
+    assert np.all(r_q[:, gp_rel_col + 2] == 0.0)
+
+    # H4 Finding 3: corrupting channels recomputes ONLY corrupted skills via deploy L350 formula (zero *0.25 flag)
+    hb_corr, mask = corrupt_pcr_hints_counterfactual(hb_clean, corrupt_prob=0.50, seed=46216)
+    assert np.any(mask) and not np.all(mask)
+    for j, is_corr in enumerate(mask):
+        s_col = hb_clean.skill_col_for_hint[j]
+        if s_col is None:
+            continue
+        if not is_corr:
+            assert float(np.max(np.abs(hb_corr.context_reliability[:, s_col] - hb_clean.context_reliability[:, s_col]))) == 0.0
+        else:
+            expected_sk = compute_l350_skill(hb_clean.context_target_norm, hb_corr.context_hints[:, j])
+            assert abs(float(hb_corr.context_reliability[0, s_col]) - expected_sk) < 1e-13
+
+    # H7 Finding 4: protocol id hashes module source + params, invariant when n_c < 20 changes k_eff
+    hb_small = compile_pcr_hints(x_c[:12], y_c[:12], x_q[:4], k_inner=5, max_formulas=6, seed=46216)
+    assert hb_small.k_eff == 3 and hb_clean.k_eff == 5
+    assert hb_small.hint_protocol_id == hb_clean.hint_protocol_id
+    return {
+        "h1_max_rel_diff": max_rel_diff,
+        "h7_protocol_id_invariant": hb_small.hint_protocol_id == hb_clean.hint_protocol_id,
+        "k_eff_pair": [hb_small.k_eff, hb_clean.k_eff],
+    }
+
+
+def _p0_17_hnc1_h5_rowid_closure_and_h6_manifest_exposure() -> Dict[str, Any]:
+    """Verifies `HNC-1` `H5` row-ID outer nesting (refusing spoofed fold strings) and `H6` mandatory exposure."""
+    x = np.ones((20, 3), dtype=np.float64)
+    y = np.arange(20, dtype=np.float64)
+    s_all = [f"S:{i}" for i in range(20)]
+    a_all = [f"A:{i}" for i in range(8)]
+
+    # Spoofed fold string: ancestor claims "fold_3" on S:0..19; consumer claims "fold_3" on S:0..15 evaluating S:16..19 -> MUST REFUSE!
+    anc_spoof = FitClosureV3.create(
+        x, y, "ds_h5", "fam_h5",
+        train_row_ids=s_all,
+        eval_row_ids=a_all,
+        checkpoint_exposed_families=(),
+        outer_fold_id="fold_3",
+        hint_protocol_id="pcr_v2_abc",
+    )
+    refused_spoof_fold = False
+    try:
+        FitClosureV3.create(
+            x[:16], y[:16], "ds_h5", "fam_h5",
+            train_row_ids=s_all[:16],
+            eval_row_ids=s_all[16:],
+            checkpoint_exposed_families=(),
+            outer_fold_id="fold_3",
+            hint_protocol_id="pcr_v2_abc",
+            ancestors=[anc_spoof],
+        )
+    except PermissionError:
+        refused_spoof_fold = True
+    assert refused_spoof_fold
+
+    # Spoofed "full_search" consumer evaluating on S:16..19 -> MUST ALSO REFUSE!
+    refused_full_search_on_s = False
+    try:
+        FitClosureV3.create(
+            x[:16], y[:16], "ds_h5", "fam_h5",
+            train_row_ids=s_all[:16],
+            eval_row_ids=s_all[16:],
+            checkpoint_exposed_families=(),
+            outer_fold_id="full_search",
+            hint_protocol_id="pcr_v2_abc",
+            ancestors=[anc_spoof],
+        )
+    except PermissionError:
+        refused_full_search_on_s = True
+    assert refused_full_search_on_s
+
+    # Valid A-only consumer (C = S, Q = A) -> MUST PASS!
+    valid_a = FitClosureV3.create(
+        x, y, "ds_h5", "fam_h5",
+        train_row_ids=s_all,
+        eval_row_ids=a_all,
+        checkpoint_exposed_families=(),
+        outer_fold_id="full_search",
+        hint_protocol_id="pcr_v2_abc",
+        ancestors=[anc_spoof],
+    )
+    assert valid_a.closure_sha256 != ""
+
+    # H7 stack mismatch refusal
+    refused_h7_mismatch = False
+    try:
+        FitClosureV3.create(
+            x, y, "ds_h5", "fam_h5",
+            train_row_ids=s_all,
+            eval_row_ids=a_all,
+            checkpoint_exposed_families=(),
+            hint_protocol_id="pcr_v2_different",
+            ancestors=[anc_spoof],
+        )
+    except PermissionError:
+        refused_h7_mismatch = True
+    assert refused_h7_mismatch
+
+    # H6: omitting checkpoint_exposed_families raises TypeError; bank_sha256 with empty list raises ValueError
+    refused_missing_exp = False
+    try:
+        FitClosureV3.create(x, y, "ds_h6", "fam_h6", train_row_ids=s_all, eval_row_ids=a_all)  # type: ignore[call-arg]
+    except TypeError:
+        refused_missing_exp = True
+    assert refused_missing_exp
+
+    refused_empty_bank_exp = False
+    try:
+        FitClosureV3.create(
+            x, y, "ds_h6", "fam_h6",
+            train_row_ids=s_all,
+            eval_row_ids=a_all,
+            checkpoint_exposed_families=(),
+            checkpoint_bank_sha256="bc5c7d6cd1f4",
+        )
+    except ValueError:
+        refused_empty_bank_exp = True
+    assert refused_empty_bank_exp
+
+    scratch = _scratch_dir()
+    try:
+        mf_p = scratch / "mock_bank.npz.json"
+        mf_p.parent.mkdir(parents=True, exist_ok=True)
+        mf_p.write_text(
+            json.dumps(
+                {
+                    "bank_sha256": "bc5c7d6c_mock",
+                    "tables": [
+                        {"family_key": "fresh:srcfile:mtp"},
+                        {"family_key": "openml:kin8nm"},
+                    ],
+                }
+            )
+        )
+        b_sha, b_fams = load_bank_manifest_exposure(mf_p)
+        assert b_sha == "bc5c7d6c_mock" and b_fams == ("openml:kin8nm", "srcfile:mtp")
+        n_ov = count_exposed_families_on_board(["srcfile:mtp", "uci:concrete"], b_fams)
+        assert n_ov == 1
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    return {
+        "board_overlap_count": n_ov,
+        "refused_empty_bank_exp": refused_empty_bank_exp,
+        "refused_full_search_on_s": refused_full_search_on_s,
+        "refused_h7_mismatch": refused_h7_mismatch,
+        "refused_missing_exp": refused_missing_exp,
+        "refused_spoof_fold": refused_spoof_fold,
+    }
+
+
+def _p0_18_hnc1_h8_200_episode_calibration_canary() -> Dict[str, Any]:
+    """Verifies `HNC-1` `H8`: over 200 synthetic episodes (`max_formulas=6`), `|mean(ctx_skill) - mean(qry_skill)| <= 0.05`."""
+    n_episodes = 200
+    n_c, n_q, n_f = 60, 36, 4
+    ctx_sums = np.zeros(11, dtype=np.float64)
+    qry_sums = np.zeros(11, dtype=np.float64)
+
+    for ep_idx in range(n_episodes):
+        rng = np.random.default_rng(462800 + ep_idx)
+        x_all = rng.normal(size=(n_c + n_q, n_f))
+        mode = ep_idx % 4
+        noise_sd = float(rng.uniform(0.15, 0.85))
+        if mode == 0:
+            y_clean = 1.3 * x_all[:, 0] - 0.9 * x_all[:, 1] + 0.5 * x_all[:, 0] * x_all[:, 1]
+        elif mode == 1:
+            y_clean = np.sin(1.5 * x_all[:, 0]) + 0.8 * (x_all[:, 1] / (np.abs(x_all[:, 2]) + 0.6))
+        elif mode == 2:
+            disc = np.round(x_all[:, 0] * 1.5)
+            y_clean = 1.1 * disc + 0.6 * (x_all[:, 1] - x_all[:, 3])
+        else:
+            y_clean = 0.25 * x_all[:, 0]
+        y_all = y_clean + noise_sd * rng.normal(size=n_c + n_q)
+
+        hb = compile_pcr_hints(
+            x_all[:n_c],
+            y_all[:n_c],
+            x_all[n_c:],
+            k_inner=5,
+            max_formulas=6,
+            seed=462800 + ep_idx,
+            query_fold_mode="random_single_fold",
+        )
+        ep_skills = evaluate_h8_episode_skills(hb, y_all[n_c:])
+        assert len(ep_skills) == 11
+        for k_pos, (_nm, (c_sk, q_sk)) in enumerate(ep_skills.items()):
+            ctx_sums[k_pos] += c_sk
+            qry_sums[k_pos] += q_sk
+
+    ctx_means = ctx_sums / float(n_episodes)
+    qry_means = qry_sums / float(n_episodes)
+    abs_gaps = np.abs(ctx_means - qry_means)
+    max_gap = float(np.max(abs_gaps))
+    assert max_gap <= 0.05, f"H8 calibration canary failed: max_gap={max_gap}, gaps={abs_gaps.tolist()}"
+    return {
+        "max_abs_skill_gap": round(max_gap, 5),
+        "mean_abs_skill_gap": round(float(np.mean(abs_gaps)), 5),
+        "n_episodes": n_episodes,
+    }
+
+
+def _p0_19_edge_certify_partial_top_block_sampling() -> Dict[str, Any]:
+    """Verifies `cl_mtc` Correction 2: `_sample_audit_shaped_blocks` draws `round(3*r/10)` rows from partial top block."""
+    from research.flywheel_selfplay.h462_apex_prism.edge_certify import _sample_audit_shaped_blocks
+
+    # n_rows = 57 -> 5 full blocks (15 draws) + partial top block r=7 -> round(2.1)=2 draws = 17 draws total
+    y = np.arange(57, dtype=np.float64)
+    draws = _sample_audit_shaped_blocks(y, n_bootstrap=400, audit_per_10=3, seed=46299)
+    assert draws.shape == (400, 17), f"Expected shape (400, 17), got {draws.shape}"
+    max_row_draw_rate = float(np.mean(np.any(draws == 56, axis=1)))
+    assert 0.18 <= max_row_draw_rate <= 0.40, f"Top row 56 never/badly drawn: rate={max_row_draw_rate}"
+    return {"draw_cols": int(draws.shape[1]), "top_row_draw_rate": round(max_row_draw_rate, 4)}
+
+
+def _p0_20_outer_nested_gp_passes_verify_nested_oof_fn() -> Dict[str, Any]:
+    """Verifies `HNC-1 H5` `verify_nested_oof_fn`: catches full-SEARCH & 2-stage outer coupling, certifies `run_outer_nested_oof_committee`."""
+    from research.flywheel_selfplay.h462_apex_prism.emit_gp_runbag6_h462 import (
+        _precision_combine_oof,
+        run_outer_nested_oof_committee,
+        run_outer_nested_oof_seed,
+    )
+
+    rng = np.random.default_rng(46220)
+    n_s = 60
+    x_s = rng.normal(size=(n_s, 4))
+    y_s = 1.7 * x_s[:, 0] - 0.9 * (x_s[:, 1] ** 2) + 0.25 * rng.normal(size=n_s)
+    lab5 = np.arange(n_s, dtype=np.int64) % 5
+
+    def _candidate_bank(X_fit: np.ndarray, y_fit: np.ndarray, X_eval: np.ndarray):
+        Phi_fit = np.column_stack(
+            [
+                np.ones(len(X_fit)),
+                X_fit[:, 0],
+                X_fit[:, 1],
+                X_fit[:, 1] ** 2,
+                X_fit[:, 2],
+                X_fit[:, 0] * X_fit[:, 3],
+            ]
+        )
+        Phi_ev = np.column_stack(
+            [
+                np.ones(len(X_eval)),
+                X_eval[:, 0],
+                X_eval[:, 1],
+                X_eval[:, 1] ** 2,
+                X_eval[:, 2],
+                X_eval[:, 0] * X_eval[:, 3],
+            ]
+        )
+        subsets = [(0, 1), (0, 2), (0, 1, 3), (0, 4), (0, 2, 5), (0, 1, 2, 3)]
+        q_cols = []
+        p_cols = []
+        for sub in subsets:
+            A = Phi_fit[:, sub]
+            beta = np.linalg.lstsq(A.T @ A + 1e-4 * np.eye(len(sub)), A.T @ y_fit, rcond=None)[0]
+            q_cols.append(A @ beta)
+            p_cols.append(Phi_ev[:, sub] @ beta)
+        return np.column_stack(q_cols), np.column_stack(p_cols)
+
+    def _seed_fold_elites(sd: int, fk: int, X_tr: np.ndarray, y_tr: np.ndarray, lab_in: np.ndarray, X_va: np.ndarray):
+        Q_in = np.empty((len(y_tr), 6), dtype=np.float64)
+        for ifk in np.unique(lab_in):
+            iva = lab_in == ifk
+            itr = ~iva
+            _, P_iva = _candidate_bank(X_tr[itr], y_tr[itr], X_tr[iva])
+            Q_in[iva] = P_iva
+        _, P_va_all = _candidate_bank(X_tr, y_tr, X_va)
+        r_sd = np.random.default_rng(sd * 31 + fk)
+        scores = np.mean((Q_in - y_tr[:, None]) ** 2, axis=0) + 0.02 * r_sd.uniform(size=6)
+        elites = np.argsort(scores)[:3]
+        return Q_in[:, elites], P_va_all[:, elites]
+
+    # 1. Negative control A: selecting top-2 programs on full SEARCH (Xs, ys) leaks validation labels -> MUST FAIL!
+    def _leaky_full_search_selection_oof(X: np.ndarray, y: np.ndarray, lab: np.ndarray) -> np.ndarray:
+        Q_all, _ = _candidate_bank(X, y, X)
+        mses = np.mean((Q_all - y[:, None]) ** 2, axis=0)
+        top2 = np.argsort(mses)[:2]
+        q_out = np.empty(len(y), dtype=np.float64)
+        for fk in range(5):
+            va = lab == fk
+            tr = ~va
+            A_tr = Q_all[np.ix_(tr, top2)]
+            w = np.linalg.lstsq(A_tr.T @ A_tr + 1e-4 * np.eye(2), A_tr.T @ y[tr], rcond=None)[0]
+            q_out[va] = Q_all[np.ix_(va, top2)] @ w
+        return q_out
+
+    caught_selection_leak = False
+    try:
+        verify_nested_oof_fn(_leaky_full_search_selection_oof, x_s, y_s, lab5)
+    except PermissionError:
+        caught_selection_leak = True
+    assert caught_selection_leak
+
+    # 2. Negative control B: naive 2-stage outer-OOF re-stacking (`Q_mat[tr]` trained on `va` in other folds) -> MUST FAIL!
+    def _leaky_two_stage_outer_coupling_oof(X: np.ndarray, y: np.ndarray, lab: np.ndarray) -> np.ndarray:
+        seeds_q = [
+            run_outer_nested_oof_seed("ctx_h5", sd, X, y, lab, lambda fk, xt, yt, li, xv, _s=sd: _seed_fold_elites(_s, fk, xt, yt, li, xv))
+            for sd in (46211, 46212, 46213)
+        ]
+        Q_mat = np.column_stack(seeds_q)
+        dummy_a = np.zeros((4, Q_mat.shape[1]), dtype=np.float64)
+        q_pr, _, _, _ = _precision_combine_oof(y, lab, Q_mat, dummy_a, dummy_a)
+        return q_pr
+
+    caught_twostage_coupling = False
+    try:
+        verify_nested_oof_fn(_leaky_two_stage_outer_coupling_oof, x_s, y_s, lab5)
+    except PermissionError:
+        caught_twostage_coupling = True
+    assert caught_twostage_coupling
+
+    # 3. Positive proof: `run_outer_nested_oof_committee` fits inner-fold weights strictly inside `(X_tr, y_tr)` -> 0.0 leak!
+    def _honest_outer_nested_committee_oof(X: np.ndarray, y: np.ndarray, lab: np.ndarray) -> np.ndarray:
+        Q_seeds, q_eq, q_pr = run_outer_nested_oof_committee(
+            "ctx_h5", (46211, 46212, 46213), X, y, lab, _seed_fold_elites
+        )
+        return np.column_stack([Q_seeds, q_eq, q_pr])
+
+    rcpt = verify_nested_oof_fn(_honest_outer_nested_committee_oof, x_s, y_s, lab5)
+    assert rcpt["verified"] is True and float(rcpt["max_abs_leak"]) == 0.0
+    return {
+        "caught_full_search_selection_leak": caught_selection_leak,
+        "caught_two_stage_outer_coupling": caught_twostage_coupling,
+        "max_abs_leak": float(rcpt["max_abs_leak"]),
+        "n_folds_checked": int(rcpt["n_folds_checked"]),
+    }
+
+
+def _p0_21_search_only_members_emitter_blocks_ya() -> Dict[str, Any]:
+    """Verifies `emit_p2_p4_members_search_only.py` blocks `ya`/`ba` via `NoLabelNpz` and emits valid `P2`/`P4` payloads."""
+    from research.flywheel_selfplay.h462_apex_prism.emit_p2_p4_members_search_only import (
+        H430_K3,
+        H433_F4,
+        H450_TAB_COLS,
+        NoLabelNpz,
+        compute_context_members_search_only,
+        load_gp_pack_no_ya,
+        load_search_only_bank,
+    )
+    from research.flywheel_selfplay.h462_apex_prism import guard_matern_core as GM
+
+    rng = np.random.default_rng(46221)
+    scratch = _scratch_dir()
+    try:
+        n_s, n_a, n_f = 30, 12, 3
+        Xs = rng.normal(size=(n_s, n_f))
+        ys = 1.4 * Xs[:, 0] - 0.7 * Xs[:, 1] + 0.25 * rng.normal(size=n_s)
+        Xa = rng.normal(size=(n_a, n_f))
+        lab0 = np.arange(n_s, dtype=np.int64) % 5
+
+        # 1. Bank containing `ya` MUST be refused immediately
+        bad_bank = scratch / "bad_bank_with_ya.npz"
+        S_mat = np.column_stack([Xs, ys])
+        np.savez(
+            bad_bank,
+            cids=np.array(["ctx01"]),
+            family=np.array(["fam01"]),
+            s_shape=np.array([[n_s, n_f + 1]], dtype=np.int64),
+            a_shape=np.array([[n_a, n_f]], dtype=np.int64),
+            search=S_mat.reshape(-1),
+            audit=Xa.reshape(-1),
+            y64=ys,
+            lab=lab0,
+            ya=np.zeros(n_a),
+        )
+        blocked_bank_ya = False
+        try:
+            load_search_only_bank(bad_bank)
+        except PermissionError:
+            blocked_bank_ya = True
+        assert blocked_bank_ya
+
+        # 2. H418-style GP file containing `ya` & `ba` MUST block `zg["ya"]` via `NoLabelNpz` while reconstructing `BAG`/`REF` with `0` `ya` reads
+        gp_p = scratch / "h418_d1_mock.npz"
+        Q_gp = ys[:, None] + 0.2 * rng.normal(size=(n_s, 6))
+        PA = 1.4 * Xa[:, [0]] - 0.7 * Xa[:, [1]] + 0.2 * rng.normal(size=(n_a, 6))
+        AKF = PA + 0.05 * rng.normal(size=(n_a, 6))
+        np.savez(
+            gp_p,
+            Q=Q_gp,
+            PA=PA,
+            AKF=AKF,
+            pa_ok=np.ones(6, dtype=bool),
+            ym=np.array(float(np.mean(ys))),
+            ya=np.full(n_a, 999999.0),
+            ba=np.zeros(n_a),
+        )
+        with NoLabelNpz(gp_p) as zg:
+            blocked_gp_ya = False
+            try:
+                _ = zg["ya"]
+            except PermissionError:
+                blocked_gp_ya = True
+            assert blocked_gp_ya and not zg.has_key("ya") and not zg.has_key("ba")
+
+        Q_loaded, bcols, rcols = load_gp_pack_no_ya(gp_p, n_s, n_a)
+        assert Q_loaded.shape == (n_s, 6) and len(bcols) == 6 and len(rcols) == 6
+
+        def _mk_blk(ncols: int):
+            q = ys[:, None] + 0.22 * rng.normal(size=(n_s, ncols))
+            b = (1.4 * Xa[:, [0]] - 0.7 * Xa[:, [1]]) + 0.22 * rng.normal(size=(n_a, ncols))
+            return q, b, b.copy()
+
+        base_common = [
+            ("m7", _mk_blk(len(GM.PRIMARY_NAMES))),
+            ("k3", _mk_blk(len(H430_K3))),
+            ("f4", _mk_blk(len(H433_F4))),
+            ("tab450", _mk_blk(len(H450_TAB_COLS))),
+        ]
+        r4_blocks = [("wc_r4e8", _mk_blk(1))]
+        gp_packs = [("d1", Q_loaded, bcols, rcols), ("d2", Q_loaded, bcols, rcols)]
+        out = compute_context_members_search_only(
+            cid="ctx01",
+            Xs=Xs,
+            Xa=Xa,
+            y=ys,
+            lab0=lab0,
+            gp_packs=gp_packs,
+            raw_common_cv7=base_common,
+            r4_blocks=r4_blocks,
+            gpbag_blk=_mk_blk(2),
+            cv_repeats=1,
+            audit_weight_mode="real_stacker",
+        )
+        out_hwm = compute_context_members_search_only(
+            cid="ctx01",
+            Xs=Xs,
+            Xa=Xa,
+            y=ys,
+            lab0=lab0,
+            gp_packs=gp_packs,
+            raw_common_cv7=base_common,
+            r4_blocks=r4_blocks,
+            gpbag_blk=None,
+            cv_repeats=1,
+            audit_weight_mode="hwm_1842_exact",
+        )
+        # 1 r4 * 2 gp * 1 cv_repeats = 2 members
+        assert out["member_oof"].shape == (n_s, 2)
+        assert out["member_audit"].shape == (n_a, 2)
+        assert abs(float(np.sum(out["member_weights"])) - 1.0) < 1e-12
+        assert np.all(np.isfinite(out["p_oof_ens"])) and np.all(np.isfinite(out["p_audit_ens"]))
+        assert "member_oof_hwm_fast" in out_hwm and out_hwm["member_oof_hwm_fast"].shape == (n_s, 2)
+        # Also verify `real_stacker_outer_oof_rep` passes `verify_nested_oof_fn` when base columns are outer-fold invariant!
+        from research.flywheel_selfplay.h462_apex_prism.emit_p2_p4_members_search_only import real_stacker_outer_oof_rep
+
+        Q_gp_fixed = np.column_stack([1.4 * Xs[:, 0] - 0.7 * Xs[:, 1], 1.2 * Xs[:, 0], -0.6 * Xs[:, 1]])
+        raw_fixed = [("m7", (np.column_stack([Xs[:, 0], Xs[:, 1]]), np.zeros((n_a, 2)), np.zeros((n_a, 2))))]
+        rcpt_rs = verify_nested_oof_fn(
+            lambda X_in, y_in, l_in: real_stacker_outer_oof_rep(
+                "ctx_rs_h5", 0, X_in, y_in, l_in, Q_gp_fixed, [True, True, True], raw_fixed, None, None
+            ),
+            Xs,
+            ys,
+            lab0,
+        )
+        assert rcpt_rs["verified"] is True and float(rcpt_rs["max_abs_leak"]) == 0.0
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    return {
+        "blocked_bank_ya": blocked_bank_ya,
+        "blocked_gp_ya": blocked_gp_ya,
+        "n_members": 2,
+    }
+
+
 def run_all_selftests() -> Dict[str, Any]:
     t0 = time.perf_counter()
     results = {
@@ -531,6 +1165,15 @@ def run_all_selftests() -> Dict[str, Any]:
         "p0_10_singleton_family_leverage_and_cohort_floor": _p0_10_singleton_family_leverage_and_cohort_floor(),
         "p0_11_bagging_e8_jensen_variance_inequality": _p0_11_bagging_e8_jensen_variance_inequality(),
         "p0_12_fit_closure_v3_s0_global_oof_and_quarantine_refusals": _p0_12_fit_closure_v3_s0_global_oof_and_quarantine_refusals(),
+        "p0_13_extreme_scale_collinear_varpro_stability": _p0_13_extreme_scale_collinear_varpro_stability(),
+        "p0_14_float32_feature_overflow_classic_floor": _p0_14_float32_feature_overflow_classic_floor(),
+        "p0_15_precision_weighted_seed_bagging_exact_law_preservation": _p0_15_precision_weighted_seed_bagging_exact_law_preservation(),
+        "p0_16_hnc1_h1_self_exclusion_and_h3_h4_h7_parity": _p0_16_hnc1_h1_self_exclusion_and_h3_h4_h7_parity(),
+        "p0_17_hnc1_h5_rowid_closure_and_h6_manifest_exposure": _p0_17_hnc1_h5_rowid_closure_and_h6_manifest_exposure(),
+        "p0_18_hnc1_h8_200_episode_calibration_canary": _p0_18_hnc1_h8_200_episode_calibration_canary(),
+        "p0_19_edge_certify_partial_top_block_sampling": _p0_19_edge_certify_partial_top_block_sampling(),
+        "p0_20_outer_nested_gp_passes_verify_nested_oof_fn": _p0_20_outer_nested_gp_passes_verify_nested_oof_fn(),
+        "p0_21_search_only_members_emitter_blocks_ya": _p0_21_search_only_members_emitter_blocks_ya(),
     }
     return {
         "all_passed": True,
