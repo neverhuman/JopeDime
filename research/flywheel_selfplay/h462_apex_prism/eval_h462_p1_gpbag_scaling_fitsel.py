@@ -45,9 +45,7 @@ for _p in (
     if Path(_p).is_dir() and _p not in sys.path:
         sys.path.insert(0, _p)
 
-import guard_matern_core as GM  # noqa: E402
-import meta_h416 as M  # noqa: E402
-import train_h416 as T16  # noqa: E402
+from h462_apex_prism import guard_matern_core as GM  # noqa: E402
 from h462_apex_prism.edge_certify import bag_predictions_precision_weighted_oof  # noqa: E402
 from h462_apex_prism.eval_h462_k5_fair0 import (  # noqa: E402
     H430_K3,
@@ -60,7 +58,14 @@ from h462_apex_prism.eval_h462_k5_fair0 import (  # noqa: E402
     _load_col_block_flex,
     _nested_oof_cv7_rep,
 )
-from stack_guard_cv7_h452 import make_stratified_kfold, stack_guard_cv7_context  # noqa: E402
+from h462_apex_prism.stack_guard_cv7_h452 import make_stratified_kfold, stack_guard_cv7_context  # noqa: E402
+
+try:
+    import meta_h416 as M  # type: ignore[import-not-found]
+    import train_h416 as T16  # type: ignore[import-not-found]
+except ImportError:
+    M = None  # type: ignore[assignment]
+    T16 = None  # type: ignore[assignment]
 
 
 def _uncentered_error_corr(p1: np.ndarray, p2: np.ndarray, y: np.ndarray) -> float:
@@ -283,9 +288,9 @@ def _eval_ctx_worker(job: Tuple) -> Dict:
                 c, Xs, Xa, y, ya_ref, ba_ref, labs_rep, cids_rep, gp_packs, base_common_cv7, r4_tri, ball_B, 1
             )
 
-    # Exact `cvrep8` (`48` members) on K=2 (`Correction 2` comparator!), K=6, K=12, K_max + K_max disjoint halves
+    # Exact `cvrep8` (`48` members) on K=2 (`Correction 2/3` comparator!) and every 6-seed rung + K_max disjoint halves
     k_max = k_rungs[-1]
-    for k_cv8 in sorted({k for k in (2, 6, 12, k_max) if k in blocks_all}):
+    for k_cv8 in sorted({k for k in ([2] + list(k_rungs)) if k in blocks_all}):
         sk_res[f"tabcv7_cvrep8_gpbag_k{k_cv8}_allcol"] = _run_tabcv7_prec(
             c, Xs, Xa, y, ya_ref, ba_ref, labs_rep, cids_rep, gp_packs, base_common_cv7, r4_tri, blocks_all[k_cv8], 8
         )
@@ -338,24 +343,24 @@ def _summarize(H, done: List[Dict], cids: List[str], fam_map: Dict[str, str], k_
     sk_keys = sorted(next(iter(sk_by.values())).keys())
     sk_umaps = {k: {c: float(sk_by[c][k]) for c in cids} for k in sk_keys}
 
-    hwm_key = "tabcv7_cvrep8_prec48_all"
-    k2_all_key = "tabcv7_cvrep8_gpbag_k2_allcol"
-    k2_2c_key = "tabcv7_cvrep8_gpbag_k2_2col"
+    hwm_col = "tabcv7_cvrep8_prec48_all"
+    k2_all_col = "tabcv7_cvrep8_gpbag_k2_allcol"
+    k2_2c_col = "tabcv7_cvrep8_gpbag_k2_2col"
     k_max = k_rungs[-1]
 
     # Paired tests vs fixed HWM comparator `tabcv7_cvrep8_prec48_all` AND vs `Correction 2` K=2 distinct-seed comparator
     vs_hwm = {}
     vs_k2 = {}
-    for k_cv8 in sorted({k for k in (2, 6, 12, k_max) if f"tabcv7_cvrep8_gpbag_k{k_cv8}_allcol" in sk_umaps}):
+    for k_cv8 in sorted({k for k in ([2] + list(k_rungs)) if f"tabcv7_cvrep8_gpbag_k{k}_allcol" in sk_umaps}):
         ak = f"tabcv7_cvrep8_gpbag_k{k_cv8}_allcol"
-        vs_hwm[f"{ak}_vs_hwm"] = T16.pair_stats(np, H, sk_umaps[ak], sk_umaps[hwm_key], fk)
+        vs_hwm[f"{ak}_vs_hwm"] = T16.pair_stats(np, H, sk_umaps[ak], sk_umaps[hwm_col], fk)
         if k_cv8 > 2:
-            vs_k2[f"{ak}_vs_k2_allcol"] = T16.pair_stats(np, H, sk_umaps[ak], sk_umaps[k2_all_key], fk)
+            vs_k2[f"{ak}_vs_k2_allcol"] = T16.pair_stats(np, H, sk_umaps[ak], sk_umaps[k2_all_col], fk)
         tk = f"tabcv7_cvrep8_gpbag_k{k_cv8}_2col"
         if tk in sk_umaps:
-            vs_hwm[f"{tk}_vs_hwm"] = T16.pair_stats(np, H, sk_umaps[tk], sk_umaps[hwm_key], fk)
+            vs_hwm[f"{tk}_vs_hwm"] = T16.pair_stats(np, H, sk_umaps[tk], sk_umaps[hwm_col], fk)
             if k_cv8 > 2:
-                vs_k2[f"{tk}_vs_k2_2col"] = T16.pair_stats(np, H, sk_umaps[tk], sk_umaps[k2_2c_key], fk)
+                vs_k2[f"{tk}_vs_k2_2col"] = T16.pair_stats(np, H, sk_umaps[tk], sk_umaps[k2_2c_col], fk)
 
     # Incremental paired tests along rep0 ladder K = 0 -> 1 -> 2 -> 6 -> 12 -> 18
     rep0_steps = {}
@@ -428,6 +433,7 @@ def main() -> int:
     ap.add_argument("--gpbag-dirs", required=True, help="Comma-separated 6-seed GPBAG FITSEL dirs")
     ap.add_argument("--wc-overlap-json", required=True)
     ap.add_argument("--out-json", required=True)
+    ap.add_argument("--ctx-cache-dir", default="", help="Optional per-context JSON cache dir for resume")
     ap.add_argument("--valley-mode", default="v12_avg")
     ap.add_argument("--procs", type=int, default=28)
     a = ap.parse_args()
@@ -490,8 +496,29 @@ def main() -> int:
         )
 
     jobs.sort(key=lambda j: -len(j[3]))
-    with Pool(processes=min(max(1, a.procs), len(jobs))) as pool:
-        done = list(pool.imap_unordered(_eval_ctx_worker, jobs, chunksize=1))
+    cache_dir_s = getattr(a, "ctx_cache_dir", "").strip()
+    cache_dir = Path(cache_dir_s) if cache_dir_s else None
+    if cache_dir is not None:
+        _check_safe_path(cache_dir)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    cached_done: List[Dict] = []
+    pending_jobs = []
+    for jb in jobs:
+        cid_j = str(jb[0])
+        cp_j = (cache_dir / f"{cid_j}.json") if cache_dir is not None else None
+        if cp_j is not None and cp_j.is_file():
+            cached_done.append(json.loads(cp_j.read_text()))
+        else:
+            pending_jobs.append(jb)
+    done = list(cached_done)
+    if pending_jobs:
+        with Pool(processes=min(max(1, a.procs), len(pending_jobs))) as pool:
+            for item in pool.imap_unordered(_eval_ctx_worker, pending_jobs, chunksize=1):
+                if cache_dir is not None:
+                    tmp_c = cache_dir / f".{item['cid']}.{os.getpid()}.tmp.json"
+                    tmp_c.write_text(json.dumps(item, sort_keys=True) + "\n")
+                    os.replace(tmp_c, cache_dir / f"{item['cid']}.json")
+                done.append(item)
 
     s88 = _summarize(H, done, clean_88, fam_map, k_rungs, include_per_fam_kmax=False)
     s106 = _summarize(H, done, all_106, fam_map, k_rungs, include_per_fam_kmax=False)

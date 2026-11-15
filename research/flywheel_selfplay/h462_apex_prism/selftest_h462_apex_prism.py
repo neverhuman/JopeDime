@@ -6,25 +6,48 @@ on CPU (`OPENBLAS_NUM_THREADS=1`, `< 25s`, zero external data or GPU required).
 """
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+
 import argparse
 import hashlib
 import json
-import os
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import torch
+
+torch.set_num_threads(1)
 
 PKG_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PKG_DIR.parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from research.flywheel_selfplay.h460_apex_eq import target_stratified_kfold_labels  # noqa: E402
+def target_stratified_kfold_labels(y: np.ndarray, n_splits: int = 5, seed: int = 460) -> np.ndarray:
+    """Target-quantile-stratified K-fold labels (`y`-sorted blocks of `n_splits`)."""
+    y_vec = np.asarray(y, dtype=np.float64).reshape(-1)
+    n_rows = y_vec.shape[0]
+    k_val = max(2, int(n_splits))
+    order = np.argsort(y_vec, kind="mergesort")
+    rng = np.random.default_rng(int(seed))
+    labels = np.zeros(n_rows, dtype=np.int64)
+    for start in range(0, n_rows, k_val):
+        block = order[start : min(start + k_val, n_rows)]
+        perm = rng.permutation(k_val)[: block.size]
+        labels[block] = perm
+    return labels
+
+
 from research.flywheel_selfplay.h462_apex_prism import (  # noqa: E402
     ENTRANT_ID_E8,
     EdgeCertifyConfig,
@@ -1292,6 +1315,334 @@ def _p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker() -> Dict[str, Any]:
     }
 
 
+def _p0_23_g3_constants_parity_missing_q_refusal_and_role_load() -> Dict[str, Any]:
+    """`G3` (`cl_mtc` `17:05:43Z` + `cl_fwriter` `17:07:06Z` items 1-5) constants parity, refusal & import/real-load check."""
+    import shutil
+    import subprocess
+    from h462_apex_prism import emit_p2_p4_members_search_only as EM
+    from h462_apex_prism import eval_h462_k5_fair0 as K5
+    from h462_apex_prism import eval_h462_p1_gpbag_scaling_fitsel as P1
+    from h462_apex_prism import eval_h462_tabcv7_cvrep as TC
+    from h462_apex_prism import guard_matern_core as GM
+
+    # 1. Exact single-source constants equality across emitter, 1842.03 evaluator, K5 evaluator, and P1 evaluator
+    expected_k3 = ("key_direct", "key_gbm", "factor_glm")
+    expected_f4 = ("form_gbm", "form_gam", "form_sr", "form_interp")
+    expected_tab = (
+        "h450_leadlag_cal",
+        "h450_lap_matern_id",
+        "h450_lap_matern_yj",
+        "h450_cb_d4_yj",
+        "h450_cb_d6_yj",
+        "h450_cb_d8_hurdle",
+        "h450_lgbm_yj",
+        "h450_et_hgb_duan",
+    )
+    for mod in (EM, TC, K5, P1):
+        assert mod.H430_K3 == expected_k3, f"{mod.__name__}.H430_K3 mismatch: {mod.H430_K3}"
+        assert mod.H433_F4 == expected_f4, f"{mod.__name__}.H433_F4 mismatch: {mod.H433_F4}"
+        assert mod.H450_TAB_COLS == expected_tab, f"{mod.__name__}.H450_TAB_COLS mismatch: {mod.H450_TAB_COLS}"
+
+    # 2. Missing `q_` refusal on present `ok=True` block + clean `None` on `ok=False`
+    pkg_dir = Path(__file__).resolve().parent
+    scratch = Path.cwd() / f".h462_p023_{os.getpid()}"
+    scratch.mkdir(parents=True, exist_ok=True)
+    try:
+        bad_tab = scratch / "bad_tab.npz"
+        np.savez(bad_tab, ok=np.array(True), q_tab_m_ens4=np.zeros(12), bag_tab_m_ens4=np.zeros(5))
+        caught_missing_q = False
+        try:
+            EM.load_col_block_no_ya(bad_tab, EM.H450_TAB_COLS, 12, 5)
+        except ValueError:
+            caught_missing_q = True
+        assert caught_missing_q
+
+        not_ok = scratch / "not_ok.npz"
+        np.savez(not_ok, ok=np.array(False))
+        assert EM.load_col_block_no_ya(not_ok, EM.H450_TAB_COLS, 12, 5) is None
+
+        # Valid 8-col tab450 + 4-col f4 load check
+        ok_tab = scratch / "ok_tab.npz"
+        np.savez(
+            ok_tab,
+            ok=np.array(True),
+            **{f"q_{v}": np.ones(12) * (j + 1) for j, v in enumerate(EM.H450_TAB_COLS)},
+            **{f"bag_{v}": np.ones(5) * (j + 1) for j, v in enumerate(EM.H450_TAB_COLS)},
+            **{f"ref_{v}": np.ones(5) * (j + 1) for j, v in enumerate(EM.H450_TAB_COLS)},
+        )
+        loaded_tab = EM.load_col_block_no_ya(ok_tab, EM.H450_TAB_COLS, 12, 5)
+        assert loaded_tab is not None and loaded_tab[0].shape == (12, 8) and loaded_tab[1].shape == (5, 8)
+
+        # Addition 1 (cl_fwriter 17:16:08Z): TC.predict_tabcv7_cvrep8_prec48_context_no_ya exact 0.0 bit-parity
+        # against BOTH EM.compute_context_members_search_only AND TC._eval_ctx_worker, plus _NoAuditLabelNpz refusal
+        rng_tc = np.random.default_rng(46223)
+        n_s_tc, n_a_tc = 40, 12
+        Xs_tc = rng_tc.normal(size=(n_s_tc, 4))
+        Xa_tc = rng_tc.normal(size=(n_a_tc, 4))
+        y_tc = 1.5 * Xs_tc[:, 0] - 0.8 * Xs_tc[:, 1] + 0.1 * rng_tc.normal(size=n_s_tc)
+        ya_tc = 1.5 * Xa_tc[:, 0] - 0.8 * Xa_tc[:, 1] + 0.1 * rng_tc.normal(size=n_a_tc)
+        ba_tc = float(np.mean((ya_tc - float(np.mean(y_tc))) ** 2))
+        lab0_tc = TC.make_stratified_kfold("p0_23_tc_ctx", y_tc, k=5, rep=0)
+
+        def _write_gp_tc(gp_path: Path, seed_g: int) -> None:
+            rg = np.random.default_rng(seed_g)
+            Q_g = np.column_stack([y_tc + 0.15 * rg.normal(size=n_s_tc) for _ in range(3)])
+            AKF_g = np.column_stack([ya_tc + 0.15 * rg.normal(size=n_a_tc) for _ in range(3)])
+            PA_g = AKF_g + 0.02 * rg.normal(size=(n_a_tc, 3))
+            np.savez(
+                gp_path,
+                Q=Q_g,
+                AKF=AKF_g,
+                PA=PA_g,
+                pa_ok=np.array([True, True, True]),
+                ym=np.array(float(np.mean(y_tc))),
+                lab=lab0_tc,
+                ya=ya_tc,
+                ba=np.array(ba_tc),
+            )
+
+        def _write_blk_tc(blk_path: Path, col_names: Tuple[str, ...], seed_b: int) -> None:
+            rb = np.random.default_rng(seed_b)
+            payload: Dict[str, Any] = {"ok": np.array(True), "lab": lab0_tc}
+            for cname in col_names:
+                q_c = y_tc + 0.2 * rb.normal(size=n_s_tc)
+                b_c = ya_tc + 0.2 * rb.normal(size=n_a_tc)
+                payload[f"q_{cname}"] = q_c
+                payload[f"bag_{cname}"] = b_c
+                payload[f"ref_{cname}"] = b_c + 0.01 * rb.normal(size=n_a_tc)
+            np.savez(blk_path, **payload)
+
+        d1_tc, d2_tc = scratch / "d1_tc.npz", scratch / "d2_tc.npz"
+        m7_tc, k3_tc, f4_tc, tab_tc = (
+            scratch / "m7_tc.npz",
+            scratch / "k3_tc.npz",
+            scratch / "f4_tc.npz",
+            scratch / "tab_tc.npz",
+        )
+        wc_tc, s1_tc, s2_tc = scratch / "wc_tc.npz", scratch / "s1_tc.npz", scratch / "s2_tc.npz"
+        _write_gp_tc(d1_tc, 101)
+        _write_gp_tc(d2_tc, 102)
+        _write_blk_tc(m7_tc, GM.PRIMARY_NAMES, 201)
+        _write_blk_tc(k3_tc, TC.H430_K3, 202)
+        _write_blk_tc(f4_tc, TC.H433_F4, 203)
+        _write_blk_tc(tab_tc, TC.H450_TAB_COLS, 204)
+        _write_blk_tc(wc_tc, ("r4_e8",), 205)
+        _write_blk_tc(s1_tc, ("r4_e8",), 206)
+        _write_blk_tc(s2_tc, ("r4_e8",), 207)
+
+        caught_tc_ya = False
+        with TC._NoAuditLabelNpz(d1_tc) as z_noya:
+            assert "ya" not in z_noya.files and "ba" not in z_noya.files
+            try:
+                _ = z_noya["ya"]
+            except PermissionError:
+                caught_tc_ya = True
+        assert caught_tc_ya
+
+        tc_no_ya = TC.predict_tabcv7_cvrep8_prec48_context_no_ya(
+            c="p0_23_tc_ctx",
+            Xs=Xs_tc,
+            Xa=Xa_tc,
+            y=y_tc,
+            lab0=lab0_tc,
+            gp0_p=d1_tc,
+            gp1_p=d2_tc,
+            is_d91_gp=True,
+            m7_p=m7_tc,
+            k3_p=k3_tc,
+            f4_p=f4_tc,
+            tab450_p=tab_tc,
+            wc_r4_p=wc_tc,
+            s1_r4_p=s1_tc,
+            s2_r4_p=s2_tc,
+            n_reps=8,
+        )
+        assert all(bool(v) for v in dict(tc_no_ya["blocks_loaded"]).values())
+
+        tc_no_ya_r2 = TC.predict_tabcv7_cvrep8_prec48_context_no_ya(
+            c="p0_23_tc_ctx",
+            Xs=Xs_tc,
+            Xa=Xa_tc,
+            y=y_tc,
+            lab0=lab0_tc,
+            gp0_p=d1_tc,
+            gp1_p=d2_tc,
+            is_d91_gp=True,
+            m7_p=m7_tc,
+            k3_p=k3_tc,
+            f4_p=f4_tc,
+            tab450_p=tab_tc,
+            wc_r4_p=wc_tc,
+            s1_r4_p=s1_tc,
+            s2_r4_p=s2_tc,
+            n_reps=2,
+        )
+        em_out = EM.compute_context_members_search_only(
+            cid="p0_23_tc_ctx",
+            Xs=Xs_tc,
+            Xa=Xa_tc,
+            y=y_tc,
+            lab0=lab0_tc,
+            gp_packs=[
+                ("d1", *EM.load_gp_pack_no_ya(d1_tc, n_s_tc, n_a_tc, lab0=lab0_tc, require_lab=True)),
+                ("d2", *EM.load_gp_pack_no_ya(d2_tc, n_s_tc, n_a_tc, lab0=lab0_tc, require_lab=True)),
+            ],
+            raw_common_cv7=[
+                ("m7", EM.load_col_block_no_ya(m7_tc, GM.PRIMARY_NAMES, n_s_tc, n_a_tc, lab0=lab0_tc)),  # type: ignore[list-item]
+                ("k3", EM.load_col_block_no_ya(k3_tc, EM.H430_K3, n_s_tc, n_a_tc, lab0=lab0_tc)),  # type: ignore[list-item]
+                ("f4", EM.load_col_block_no_ya(f4_tc, EM.H433_F4, n_s_tc, n_a_tc, lab0=lab0_tc)),  # type: ignore[list-item]
+                ("tab450", EM.load_col_block_no_ya(tab_tc, EM.H450_TAB_COLS, n_s_tc, n_a_tc, lab0=lab0_tc)),  # type: ignore[list-item]
+            ],
+            r4_blocks=[
+                ("wc_r4e8", EM.load_col_block_no_ya(wc_tc, ("r4_e8",), n_s_tc, n_a_tc, lab0=lab0_tc)),
+                ("s46201_r4e8", EM.load_col_block_no_ya(s1_tc, ("r4_e8",), n_s_tc, n_a_tc, lab0=lab0_tc)),
+                ("s46202_r4e8", EM.load_col_block_no_ya(s2_tc, ("r4_e8",), n_s_tc, n_a_tc, lab0=lab0_tc)),
+            ],
+            gpbag_blk=None,
+            cv_repeats=2,
+            audit_weight_mode="hwm_1842_exact",
+        )
+        assert float(np.max(np.abs(em_out["p_audit_ens"] - np.asarray(tc_no_ya_r2["p_audit_ens"])))) == 0.0
+        assert float(np.max(np.abs(em_out["member_audit"] - np.asarray(tc_no_ya_r2["member_audit"])))) == 0.0
+        assert float(np.max(np.abs(em_out["member_oof_hwm_fast"] - np.asarray(tc_no_ya_r2["member_oof_hwm_fast"])))) == 0.0
+
+        class _StubM:
+            @staticmethod
+            def utility(pred: np.ndarray, ya_v: np.ndarray, ba_v: float) -> Tuple[float, float]:
+                mse = max(float(np.mean((pred - ya_v) ** 2)), 1e-30)
+                return (-0.5 * float(np.log(mse / max(ba_v, 1e-30))), mse)
+
+        orig_M = TC.M
+        try:
+            if TC.M is None:
+                TC.M = _StubM  # type: ignore[assignment]
+            u_expect = float(TC.M.utility(np.asarray(tc_no_ya["p_audit_ens"]), ya_tc, ba_tc)[0])
+            ev_res = TC._eval_ctx_worker(
+                (
+                    "p0_23_tc_ctx",
+                    Xs_tc,
+                    Xa_tc,
+                    y_tc,
+                    lab0_tc,
+                    d1_tc,
+                    d2_tc,
+                    True,
+                    TC._load_col_block_flex(m7_tc, GM.PRIMARY_NAMES, n_s_tc, n_a_tc),
+                    TC._clip_k3(TC._load_col_block_flex(k3_tc, TC.H430_K3, n_s_tc, n_a_tc), y_tc),
+                    TC._clip_f4(TC._load_col_block_flex(f4_tc, TC.H433_F4, n_s_tc, n_a_tc), y_tc),
+                    TC._load_col_block_flex(tab_tc, TC.H450_TAB_COLS, n_s_tc, n_a_tc),
+                    TC._load_col_block_flex(wc_tc, ("r4_e8",), n_s_tc, n_a_tc),
+                    TC._load_col_block_flex(s1_tc, ("r4_e8",), n_s_tc, n_a_tc),
+                    TC._load_col_block_flex(s2_tc, ("r4_e8",), n_s_tc, n_a_tc),
+                    8,
+                )
+            )
+            assert abs(float(ev_res["scores"]["u_tabcv7_cvrep8_prec48_all"]) - u_expect) == 0.0
+        finally:
+            TC.M = orig_M
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    # 3. Sterile CLI `--help` smoke check (no external stage dirs in PYTHONPATH)
+    sterile_env = {
+        "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+        "PYTHONPATH": f"{pkg_dir.parents[2]}:{pkg_dir.parent}",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+    }
+    cli_scripts = (
+        "eval_h462_p1_gpbag_scaling_fitsel.py",
+        "eval_h462_k5_fair0.py",
+        "eval_h462_tabcv7_cvrep.py",
+        "emit_p2_p4_members_search_only.py",
+        "emit_gp_runbag6_h462.py",
+        "verify_f2_comparator_parity_no_ya.py",
+    )
+    for sc in cli_scripts:
+        sc_p = pkg_dir / sc
+        if sc_p.is_file():
+            cp = subprocess.run([sys.executable, str(sc_p), "--help"], env=sterile_env, capture_output=True, text=True)
+            assert cp.returncode == 0, f"{sc} --help failed ({cp.returncode}): {cp.stderr}"
+
+    # 4. Real-file load per input role when host stage directory is mounted
+    real_bank = Path("/home/ubuntu/jope-data/h450-quarantine/bank_d91_search_f64.npz")
+    real_roles_loaded: Optional[Dict[str, Tuple[int, int]]] = None
+    if real_bank.is_file():
+        b_rows = EM.load_search_only_bank(real_bank)
+        cid0 = sorted(b_rows)[0]
+        _fam, _Xs, Xa, y, lab0 = b_rows[cid0]
+        n_s, n_a = len(y), len(Xa)
+        Qd1, _, _ = EM.load_gp_pack_no_ya(
+            Path(f"/home/ubuntu/jope_plan/evidence/H418/pulled/D1/h416_D1_npz/{cid0}.npz"),
+            n_s,
+            n_a,
+            lab0=lab0,
+            require_lab=True,
+        )
+        Qd2, _, _ = EM.load_gp_pack_no_ya(
+            Path(f"/home/ubuntu/jope_plan/evidence/H418/pulled/D2/h416_D2_npz/{cid0}.npz"),
+            n_s,
+            n_a,
+            lab0=lab0,
+            require_lab=True,
+        )
+        bm = EM.load_col_block_no_ya(
+            Path(f"/home/ubuntu/jope-data/h462-fastclock/xbabe3_stage/d91_inputs/cols_matern/{cid0}.npz"),
+            GM.PRIMARY_NAMES,
+            n_s,
+            n_a,
+            lab0=lab0,
+        )
+        bk = EM.load_col_block_no_ya(
+            Path(f"/home/ubuntu/jope-data/h462-fastclock/xbabe3_stage/d91_inputs/cols_k3/{cid0}.npz"),
+            EM.H430_K3,
+            n_s,
+            n_a,
+            lab0=lab0,
+        )
+        bf = EM.load_col_block_no_ya(
+            Path(f"/home/ubuntu/jope-data/h462-fastclock/xbabe3_stage/d91_inputs/cols_f4/{cid0}.npz"),
+            EM.H433_F4,
+            n_s,
+            n_a,
+            lab0=lab0,
+        )
+        bt = EM.load_col_block_no_ya(
+            Path(f"/home/ubuntu/jope-data/h462-fastclock/xbabe3_stage/cols_d91/cols_tab_h450_D91/{cid0}.npz"),
+            EM.H450_TAB_COLS,
+            n_s,
+            n_a,
+            lab0=lab0,
+        )
+        bwc = EM.load_col_block_no_ya(
+            Path(f"/home/ubuntu/jope-data/h462-fastclock/xbabe3_stage/d91_inputs/cols_r4_e8/{cid0}.npz"),
+            ("r4_e8",),
+            n_s,
+            n_a,
+            lab0=lab0,
+        )
+        assert bm is not None and bk is not None and bf is not None and bt is not None and bwc is not None
+        assert bf[0].shape == (n_s, 4) and bt[0].shape == (n_s, 8) and bwc[0].shape == (n_s, 1)
+        real_roles_loaded = {
+            "d1": Qd1.shape,
+            "d2": Qd2.shape,
+            "m7": bm[0].shape,
+            "k3": bk[0].shape,
+            "f4": bf[0].shape,
+            "tab450": bt[0].shape,
+            "wc_r4e8": bwc[0].shape,
+        }
+
+    return {
+        "constants_match_all_4_modules": True,
+        "caught_missing_q_on_ok_block": caught_missing_q,
+        "sterile_cli_help_passed": len(cli_scripts),
+        "real_roles_loaded": real_roles_loaded,
+    }
+
+
 def run_all_selftests() -> Dict[str, Any]:
     t0 = time.perf_counter()
     results = {
@@ -1317,6 +1668,7 @@ def run_all_selftests() -> Dict[str, Any]:
         "p0_20_outer_nested_gp_passes_verify_nested_oof_fn": _p0_20_outer_nested_gp_passes_verify_nested_oof_fn(),
         "p0_21_search_only_members_emitter_blocks_ya": _p0_21_search_only_members_emitter_blocks_ya(),
         "p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker": _p0_22_nested_gpbag_layout_g1_g2_and_zero_leak_stacker(),
+        "p0_23_g3_constants_parity_missing_q_refusal_and_role_load": _p0_23_g3_constants_parity_missing_q_refusal_and_role_load(),
     }
     return {
         "all_passed": True,
@@ -1330,7 +1682,7 @@ def run_all_selftests() -> Dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--selftest", action="store_true", help="Run all 22 deterministic H462 APEX-PRISM checks")
+    ap.add_argument("--selftest", action="store_true", help="Run all 23 deterministic H462 APEX-PRISM checks")
     ap.add_argument("--out-json", type=Path, default=None)
     args = ap.parse_args(argv)
     report = run_all_selftests()

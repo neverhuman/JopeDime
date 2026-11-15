@@ -50,16 +50,13 @@ if str(HERE.parent) not in sys.path:
 from h462_apex_prism import guard_matern_core as GM  # noqa: E402
 from h462_apex_prism.contracts_v3 import verify_nested_oof_fn  # noqa: E402
 from h462_apex_prism.edge_certify import bag_predictions_precision_weighted_oof  # noqa: E402
+from h462_apex_prism.eval_h462_tabcv7_cvrep import H430_K3, H433_F4, H450_TAB_COLS  # noqa: E402
 from h462_apex_prism.stack_guard_cv7_h452 import (  # noqa: E402
     _fit_sharp_foldlog_simplex,
     bcar_weights_pool_agnostic,
     make_stratified_kfold,
     stack_guard_cv7_context,
 )
-
-H430_K3 = ("key_direct", "key_gbm", "factor_glm")
-H433_F4 = ("form_sr", "form_gam", "form_gbm", "cap")
-H450_TAB_COLS = ("tab_m_ens4", "tab_realtabmlp_ens", "tab_catboost_ens", "tab_lgbm_ens")
 
 FORBIDDEN_TOKENS = ("CONFIRM", "FMGAP_B", "FMGAP_C", "HOLDOUT", "SEALED", "PROBE_YA", "/tmp/")
 ALLOWED_GP_NO_LABEL_KEYS = frozenset({"Q", "AKF", "PA", "BAG", "REF", "pa_ok", "ym", "y", "lab", "shas"})
@@ -252,8 +249,15 @@ def load_col_block_no_ya_with_nest(
             assert_same_outer_folds(np.asarray(z["lab"], np.int64), lab0, p)
             if keys_sink is not None:
                 keys_sink.add("lab")
-        if not all(f"q_{v}" in z.files and len(z[f"q_{v}"]) == n_s for v in names):
-            return None
+        missing_cols = [v for v in names if f"q_{v}" not in z.files or f"bag_{v}" not in z.files]
+        if missing_cols:
+            raise ValueError(
+                f"G3 REFUSAL: present ok=True column block {p} lacks requested column(s) {missing_cols}; "
+                f"available={sorted(z.files)}"
+            )
+        bad_len = [v for v in names if len(z[f"q_{v}"]) != n_s]
+        if bad_len:
+            raise ValueError(f"G3 REFUSAL: row count mismatch on {bad_len} in {p}: expected n_s={n_s}")
         Q = np.column_stack([np.asarray(z[f"q_{v}"], np.float64) for v in names])
         BAG = np.column_stack([np.asarray(z[f"bag_{v}"], np.float64) for v in names])
         REF = np.column_stack(
@@ -926,6 +930,16 @@ def _ctx_worker(job: Tuple) -> Dict[str, object]:
     os.replace(tmp, dst)
     rmse_oof = float(np.sqrt(np.mean((res["p_oof_ens"] - y) ** 2)))
     max_diff_real_vs_w = float(np.max(np.abs(res["p_audit_ens"] - res["p_audit_ens_real_stacker"])))
+    blocks_loaded = {
+        "d1": True,
+        "d2": True,
+        "m7": blk_m is not None,
+        "k3": blk_k_raw is not None,
+        "f4": blk_f_raw is not None,
+        "tab450": blk_tab is not None,
+        "e8": {rname: (rblk is not None) for rname, rblk in r4_blocks},
+        "gpbag": gpbag_blk is not None,
+    }
     return {
         "cid": cid,
         "family": fam,
@@ -935,6 +949,7 @@ def _ctx_worker(job: Tuple) -> Dict[str, object]:
         "search_oof_rmse": rmse_oof,
         "search_oof_rmse_diagnostic_coupled": rmse_oof,
         "max_abs_diff_audit_ens_vs_real_stacker": max_diff_real_vs_w,
+        "blocks_loaded": blocks_loaded,
         "d1_d2_lab0_verified": True,
         "gpbag_lab0_verified": gpbag_lab_verified,
         "gpbag_nested": gpbag_is_nested,
@@ -1106,9 +1121,34 @@ def main() -> int:
 
     all_gpbag_nested = all(bool(d["gpbag_nested"]) for d in done) if int(a.gpbag_k) > 0 and a.gpbag_mode != "none" else None
     canary_rows = [d["search_canary"] for d in done if d["search_canary"] is not None]
+    block_loaded_counts = {
+        role: sum(1 for d in done if bool(d["blocks_loaded"][role]))  # type: ignore[index]
+        for role in ("d1", "d2", "m7", "k3", "f4", "tab450", "gpbag")
+    }
+    block_loaded_counts["e8"] = {  # type: ignore[assignment]
+        rname: sum(1 for d in done if bool(d["blocks_loaded"]["e8"].get(rname)))  # type: ignore[index]
+        for rname in (["wc_r4e8", "s46201_r4e8", "s46202_r4e8"] + [tag for tag, _, _ in extra_r4])
+    }
     receipt = {
         "schema": "jope.h462.p2_p4_members_search_only/v3",
         "timestamp_utc": time.strftime("%FT%TZ", time.gmtime()),
+        "host": os.uname().nodename,
+        "argv": list(sys.argv),
+        "role_dirs": {
+            "bank": str(bank_p),
+            "d1_dir": str(a.d1_dir),
+            "d2_dir": str(a.d2_dir),
+            "m7_dir": str(a.m7_dir),
+            "k3_dir": str(a.k3_dir),
+            "f4_dir": str(a.f4_dir),
+            "tab450_dir": str(a.tab450_dir),
+            "wc_r4e8_dir": str(a.wc_r4e8_dir),
+            "s1_r4e8_dir": str(a.s1_r4e8_dir),
+            "s2_r4e8_dir": str(a.s2_r4e8_dir),
+            "extra_r4_dirs": str(a.extra_r4_dirs),
+            "gpbag_dirs": [str(x) for x in gpbag_dirs],
+        },
+        "block_loaded_counts": block_loaded_counts,
         "ya_keys_accessed": ya_keys_cnt,
         "ba_keys_accessed": ba_keys_cnt,
         "npz_keys_read_union": sorted(all_keys_read),
@@ -1167,6 +1207,7 @@ def main() -> int:
                 "search_oof_rmse": d["search_oof_rmse"],
                 "search_oof_rmse_diagnostic_coupled": d["search_oof_rmse_diagnostic_coupled"],
                 "max_abs_diff_audit_ens_vs_real_stacker": d["max_abs_diff_audit_ens_vs_real_stacker"],
+                "blocks_loaded": d["blocks_loaded"],
                 "d1_d2_lab0_verified": d["d1_d2_lab0_verified"],
                 "gpbag_nested": d["gpbag_nested"],
                 "extra_r4_nested": d["extra_r4_nested"],

@@ -48,20 +48,26 @@ for _p in (
     if Path(_p).is_dir() and _p not in sys.path:
         sys.path.insert(0, _p)
 
-import guard_matern_core as GM  # noqa: E402
-import h335_stats as H  # noqa: E402
-import meta_h416 as M  # noqa: E402
-import train_h416 as T16  # noqa: E402
+from h462_apex_prism import guard_matern_core as GM  # noqa: E402
 from h462_apex_prism.edge_certify import bag_predictions_precision_weighted_oof  # noqa: E402
-from stack_guard_cv7_h452 import (  # noqa: E402
+from h462_apex_prism.stack_guard_cv7_h452 import (  # noqa: E402
     _fit_sharp_foldlog_simplex,
     bcar_weights_pool_agnostic,
     make_stratified_kfold,
     stack_guard_cv7_context,
 )
 
-ANCHOR = T16.ANCHOR
-LADDER_SEED = T16.LADDER_SEED
+try:
+    import h335_stats as H  # type: ignore[import-not-found]
+    import meta_h416 as M  # type: ignore[import-not-found]
+    import train_h416 as T16  # type: ignore[import-not-found]
+except ImportError:
+    H = None  # type: ignore[assignment]
+    M = None  # type: ignore[assignment]
+    T16 = None  # type: ignore[assignment]
+
+ANCHOR = T16.ANCHOR if T16 is not None else "dope.v1"
+LADDER_SEED = T16.LADDER_SEED if T16 is not None else 416001
 FAIR_CANONICAL = "h448.APEX_FAIR_CHAMPION"
 KUMO_LARGE = "kumo_tabular_large_e8.v1"
 TABFM = "tabfm_ensemble.v1"
@@ -358,6 +364,125 @@ def _score_tabcv7_grid(
         "u_dual_cvrep8_prec64_s12": _prec(du_s12_cv8),
         "rho_err_stacker_axis": rho_stacker,
         "rho_err_tabcv7_cvrep_axis": rho_tabcv7_cvrep,
+    }
+
+
+class _NoAuditLabelNpz:
+    """Wrapper over `np.load` forbidding any access to audit labels (`ya`, `ba`, `y_audit`, `audit_y`)."""
+
+    _FORBIDDEN = frozenset({"ya", "ba", "y_audit", "audit_y"})
+
+    def __init__(self, path: Path) -> None:
+        self._path = Path(path)
+        _check_safe_path(self._path)
+        self._npz = np.load(self._path, allow_pickle=False)
+
+    def __enter__(self) -> "_NoAuditLabelNpz":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self._npz.close()
+
+    @property
+    def files(self) -> List[str]:
+        return [k for k in self._npz.files if k not in self._FORBIDDEN]
+
+    def __getitem__(self, key: str) -> np.ndarray:
+        if key in self._FORBIDDEN:
+            raise PermissionError(f"Audit label key {key!r} forbidden in _NoAuditLabelNpz ({self._path})")
+        return self._npz[key]
+
+
+def predict_tabcv7_cvrep8_prec48_context_no_ya(
+    c: str,
+    Xs: np.ndarray,
+    Xa: np.ndarray,
+    y: np.ndarray,
+    lab0: np.ndarray,
+    gp0_p: Path,
+    gp1_p: Path,
+    is_d91_gp: bool,
+    m7_p: Path,
+    k3_p: Path,
+    f4_p: Path,
+    tab450_p: Path,
+    wc_r4_p: Path,
+    s1_r4_p: Path,
+    s2_r4_p: Path,
+    n_reps: int = 8,
+) -> Dict[str, object]:
+    """`TC`'s canonical `0`-`ya` per-context `tabcv7_cvrep8_prec48_all` predictor (`F2` / `G4` / `Addition 1`).
+
+    Uses `TC`'s own `GM.PRIMARY_NAMES`, `H430_K3`, `H433_F4`, `H450_TAB_COLS`, `_load_col_block_flex`,
+    `_clip_k3`, `_clip_f4`, `stack_guard_cv7_context`, `_nested_oof_cv7_rep`, and
+    `bag_predictions_precision_weighted_oof` while opening `gp0_p`/`gp1_p` through `_NoAuditLabelNpz`
+    (`0` `ya`/`ba` reads, `0` `M.utility` calls).
+    """
+    n_s, n_a = len(y), len(Xa)
+    blk_m = _load_col_block_flex(Path(m7_p), GM.PRIMARY_NAMES, n_s, n_a)
+    blk_k = _clip_k3(_load_col_block_flex(Path(k3_p), H430_K3, n_s, n_a), y)
+    blk_f = _clip_f4(_load_col_block_flex(Path(f4_p), H433_F4, n_s, n_a), y)
+    blk_tab = _load_col_block_flex(Path(tab450_p), H450_TAB_COLS, n_s, n_a)
+    r4_wc = _load_col_block_flex(Path(wc_r4_p), ("r4_e8",), n_s, n_a)
+    r4_s1 = _load_col_block_flex(Path(s1_r4_p), ("r4_e8",), n_s, n_a)
+    r4_s2 = _load_col_block_flex(Path(s2_r4_p), ("r4_e8",), n_s, n_a)
+
+    gp_packs = []
+    for gi, gp_p in enumerate((gp0_p, gp1_p)):
+        with _NoAuditLabelNpz(Path(gp_p)) as zg:
+            Q_gp = np.asarray(zg["Q"], np.float64)
+            ym = float(zg["ym"])
+            m_gp = Q_gp.shape[1]
+            mean_a = np.full(n_a, ym, dtype=np.float64)
+            if is_d91_gp:
+                bag_gp = [
+                    None if not np.all(np.isfinite(zg["AKF"][:, i])) else zg["AKF"][:, i].astype(np.float64)
+                    for i in range(m_gp)
+                ]
+                ref_gp = [zg["PA"][:, i].astype(np.float64) if bool(zg["pa_ok"][i]) else None for i in range(m_gp)]
+                bcols = [b if b is not None else (r if r is not None else mean_a) for b, r in zip(bag_gp, ref_gp)]
+                rcols = ref_gp
+            else:
+                BAG_gp = np.asarray(zg["BAG"], np.float64)
+                REF_gp = np.asarray(zg["REF"], np.float64)
+                bcols = [BAG_gp[:, j] if np.all(np.isfinite(BAG_gp[:, j])) else mean_a for j in range(m_gp)]
+                rcols = [REF_gp[:, j] if np.all(np.isfinite(REF_gp[:, j])) else None for j in range(m_gp)]
+        gp_packs.append((gi, Q_gp, bcols, rcols))
+
+    labs_rep = [lab0 if r == 0 else make_stratified_kfold(c, y, k=5, rep=r) for r in range(n_reps)]
+    cids_rep = [c if r == 0 else f"{c}#cvrep{r}" for r in range(n_reps)]
+    base_common_cv7 = [
+        (t, b) for t, b in (("m7", blk_m), ("k3", blk_k), ("f4", blk_f), ("tab450", blk_tab)) if b is not None
+    ]
+
+    preds_all: List[np.ndarray] = []
+    oofs_all: List[np.ndarray] = []
+    for _ni, r4_blk in ((0, r4_wc), (1, r4_s1), (2, r4_s2)):
+        tb_cv7 = list(base_common_cv7) + ([("e8", r4_blk)] if r4_blk is not None else [])
+        for _gi, Q_gp, bcols, rcols in gp_packs:
+            for r in range(n_reps):
+                cr = cids_rep[r]
+                lr = labs_rep[r]
+                p_tb, _ = stack_guard_cv7_context(cr, Xs, Xa, y, lr, Q_gp, bcols, rcols, tb_cv7, use_cv7_folds=True)
+                q_tb = _nested_oof_cv7_rep(cr, y, lr, Q_gp, tb_cv7)
+                preds_all.append(np.asarray(p_tb, np.float64))
+                oofs_all.append(np.asarray(q_tb, np.float64))
+
+    p_ens, meta_w = bag_predictions_precision_weighted_oof(y, oofs_all, preds_all)
+    return {
+        "p_audit_ens": np.asarray(p_ens, np.float64),
+        "member_audit": np.column_stack(preds_all),
+        "member_oof_hwm_fast": np.column_stack(oofs_all),
+        "member_weights": np.asarray(meta_w["weights"], np.float64),
+        "blocks_loaded": {
+            "m7": blk_m is not None,
+            "k3": blk_k is not None,
+            "f4": blk_f is not None,
+            "tab450": blk_tab is not None,
+            "wc_r4e8": r4_wc is not None,
+            "s1_r4e8": r4_s1 is not None,
+            "s2_r4e8": r4_s2 is not None,
+        },
     }
 
 
