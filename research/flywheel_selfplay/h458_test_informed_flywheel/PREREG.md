@@ -136,6 +136,15 @@ JSONs and per-context results are the durable record.
   one; the canonical path asserts that the builder's cleaning step keeps every raw column. The 20 pilot recall
   blocks and the 71 remaining ones are built with the stage of the first look (`c9c8b9c95e`), so the full-ladder
   look uses one builder version; the new stage is used for probe blocks.
+- 2026-11-15 01:15Z, S9 (owner's staged residual GP, arms A0 to A4 of the shared S9 plan; the S9 PREREG, budget table
+  and scoring are Track S's, arm A5 is wave H459's). `gp_chain_h458.py` loops over the H453 engine's own entry
+  point; engine files, worker binary and surrogate prior are pinned by sha256. Fixed before any column was read:
+  tiers 40 / 160 / 1,250 generations; chain arms use 4 stages (2 inside outer folds), 4 outer folds, shrinkage 0.7,
+  a committee of 3 and a keep rule of 0.2% relative cross-fitted RMSE. Nothing is chosen on outer folds. Only the
+  outer-fold column of the out-of-fold arms is called honest; the keep rule is decided on inner cross-fitted error
+  and is slightly in-sample (review D2). The two seeds of the single arm share fold partitions, so their difference
+  is GP stochasticity only (review D5). Every arm reports evaluations, worker calls, timeouts and wall time, and a
+  single run at 1.5 times the generations is the control for the extra seeding of multi-call arms.
 - 2026-11-15 00:40Z, reporting: the recall arm is reported twice at the full-ladder look, as board Elo (33-entrant
   field, which holds 11 of our own earlier systems) and as family-games won against the 22 external models only (a
   league of 23), each with and without the recall columns.

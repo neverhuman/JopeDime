@@ -508,6 +508,8 @@ class _LookupEngine:
         return np.arange(len(y), dtype=np.int64) % int(k)
 
     def evolve_single_context_1000g(self, *, cid, Xs, Xa, ys, out_root, n_gens, **_kw):
+        if (Path(out_root) / f"g{int(n_gens)}" / f"{cid}.npz").is_file():
+            return {"cid": cid, "skipped_existing": True}  # what the real engine does when a stage's snapshot exists
         table = {Xs[i].tobytes(): float(ys[i]) for i in range(len(ys))}
         pa = np.array([0.5 * table.get(Xa[i].tobytes(), 0.0) for i in range(len(Xa))])
         snap = Path(out_root) / f"g{int(n_gens)}"
@@ -544,6 +546,7 @@ def gate_gp_chain_units(ctx) -> dict:
 
     class A:  # the argparse fields run_context reads
         gens, stages, outer, nu, committee, min_gain, seed, inner_slots = 12, 3, 4, 1.0, 1, 0.0, 1, 1
+        base_block, base_col = "", ""
 
     eng = _LookupEngine()
     A.arm = "chain"
@@ -562,6 +565,38 @@ def gate_gp_chain_units(ctx) -> dict:
     last = res["stages"][-1]["ref"]
     assert np.allclose(last[:10], 0.75 * 0.75 * yy[:10]) and np.allclose(last[10:], 0.0), "fold-models are not averaged on the audit slot"
     assert len(eng.calls) == 8 and all(c["rows"] == 36 for c in eng.calls) and sum(c["gens"] for c in eng.calls) == 12
+    # an interrupted run resumes: finished stages are reused with the cost they recorded, never with zero cost or another setting's stages
+    eng = _LookupEngine()
+    A.arm, A.stages = "chain", 3
+    res_r = GC.run_context((eng, None, None), "ctxa", d, A, work / "chain")
+    assert not eng.calls and res_r["book"]["evaluated_total"] == 36 and all(r["skipped_existing"] for p_ in res_r["book"]["pipelines"] for r in p_)
+    assert np.allclose(res_r["stages"][-1]["q"], res["stages"][-1]["q"] if len(res["stages"]) == 3 else res_r["stages"][-1]["q"])
+    orphan = work / "orphan" / "snap" / "g4"
+    orphan.mkdir(parents=True)
+    np.savez(orphan / "ctxz.s1.npz", Q_cons=np.zeros((48, 1)), AKF_cons=np.zeros((15, 1)), PA_cons=np.zeros((15, 1)), u_cons=np.zeros(1), dsls=np.array(["x"]))
+    assert _refused(GC.run_stage, (_LookupEngine(), None, None), "ctxz.s1", "fam", xs, d["Xa"], yy, work / "orphan", 4, 1, 1), "a snapshot without its stage record was reused"
+    fold = work / "claimed"
+    fold.mkdir()
+    GC.claim_folder(fold, {"arm": "single", "seed": 1})
+    GC.claim_folder(fold, {"arm": "single", "seed": 1})
+    assert _refused(GC.claim_folder, fold, {"arm": "single", "seed": 2}), "a second seed was accepted into the first seed's folder"
+    assert _refused(GC.claim_folder, work / "chain", {"arm": "chain"}), "a folder with files and no settings was claimed"
+    # a chain started from an existing out-of-fold column fits that column's residual; held-out rows keep the base's own value
+    bdir = work / "base_block"
+    bdir.mkdir(parents=True)
+    for cid_b in ("ctxc", "ctxd"):
+        np.savez(bdir / f"{cid_b}.npz", q_stack=0.5 * yy, bag_stack=np.ones(15), ref_stack=np.ones(15))
+    A.base_block, A.base_col = str(bdir), "stack"
+    eng = _LookupEngine()
+    A.arm, A.stages = "chain", 2
+    res_b = GC.run_context((eng, None, None), "ctxc", d, A, work / "base_chain")
+    assert np.allclose(res_b["stages"][0]["q"], 0.75 * yy) and np.allclose(res_b["stages"][1]["q"], 0.875 * yy), "the first stage did not fit the base column's residual"
+    assert np.allclose(res_b["stages"][0]["ref"][:10], 1.0 + 0.25 * yy[:10]) and np.allclose(res_b["stages"][0]["ref"][10:], 1.0)
+    assert abs(res_b["book"]["u_search_base"] - GC.u_search(0.5 * yy, yy)) < 1e-12
+    A.arm = "oof_chain"
+    res_o = GC.run_context((_LookupEngine(), None, None), "ctxd", d, A, work / "base_oof")
+    assert np.allclose(res_o["stages"][-1]["q"], 0.5 * yy), "a held-out row got more than the base column's out-of-fold value"
+    A.base_block, A.base_col = "", ""
     # packing for a column scorer: names, shapes, nothing but the block layout
     arm_dirs = {}
     for tag, st in (("single", res["stages"][:1]), ("chain", res["stages"])):
@@ -578,7 +613,23 @@ def gate_gp_chain_units(ctx) -> dict:
         assert sorted(k for k in z.files if k not in ("ok", "wall_s")) == sorted(f"{p_}_{n}" for p_ in ("q", "bag", "ref") for n in doc["names"])
         assert np.array_equal(z["ref_chain"], res["stages"][-1]["ref"]) and np.array_equal(z["q_chain_s1"], res["stages"][0]["q"])
     assert _refused(GC.pack_block, arm_dirs, pk), "a pack into a filled directory was accepted"
-    return {"checks": 21, "dir": str(work)}
+    # an audit slot made of two parts (the bank's own rows, then an appended bank's): the pack step takes one part
+    two = work / "arm_two"
+    two.mkdir()
+    np.savez(two / "ctxe.npz", outer_lab=lab, q_s1=np.zeros(48), bag_s1=np.arange(15.0), ref_s1=np.arange(15.0) + 100.0)
+    (two / "ctxe.json").write_text(json.dumps({"wall_s": 1.0, "n_audit_slot": 15, "audit_slot_parts": [10, 5],
+                                               "settings": {"bank_sha256": "b", "bank": str(P.EVAL_BANK), "extra_audit_bank_sha256": "x", "extra_audit_bank": str(P.EVAL_BANK)}}))
+    for part, lo, hi in ((0, 0, 10), (1, 10, 15)):
+        pk2 = work / f"packed_part{part}"
+        pk2.mkdir()
+        doc2 = GC.pack_block({"two": two}, pk2, part)
+        with np.load(pk2 / "ctxe.npz") as z:
+            assert np.array_equal(z["ref_two"], np.arange(15.0)[lo:hi] + 100.0) and np.array_equal(z["bag_two"], np.arange(15.0)[lo:hi]) and z["q_two"].shape == (48,)
+        assert doc2["bank_sha256"] == ("b" if part == 0 else "x")
+    pk3 = work / "packed_part1_missing"
+    pk3.mkdir()
+    assert _refused(GC.pack_block, arm_dirs, pk3, 1), "arms without an appended bank were packed for its rows"
+    return {"checks": 37, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

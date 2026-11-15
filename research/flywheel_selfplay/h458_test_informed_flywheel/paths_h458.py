@@ -26,6 +26,8 @@ MMAP_V1 = Path("/home/ubuntu/jope-data/h450-fleet-agy/banks/mmap_v1")
 EVAL_BANK = Path("/home/ubuntu/jope-data/h450-quarantine/bank_d91_search_f64.npz")
 POOL_DIR = QUARANTINE / "family_pool_v1"
 
+# probe banks by content, so a copy moved away from its board directory cannot pass as an evaluation bank
+KNOWN_PROBE_BANKS = {"ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632": "dev91-freshprobe-v1"}
 SEALED_TOKENS = ("CONFIRM", "HOLDOUT", "SEALED", "DL-VAL", "DL-Val", "FMGAP")
 DISCLOSURE = {"in_corpus_dev91_disclosure": True, "canonical_promotion_forbidden": True}
 WRITE_ROOTS = (str(QUARANTINE) + "/", str(EVIDENCE) + "/")

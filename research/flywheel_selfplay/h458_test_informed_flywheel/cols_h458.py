@@ -72,8 +72,7 @@ FAIR_ALLOWLIST = P.EVIDENCE / "trackD" / "FAIR_CKPT_ALLOWLIST.json"
 SHORT = {"icl_e8_cw12_robridge_cv7": "rr", "icl_e8_cw12_yj_cv7": "yj", "icl_e8_rankgauss_duan_cv7": "rg"}
 # `quarantined_unfair_diagnostic` is not listed: in H449 it marks other boards' test rows, and the dev91-free H449 checkpoints carry it
 IN_CORPUS_MARKS = ("in_corpus_dev91_disclosure", "quarantined_in_corpus", "quarantined_in_corpus_random_split_diagnostic")
-# probe banks by content, so a copy moved away from its board directory cannot pass as an evaluation bank
-KNOWN_PROBE_BANKS = {"ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632": "dev91-freshprobe-v1"}
+KNOWN_PROBE_BANKS = P.KNOWN_PROBE_BANKS  # probe banks by content (one registry for every H458 entry point)
 _STATE = {"n_raw": None}
 
 

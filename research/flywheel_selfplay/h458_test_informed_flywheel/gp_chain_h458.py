@@ -17,6 +17,10 @@ Arms, all at the same total number of generations G:
               fold is predicted by a pipeline that never saw it.
   oof_chain   K outer folds, each a chain_sc of k stages of G/(K k) generations
 
+With `--base-block DIR --base-col NAME` a chain does not start from zero: its first stage is evolved on the residual
+of an existing column (for example a stack), which must itself be out of fold on SEARCH rows. That is the owner's
+"dataset 2" applied where the ladder is decided: what can GP still find in what our best model misses.
+
 The out-of-fold arms return a SEARCH column that no fit and no selection ever saw, so its utility is an honest
 estimate of generalisation and a stack can weight it without deflation, and K fold-models averaged on the audit rows.
 Nothing in an arm is chosen on the outer folds: stage count, shrinkage and committee size are fixed in advance.
@@ -144,6 +148,17 @@ def run_stage(eng, key: str, family: str, xs, xa, target, work: Path, n_gens: in
         inner_slots=int(inner_slots),
         rayon_threads=1,
     )
+    rec_p = work / "rec" / f"{key}.g{int(n_gens)}.json"
+    if res.get("skipped_existing"):
+        # the engine returns early when the stage's snapshot exists (an interrupted run); its cost was recorded when it ran
+        if not rec_p.is_file():
+            raise SystemExit(f"{key}: a snapshot exists without its stage record; this folder was not written by this arm setting")
+        res = {**json.loads(rec_p.read_text()), "skipped_existing": True}
+    else:
+        rec_p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = rec_p.with_name(f".{rec_p.name}.{os.getpid()}.{threading.get_ident()}.part")
+        tmp.write_text(json.dumps({k: res.get(k) for k in ("total_unique_evaluated", "worker_calls", "timeouts", "wall_s", "final_u_cv7")}, sort_keys=True) + "\n")
+        os.replace(tmp, rec_p)
     with np.load(work / "snap" / f"g{int(n_gens)}" / f"{key}.npz", allow_pickle=False) as z:
         if "ya" in z.files:
             raise SystemExit("audit labels in an engine snapshot")
@@ -171,9 +186,12 @@ def stage_column(snap: dict, target: np.ndarray, committee: int) -> tuple[dict, 
     return {"q": q[:, :m] @ w, "bag": bag[:, :m] @ w, "ref": ref[:, :m] @ w}, [float(v) for v in w], dsls[:m]
 
 
-def pipeline(eng, key: str, family: str, xs, xa, y, plan: list[int], style: dict, work: Path, seed: int, inner_slots: int) -> list[dict]:
-    """A chain of stages on one set of rows. Returns one record per stage with the running column after that stage."""
-    col: dict | None = None
+def pipeline(eng, key: str, family: str, xs, xa, y, plan: list[int], style: dict, work: Path, seed: int, inner_slots: int, base: dict | None = None) -> list[dict]:
+    """A chain of stages on one set of rows. Returns one record per stage with the running column after that stage.
+
+    With `base`, the running column starts as that column and every stage, the first included, fits its residual.
+    """
+    col: dict | None = None if base is None else {k: np.array(base[k], dtype=np.float64) for k in ("q", "bag", "ref")}
     out: list[dict] = []
     for j, n_gens in enumerate(plan):
         target = y if col is None else y - col["q"]
@@ -206,17 +224,27 @@ def split_generations(total: int, parts: int) -> list[int]:
     return [base + (1 if i < extra else 0) for i in range(parts)]
 
 
+def load_base(block: Path, name: str, cid: str, n_s: int, n_a: int) -> dict:
+    """The starting column of a chain: SEARCH-row out-of-fold values and audit-slot values of one stored column."""
+    with np.load(block / f"{cid}.npz", allow_pickle=False) as z:
+        col = {k: np.asarray(z[f"{k}_{name}"], dtype=np.float64) for k in ("q", "bag", "ref")}
+    if col["q"].shape != (n_s,) or col["ref"].shape != (n_a,) or col["bag"].shape != (n_a,) or not all(np.isfinite(v).all() for v in col.values()):
+        raise SystemExit(f"{block}/{cid}.npz: column {name} does not fit this bank")
+    return col
+
+
 def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
     """One arm on one context. Returns per-stage columns on SEARCH rows and on the audit slot, and the bookkeeping."""
     xs, xa, y, fam = d["Xs"], d["Xa"], d["y"], d["family"]
     n_s, n_a = len(y), xa.shape[0]
+    base = load_base(Path(a.base_block), a.base_col, cid, n_s, n_a) if getattr(a, "base_block", "") else None
     chain = a.arm in ("chain", "chain_sc", "oof_chain")
     fancy = a.arm in ("chain_sc", "oof_chain")
     style = {"committee": a.committee if fancy else 1, "nu": a.nu if fancy else 1.0, "keep_rule": fancy, "min_gain": a.min_gain}
     k_stage = a.stages if chain else 1
     t0 = time.time()
     if a.arm in ("single", "chain", "chain_sc"):
-        recs = pipeline(eng, cid, fam, xs, xa, y, split_generations(a.gens, k_stage), style, work, a.seed, a.inner_slots)
+        recs = pipeline(eng, cid, fam, xs, xa, y, split_generations(a.gens, k_stage), style, work, a.seed, a.inner_slots, base)
         cols = [r.pop("column") for r in recs]
         stages = [{"q": c["q"], "bag": c["bag"], "ref": c["ref"]} for c in cols]
         book = {"outer_folds": 0, "pipelines": [recs], "honest_search_column": False}
@@ -231,8 +259,11 @@ def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
         for o in range(k_o):
             hold = lab_o == o
             n_h = int(hold.sum())
+            # a base column is out of fold on SEARCH rows, so its value on a held-out row is a prediction that row's label never touched
+            base_o = None if base is None else {"q": base["q"][~hold], "bag": np.concatenate([base["q"][hold], base["bag"]]),
+                                                "ref": np.concatenate([base["q"][hold], base["ref"]])}
             recs = pipeline(eng, f"{cid}.o{o}", fam, xs[~hold], np.vstack([xs[hold], xa]), y[~hold], split_generations(per_fold[o], k_stage), style,
-                            work, a.seed + 101 * (o + 1), a.inner_slots)
+                            work, a.seed + 101 * (o + 1), a.inner_slots, base_o)
             for j, r in enumerate(recs):
                 c = r.pop("column")
                 stages[j]["q"][hold] = c["ref"][:n_h]  # rows this fold's pipeline never saw
@@ -249,27 +280,52 @@ def run_context(eng, cid: str, d: dict, a, work: Path) -> dict:
         "evaluated_total": int(sum(r["evaluated"] for r in flat)), "worker_calls_total": int(sum(r["worker_calls"] for r in flat)),
         "timeouts_total": int(sum(r["timeouts"] for r in flat)), "wall_s": round(time.time() - t0, 1), "slots": int(a.inner_slots),
         "u_search_by_stage": [u_search(s["q"], y) for s in stages],
+        "u_search_base": None if base is None else u_search(base["q"], y),
+        "audit_slot_parts": [int(v) for v in d.get("parts", [n_a, 0])],
     })
     return {"stages": stages, "outer_lab": lab_o, "book": book}
 
 
-def pack_block(sources: dict[str, Path], out_dir: Path) -> dict:
+def claim_folder(out_dir: Path, fixed: dict) -> None:
+    """One folder holds one arm setting. Stage snapshots are reused by context key, so a second setting in the same
+    folder would silently inherit the first one's stages (a second seed would reproduce the first)."""
+    set_p = out_dir / "SETTINGS.json"
+    if set_p.is_file():
+        old = json.loads(set_p.read_text())
+        diff = {k: (old.get(k), v) for k, v in fixed.items() if old.get(k) != v}
+        if diff:
+            raise SystemExit(f"{out_dir} was started with other settings: {json.dumps(diff, sort_keys=True)[:500]}")
+        return
+    if any(out_dir.iterdir()):
+        raise SystemExit(f"{out_dir} holds files but no SETTINGS.json; use a new folder")
+    tmp = out_dir / f".SETTINGS.{os.getpid()}.part.json"
+    tmp.write_text(json.dumps(fixed, indent=1, sort_keys=True) + "\n")
+    os.replace(tmp, set_p)
+
+
+def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0) -> dict:
     """One block directory in the `_load_col_block` layout from several arm folders, for a column scorer.
 
     Column `<tag>` is the arm's column after its last stage and `<tag>_s<j>` the column after stage j. Only contexts
-    that every source holds are written. This renames stored predictions; it reads no label.
+    that every source holds are written. `part` picks the rows of the audit slot: 0 for the bank's own, 1 for the
+    appended bank's. This renames stored predictions; it reads no label.
     """
     books: dict[str, dict] = {}
     for tag, src in sources.items():
         if not re.fullmatch(r"[a-z][a-z0-9]{0,15}", tag):
             raise SystemExit(f"pack tag {tag!r}: lower-case letters and digits only")
-        books[tag] = {f.stem: json.loads(f.read_text()) for f in sorted(src.glob("*.json")) if not f.name.startswith(".")}
+        books[tag] = {f.stem: json.loads(f.read_text()) for f in sorted(src.glob("*.json")) if not f.name.startswith(".") and f.name != "SETTINGS.json"}
         if not books[tag]:
             raise SystemExit(f"{src}: no finished context")
-    banks = {b["settings"]["bank_sha256"] for bk in books.values() for b in bk.values()}
-    if len(banks) != 1:
-        raise SystemExit("the arms were run on different banks")
-    cids = sorted(set.intersection(*(set(bk) for bk in books.values())))
+    sha_key, path_key = ("bank_sha256", "bank") if part == 0 else ("extra_audit_bank_sha256", "extra_audit_bank")
+    banks = {b["settings"].get(sha_key) for bk in books.values() for b in bk.values()}
+    if len(banks) != 1 or None in banks:
+        raise SystemExit("the arms were run on different banks, or without the bank this part needs")
+    def parts_of(book: dict) -> list[int] | None:  # None: a manifest from before the audit slot had parts (one part, all rows)
+        return book.get("audit_slot_parts")
+
+    cids = sorted(c for c in set.intersection(*(set(bk) for bk in books.values()))
+                  if all((parts_of(bk[c]) or [1, 0])[part] > 0 for bk in books.values()))
     if not cids or any(out_dir.iterdir()):
         raise SystemExit("nothing in common to pack, or the output directory is not empty")
     names: list[str] = []
@@ -278,19 +334,22 @@ def pack_block(sources: dict[str, Path], out_dir: Path) -> dict:
         wall = 0.0
         for tag, src in sources.items():
             wall += float(books[tag][cid]["wall_s"])
+            parts = parts_of(books[tag][cid])
+            rows = slice(None) if parts is None else (slice(0, parts[0]) if part == 0 else slice(parts[0], parts[0] + parts[1]))
             with np.load(src / f"{cid}.npz", allow_pickle=False) as z:
                 n_st = len([k for k in z.files if k.startswith("q_s")])
                 for j in range(1, n_st + 1):
                     for name in ([f"{tag}_s{j}"] if n_st > 1 else []) + ([tag] if j == n_st else []):
-                        for pre in ("q", "bag", "ref"):
-                            out[f"{pre}_{name}"] = np.asarray(z[f"{pre}_s{j}"], dtype=np.float64)
+                        out[f"q_{name}"] = np.asarray(z[f"q_s{j}"], dtype=np.float64)
+                        for pre in ("bag", "ref"):
+                            out[f"{pre}_{name}"] = np.asarray(z[f"{pre}_s{j}"], dtype=np.float64)[rows]
                         if cid == cids[0]:
                             names.append(name)
         out["wall_s"] = np.array(wall)
         tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
         np.savez(tmp, **out)
         os.replace(tmp, out_dir / f"{cid}.npz")
-    probe = (Path(next(iter(next(iter(books.values())).values()))["settings"]["bank"]).parent / "PROBE_BOARD.json").is_file()
+    probe = next(iter(banks)) in P.KNOWN_PROBE_BANKS or (Path(next(iter(next(iter(books.values())).values()))["settings"][path_key]).parent / "PROBE_BOARD.json").is_file()
     doc = {
         "names": names, "closure": "fresh-probe" if probe else "fair-gp-search-only", "bank_sha256": next(iter(banks)), "contexts": cids,
         "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
@@ -307,6 +366,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--arm", choices=ARMS, default="")
     ap.add_argument("--pack", default="", help="tag=DIR,tag=DIR: write the arms' columns as one block directory into --out-dir and stop")
+    ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack: 0 = the bank's own audit slot, 1 = the appended bank's")
     ap.add_argument("--gens", type=int, default=0, help="total generations of the arm (medium 40, high 160, ultra 1250)")
     ap.add_argument("--stages", type=int, default=4, help="chain arms: number of stages")
     ap.add_argument("--outer", type=int, default=4, help="out-of-fold arms: number of outer folds")
@@ -318,6 +378,9 @@ def main() -> None:
     ap.add_argument("--families", default="", help="comma-separated 8-hex family ids")
     ap.add_argument("--per-family", type=int, default=0, help="with --families: only the first N contexts of each family (sorted by id)")
     ap.add_argument("--bank", default=str(P.EVAL_BANK), help="evaluation bank, or the fresh-row probe bank")
+    ap.add_argument("--extra-audit-bank", default="", help="a second bank whose audit-slot features are appended (for example the probe bank), so one run predicts both")
+    ap.add_argument("--base-block", default="", help="block directory holding the column every chain starts from (its q_ must be out of fold)")
+    ap.add_argument("--base-col", default="", help="name of that column")
     ap.add_argument("--out-dir", required=True, help="one folder per arm setting; one npz and one json per context, written once")
     ap.add_argument("--workers", type=int, default=1, help="contexts run side by side; each uses --inner-slots worker processes")
     ap.add_argument("--inner-slots", type=int, default=3)
@@ -333,25 +396,42 @@ def main() -> None:
         pairs = [kv.split("=", 1) for kv in a.pack.split(",") if kv]
         if any(len(kv) != 2 for kv in pairs) or len({k for k, _ in pairs}) != len(pairs):
             raise SystemExit("--pack takes tag=DIR pairs with distinct tags")
-        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir)
+        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part)
         print(json.dumps({"packed": len(doc["contexts"]), "names": doc["names"], "closure": doc["closure"]}))
         return
     if a.arm not in ARMS or a.gens < 1:
         raise SystemExit("--arm and --gens are required")
+    if bool(a.base_block) != bool(a.base_col):
+        raise SystemExit("--base-block and --base-col go together")
     bank = load_bank(Path(a.bank))
+    for d in bank.values():
+        d["parts"] = [int(d["Xa"].shape[0]), 0]
+    if a.extra_audit_bank:
+        if a.base_block:
+            raise SystemExit("a base column covers one audit slot; run it without --extra-audit-bank")
+        for c, e in load_bank(Path(a.extra_audit_bank)).items():
+            if c in bank:
+                if not (np.array_equal(e["Xs"], bank[c]["Xs"]) and np.array_equal(e["y"], bank[c]["y"])):
+                    raise SystemExit(f"{c}: the two banks disagree on SEARCH rows")
+                bank[c]["parts"][1] = int(e["Xa"].shape[0])
+                bank[c]["Xa"] = np.vstack([bank[c]["Xa"], e["Xa"]])
     want = [f for f in a.families.split(",") if f]
     cids = [c for c in a.cids.split(",") if c]
     if not cids:
         for f in want:
             fam_cids = sorted(c for c, d in bank.items() if d["family"][4:12] == f)
             cids += fam_cids[: a.per_family] if a.per_family > 0 else fam_cids
-    cids = [c for c in cids if not (out_dir / f"{c}.json").exists()]
+    cids = [c for c in dict.fromkeys(cids) if not (out_dir / f"{c}.json").exists()]
     if not cids:
         raise SystemExit("no contexts to run (none selected, or all already written)")
     eng = load_engine()
-    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots")}
-    settings.update({"bank": str(a.bank), "bank_sha256": P.digest_file(Path(a.bank)), "engine_sha256": ENGINE_SHA256, "qhat_sha256": QHAT_SHA256,
+    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots", "base_block", "base_col")}
+    settings.update({"bank": str(a.bank), "bank_sha256": P.digest_file(Path(a.bank)), "extra_audit_bank": str(a.extra_audit_bank),
+                     "extra_audit_bank_sha256": P.digest_file(Path(a.extra_audit_bank)) if a.extra_audit_bank else None,
+                     "engine_sha256": ENGINE_SHA256, "qhat_sha256": QHAT_SHA256,
                      "n_pop": N_POP, "eval_per_gen": EVAL_PER_GEN, "top_export": TOP_EXPORT, "reads_audit_labels": False, **P.DISCLOSURE})
+
+    claim_folder(out_dir, {k: v for k, v in settings.items() if k != "inner_slots"})
 
     def one(cid: str) -> dict:
         res = run_context(eng, cid, bank[cid], a, out_dir / "_engine")
