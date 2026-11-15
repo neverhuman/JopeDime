@@ -645,6 +645,24 @@ def gate_gp_chain_units(ctx) -> dict:
     pk3 = work / "packed_part1_missing"
     pk3.mkdir()
     assert _refused(GC.pack_block, arm_dirs, pk3, 1), "arms without an appended bank were packed for its rows"
+    # committee without residuals: the blend of a single run's own exported programs, no GP run
+    csrc, cdst = work / "single_src", work / "single_committee"
+    (csrc / "_engine" / "snap" / "g8").mkdir(parents=True)
+    cdst.mkdir()
+    cidr0 = ctx["identity_cids"][0]
+    yr0 = ctx["bank_full"][cidr0]["y"]
+    n_a0 = ctx["bank_full"][cidr0]["Xa"].shape[0]
+    e1, e2 = np.random.default_rng(1).normal(size=len(yr0)), np.random.default_rng(2).normal(size=len(yr0))
+    np.savez(csrc / "_engine" / "snap" / "g8" / f"{cidr0}.s1.npz", Q_cons=np.column_stack([yr0 + e1, yr0 + e2]), AKF_cons=np.ones((n_a0, 2)),
+             PA_cons=np.column_stack([np.ones(n_a0), 3.0 * np.ones(n_a0)]), u_cons=np.array([0.2, 0.1]), dsls=np.array(["p1", "p2"]))
+    (csrc / f"{cidr0}.json").write_text(json.dumps({"arm": "single", "outer_folds": 0, "wall_s": 2.0, "pipelines": [[{"generations": 8}]],
+                                                     "settings": {"bank": str(P.EVAL_BANK), "bank_sha256": P.digest_file(P.EVAL_BANK), "prior": "dev91-free"}}))
+    assert GC.derive_committee(csrc, cdst, 3) == 1 and GC.derive_committee(csrc, cdst, 3) == 0
+    cbook = json.loads((cdst / f"{cidr0}.json").read_text())
+    with np.load(cdst / f"{cidr0}.npz") as z:
+        assert GC.rmse(z["q_s1"], yr0) < GC.rmse(yr0 + e1, yr0) and np.allclose(z["ref_s1"], cbook["weights"][0] + 3.0 * cbook["weights"][1])
+    assert cbook["arm"] == "single_committee" and cbook["dsls"] == ["p1", "p2"] and abs(sum(cbook["weights"]) - 1.0) < 0.2
+    assert _refused(GC.derive_committee, work / "arm_chain", work / "single_committee_x", 3), "a folder that is not a single-run arm was accepted"
     # stack-level read: fixed non-negative blend fitted on SEARCH rows, applied to the audit slot
     cidr = ctx["identity_cids"][0]
     dr = ctx["bank_full"][cidr]
@@ -668,7 +686,7 @@ def gate_gp_chain_units(ctx) -> dict:
     with np.load(s_out / f"{cidr}.npz") as z:
         assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
     assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
-    return {"checks": 47, "dir": str(work)}
+    return {"checks": 51, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

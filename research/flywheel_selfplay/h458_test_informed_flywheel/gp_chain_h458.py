@@ -378,6 +378,44 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     return doc
 
 
+def derive_committee(src: Path, out_dir: Path, committee: int) -> int:
+    """Committee without residuals (arm A6 of the S9 plan): the non-negative blend of a single run's own top programs.
+
+    No GP is run: the blend is taken from the snapshot the single run already exported, with the same rule a chain
+    stage uses. It separates "averaging programs" from "fitting residuals". Like every stage committee, its weights
+    are fitted on the cross-fitted values the programs were selected on.
+    """
+    books = {f.stem: json.loads(f.read_text()) for f in sorted(src.glob("*.json")) if not f.name.startswith(".") and f.name != "SETTINGS.json"}
+    if not books or any(b.get("arm") != "single" or b.get("outer_folds") for b in books.values()):
+        raise SystemExit(f"{src}: --committee-of takes the folder of a single-run arm")
+    first = next(iter(books.values()))["settings"]
+    if P.digest_file(Path(first["bank"])) != first["bank_sha256"]:
+        raise SystemExit("the arm's bank changed")
+    bank = load_bank(Path(first["bank"]))
+    claim_folder(out_dir, {"arm": "single_committee", "committee": int(committee), "derived_from": str(src), "source_settings": first})
+    done = 0
+    for cid, book in books.items():
+        if (out_dir / f"{cid}.json").exists():
+            continue
+        y = bank[cid]["y"]
+        gens = int(book["pipelines"][0][0]["generations"])
+        with np.load(src / "_engine" / "snap" / f"g{gens}" / f"{cid}.s1.npz", allow_pickle=False) as z:
+            snap = {k: np.array(z[k]) for k in ("Q_cons", "AKF_cons", "PA_cons", "u_cons")}
+            snap["dsls"] = np.array(z["dsls_cons"] if "dsls_cons" in z.files else z["dsls"])
+        col, weights, dsls = stage_column(snap, y, committee)
+        tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
+        np.savez(tmp, outer_lab=np.zeros(len(y), dtype=np.int64), q_s1=col["q"], bag_s1=col["bag"], ref_s1=col["ref"])
+        os.replace(tmp, out_dir / f"{cid}.npz")
+        new = {**book, "arm": "single_committee", "derived_from": str(src), "committee": int(committee), "weights": weights, "dsls": dsls,
+               "u_search_by_stage": [u_search(col["q"], y)], "honest_search_column": False,
+               "settings": {**book["settings"], "arm": "single_committee", "committee": int(committee)}}
+        tmp_j = out_dir / f".{cid}.{os.getpid()}.part.json"
+        tmp_j.write_text(json.dumps(new, indent=1, sort_keys=True) + "\n")
+        os.replace(tmp_j, out_dir / f"{cid}.json")
+        done += 1
+    return done
+
+
 def blend_weights(q: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Non-negative weights that sum to one, fitted on SEARCH rows; equal weights when the fit degenerates."""
     w, _ = nnls(np.asarray(q, dtype=np.float64), np.asarray(y, dtype=np.float64))
@@ -453,6 +491,7 @@ def main() -> None:
     ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack: 0 = the bank's own audit slot, 1 = the appended bank's")
     ap.add_argument("--pack-closure", default="", help="with --pack: closure label for a block on an evaluation bank (the scorer's owner names it); a probe bank is always fresh-probe")
     ap.add_argument("--stack", default="", help="GPBLOCK,OTHERBLOCK: write stk_base and stk_<gp column> blends into --out-dir (weights from SEARCH rows) and stop")
+    ap.add_argument("--committee-of", default="", help="folder of a single-run arm: write the blend of its own top --committee programs into --out-dir (no GP is run) and stop")
     ap.add_argument("--gens", type=int, default=0, help="total generations of the arm (medium 40, high 160, ultra 1250)")
     ap.add_argument("--stages", type=int, default=4, help="chain arms: number of stages")
     ap.add_argument("--outer", type=int, default=4, help="out-of-fold arms: number of outer folds")
@@ -485,6 +524,9 @@ def main() -> None:
             raise SystemExit("--pack takes tag=DIR pairs with distinct tags")
         doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure)
         print(json.dumps({"packed": len(doc["contexts"]), "names": doc["names"], "closure": doc["closure"]}))
+        return
+    if a.committee_of:
+        print(json.dumps({"derived": derive_committee(Path(a.committee_of), out_dir, a.committee), "committee": a.committee, "from": a.committee_of}))
         return
     if a.stack:
         parts = a.stack.split(",")
