@@ -322,3 +322,81 @@ Receipt: `diag_results/r4_g00_init/`.
 **Epoch 33** is not scored. Its column directory `r4/cols/g33_r4_L_A_r4_L_B` is partial (create-once, kept). `ab_pairs_e33.json` was computed on 39 of 91 contexts and is marked INVALID by a note file. Later per-run reads leave epoch 33 out of `--epochs`. The queue resumes at the newest epoch that both runs have written.
 
 **Unchanged:** the trainers, the arms, the plateau rule and the per-run rule.
+
+## 14. Closeout (2026-11-15 about 00:25Z): r4 final
+
+**Labels.** Every number in this section is in-corpus: dev91 tables were in the training bank at their natural share (about 2%), so `canonical_promotion_forbidden = true`. None of it is a fair dev91 entry. The reference board is unchanged, and `h448.APEX_FAIR_CHAMPION` stays the fair dev91 entry.
+
+**Runs.** Both 104M fine-tunes finished their 48-train-hour cosine. Both started from the H449 `all_non_d91_L` init (sha256 `b854b518…`).
+
+| | r4_L_A (xbabe2, pub-r12 control) | r4_L_B (xbabe3, pub-r12, then pub-r14 from epoch 16) |
+|---|---|---|
+| finished (UTC) | 2026-11-14 21:59 | 2026-11-14 about 21:20 |
+| optimizer steps | 316,392 | 368,779 |
+| train_s | 172,800.4 | 172,800.1 |
+| datasets seen, all unique | 7,123,792 (0 duplicates) | 8,297,985 (0 duplicates) |
+| source tables seen | 3,525 of 3,525 | 3,525 of 3,525 |
+| OOM / non-finite skips | 0 / 0 | 0 / 0 |
+| resumes | 4 | 5 |
+| `ckpt_h450_final.pt` sha256 | `6b244ac784a16a53dd57a62f1048949387c7c87edb13a8583f02794a85378151` | `7ed26adab7adb04aacfba803d5fb8026e4fe168636767165405e3f31c07dc379` |
+| `ckpt_epoch_48.pt` sha256 | `f8b8f096e0695bf2efb50fb063c9655d3e3bddd81962631944fb7ff68c557068` | `501d503f45a384ffdf4d65525ae547f6923f30adbc0743406dad1fde31187ee6` |
+
+Read-only custody, with sha lists cmp-equal across hosts:
+- xbabe2: `~/jope-data/h450-quarantine/r4/finals/{r4_L_A,r4_L_B}/`
+- xbabe3: `~/jope-data/h450-r4-x3/finals/r4_L_A/`, plus r4_L_B's own run directory there.
+
+Each holds the final file, the epoch-48 EMA checkpoint, the manifest, epoch_48.json and log.jsonl. S3 upload is an open owner decision.
+
+**dev91 trajectory** (original dev91-audit-v1 split; pooled pre-registered arms; Kumo L 2070.2). Every scored epoch is in `evidence/H450/r4_traj_final.tsv`.
+
+| epoch | champion stack | ICL-only | legacy stack | no-GP | champion vs zero-dev91 control |
+|---|---|---|---|---|---|
+| 0 (init) | 1783.7 | 1652.0 | 1852.8 | 1683.4 | — |
+| 5 | **1791.7** | 1661.4 | 1860.5 | 1689.6 | +8.1 |
+| 15 (PLATEAU) | 1782.0 | 1658.5 | 1855.6 | 1680.7 | −1.7 |
+| 28 | 1788.2 | 1675.1 | 1859.9 | 1690.2 | +4.5 |
+| 44 | 1789.2 | **1676.2** | 1859.0 | 1699.6 | +5.6 |
+| 45 | 1791.4 | 1671.8 | 1861.2 | 1699.3 | +7.8 |
+| 47 | 1782.4 | 1666.9 | 1857.4 | 1690.5 | −1.3 |
+| 48 (final) | 1787.8 | 1671.9 | 1860.5 | 1692.8 | +4.2 |
+
+- **Scored:** 34 epochs after init.
+- **Means:** champion 1786.0 (init 1783.7), ICL-only 1665.7 (init 1652.0). The mean champion-vs-control gap is +2.3 Elo.
+- **Plateau:** the champion stack never beat its epoch-5 value over the remaining 43 train-hours. The plateau rule tripped at epoch 15 (2026-11-13 14:16Z), and scoring continued under section 11.
+- **ICL-only:** improved from 1652.0 to a best of 1676.2 (+24.2).
+- **Kumo L:** the gap at the best champion is −278.5 Elo.
+
+**Verdict on "fine-tune to exhaustion":** reached for this recipe. Forty-eight train-hours on 7.1M and 8.3M unique datasets moved the in-corpus champion stack by at most +8 Elo, and by +2 on average. The ICL tower gained about +14 to +24 Elo in-corpus. Neither run approaches Kumo L.
+
+**A/B, pub-r14 max-entropy (r4_L_B) against the pub-r12 control (r4_L_A)** (section 12a; `evidence/H450/diag_results/ab_pairs_e48.json`). The primary readout is the refit column's own-column utility, DiD against the pre-switch baseline over the 91 contexts. 24 post-switch epochs were scored.
+- **Epochs 18–32** (15 epochs): mixed, mean +0.003. One epoch is significantly positive (epoch 21: +0.012, p 0.019) and one significantly negative (epoch 24: −0.010, p 0.037).
+- **Epochs 35–48** (9 scored): every one is negative, from −0.009 to −0.025, and 8 of the 9 have p < 0.05.
+  - Epoch 48: −0.0215 (W/T/L 40/0/51, p 0.0001).
+  - Secondary bag column at epoch 48: −0.0271 (37/0/54, p < 1e-5).
+- **All 24 post-switch epochs:** mean −0.0049.
+- **Own-column utility at epochs 44–48:** r4_L_A 1.494–1.496, r4_L_B 1.471–1.472.
+
+Reading: in the late, low-learning-rate part of the cosine, the maximum-entropy sampler (heavier column removal and injection, random targets, affine noise, uniform-by-dataset) costs own-column skill. The pooled stack Elo does not show it. There is one run per arm, so this design does not separate run-to-run variance in the late phase from the sampler effect.
+
+**Unscored epochs:** 1, 4, 6, 8, 10, 14, 17, 33, 34, 37, 38, 41, 43, 46.
+- The queue scores the newest common epoch and skips any it falls behind on.
+- Epochs 33, 34 and 38 were lost to the xbabe2 OOM and restarts (section 13). Their partial column directories are kept with UNSCORED notes.
+- `ab_pairs_e33.json` is marked INVALID.
+- Two `g67_fleet_L_x1` / `g173_fleet_L_x1` directories in the same results folder belong to another run's protocol and are not part of r4.
+
+**Exposure caveats**, found after training by Track S (cl_mtc). They apply to r4 and to its H449 init lineage, which used the same bank:
+1. **S8, bucket function.** The H450 builder bucketed S3 families with `"APEX-split-v1:"+fk`, u ≥ 0.80, instead of the canonical `sha256(b"APEX-split-v1\0"+fk)[:8] mod 5`. The r4 bank therefore holds 281 S3 tables (269 families) in the canonical CONFIRM bucket.
+   - 0 of them are among the 241 sealed APEX-CONFIRM contexts or their families.
+   - Receipt: `~/jope-data/h458s-quarantine/s8/S8_BUCKET_AUDIT.json`.
+2. **S8 addendum, DL-TRAIN views.** 258 of the 1,219 DL-TRAIN-FULL views (55 datasets) have family keys in the canonical CONFIRM bucket. 0 share a family key or id with the 241 APEX-CONFIRM contexts, and 0 are in any sealed set (`s8_view_confirm_check.py`).
+3. **S4, name token.** One APEX-FIT-ICL view, dataset `4e3c00388b4e6a4c` (`srcfile:meta-album-md-6-mini`), matches the sealed APEX-CONFIRM family `srcfile:meta-album-md-5-bis-mini` (`07a8e8f750945537`) under the builder's S4 screen. The builder never ran S4 on view jobs.
+
+Any later CONFIRM read that involves r4 or H449 descendants must state these exposures. Bank v2 r3 (`9df95437…`, cl_mtc; reviewed by cl_fwriter) excludes items 1 and 3. Item 2 is the owner's decision.
+
+**Evaluation queue.** Stopped after epoch 48: both runs are final, so nothing remains to score.
+
+**Open owner decisions:**
+- S3 upload of the finals;
+- a pin of the epoch-44 and epoch-45 checkpoints, whose only copies are the xbabe3 eval copies; `ckpt_pruner` is due to remove them at about 00:15Z and 01:45Z on 2026-11-15 unless Jepson pins them;
+- the 258 DL-TRAIN views;
+- whether `r4_L_A` final replaces the H449 L init as the 104M base. agy_apex_w10's X3-B already warm-starts from it.
