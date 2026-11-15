@@ -636,6 +636,20 @@ def gate_gp_chain_units(ctx) -> dict:
         assert sorted(k for k in z.files if k not in ("ok", "wall_s")) == sorted(f"{p_}_{n}" for p_ in ("q", "bag", "ref") for n in doc["names"])
         assert np.array_equal(z["ref_chain"], res["stages"][-1]["ref"]) and np.array_equal(z["q_chain_s1"], res["stages"][0]["q"])
     assert _refused(GC.pack_block, arm_dirs, pk), "a pack into a filled directory was accepted"
+    # clipped twins: every column also as <name>c, inside the context's SEARCH target range, the plain column untouched
+    cidk = ctx["identity_cids"][0]
+    yk = ctx["bank_full"][cidk]["y"]
+    n_ak = ctx["bank_full"][cidk]["Xa"].shape[0]
+    karm, kout = work / "arm_clip", work / "packed_clip"
+    karm.mkdir()
+    kout.mkdir()
+    wild = np.linspace(yk.min() - 5.0, yk.max() + 5.0, n_ak)
+    np.savez(karm / f"{cidk}.npz", outer_lab=np.zeros(len(yk), dtype=np.int64), q_s1=yk + 10.0 * (yk.max() - yk.min()), bag_s1=wild, ref_s1=wild)
+    (karm / f"{cidk}.json").write_text(json.dumps({"wall_s": 1.0, "settings": {"bank_sha256": P.digest_file(P.EVAL_BANK), "bank": str(P.EVAL_BANK), "prior": "dev91-free"}}))
+    kdoc = GC.pack_block({"w": karm}, kout, 0, "", True)
+    assert kdoc["names"] == ["w", "wc"] and kdoc["clipped_twins"]
+    with np.load(kout / f"{cidk}.npz") as z:
+        assert np.array_equal(z["ref_w"], wild) and z["ref_wc"].min() == yk.min() and z["ref_wc"].max() == yk.max() and np.all(z["q_wc"] == yk.max())
     # an audit slot made of two parts (the bank's own rows, then an appended bank's): the pack step takes one part
     two = work / "arm_two"
     two.mkdir()
@@ -693,7 +707,7 @@ def gate_gp_chain_units(ctx) -> dict:
     with np.load(s_out / f"{cidr}.npz") as z:
         assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
     assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
-    return {"checks": 53, "dir": str(work)}
+    return {"checks": 56, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

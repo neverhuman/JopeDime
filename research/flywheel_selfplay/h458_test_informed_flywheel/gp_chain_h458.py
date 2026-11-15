@@ -313,12 +313,14 @@ def claim_folder(out_dir: Path, fixed: dict) -> None:
     os.replace(tmp, set_p)
 
 
-def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "") -> dict:
+def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "", clip: bool = False) -> dict:
     """One block directory in the `_load_col_block` layout from several arm folders, for a column scorer.
 
     Column `<tag>` is the arm's column after its last stage and `<tag>_s<j>` the column after stage j. Only contexts
     that every source holds are written. `part` picks the rows of the audit slot: 0 for the bank's own, 1 for the
-    appended bank's. This renames stored predictions; it reads no label.
+    appended bank's. With `clip`, every column `<name>` gets a twin `<name>c` whose values are clipped to the range of
+    the context's SEARCH targets (a guard against a program that leaves the observed range on a row). This renames and
+    clips stored predictions; it reads no label outside SEARCH rows.
     """
     books: dict[str, dict] = {}
     for tag, src in sources.items():
@@ -339,6 +341,12 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     if not cids or any(out_dir.iterdir()):
         raise SystemExit("nothing in common to pack, or the output directory is not empty")
     names: list[str] = []
+    y_range: dict[str, tuple[float, float]] = {}
+    if clip:
+        first = next(iter(next(iter(books.values())).values()))["settings"]
+        if P.digest_file(Path(first["bank"])) != first["bank_sha256"]:
+            raise SystemExit("the arms' bank changed")
+        y_range = {c: (float(d["y"].min()), float(d["y"].max())) for c, d in load_bank(Path(first["bank"])).items()}
     for cid in cids:
         out: dict[str, np.ndarray] = {"ok": np.array(True)}
         wall = 0.0
@@ -353,8 +361,12 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
                         out[f"q_{name}"] = np.asarray(z[f"q_s{j}"], dtype=np.float64)
                         for pre in ("bag", "ref"):
                             out[f"{pre}_{name}"] = np.asarray(z[f"{pre}_s{j}"], dtype=np.float64)[rows]
+                        if clip:
+                            lo, hi = y_range[cid]
+                            for pre in ("q", "bag", "ref"):
+                                out[f"{pre}_{name}c"] = np.clip(out[f"{pre}_{name}"], lo, hi)
                         if cid == cids[0]:
-                            names.append(name)
+                            names.extend([name, name + "c"] if clip else [name])
         out["wall_s"] = np.array(wall)
         tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
         np.savez(tmp, **out)
@@ -368,6 +380,7 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: 
     label = "fresh-probe" if probe else (closure or ("fair-gp-search-only" if fair_prior else "in-corpus-prior"))
     doc = {
         "names": names, "closure": label, "prior_in_corpus": not fair_prior, "bank_sha256": next(iter(banks)), "contexts": cids,
+        "clipped_twins": "<name>c = <name> clipped to the range of the context's SEARCH targets" if clip else None,
         "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
         "priors": priors,
         "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False,
@@ -490,6 +503,7 @@ def main() -> None:
     ap.add_argument("--arm", choices=ARMS, default="")
     ap.add_argument("--pack", default="", help="tag=DIR,tag=DIR: write the arms' columns as one block directory into --out-dir and stop")
     ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack: 0 = the bank's own audit slot, 1 = the appended bank's")
+    ap.add_argument("--pack-clip", action="store_true", help="with --pack: add a twin <name>c of every column, clipped to the context's SEARCH target range")
     ap.add_argument("--pack-closure", default="", help="with --pack: closure label for a block on an evaluation bank (the scorer's owner names it); a probe bank is always fresh-probe")
     ap.add_argument("--stack", default="", help="GPBLOCK,OTHERBLOCK: write stk_base and stk_<gp column> blends into --out-dir (weights from SEARCH rows) and stop")
     ap.add_argument("--committee-of", default="", help="folder of a single-run arm: write the blend of its own top --committee programs into --out-dir (no GP is run) and stop")
@@ -524,7 +538,7 @@ def main() -> None:
         pairs = [kv.split("=", 1) for kv in a.pack.split(",") if kv]
         if any(len(kv) != 2 for kv in pairs) or len({k for k, _ in pairs}) != len(pairs):
             raise SystemExit("--pack takes tag=DIR pairs with distinct tags")
-        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure)
+        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure, a.pack_clip)
         print(json.dumps({"packed": len(doc["contexts"]), "names": doc["names"], "closure": doc["closure"]}))
         return
     if a.committee_of:
