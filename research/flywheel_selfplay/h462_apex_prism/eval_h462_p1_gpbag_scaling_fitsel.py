@@ -419,8 +419,8 @@ def _summarize(H, done: List[Dict], cids: List[str], fam_map: Dict[str, str], k_
                 "cid": c,
                 "family_key": fam_map[c],
                 f"u_{cand_key}": round(sk_umaps[cand_key][c], 6),
-                "u_tabcv7_cvrep8_prec48_all": round(sk_umaps[hwm_key][c], 6),
-                "delta_vs_hwm": round(sk_umaps[cand_key][c] - sk_umaps[hwm_key][c], 6),
+                "u_tabcv7_cvrep8_prec48_all": round(sk_umaps[hwm_col][c], 6),
+                "delta_vs_hwm": round(sk_umaps[cand_key][c] - sk_umaps[hwm_col][c], 6),
             }
             for c in cids
         ]
