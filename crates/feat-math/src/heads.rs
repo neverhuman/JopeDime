@@ -64,8 +64,13 @@ pub fn fit_head(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedHead> {
             stage.get_f64("lambda_frac", 0.02),
         ))),
         // Self-tuning ridge: the penalty is chosen by generalized cross-validation
-        // over a fixed grid, so the stage carries no parameters.
-        "ridge_gcv" => Ok(FittedHead::RidgeGcv(RidgeGcvModel::fit(x, y))),
+        // over a fixed grid, so the stage carries no parameters by default;
+        // optional `unclamped=true` disables the legacy ±60 prediction clip.
+        "ridge_gcv" => Ok(FittedHead::RidgeGcv(RidgeGcvModel::fit_with_options(
+            x,
+            y,
+            stage.get_bool("unclamped", false),
+        ))),
         "elasticnet" => Ok(FittedHead::ElasticNet(ElasticNetModel::fit(
             x,
             y,
@@ -811,6 +816,8 @@ pub struct RidgeGcvModel {
     pub scales: Vec<f64>,
     /// `[intercept, w_0, .., w_{k-1}]` on the standardized kept columns.
     pub w: Vec<f64>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub unclamped: bool,
 }
 
 /// Train-only pre-screen for very wide blocks: the `cap` columns with the
@@ -862,6 +869,12 @@ impl RidgeGcvModel {
         Self::fit_inner(x, y, false)
     }
 
+    pub fn fit_with_options(x: &Rows, y: &[f64], unclamped: bool) -> RidgeGcvModel {
+        let mut m = Self::fit_inner(x, y, false);
+        m.unclamped = unclamped;
+        m
+    }
+
     /// `force_primal` replays the p x p Gram route even when n < p (test-only
     /// hook: the dual route must agree with it to floating-point roundoff).
     fn fit_inner(x: &Rows, y: &[f64], force_primal: bool) -> RidgeGcvModel {
@@ -895,6 +908,7 @@ impl RidgeGcvModel {
                 means,
                 scales,
                 w,
+                unclamped: false,
             };
         }
         // Width screen: cap the eigenproblem at GCV_SCREEN_CAP a side.
@@ -1013,6 +1027,7 @@ impl RidgeGcvModel {
                 means,
                 scales,
                 w,
+                unclamped: false,
             };
         }
         // Primal route: Gram matrix, rhs, and target energy on standardized
@@ -1109,6 +1124,7 @@ impl RidgeGcvModel {
             means,
             scales,
             w,
+            unclamped: false,
         }
     }
 
@@ -1121,7 +1137,15 @@ impl RidgeGcvModel {
                         z += self.w[k + 1] * ((r[j] - self.means[k]) / self.scales[k]);
                     }
                 }
-                z.clamp(-60.0, 60.0)
+                if self.unclamped {
+                    if z.is_finite() {
+                        z
+                    } else {
+                        0.0
+                    }
+                } else {
+                    z.clamp(-60.0, 60.0)
+                }
             })
             .collect()
     }

@@ -77,6 +77,14 @@ impl Stage {
             .and_then(ParamValue::as_f64)
             .unwrap_or(default)
     }
+
+    pub fn get_bool(&self, key: &str, default: bool) -> bool {
+        match self.params.get(key) {
+            Some(ParamValue::Bool(v)) => *v,
+            Some(ParamValue::Int(v)) => *v != 0,
+            _ => default,
+        }
+    }
 }
 
 impl Display for ParamValue {

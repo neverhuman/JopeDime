@@ -118,16 +118,23 @@ pub fn fit_target(stage: &Stage, y: &[f64]) -> Result<FittedTarget> {
                 y_max = y_max.max(*v);
             }
             let spread = (y_max - y_min).max(1e-9);
+            let unclamped = stage.get_bool("unclamped", false);
             // The clamp interval is the UNION of the train range ±5% and the
-            // legacy ±60 window: never tighter than either, so small-scale
-            // targets keep their legitimate extrapolation headroom while
-            // large-scale targets still survive past ±60. The min/max also
-            // guarantee clamp_lo <= clamp_hi for any target.
+            // legacy ±60 window unless `unclamped=true` explicitly removes the
+            // extrapolation clip for exact ratio/formula candidates.
             Ok(FittedTarget::ZScore {
                 mu,
                 sigma,
-                clamp_lo: (y_min - 0.05 * spread).min(-60.0),
-                clamp_hi: (y_max + 0.05 * spread).max(60.0),
+                clamp_lo: if unclamped {
+                    -1e100
+                } else {
+                    (y_min - 0.05 * spread).min(-60.0)
+                },
+                clamp_hi: if unclamped {
+                    1e100
+                } else {
+                    (y_max + 0.05 * spread).max(60.0)
+                },
             })
         }
         "winsor" => {

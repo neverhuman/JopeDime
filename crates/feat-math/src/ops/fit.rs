@@ -358,11 +358,17 @@ pub(crate) fn fit_op_with_cache(
                 .collect();
             FittedOp::Spline { knots, append }
         }
-        "pair_ratio" => {
+        "pair_ratio" | "pair_ratio_undamped" => {
             let topk = stage.get_usize("topk", 8).clamp(1, 64);
+            let undamped = stage.op == "pair_ratio_undamped" || stage.get_bool("undamped", false);
+            let screen_cap = if undamped {
+                stage.get_usize("screen", 32).clamp(1, 64)
+            } else {
+                32
+            };
             // Same target-guided screen as pair_prod: |pearson| descending,
             // ties to the lower index, kept indices re-sorted ascending.
-            let m = cols.min(32);
+            let m = cols.min(screen_cap);
             let mut scored: Vec<(usize, f64)> = (0..cols)
                 .map(|j| {
                     let col: Vec<f64> = x.iter().map(|r| r[j]).collect();
@@ -372,44 +378,83 @@ pub(crate) fn fit_op_with_cache(
             scored.sort_by(|a, b| b.1.total_cmp(&a.1).then(a.0.cmp(&b.0)));
             let mut screened: Vec<usize> = scored[..m].iter().map(|&(j, _)| j).collect();
             screened.sort_unstable();
-            // Per screened column: population std -> denominator guard
-            // eps = max(1e-12, (0.01 * std)^2).
-            let mut guards = Vec::with_capacity(screened.len());
-            for &j in &screened {
-                let mut s = 0.0;
-                for r in x {
-                    s += r[j];
-                }
-                let mean = s / n as f64;
-                let mut v = 0.0;
-                for r in x {
-                    let d = r[j] - mean;
-                    v += d * d;
-                }
-                let e = 0.01 * (v / n as f64).sqrt();
-                guards.push((e * e).max(1e-12));
-            }
-            // Score every ordered pair by |pearson(ratio, y)|.
-            let mut candidates: Vec<(usize, usize, f64, f64)> = Vec::new();
-            for (ai, &a) in screened.iter().enumerate() {
-                for (bi, &b) in screened.iter().enumerate() {
-                    if ai == bi {
-                        continue;
+            if undamped {
+                let zero_tol = stage.get_f64("zero_tol", 1e-12).clamp(1e-30, 1.0);
+                let mut candidates: Vec<(usize, usize, f64, f64)> = Vec::new();
+                for (ai, &a) in screened.iter().enumerate() {
+                    for (bi, &b) in screened.iter().enumerate() {
+                        if ai == bi {
+                            continue;
+                        }
+                        let ratio: Vec<f64> = x
+                            .iter()
+                            .map(|r| {
+                                if r[b].abs() > zero_tol {
+                                    let q = r[a] / r[b];
+                                    if q.is_finite() {
+                                        q
+                                    } else {
+                                        0.0
+                                    }
+                                } else {
+                                    0.0
+                                }
+                            })
+                            .collect();
+                        candidates.push((a, b, zero_tol, crate::metrics::pearson(&ratio, y).abs()));
                     }
-                    let eps = guards[bi];
-                    let ratio: Vec<f64> = x
-                        .iter()
-                        .map(|r| r[a] * r[b] / (r[b] * r[b] + eps))
-                        .collect();
-                    candidates.push((a, b, eps, crate::metrics::pearson(&ratio, y).abs()));
                 }
-            }
-            candidates.sort_by(|l, r| r.3.total_cmp(&l.3).then(l.0.cmp(&r.0)).then(l.1.cmp(&r.1)));
-            candidates.truncate(topk.min(candidates.len()));
-            FittedOp::PairRatio {
-                pairs: candidates.iter().map(|&(a, b, _, _)| (a, b)).collect(),
-                eps: candidates.iter().map(|&(_, _, e, _)| e).collect(),
-                append,
+                candidates
+                    .sort_by(|l, r| r.3.total_cmp(&l.3).then(l.0.cmp(&r.0)).then(l.1.cmp(&r.1)));
+                candidates.truncate(topk.min(candidates.len()));
+                FittedOp::PairRatio {
+                    pairs: candidates.iter().map(|&(a, b, _, _)| (a, b)).collect(),
+                    eps: candidates.iter().map(|&(_, _, e, _)| e).collect(),
+                    append,
+                    undamped: true,
+                }
+            } else {
+                // Per screened column: population std -> denominator guard
+                // eps = max(1e-12, (0.01 * std)^2).
+                let mut guards = Vec::with_capacity(screened.len());
+                for &j in &screened {
+                    let mut s = 0.0;
+                    for r in x {
+                        s += r[j];
+                    }
+                    let mean = s / n as f64;
+                    let mut v = 0.0;
+                    for r in x {
+                        let d = r[j] - mean;
+                        v += d * d;
+                    }
+                    let e = 0.01 * (v / n as f64).sqrt();
+                    guards.push((e * e).max(1e-12));
+                }
+                // Score every ordered pair by |pearson(ratio, y)|.
+                let mut candidates: Vec<(usize, usize, f64, f64)> = Vec::new();
+                for (ai, &a) in screened.iter().enumerate() {
+                    for (bi, &b) in screened.iter().enumerate() {
+                        if ai == bi {
+                            continue;
+                        }
+                        let eps = guards[bi];
+                        let ratio: Vec<f64> = x
+                            .iter()
+                            .map(|r| r[a] * r[b] / (r[b] * r[b] + eps))
+                            .collect();
+                        candidates.push((a, b, eps, crate::metrics::pearson(&ratio, y).abs()));
+                    }
+                }
+                candidates
+                    .sort_by(|l, r| r.3.total_cmp(&l.3).then(l.0.cmp(&r.0)).then(l.1.cmp(&r.1)));
+                candidates.truncate(topk.min(candidates.len()));
+                FittedOp::PairRatio {
+                    pairs: candidates.iter().map(|&(a, b, _, _)| (a, b)).collect(),
+                    eps: candidates.iter().map(|&(_, _, e, _)| e).collect(),
+                    append,
+                    undamped: false,
+                }
             }
         }
         "impute" => {

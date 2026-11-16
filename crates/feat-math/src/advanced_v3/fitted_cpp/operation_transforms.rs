@@ -178,9 +178,13 @@ fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
             let pairs = pairs.iter().map(|(a,b)| format!("{{{a},{b}}}")).collect::<Vec<_>>().join(",");
             format!("static const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};for(const auto& p:pairs)g.push_back(x[fitted_index(p.first,x.size())]*x[fitted_index(p.second,x.size())]);")
         }
-        FittedOp::PairRatio { pairs, eps, .. } => {
+        FittedOp::PairRatio { pairs, eps, undamped, .. } => {
             let pairs = pairs.iter().map(|(a,b)| format!("{{{a},{b}}}")).collect::<Vec<_>>().join(",");
-            format!("const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};const V eps={};for(std::size_t i=0;i<pairs.size();++i){{double a=x[fitted_index(pairs[i].first,x.size())],b=x[fitted_index(pairs[i].second,x.size())];g.push_back(a*b/(b*b+eps[fitted_index(i,eps.size())]));}}", f64_vec(eps))
+            if *undamped {
+                format!("const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};const V eps={};for(std::size_t i=0;i<std::min(pairs.size(),eps.size());++i){{double a=x[fitted_index(pairs[i].first,x.size())],b=x[fitted_index(pairs[i].second,x.size())],e=eps[i];if(std::abs(b)>e){{double q=a/b;g.push_back(std::isfinite(q)?q:0.0);g.push_back(0.0);}}else{{g.push_back(0.0);g.push_back(1.0);}}}}", f64_vec(eps))
+            } else {
+                format!("const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};const V eps={};for(std::size_t i=0;i<pairs.size();++i){{double a=x[fitted_index(pairs[i].first,x.size())],b=x[fitted_index(pairs[i].second,x.size())];g.push_back(a*b/(b*b+eps[fitted_index(i,eps.size())]));}}", f64_vec(eps))
+            }
         }
         FittedOp::RffCos { w, b, .. } => format!("const M a={};const V b={};const double scale=std::sqrt(2.0/static_cast<double>(a.size()));for(std::size_t i=0;i<a.size();++i)g.push_back(scale*std::cos(dot(a[i],x)+b[fitted_index(i,b.size())]));", f64_matrix(w), f64_vec(b)),
         FittedOp::RffSin { w, b, .. } => format!("const M a={};const V b={};const double scale=std::sqrt(2.0/static_cast<double>(a.size()));for(std::size_t i=0;i<a.size();++i)g.push_back(scale*std::sin(dot(a[i],x)+b[fitted_index(i,b.size())]));", f64_matrix(w), f64_vec(b)),

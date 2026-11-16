@@ -330,13 +330,37 @@ pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
             }
             vals
         }),
-        FittedOp::PairRatio { pairs, eps, .. } => map_rows(x, |r| {
-            pairs
-                .iter()
-                .zip(eps)
-                .map(|(&(a, b), e)| r[a] * r[b] / (r[b] * r[b] + e))
-                .collect()
-        }),
+        FittedOp::PairRatio {
+            pairs,
+            eps,
+            undamped,
+            ..
+        } => {
+            if *undamped {
+                map_rows(x, |r| {
+                    let mut vals = Vec::with_capacity(pairs.len().min(eps.len()) * 2);
+                    for (&(a, b), e) in pairs.iter().zip(eps) {
+                        if r[b].abs() > *e {
+                            let q = r[a] / r[b];
+                            vals.push(if q.is_finite() { q } else { 0.0 });
+                            vals.push(0.0);
+                        } else {
+                            vals.push(0.0);
+                            vals.push(1.0);
+                        }
+                    }
+                    vals
+                })
+            } else {
+                map_rows(x, |r| {
+                    pairs
+                        .iter()
+                        .zip(eps)
+                        .map(|(&(a, b), e)| r[a] * r[b] / (r[b] * r[b] + e))
+                        .collect()
+                })
+            }
+        }
         // Truncated-power natural cubic basis; like hinge, over-wide output
         // relies on the shared MAX_WIDTH truncation in `finish`.
         FittedOp::Spline { knots, .. } => map_rows(x, |r| {

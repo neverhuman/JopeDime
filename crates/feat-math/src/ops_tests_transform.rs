@@ -449,3 +449,114 @@ fn every_op_survives_near_constant_columns() {
         }
     }
 }
+
+#[test]
+fn undamped_protected_ratio_recovers_scale_1000_across_five_decades_with_zero_denom_indicator() {
+    // Mirrors the 7-column SEARCH-row structure where y = 1000 * col(6) / col(5)
+    // when col(5) != 0 and y = 0 when col(5) == 0, with col(5) spanning five decades
+    // [1.0, 97_780.0] so damped pair_ratio's eps = (0.01 * std)^2 > 1,000 corrupts small denominators.
+    let mut rng = Pcg32::new(465_010, 1);
+    let n = 480usize;
+    let mut x: Rows = Vec::with_capacity(n);
+    let mut y: Vec<f64> = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut r = vec![0.0; 7];
+        for item in r.iter_mut().take(5) {
+            *item = rng.range_f64(-50.0, 50.0);
+        }
+        if i % 6 == 0 {
+            // Exact zero-denominator rows -> target is 0.0.
+            r[5] = 0.0;
+            r[6] = rng.range_f64(1.0, 500.0);
+            y.push(0.0);
+        } else {
+            let log10_den = (i % 50) as f64 / 10.0; // 10^0 = 1.0 up to 10^4.9 ~ 79,432
+            let den = 10.0_f64.powf(log10_den);
+            let ratio_true = rng.range_f64(0.05, 8.5);
+            r[5] = den;
+            r[6] = ratio_true * den;
+            y.push(1000.0 * ratio_true);
+        }
+        x.push(r);
+    }
+
+    // 1. Stage-level verification: selects (6, 5), no mean shift, no output clip, emits [ratio, zero_ind].
+    let op = fit_op(&stage("(pair_ratio_undamped topk=1)"), &x, &y).unwrap();
+    match &op {
+        FittedOp::PairRatio {
+            pairs,
+            undamped,
+            append,
+            ..
+        } => {
+            assert!(*undamped);
+            assert!(!*append);
+            assert_eq!(pairs, &vec![(6, 5)]);
+        }
+        other => panic!("unexpected FittedOp: {other:?}"),
+    }
+    let feat = apply_op(&op, &x).unwrap();
+    assert_eq!(feat[0], vec![0.0, 1.0]); // zero denominator -> ratio=0, indicator=1
+    assert!((feat[1][0] - (x[1][6] / x[1][5])).abs() < 1e-12);
+    assert_eq!(feat[1][1], 0.0);
+
+    // 2. Full pipeline verification: recovers slope c = 1000.0 and extrapolates past training max without clip!
+    let g =
+        crate::GenomeIr::parse("(pipe X (pair_ratio_undamped topk=1) (ridge_gcv unclamped=true))")
+            .unwrap();
+    let mdl = crate::fit(&g, &x, &y).unwrap();
+    let mut probe: Rows = vec![vec![0.0; 7]; 3];
+    probe[0][5] = 0.0;
+    probe[0][6] = 42.0; // zero denominator -> 0.0
+    probe[1][5] = 3.0;
+    probe[1][6] = 6.0; // ratio = 2.0 -> pred = 2000.0 (even at tiny denominator 3.0!)
+    probe[2][5] = 10.0;
+    probe[2][6] = 250.0; // ratio = 25.0 -> pred = 25000.0 (extrapolates ~3x past train max without 2-range clip!)
+    let preds = mdl.predict(&probe).unwrap();
+    assert!(preds[0].abs() < 1e-2, "zero-denom pred={}", preds[0]);
+    let c_recovered = (preds[2] - preds[1]) / (25.0 - 2.0);
+    assert!(
+        (c_recovered - 1000.0).abs() < 0.05,
+        "expected slope c=1000.0, got {c_recovered} (preds={preds:?})"
+    );
+}
+
+#[test]
+fn undamped_protected_ratio_selects_pair_22_25_among_27_columns() {
+    // Mirrors the 27-column SEARCH-row structure where y depends on col(22) / col(25)
+    // while individual numerator and denominator have weak marginal linear correlation with y.
+    let mut rng = Pcg32::new(465_011, 7);
+    let n = 560usize;
+    let mut x: Rows = Vec::with_capacity(n);
+    let mut y: Vec<f64> = Vec::with_capacity(n);
+    for _ in 0..n {
+        let mut r: Vec<f64> = (0..27).map(|_| rng.range_f64(-10.0, 10.0)).collect();
+        let den = rng.range_f64(2.8, 395.0);
+        let q = rng.range_f64(0.1, 4.0);
+        r[25] = den;
+        r[22] = q * den;
+        y.push(q);
+        x.push(r);
+    }
+    let op = fit_op(
+        &stage("(pair_ratio topk=1 undamped=true screen=32)"),
+        &x,
+        &y,
+    )
+    .unwrap();
+    match &op {
+        FittedOp::PairRatio {
+            pairs, undamped, ..
+        } => {
+            assert!(*undamped);
+            assert_eq!(pairs, &vec![(22, 25)]);
+        }
+        other => panic!("unexpected FittedOp: {other:?}"),
+    }
+    let g = crate::GenomeIr::parse(
+        "(pipe X (target kind=zscore unclamped=true) (pair_ratio topk=1 undamped=true) (ridge_gcv unclamped=true))",
+    )
+    .unwrap();
+    let rep = crate::cv_r2(&g, &x, &y, 5, "ratio_22_25").unwrap();
+    assert!(rep.oof_r2 > 0.9999, "oof_r2={}", rep.oof_r2);
+}

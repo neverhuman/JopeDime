@@ -178,6 +178,7 @@ mod tests {
                 pairs: vec![],
                 eps: vec![],
                 append: false,
+                undamped: false,
             },
             FittedOp::Spline {
                 knots: vec![],

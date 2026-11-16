@@ -209,14 +209,17 @@ pub enum FittedOp {
         indicator_cols: Vec<usize>,
         append: bool,
     },
-    /// Target-guided regularized ratios x_a * x_b / (x_b^2 + eps): the
-    /// screened ordered pairs with the strongest |pearson(ratio, y)|, where
-    /// eps = max(1e-12, (0.01 * train std of x_b)^2) keeps every ratio finite
-    /// and smooth. `eps[i]` is the denominator guard for `pairs[i]`.
+    /// Target-guided ratios: by default (`undamped == false`), regularized
+    /// `x_a * x_b / (x_b^2 + eps)` with `eps = max(1e-12, (0.01 * std(x_b))^2)`.
+    /// When `undamped == true` (`pair_ratio_undamped` or `undamped=true`), emits
+    /// the unshifted, unclipped quotient `x_a / x_b` when `|x_b| > eps[i]` (else
+    /// `0.0`) paired with a `0/1` zero-denominator indicator `1[|x_b| <= eps[i]]`.
     PairRatio {
         pairs: Vec<(usize, usize)>,
         eps: Vec<f64>,
         append: bool,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        undamped: bool,
     },
     /// Natural cubic spline basis at train quantile knots (ESL §5.2.1): per
     /// column emits [x, N_2(x), .., N_{K-1}(x)], linear beyond the boundary

@@ -307,8 +307,20 @@ fn generated_width(op: &FittedOp, d: usize) -> Option<usize> {
             })?
         }
         FittedOp::PolyInteract { pairs, .. } | FittedOp::PairProd { pairs, .. } => pairs.len(),
-        // `apply_op` zips the pairs with their guards.
-        FittedOp::PairRatio { pairs, eps, .. } => pairs.len().min(eps.len()),
+        // `apply_op` zips the pairs with their guards; undamped mode emits `[ratio, zero_ind]`.
+        FittedOp::PairRatio {
+            pairs,
+            eps,
+            undamped,
+            ..
+        } => {
+            let k = pairs.len().min(eps.len());
+            if *undamped {
+                k.checked_mul(2)?
+            } else {
+                k
+            }
+        }
         FittedOp::RffCos { w, .. }
         | FittedOp::RffSin { w, .. }
         | FittedOp::RandProj { w, .. }
