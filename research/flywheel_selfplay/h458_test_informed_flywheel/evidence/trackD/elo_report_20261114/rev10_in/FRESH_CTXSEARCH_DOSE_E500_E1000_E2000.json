@@ -1,0 +1,561 @@
+{
+ "arm": "h458d.FRESH_CTXSEARCH_DOSE_E500_E1000_E2000",
+ "baseline": "init_mean3",
+ "block_dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/cmp_ctx_dose",
+ "block_files_sha256": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": "7a2ab8f99e2346ad27771426038b662ffc6da87c4a57b6a2251948fda8136055",
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": "bdb260f2d619bcea3ba24804d46bbe136cd2bbbc411149753edafef0a316fa2a",
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": "f028b0e83e178fc622b5a38eeda76f0ec025271db26ab6962f39551959dc9d64",
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": "e196e7825e1246fed9fff27081cc6e671f31ae372347253eb23b86098b8cb360",
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": "8496da5eb5a052e07001a2e18264d66bc5938624afc882e3a20e665d69ae1a41",
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": "dc07aded403ea64e83f648bc1dfc64fe5809aadb3158822f209619fd2bb64f1a",
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": "47b4656f38863079dadb30ddc2e8f686c6e5c3ccf857099b004242c1977e3756",
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": "2f76c5e14caa6eabbe27e85d037631e9388de00d6f525181338848c806868ee7",
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": "b9acd9fbcf7254c674466d169840a3a922414559099f4f287fa7d2cb7cf8cb42",
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": "5b582ba31607c3d400483987f7a23db4727ac107643266db325664f2b7a0fe8f"
+ },
+ "board": "dev91-freshprobe-v1",
+ "columns": [
+  "c500_mean3",
+  "c1000_mean3",
+  "ctx_mean3",
+  "init_mean3"
+ ],
+ "families": [
+  "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+  "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+  "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+  "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+  "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+  "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+  "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+  "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+  "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+  "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+ ],
+ "family_mean_u": {
+  "c1000_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.5540107661676976,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.9918514527149822,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 1.8408548661838644,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.1500947267860407,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.15046058454522268,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 2.5586121826444015,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.9826466487563696,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.7370406638479893,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.006314120318384952,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 1.0247020027758988
+  },
+  "c500_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.380389006134029,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 2.0243830173127786,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.6144428783161926,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.11347659535739718,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.06962019794626689,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 2.458896670951641,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.973725028456731,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.7015149059076615,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.0588634471804753,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.45538048834986355
+  },
+  "ctx_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.9017449402860187,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.9902002677397306,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 1.3197797357735053,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.4257564280012207,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.07793618116539153,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 2.3406596638368375,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8245996686194511,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.7445165980660203,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.09741780861601378,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.9046021610521487
+  },
+  "init_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.0104309275033345,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.576905284084281,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.147964785736969,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.10781251730635476,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.12534034809456454,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.839908690007887,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8699766921254792,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6169788397764655,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.08571177973266617,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.13766679135668228
+  }
+ },
+ "inputs": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "board_sums": {
+   "PROBE_BOARD.json": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+   "PROBE_YA.npz": "faeff3583372a6b5ea7f002f3b2c08c7427915924a051106449e2824ea35f1a5",
+   "bank_d91probe_f64.npz": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632"
+  }
+ },
+ "label": "fresh-probe: scoring only",
+ "missing_contexts": [],
+ "n_scored": 10,
+ "paired": {
+  "c1000_mean3 - init_mean3": {
+   "contexts_wtl": [
+    7,
+    0,
+    3
+   ],
+   "families_wtl": [
+    7,
+    0,
+    3
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.5435798386643631,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.4149461686307012,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.3071099195531044,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.04228220947968593,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.2758009326397872,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.7187034926365143,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.11266995663089041,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.12006182407152377,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.07939765941428122,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.8870352114192166
+   },
+   "mean_context_du": 0.3176970189925723,
+   "mean_family_du": 0.3176970189925723,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.1328125
+  },
+  "c500_mean3 - init_mean3": {
+   "contexts_wtl": [
+    8,
+    0,
+    2
+   ],
+   "families_wtl": [
+    8,
+    0,
+    2
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.3699580786306944,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.4474777332284976,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.4664780925792238,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.005664078051042423,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.05572015014829765,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.618987980943754,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.1037483363312518,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.08453606613119602,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.026848332552190865,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.3177136969931813
+   },
+   "mean_context_du": 0.3331995580188353,
+   "mean_family_du": 0.3331995580188353,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.013671875
+  },
+  "ctx_mean3 - init_mean3": {
+   "contexts_wtl": [
+    5,
+    0,
+    5
+   ],
+   "families_wtl": [
+    5,
+    0,
+    5
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.10868598721731582,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.4132949836554496,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.8281850499634635,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.31794391069486594,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.047404166929173014,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.5007509738289504,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": -0.045377023506028125,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.12753775828955483,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.18312958834867993,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.7669353696954665
+   },
+   "mean_context_du": 0.19136811801996273,
+   "mean_family_du": 0.19136811801996273,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.376953125
+  }
+ },
+ "per_context": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 0.6775327292132155,
+     "u": 2.5540107661676976
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 0.805996677607029,
+     "u": 2.380389006134029
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 1.3007856229574686,
+     "u": 1.9017449402860187
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.1668203737422311,
+     "u": 2.0104309275033345
+    }
+   },
+   "family": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+   "n_probe": 2000
+  },
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 3.1399417939368255,
+     "u": 0.7370406638479893
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 3.253495707897728,
+     "u": 0.7015149059076615
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 3.116555322419829,
+     "u": 0.7445165980660203
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 3.54049336775534,
+     "u": 0.6169788397764655
+    }
+   },
+   "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+   "n_probe": 1999
+  },
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 103.27247067773982,
+     "u": 1.9918514527149822
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 99.96691460034488,
+     "u": 2.0243830173127786
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 103.44313348884002,
+     "u": 1.9902002677397306
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 156.38438930094298,
+     "u": 1.576905284084281
+    }
+   },
+   "family": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+   "n_probe": 2000
+  },
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 1628.531421241196,
+     "u": 0.006314120318384952
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 1545.162856104915,
+     "u": 0.0588634471804753
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 1806.5348612117689,
+     "u": -0.09741780861601378
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1504.2297613643598,
+     "u": 0.08571177973266617
+    }
+   },
+   "family": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+   "n_probe": 1999
+  },
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 1.7899629578912337,
+     "u": -0.15046058454522268
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 1.436362883704964,
+     "u": 0.06962019794626689
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 1.4244676429306078,
+     "u": 0.07793618116539153
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.3585174475978516,
+     "u": 0.12534034809456454
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 0.44681934542692053,
+     "u": 2.5586121826444015
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 0.49367128251274395,
+     "u": 2.458896670951641
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 0.5556323768207888,
+     "u": 2.3406596638368375
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 2.492042306344067,
+     "u": 0.839908690007887
+    }
+   },
+   "family": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+   "n_probe": 1999
+  },
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 1.8820033947250212,
+     "u": 0.1500947267860407
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 1.9521961631837694,
+     "u": 0.11347659535739718
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 1.42857171399078,
+     "u": 0.4257564280012207
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.963284928794346,
+     "u": 0.10781251730635476
+    }
+   },
+   "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+   "n_probe": 2000
+  },
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 19255.385071872093,
+     "u": 1.0247020027758988
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 34025.56929386629,
+     "u": 0.45538048834986355
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 21712.553755062436,
+     "u": 0.9046021610521487
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 46750.547973547684,
+     "u": 0.13766679135668228
+    }
+   },
+   "family": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+   "n_probe": 2000
+  },
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 2.0396368024656355,
+     "u": 1.8408548661838644
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 0.9409961242763376,
+     "u": 2.6144428783161926
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 3.434415957909983,
+     "u": 1.3197797357735053
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.500295118533593,
+     "u": 2.147964785736969
+    }
+   },
+   "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+   "n_probe": 1997
+  },
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+   "cols": {
+    "c1000_mean3": {
+     "finite": true,
+     "rmse": 8816.968691287306,
+     "u": 0.9826466487563696
+    },
+    "c500_mean3": {
+     "finite": true,
+     "rmse": 8895.982278665444,
+     "u": 0.973725028456731
+    },
+    "ctx_mean3": {
+     "finite": true,
+     "rmse": 10326.620805695036,
+     "u": 0.8245996686194511
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 9868.502127342676,
+     "u": 0.8699766921254792
+    }
+   },
+   "family": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+   "n_probe": 2000
+  }
+ },
+ "pre": {
+  "arm": "h458d.FRESH_CTXSEARCH_DOSE_E500_E1000_E2000",
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "baseline": "init_mean3",
+  "board": "dev91-freshprobe-v1",
+  "by": "cl_h458",
+  "columns": [
+   "c500_mean3",
+   "c1000_mean3",
+   "ctx_mean3",
+   "init_mean3"
+  ],
+  "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+  "spec": "Track D, dose curve of the SEARCH-only fine-tune of ledger line 25 (same ten contexts, same runs, same recipe; the trainer saved a checkpoint at 500 and at 1,000 exposures per row on the way to 2,000). Columns: c500, c1000, ctx (= 2,000, the column of line 25, read here a second time on purpose) and init, baseline init_mean3. Named before any ctx column of any dose exists (two of ten fine-tunes finished, no block built). Why: an honest stack column needs one fine-tune per fold, so the cost of a fair board run is proportional to the dose; if 500 exposures carry most of the gain the fair version is four times cheaper. Prediction: if the gain of ctx over init at 2,000 is positive, c1000 carries at least 70% of it and c500 at least 40% (family-mean u), and neither beats ctx by more than 0.05 u. If the gain at 2,000 is not positive, this read only shows whether a smaller dose avoids the damage. Descriptive: ten contexts, one seed, three doses of one run each, no selection of a dose for any later scored arm from this read alone.",
+  "time_utc": "2026-11-15T04:31:20Z",
+  "type": "pre",
+  "use": "ref"
+ },
+ "schema": "jope.h458s.s7_probe_score/v1",
+ "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+ "sidecar": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "canonical_promotion_forbidden": true,
+  "closure": "fresh-probe",
+  "contexts": [
+   "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+   "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+   "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755",
+   "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+   "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689",
+   "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631",
+   "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38",
+   "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042",
+   "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8"
+  ],
+  "in_corpus_dev91_disclosure": true,
+  "merged_from": {
+   "c1000": {
+    "arm": "canon",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctx_e01000",
+    "probe_role": "specialist",
+    "sidecar_sha256": "3db76c5341b18f18bedf16851cec35b9da4eadd73bde337a815b8d991ea7c255",
+    "weights_sha256": "0748eaf53e915e4de70f5d3730c863e412dc6d4c10c21edfc5f9a1f28c459f8f"
+   },
+   "c500": {
+    "arm": "canon",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctx_e00500",
+    "probe_role": "specialist",
+    "sidecar_sha256": "f2ba55a31b3ff6dd1ae0d74be3abccd221bc6e6854ee31dd536bd457776001cb",
+    "weights_sha256": "7c1fc0fd11da1f872eeadbbc5463fc892828a52609c380c123c89617b4d84399"
+   },
+   "ctx": {
+    "arm": "canon",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctx_e2000",
+    "probe_role": "specialist",
+    "sidecar_sha256": "2945a8531bf1b8fbf6c86d84758e9fcc2d5b1216fd14faa219cad656a80b8c33",
+    "weights_sha256": "1560521aa631c5a4523c5f7fa895638fd72e9be1bea69b9ed00d967bf78127c8"
+   },
+   "init": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/init_rand",
+    "probe_role": "init",
+    "sidecar_sha256": "8c07da14666fa8c6e4b9ec10fbcd9e20699a12c492b32441af928ac48cda8deb",
+    "weights_sha256": "30c93f80451c14a9ea2947b428a38053dbb3bfeff2e376fdb3f9e7b07b0e51c4"
+   }
+  },
+  "names": [
+   "init_rr",
+   "init_yj",
+   "init_rg",
+   "init_mean3",
+   "c500_rr",
+   "c500_yj",
+   "c500_rg",
+   "c500_mean3",
+   "c1000_rr",
+   "c1000_yj",
+   "c1000_rg",
+   "c1000_mean3",
+   "ctx_rr",
+   "ctx_yj",
+   "ctx_rg",
+   "ctx_mean3"
+  ],
+  "notes": "H458 Track D fresh-row probe comparison block: <tag>_mean3 is the equal-weight mean of a source's three direct columns; not a board block",
+  "probe_bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "probe_board_sha256": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+  "producer": "cl_h458 cols_h458.py @ 425e0700e7106c8f6368f3efec337f40eea8db1e",
+  "reads_audit_labels": false
+ },
+ "sidecar_sha256": "d2a3e3fb075bd94b17bda597078f39091cbedf5b2392945160af38d247b3f9ff",
+ "summary": {
+  "c1000_mean3": {
+   "context_mean_u": 1.1695666845650408,
+   "family_mean_u": 1.1695666845650403
+  },
+  "c500_mean3": {
+   "context_mean_u": 1.1850692235913036,
+   "family_mean_u": 1.1850692235913036
+  },
+  "ctx_mean3": {
+   "context_mean_u": 1.043237783592431,
+   "family_mean_u": 1.043237783592431
+  },
+  "init_mean3": {
+   "context_mean_u": 0.8518696655724683,
+   "family_mean_u": 0.8518696655724683
+  }
+ },
+ "time_utc": "2026-11-15T07:58:35Z",
+ "use": "ref",
+ "wall_s": 0.04
+}

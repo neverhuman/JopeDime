@@ -1,0 +1,22 @@
+H465 A-12 (sheet fe2c5fde908f68bb), dev91 per-context dossiers. One "pre" line written by the ledger keeper (cl_mtc) at cl_h458's request, after cl_fwriter's clearance.
+
+Spec: ~/jope_plan/evidence/H465/wp3/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt sha256 902ff884b7e5f59f... (cl_h458).
+Clearance: ~/jope_plan/evidence/H462_review/REVIEW_SPEC_DOSSIERS_902ff884_TREEMEM_057ce024_cl_fwriter_20261116T020017Z.md (7b2e3a0b...), with terms D-1 to D-3.
+
+The look. ONE official look on all 91 contexts of dev91-audit-v1, with the unchanged scorer score_h458s.py 0a9adb2c702af628..., optset legacy, epoch cols g44_r4_L_A_r4_L_B. It is two back-to-back runs of that scorer under this arm name:
+  A = legacy + h458d (look 2's arm, ledger line 4), re-scored in this look (D-1);
+  B = legacy + h458d + h465c (the new per-context block, one dossier column per context).
+Blocks: h458d = /home/ubuntu/jope-data/h458-quarantine/blocks/recall_canon_e2000_all91 (sidecar 8a1d512e87e67872...); h465c = /home/ubuntu/jope-data/h458-quarantine/blocks/h465c_ctx_recall_all91, built by cl_mtc with cols_h458.py 96c08a9063ed313a... from cl_h458's manifest, one call per context with its own checkpoint and pool, and pinned only after the spec's checks (91 files, key whitelist, shapes, all finite, pool coverage of SEARCH and AUDIT rows 1.0 and 1.0).
+Runs: both --official --optset legacy --arm-optset legacy on all 91 contexts with Elo, one create-once output directory each; each appends its own "look" line, and the two lines together are this one look. A runs first.
+D_f and the rule are computed from the two receipts by a small script, posted 0444 with its sha before the first run. It calls the scorer's own pair function (train_h416.pair_stats, as score_h458s.py does for its pair tests) on u_B against u_A with the board's families.
+D-1: B is paired against this look's A. A's per-context u is checked against look 2's receipt (0bde5d23...) within 1e-9 x max(1, |u|), and the check is reported. If it does not reproduce, the rule still uses this look's A.
+
+Rows (A12-1): every dossier trains on all rows of its context, SEARCH and AUDIT with labels. So every number from B is "recall (trained on this context's AUDIT labels)" on all 91 contexts. It never sits beside the fair board's numbers.
+
+Trainings: the 10 WP1a dossiers are reused; 81 are new with WP1a's recipe unchanged (train_h458.py a8020d7a, canonical slots, init valley 002 ba90b6ef, 2,000 exposures per row, one seed). D-2: the runner is posted 0444 with its sha before the first of the 81, with one dry run of its claim and STOP steps on a dummy directory. D-3: host and torch build are recorded per dossier, and D_f is reported by host group, descriptively.
+
+Rule, as in the spec: D_f is the family mean of u_B minus u_A, over the 19 families. PASS if the scorer's own pair test passes on D (clipped mean above 0, one-sided sign-flip p below 0.05, leave-one-family-out minimum above 0, median at or above 0) AND the mean of D_f is at least +0.05 u. Otherwise FAIL, and dev91 keeps the family specialists only.
+
+Not an F5 look: no formula column and no sweep is in either arm.
+
+Prediction (cl_h458, before any training): PASS; mean D_f between +0.10 and +0.35 u; 13 to 17 of 19 families above 0; 866f66b1 within 0.10 of zero.

@@ -1,0 +1,174 @@
+{
+ "all_pass": true,
+ "canonical_promotion_forbidden": true,
+ "deps": {
+  "cols_104m_e8_gpresid_h452.py": "0ed21ab34b1330c892ba2f608e137f3c1ed28702ca8f248ca81917043994ed92",
+  "formula_core.py": "b7a0ba028607096df3315e7a18d421d2bab2a47910adedcf66c919a56e654751",
+  "guard_matern_core.py": "9e0bd27f07f3be2f3f9ae78222d4bf564e78a6c2c133d11f78db8f31b6fd60d3",
+  "icl_model.py": "335a045f326693a742347c7d22378073760c6270c38ffd6735a7c349fbeb2946",
+  "icl_model_h450.py": "8f9fd7bf7f7103a832178cfbfac24c3871103ca09eb668b1687e2089e88884fd",
+  "icl_model_mps_h450.py": "b78c50fcb789b0e008b47fdeb229ba389f0d12af68e5ab72db48b1a5a37e62c6",
+  "keys_core.py": "35026cdebdc4a4ca8f94191fc6fdd3e960f399aed3edad562c574158e9ec88a1",
+  "relational_struct_h450.py": "e3d57e45a99a456311f00fd06855552850e6b2fb9c741a0fbe6b54b7ae0ffcdb",
+  "robust_resid_h450.py": "c582633c7e50ba5a500ad2a4351f4c3867da3f0153524f6b8a42c18fc314cb48",
+  "stack_guard_cv7_h452.py": "8de51475484d6fb41af20ae7257cfb8b0609ef59e8ff4af75e70033eecca1a80",
+  "struct_cols.py": "9f9ae3c42d0d3e606f9d2d5b341a5ac02c8e9c42c0b67fb0bd37fbd92f2b57c5"
+ },
+ "in_corpus_dev91_disclosure": true,
+ "not_covered": [
+  "a real CUDA out-of-memory error (an injected one is covered)",
+  "GP-residual target mode"
+ ],
+ "passed": 18,
+ "results": [
+  {
+   "bank_tables": 3525,
+   "gate": "gate_quarantine",
+   "pass": true,
+   "pool_families": 19,
+   "seconds": 0.0
+  },
+  {
+   "gate": "gate_pool_dedup_union",
+   "pass": true,
+   "seconds": 1.1,
+   "unique_rows": 75553
+  },
+  {
+   "gate": "gate_pool_no_split_marker",
+   "meta_keys": 15,
+   "pass": true,
+   "seconds": 0.0
+  },
+  {
+   "gate": "gate_zero_query_leakage",
+   "pass": true,
+   "rows": 200,
+   "seconds": 1.5
+  },
+  {
+   "draws": 300,
+   "gate": "gate_unique_rows_and_commitments",
+   "pass": true,
+   "seconds": 0.3
+  },
+  {
+   "fitting_shapes": 3905,
+   "gate": "gate_batch_caps",
+   "pass": true,
+   "seconds": 0.1
+  },
+  {
+   "gate": "gate_rank_gauss_roundtrip",
+   "max_error": 8.881784197001252e-16,
+   "pass": true,
+   "seconds": 0.0
+  },
+  {
+   "gate": "gate_canonical_slots",
+   "pass": true,
+   "pinned_cols_in_two_splits": [
+    4,
+    4
+   ],
+   "seconds": 1.6
+  },
+  {
+   "floor": 5e-06,
+   "gate": "gate_lr_schedule",
+   "pass": true,
+   "peak": 5e-05,
+   "seconds": 0.0
+  },
+  {
+   "files": 7,
+   "gate": "gate_static_hygiene",
+   "pass": true,
+   "seconds": 0.0
+  },
+  {
+   "gate": "gate_feature_strata",
+   "pass": true,
+   "seconds": 0.0,
+   "shares": [
+    0.192,
+    0.209,
+    0.201,
+    0.203,
+    0.196
+   ],
+   "twin_groups": 726
+  },
+  {
+   "gate": "gate_benchmark_split_audit",
+   "max_jaccard_with_a_search_set": 0.3076,
+   "pass": true,
+   "seconds": 0.7
+  },
+  {
+   "folds_checked": 4,
+   "gate": "gate_eval_pipeline_identity",
+   "pass": true,
+   "seconds": 57.6
+  },
+  {
+   "fits": 8,
+   "gate": "gate_builder_matches_reference",
+   "max_abs_diff": 0.0,
+   "pass": true,
+   "pool_coverage": [
+    1.0,
+    1.0
+   ],
+   "seconds": 413.3,
+   "strata_search": [
+    106,
+    112,
+    115,
+    114,
+    119
+   ]
+  },
+  {
+   "checks": 55,
+   "dir": "/home/ubuntu/jope-data/h458-quarantine/selftest/closures_1794766900_1101315",
+   "gate": "gate_block_closures",
+   "pass": true,
+   "seconds": 2.6
+  },
+  {
+   "checks": 84,
+   "dir": "/home/ubuntu/jope-data/h458-quarantine/selftest/gpchain_1794766903_1101315",
+   "gate": "gate_gp_chain_units",
+   "pass": true,
+   "seconds": 4.6
+  },
+  {
+   "fault_run": {
+    "cap_scale_end": 0.7225,
+    "injected_ooms": 5,
+    "steps": 1
+   },
+   "gate": "gate_cpu_mini_train",
+   "pass": true,
+   "run_dir": "/home/ubuntu/jope-data/h458-quarantine/selftest/mini_1794766908",
+   "seconds": 296.4,
+   "steps": 2
+  },
+  {
+   "gate": "gate_remote_workers",
+   "items": 6,
+   "pass": true,
+   "seconds": 158.0,
+   "seq": [
+    2,
+    2,
+    2
+   ],
+   "steps": 2
+  }
+ ],
+ "schema": "jope.h458.selftest/v1",
+ "total": 18,
+ "utc": "2026-11-15T18:29:22Z"
+}

@@ -1,0 +1,282 @@
+{
+  "schema": "jope.h458s.s9_selection_null/v1",
+  "board": "P201B",
+  "verdict": "NULL: no arm passes R1 at high or at medium; S9 stops after P201B, with no FITSEL, probe or dev91 stage",
+  "rule": "PREREG_S9 section 5; AMENDMENT_6 section 6 (the frozen tool refuses a null with exit 3, so this file records its refusals)",
+  "expected_receipts_file": "/home/ubuntu/jope_plan/evidence/H458/trackS/S9/EXPECTED_RECEIPTS.json",
+  "expected_receipts_sha256": "2611bf1608bf602f671766323b9f0fa16059277735a9d4ca70c0df117e704409",
+  "tool": {
+    "path": "/home/ubuntu/h458s-stage/code/s9_write_selection.sh",
+    "sha256": "412b560f94ab7af02b73eec66a1c89daa5660257256f58beac69a0ea14a4e3c8",
+    "probe_arm": "none"
+  },
+  "refusals": {
+    "high": {
+      "rc": 3,
+      "stderr": "refused: no R1 pass at high: S9 stops after P201B with a null (PREREG_S9 section 5)\n"
+    },
+    "medium": {
+      "rc": 3,
+      "stderr": "refused: no R1 pass at medium: S9 stops after P201B with a null (PREREG_S9 section 5)\n"
+    }
+  },
+  "receipts": [
+    {
+      "name": "S9_STACK_P201B_medium_main.json",
+      "sha256": "97ecd66a500e7c37fdca24e7178af5e9533a67f5827e46586109ded171cf3bc1",
+      "written_utc": "2026-11-15T12:09:24Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a2",
+        "a4",
+        "a6a",
+        "a1",
+        "a3"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a2",
+          "R1": false,
+          "T_over_ctrl_a": 0.026214045522914325,
+          "holm_p": {
+            "a2 - a0a": 1.0,
+            "a2 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a4",
+          "R1": false,
+          "T_over_ctrl_a": -0.0570495914448218,
+          "holm_p": {
+            "a4 - a0a": 1.0,
+            "a4 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a6a",
+          "R1": false,
+          "T_over_ctrl_a": 0.0038286975720629225,
+          "holm_p": {
+            "a6a - a0a": 1.0,
+            "a6a - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a1",
+          "R1": false,
+          "T_over_ctrl_a": -0.029643223798505057,
+          "holm_p": {
+            "a1 - a0a": 1.0,
+            "a1 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a3",
+          "R1": false,
+          "T_over_ctrl_a": -0.05519584043311974,
+          "holm_p": {
+            "a3 - a0a": 1.0,
+            "a3 - a0b": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_high_main.json",
+      "sha256": "a4f2c78055ee30701dec935b42ef448bfb76cbc6e00606e62cebb34e602c1320",
+      "written_utc": "2026-11-15T16:03:49Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a2",
+        "a4",
+        "a6a",
+        "a1",
+        "a3"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a2",
+          "R1": false,
+          "T_over_ctrl_a": -0.04285748507836373,
+          "holm_p": {
+            "a2 - a0a": 1.0,
+            "a2 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a4",
+          "R1": false,
+          "T_over_ctrl_a": -0.03297085211585325,
+          "holm_p": {
+            "a4 - a0a": 1.0,
+            "a4 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a6a",
+          "R1": false,
+          "T_over_ctrl_a": 0.00355054086301797,
+          "holm_p": {
+            "a6a - a0a": 1.0,
+            "a6a - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a1",
+          "R1": false,
+          "T_over_ctrl_a": -0.05276507510554261,
+          "holm_p": {
+            "a1 - a0a": 1.0,
+            "a1 - a0b": 1.0
+          }
+        },
+        {
+          "arm": "a3",
+          "R1": false,
+          "T_over_ctrl_a": -0.05750575165522757,
+          "holm_p": {
+            "a3 - a0a": 1.0,
+            "a3 - a0b": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_prod_pure.json",
+      "sha256": "db1f59f9c1c020a4f166e82f00c9601b3450051824dda87db70346e2a7e1a154",
+      "written_utc": "2026-11-15T04:19:12Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a5_medium_pure_shrunk",
+        "a5_medium_pure_ratchet"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a5_medium_pure_shrunk",
+          "R1": false,
+          "T_over_ctrl_a": -0.00536493950112806,
+          "holm_p": {
+            "a5_medium_pure_shrunk - a0_medium_pure_s0": 1.0,
+            "a5_medium_pure_shrunk - a0_medium_pure_s1": 1.0
+          }
+        },
+        {
+          "arm": "a5_medium_pure_ratchet",
+          "R1": false,
+          "T_over_ctrl_a": -0.005945802186180134,
+          "holm_p": {
+            "a5_medium_pure_ratchet - a0_medium_pure_s0": 1.0,
+            "a5_medium_pure_ratchet - a0_medium_pure_s1": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_prod_hyb.json",
+      "sha256": "19052a3139c5408042d7a14ac630bf3f94192c23373dd3e7c41ab0f22685cc47",
+      "written_utc": "2026-11-15T05:21:10Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a5_medium_hyb_shrunk",
+        "a5_medium_hyb_ratchet"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a5_medium_hyb_shrunk",
+          "R1": false,
+          "T_over_ctrl_a": 0.01158296159658683,
+          "holm_p": {
+            "a5_medium_hyb_shrunk - a0_medium_hyb_s0": 0.3193035125732422,
+            "a5_medium_hyb_shrunk - a0_medium_hyb_s1": 0.3193035125732422
+          }
+        },
+        {
+          "arm": "a5_medium_hyb_ratchet",
+          "R1": false,
+          "T_over_ctrl_a": 0.018242616099068975,
+          "holm_p": {
+            "a5_medium_hyb_ratchet - a0_medium_hyb_s0": 0.108856201171875,
+            "a5_medium_hyb_ratchet - a0_medium_hyb_s1": 0.20486927032470703
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_high_a5_prod_pure.json",
+      "sha256": "4a875b056ea3d8916b815e97909f0c90e1102dfb2df6b7512f51e5ee8de33a2d",
+      "written_utc": "2026-11-15T11:28:18Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a5_high_pure_shrunk",
+        "a5_high_pure_ratchet"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a5_high_pure_shrunk",
+          "R1": false,
+          "T_over_ctrl_a": 0.013613102894614038,
+          "holm_p": {
+            "a5_high_pure_shrunk - a0_high_pure_s0": 1.0,
+            "a5_high_pure_shrunk - a0_high_pure_s1": 1.0
+          }
+        },
+        {
+          "arm": "a5_high_pure_ratchet",
+          "R1": false,
+          "T_over_ctrl_a": 0.013031247810860083,
+          "holm_p": {
+            "a5_high_pure_ratchet - a0_high_pure_s0": 1.0,
+            "a5_high_pure_ratchet - a0_high_pure_s1": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_high_a5_prod_hyb.json",
+      "sha256": "55acb37d5d6ab135c5e0490cc94e30cb65bc342ee700a5181cbd9448c0f5c08f",
+      "written_utc": "2026-11-15T12:01:11Z",
+      "n_contexts": 80,
+      "eligible": [
+        "a5_high_hyb_shrunk",
+        "a5_high_hyb_ratchet"
+      ],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": [
+        {
+          "arm": "a5_high_hyb_shrunk",
+          "R1": false,
+          "T_over_ctrl_a": -0.009849362506665987,
+          "holm_p": {
+            "a5_high_hyb_shrunk - a0_high_hyb_s0": 1.0,
+            "a5_high_hyb_shrunk - a0_high_hyb_s1": 0.7521543502807617
+          }
+        },
+        {
+          "arm": "a5_high_hyb_ratchet",
+          "R1": false,
+          "T_over_ctrl_a": -0.00024798128364535296,
+          "holm_p": {
+            "a5_high_hyb_ratchet - a0_high_hyb_s0": 1.0,
+            "a5_high_hyb_ratchet - a0_high_hyb_s1": 0.3883628845214844
+          }
+        }
+      ]
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_cycle_pure.json",
+      "sha256": "54b5119b0ef03e697563c1ad2c6c2467b50fff1f112e0b2b88f2bfd26f152b47",
+      "written_utc": "2026-11-15T12:26:46Z",
+      "n_contexts": 80,
+      "eligible": [],
+      "r1_passing_eligible_by_T": [],
+      "eligible_R1": []
+    }
+  ],
+  "written_by": "cl_mtc",
+  "written_utc": "2026-11-15T16:04:59Z"
+}

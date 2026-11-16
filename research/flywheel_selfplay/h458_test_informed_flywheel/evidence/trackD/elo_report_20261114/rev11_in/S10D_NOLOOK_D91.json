@@ -1,0 +1,306 @@
+{
+ "anchor": "A1 = gm_ts LEGACY (== GM.guard_and_stack_2l) over GP D1 + m7 + k3 + f4 + tab450",
+ "candidate_sets": {
+  "four": [
+   "raw_ridge",
+   "raw_hgb",
+   "raw_rf",
+   "raw_et"
+  ],
+  "four+mean": [
+   "raw_ridge",
+   "raw_hgb",
+   "raw_rf",
+   "raw_et",
+   "search_mean"
+  ]
+ },
+ "check": true,
+ "closure": {
+  "bank_has_no_ya": true,
+  "forbidden_members": [
+   "ya",
+   "ba"
+  ],
+  "gp_archive_guard": "NoLabelNpz allow-list",
+  "gp_members_accessed": [
+   "AKF",
+   "PA",
+   "Q",
+   "pa_ok",
+   "y",
+   "ym"
+  ],
+  "scores_dir_opened": false
+ },
+ "code_sha256": "a924b8b437d27cb0cca3e26900e4f8ab77ee3f6006115a3c0868025636b64f3b",
+ "counts": {
+  "four+mean|0.6:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.6:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.6:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.6:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.7:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.7:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.7:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.7:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.8:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.8:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.8:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.8:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.9:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.9:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.9:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four+mean|0.9:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.6:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.6:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.6:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.6:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.7:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.7:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.7:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.7:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.8:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.8:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.8:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.8:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.9:0.0": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.9:0.005": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.9:0.02": {
+   "leaves": [],
+   "n_leaves": 0
+  },
+  "four|0.9:0.05": {
+   "leaves": [],
+   "n_leaves": 0
+  }
+ },
+ "edge_certify_sha256": "d9b3c9f688acd3848dc4f9d1d96c3fffd452e975a7fb0bb09ab86c37c957d416",
+ "elapsed_s": 139.1,
+ "grid": [
+  [
+   0.6,
+   0.0
+  ],
+  [
+   0.6,
+   0.005
+  ],
+  [
+   0.6,
+   0.02
+  ],
+  [
+   0.6,
+   0.05
+  ],
+  [
+   0.7,
+   0.0
+  ],
+  [
+   0.7,
+   0.005
+  ],
+  [
+   0.7,
+   0.02
+  ],
+  [
+   0.7,
+   0.05
+  ],
+  [
+   0.8,
+   0.0
+  ],
+  [
+   0.8,
+   0.005
+  ],
+  [
+   0.8,
+   0.02
+  ],
+  [
+   0.8,
+   0.05
+  ],
+  [
+   0.9,
+   0.0
+  ],
+  [
+   0.9,
+   0.005
+  ],
+  [
+   0.9,
+   0.02
+  ],
+  [
+   0.9,
+   0.05
+  ]
+ ],
+ "inputs": {
+  "BOARD.json": "fa34bc9cfd428ac16a7a8bdeeb44948758749db81aa22957e627afe6b14c5fed",
+  "agy_readout": {
+   "path": "/home/ubuntu/jope_plan/evidence/H462/H462_ASSAY_AND_BATTERY_READOUT.json",
+   "sha256": "c083fd75cd97e928bcbe806016610461d8e942656e180555a92755d683365377"
+  },
+  "bank": {
+   "path": "/home/ubuntu/jope-data/h450-quarantine/bank_d91_search_f64.npz",
+   "sha256": "0bce958572faee0ddae494df6d75c837e1c14936e34e565f042ef13aa727d955"
+  },
+  "block_dirs": {
+   "f4": "/home/ubuntu/jope_plan/evidence/H448/pulled/cols_f4_D91",
+   "k3": "/home/ubuntu/jope_plan/evidence/H448/pulled/cols_k3_D91",
+   "m7": "/home/ubuntu/jope_plan/evidence/H448/pulled/cols_matern_D91",
+   "tab450": "/home/ubuntu/jope-data/h450-quarantine/cols_tab_h450_D91"
+  },
+  "gp_dir": "/home/ubuntu/jope_plan/evidence/H418/pulled/D1/h416_D1_npz"
+ },
+ "label": "dev91 SEARCH ONLY, no look: no AUDIT label read, no AUDIT score, no Elo object. Ledgered as a SEARCH-only line. Fair anchor proxy A1 (no ICL); the count is an expected upper bound on the members entrant's leaves, not a per-context bound.",
+ "s10_code_sha256": "e944dc63e5a5b452ba6a5dfe1993ec0320bbab8c1d0d9b13409725de561f672c",
+ "schema": "jope.h458s.s10d_nolook_d91/v1",
+ "summary": {
+  "best_raw_minus_A1": {
+   "max": -0.0063726274745627975,
+   "median": -0.1919517764451295,
+   "n_ge_0": 0,
+   "n_ge_minus_0.05": 19,
+   "q90": -0.03635887277699168
+  },
+  "exact_screen": {
+   "flagged": [
+    "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+    "24c9ee141b718ef99ecf0a0a170f498c9051fc5d1ba8af2b38b7d8c1953df150",
+    "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91",
+    "4f7d3f5391d70e8b069ee39bb59adc30b1c4a4050cdb86fdfea2eac35ef1f0d8",
+    "5cff215fc5432a6f802dec3f1b64c58542ac03905a55a65af1afdde0189e3e37",
+    "81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d",
+    "bad21c5c67d19f4bdec4daab97e2e990189082e1cf8dac3fb296fe6653e3899a",
+    "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf",
+    "f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a",
+    "f84cf79d872e75573689f53559944dca750d5e087206646364f7f28862b8b589"
+   ],
+   "margin": 0.05,
+   "n_flagged": 10,
+   "stored_exact_minus_A1_max": -0.019469253784301088,
+   "stored_exact_minus_A1_median": -0.370747749176208
+  },
+  "gp_members_accessed": [
+   "AKF",
+   "PA",
+   "Q",
+   "pa_ok",
+   "y",
+   "ym"
+  ],
+  "max_leaves_over_grid": 0,
+  "mean_u_search": {
+   "A1": 1.688207581902485,
+   "raw_et": 1.0976073913721214,
+   "raw_hgb": 0.9064935656913145,
+   "raw_rf": 1.091993428531959,
+   "raw_ridge": 0.710598499776402,
+   "search_mean": -3.372154831739492e-05
+  },
+  "min_leaves_over_grid": 0,
+  "n_contexts": 91,
+  "n_families": 19,
+  "primary": "four|0.7:0.005",
+  "primary_n_leaves": 0,
+  "raw_refit_vs_agy_stored_u_max_abs_diff": 0.0002485697463524561
+ }
+}

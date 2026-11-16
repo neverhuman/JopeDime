@@ -1,0 +1,32 @@
+s9_write_selection.sh tests, 20261115T034218Z, host xbabe2
+412b560f94ab7af02b73eec66a1c89daa5660257256f58beac69a0ea14a4e3c8  /home/ubuntu/h458s-stage/code/s9_write_selection.sh
+48b7b098d858dbc399fad6d280fbcf69dd49cee4b6073c1e89a87dc8b67154fe  /tmp/claude-1000/-home-ubuntu-JopeDime/7afc9e1c-0a35-41de-8b38-8892ec985b0e/scratchpad/s9sel_test/run_tests.sh
+53d260dbcfc6ffb48b02a8171ced25c77684d1a620536bfc5b71f92efae8b926  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/CIDS_80.txt
+PASS high_argmax rc=0 
+PASS record_contents
+PASS create_once rc=2 /tmp/claude-1000/-home-ubuntu-JopeDime/7afc9e1c-0a35-41de-8b38-8892ec985b0e/scratchpad/s9sel_test/run_final_20261115T034
+PASS not_argmax rc=3 refused: the argmax of T over A0a at high is a2 (0.05), not a4 
+PASS descriptive_never_selected rc=3 refused: the argmax of T over A0a at high is a2 (0.05), not a1l_s1 
+PASS r1_false_arm rc=3 refused: the argmax of T over A0a at high is a2 (0.05), not a5_high_pure_ratchet 
+PASS medium_while_high_passes rc=3 refused: S9_STACK_P201B_high_a5_prod_pure.json: the high tier has R1 passers ["a5_high_pure_shrunk"], so the selection is not at medium refused: S9_STACK_P201B_
+PASS medium_after_null_high rc=0 
+PASS medium_not_argmax rc=3 refused: the argmax of T over A0a at medium is a5_medium_pure_shrunk (0.03), not a2 
+PASS medium_without_high rc=3 refused: a medium selection needs the high tier scored first (no high receipt) 
+PASS unexpected_receipt rc=3 refused: receipts not in the expected list: ["S9_STACK_P201B_medium_a5_prod_pure.json"] 
+PASS missing_expected rc=3 refused: expected receipts missing: ["S9_STACK_P201B_high_extra.json"] 
+PASS untiered_name rc=2 S9_STACK_P201B_cycle_medium_a5_pure.json: not S9_STACK_P201B_<medium|high|ultra>_<tag>.json (A5 tags start with the tier) 
+PASS duplicate_arm_in_tier rc=3 refused: eligible arms in more than one high receipt: ["a2"] 
+PASS tie rc=3 refused: T over A0a ties at 0.05: ["a5_high_pure_shrunk","a2"] 
+PASS writable_receipt rc=2 S9_STACK_P201B_high_v1.json is writable; receipts are create-once 0444 
+PASS wrong_contexts rc=3 refused: S9_STACK_P201B_medium_v1.json: contexts are not the medium tier set (79 contexts) 
+PASS other_tier_column rc=3 refused: S9_STACK_P201B_high_a5_prod_pure.json: columns named for another tier: ["a5_medium_pure_shrunk"] 
+PASS ultra_null_read_ok rc=0 
+PASS ultra_with_passer rc=3 refused: S9_STACK_P201B_ultra_v1.json: the ultra tier has R1 passers ["a2"], so the selection is not at high 
+PASS ultra_wrong_contexts rc=3 refused: S9_STACK_P201B_ultra_v1.json: contexts are not the ultra tier set (80 contexts) 
+PASS tier_ultra_refused rc=2 ultra never selects: no A0x runs there, so R1 is null (PREREG_S9 section 4 item 2, AMENDMENT_4 section 1, AMENDMENT_6) 
+PASS wrong_scorer rc=3 refused: S9_STACK_P201B_high_v1.json: scorer deadbeef is not a frozen scorer 
+PASS raw_ignored rc=0 
+PASS null_everywhere rc=3 refused: no R1 pass at medium: S9 stops after P201B with a null (PREREG_S9 section 5) 
+PASS wrong_board rc=3 refused: S9_STACK_P201B_medium_v1.json: not a P201B board receipt 
+tests: 26 passed, 0 failed
+exit 0

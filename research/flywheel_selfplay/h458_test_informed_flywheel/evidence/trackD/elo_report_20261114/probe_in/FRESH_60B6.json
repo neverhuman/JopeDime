@@ -1,0 +1,284 @@
+{
+ "arm": "h458d.FRESH_RAND_CANON_E2000_VS_INIT_60B6",
+ "baseline": "init_mean3",
+ "block_dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/cmp_60b6",
+ "block_files_sha256": {
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": "9f49f6e0a749b67a63a0d81ecc1d1967fb16bd96e029142980b116f1b666ed99",
+  "81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d": "9aabc591b4dc4a78b0ed162baf37749da9010aaf5054ea1d1918b526ff17ef1e",
+  "8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47": "8dda9fd33c74050c749c199164b37ca03b9733f360bbd8b7e3fc2a94dadd643c",
+  "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf": "595c7d409e62dd5911d5eabd5c62305dfb9e615ace54916c4f4ddc3cdaa32f07",
+  "f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a": "4bde9890d16f89a5e51a35988312d952a4228509c7f07d078a3f49c2d808cc7f"
+ },
+ "board": "dev91-freshprobe-v1",
+ "columns": [
+  "rand_mean3",
+  "canon_mean3",
+  "init_mean3"
+ ],
+ "families": [
+  "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99"
+ ],
+ "family_mean_u": {
+  "canon_mean3": {
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.12003857063262166
+  },
+  "init_mean3": {
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.15757881064457696
+  },
+  "rand_mean3": {
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.044397005323525286
+  }
+ },
+ "inputs": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "board_sums": {
+   "PROBE_BOARD.json": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+   "PROBE_YA.npz": "faeff3583372a6b5ea7f002f3b2c08c7427915924a051106449e2824ea35f1a5",
+   "bank_d91probe_f64.npz": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632"
+  }
+ },
+ "label": "fresh-probe: scoring only",
+ "missing_contexts": [],
+ "n_scored": 5,
+ "paired": {
+  "canon_mean3 - init_mean3": {
+   "contexts_wtl": [
+    3,
+    0,
+    2
+   ],
+   "families_wtl": [
+    1,
+    0,
+    0
+   ],
+   "family_du": {
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.2776173812771986
+   },
+   "mean_context_du": 0.2776173812771986,
+   "mean_family_du": 0.2776173812771986,
+   "n_contexts": 5,
+   "n_families": 1,
+   "signflip_p_two_sided": 1.0
+  },
+  "rand_mean3 - init_mean3": {
+   "contexts_wtl": [
+    2,
+    0,
+    3
+   ],
+   "families_wtl": [
+    1,
+    0,
+    0
+   ],
+   "family_du": {
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.2019758159681022
+   },
+   "mean_context_du": 0.2019758159681022,
+   "mean_family_du": 0.2019758159681022,
+   "n_contexts": 5,
+   "n_families": 1,
+   "signflip_p_two_sided": 1.0
+  }
+ },
+ "per_context": {
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+   "cols": {
+    "canon_mean3": {
+     "finite": true,
+     "rmse": 1.4396568534838643,
+     "u": 0.06732955217870752
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.3585174475978516,
+     "u": 0.12534034809456454
+    },
+    "rand_mean3": {
+     "finite": true,
+     "rmse": 1.5699322806403078,
+     "u": -0.01929814390201739
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d": {
+   "cols": {
+    "canon_mean3": {
+     "finite": true,
+     "rmse": 1.3853599444209481,
+     "u": 0.10577434022963865
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.734594049688177,
+     "u": -0.11903907512438967
+    },
+    "rand_mean3": {
+     "finite": true,
+     "rmse": 1.5198224897163115,
+     "u": 0.013140788815408854
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47": {
+   "cols": {
+    "canon_mean3": {
+     "finite": true,
+     "rmse": 1.2583053529437105,
+     "u": 0.20196488066651958
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.2737250260242785,
+     "u": 0.18978503967251312
+    },
+    "rand_mean3": {
+     "finite": true,
+     "rmse": 1.2829496018225781,
+     "u": 0.18256893502906035
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf": {
+   "cols": {
+    "canon_mean3": {
+     "finite": true,
+     "rmse": 1.3429572429373013,
+     "u": 0.1368133476480083
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.3000792260614629,
+     "u": 0.16926222196863824
+    },
+    "rand_mean3": {
+     "finite": true,
+     "rmse": 1.3569648957235876,
+     "u": 0.1264369162172432
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a": {
+   "cols": {
+    "canon_mean3": {
+     "finite": true,
+     "rmse": 1.409906317070879,
+     "u": 0.08831073244023423
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 4.879665052191646,
+     "u": -1.153242587834211
+    },
+    "rand_mean3": {
+     "finite": true,
+     "rmse": 1.6697893193146855,
+     "u": -0.08086346954206859
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  }
+ },
+ "pre": {
+  "arm": "h458d.FRESH_RAND_CANON_E2000_VS_INIT_60B6",
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "baseline": "init_mean3",
+  "board": "dev91-freshprobe-v1",
+  "by": "cl_h458",
+  "columns": [
+   "rand_mean3",
+   "canon_mean3",
+   "init_mean3"
+  ],
+  "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+  "spec": "Skill on rows no model saw (board dev91-freshprobe-v1). Blocks by cols_h458.py closure fresh-probe: SEARCH context unchanged, probe rows as queries, GP anchor off. <tag>_rr, _yj, _rg are the three direct ICL columns (ridge-residual, Yeo-Johnson, rank-Gauss) and <tag>_mean3 their equal-weight mean; use ref = the full-SEARCH refit. init = the checkpoint every H458 specialist was fine-tuned from (fleet_M_x2_h455_maxent/ckpt_valley_002.pt key ema, sha256 ba90b6efa2ccc003...), scored with the evaluation own four random-slot views. canon = the canonical-slot recall specialist of the family at 2,000 exposures per pool row, one copy per family, scored with one native-order canonical-slot view. The one-view against four-view difference is part of the arm. SECONDARY, family 60b608db only (its 5 contexts are passed at scoring time). rand = the random-slot recall specialist of 60b608db at 2,000 exposures, scored with the four random-slot views like the init. Prediction: rand_mean3 - init_mean3 between 0.00 and +0.02 u; canon_mean3 - init_mean3 negative. One family, so the sign-flip p is not informative; read the 5 contexts.",
+  "time_utc": "2026-11-15T00:46:00Z",
+  "type": "pre",
+  "use": "ref"
+ },
+ "schema": "jope.h458s.s7_probe_score/v1",
+ "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+ "sidecar": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "canonical_promotion_forbidden": true,
+  "closure": "fresh-probe",
+  "contexts": [
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+   "81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d",
+   "8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47",
+   "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf",
+   "f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a"
+  ],
+  "in_corpus_dev91_disclosure": true,
+  "merged_from": {
+   "canon": {
+    "arm": "canon",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/canon_e2000",
+    "probe_role": "specialist",
+    "sidecar_sha256": "92b0abecb790f55f7a16235fcb43fa752f6903272f1960e444c8727d33ca34bb",
+    "weights_sha256": "354d3b7d0d73c645412f594320bfc22c6248f1dd83804316d57b620d59d27df6"
+   },
+   "init": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/init_rand",
+    "probe_role": "init",
+    "sidecar_sha256": "8c07da14666fa8c6e4b9ec10fbcd9e20699a12c492b32441af928ac48cda8deb",
+    "weights_sha256": "30c93f80451c14a9ea2947b428a38053dbb3bfeff2e376fdb3f9e7b07b0e51c4"
+   },
+   "rand": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/rand_e2000_60b6",
+    "probe_role": "specialist",
+    "sidecar_sha256": "243e81a905a8ae0aee77d52d4e12209ed39979287dc35bcd3140556ba608dff8",
+    "weights_sha256": "1a3a35151e4a5d70435d5fb65b6100b7333e0ee78d968938b37ef87558d79147"
+   }
+  },
+  "names": [
+   "init_rr",
+   "init_yj",
+   "init_rg",
+   "init_mean3",
+   "rand_rr",
+   "rand_yj",
+   "rand_rg",
+   "rand_mean3",
+   "canon_rr",
+   "canon_yj",
+   "canon_rg",
+   "canon_mean3"
+  ],
+  "notes": "H458 Track D fresh-row probe comparison block: <tag>_mean3 is the equal-weight mean of a source's three direct columns; not a board block",
+  "probe_bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "probe_board_sha256": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+  "producer": "cl_h458 cols_h458.py @ 425e0700e7106c8f6368f3efec337f40eea8db1e",
+  "reads_audit_labels": false
+ },
+ "sidecar_sha256": "3e11763a2f13f01e2ba22a6a59674068d1a671de3b1518a6682db7d17997c074",
+ "summary": {
+  "canon_mean3": {
+   "context_mean_u": 0.12003857063262166,
+   "family_mean_u": 0.12003857063262166
+  },
+  "init_mean3": {
+   "context_mean_u": -0.15757881064457696,
+   "family_mean_u": -0.15757881064457696
+  },
+  "rand_mean3": {
+   "context_mean_u": 0.044397005323525286,
+   "family_mean_u": 0.044397005323525286
+  }
+ },
+ "time_utc": "2026-11-15T03:12:19Z",
+ "use": "ref",
+ "wall_s": 0.01
+}

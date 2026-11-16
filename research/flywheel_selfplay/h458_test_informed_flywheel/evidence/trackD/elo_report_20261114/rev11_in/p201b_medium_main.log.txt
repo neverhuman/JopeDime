@@ -1,0 +1,72 @@
+log /home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_medium_main.log block /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/medium/block
+start 2026-11-15T11:43:44Z host xbabe2 tier medium tag main
+affinity 0-15,64-79 threads OMP=1 OPENBLAS=1 MKL=1 NUMEXPR=1
+b739b4d1b5c086a99e7840d7511580e8ecc4c85af4e73c2acdfb45bb098b5d33  s9_ensemble_controls.py
+425a5e587dee430a11df01e6cfad89e2583448ce7f70612da907a4d9dc8a246b  s9_budget_table.sh
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+d5acd881f261f94e0523e7eeb627e3b613e5e021fbaa7985175f0dcc77e166c8  run_s9_p201b_score.sh
+b739b4d1b5c086a99e7840d7511580e8ecc4c85af4e73c2acdfb45bb098b5d33  s9_ensemble_controls.py
+425a5e587dee430a11df01e6cfad89e2583448ce7f70612da907a4d9dc8a246b  s9_budget_table.sh
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+d5acd881f261f94e0523e7eeb627e3b613e5e021fbaa7985175f0dcc77e166c8  run_s9_p201b_score.sh
+2fe42bef27cffedb695421e367f473404ce7dd1689e93cd5b4997c9085e4b97b  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/medium/block/SIDECAR.json
+5555ed0a7bfe311a82ff54ddf25783dbba23d3365fb2e678942c9a44a4eedd53  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/medium/HOSTS.json
+{"wrote": "/home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_medium_main_a6b_block", "names": ["a6b"], "contexts": 80, "closure": "fair-gp-search-only", "bank_sha256": "da29e8ec64f623e0fa2ab29b31bbd40b91bef36adf8ddc8e2e773f51c96d01af", "sidecar_sha256": "ab19b5d2473e0c39ac0a5ccf2fb69e8ff42de4a0b6702c2f12c5b7e80be7abd7"}
+host xbabe2 a0a: contexts 40, candidates 168.85, timeouts 9.15, time-out share 0.05140449438202247
+host xbabe2 a0b: contexts 40, candidates 168.55, timeouts 9.45, time-out share 0.05308988764044943
+host xbabe2 a0s: contexts 40, candidates 133.225, timeouts 8.775, time-out share 0.061795774647887325
+host xbabe2 a0x: contexts 40, candidates 295, timeouts 17.3, time-out share 0.055395453089977585
+host xbabe2 a1: contexts 40, candidates 166.75, timeouts 9.4, time-out share 0.05336361055918252
+host xbabe2 a2: contexts 40, candidates 166.525, timeouts 9.475, time-out share 0.05383522727272727
+host xbabe2 a3: contexts 40, candidates 159.6, timeouts 16.525, time-out share 0.09382540809084457
+host xbabe2 a4: contexts 40, candidates 178.45, timeouts 14.85, time-out share 0.07682359027418521
+host xbabe2 a6a: contexts 40, candidates 168.85, timeouts 9.15, time-out share 0.05140449438202247
+76b544fa442aba08461b7bad689253b71456243c66be55d2e67d4811777f7a17  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/medium/FREEZES.xbabe2.jsonl
+freeze xbabe2 a0a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 9.15 elsewhere
+freeze xbabe2 a0b: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 9.45 elsewhere
+freeze xbabe2 a0s: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 8.775 elsewhere
+freeze xbabe2 a0x: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 17.3 elsewhere
+freeze xbabe2 a1: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 9.4 elsewhere
+freeze xbabe2 a2: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 9.475 elsewhere
+freeze xbabe2 a3: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 16.525 elsewhere
+freeze xbabe2 a4: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 14.85 elsewhere
+freeze xbabe2 a6a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 9.15 elsewhere
+host xbabe3 a0a: contexts 40, candidates 164.375, timeouts 13.625, time-out share 0.07654494382022473
+host xbabe3 a0b: contexts 40, candidates 165.7, timeouts 12.3, time-out share 0.06910112359550562
+host xbabe3 a0s: contexts 40, candidates 133.3, timeouts 8.7, time-out share 0.06126760563380281
+host xbabe3 a0x: contexts 40, candidates 295.325, timeouts 16.95, time-out share 0.05427908093827556
+host xbabe3 a1: contexts 40, candidates 163.975, timeouts 12.7, time-out share 0.07188340172633367
+host xbabe3 a2: contexts 40, candidates 164.25, timeouts 12.1, time-out share 0.06861355259427275
+host xbabe3 a3: contexts 40, candidates 156.675, timeouts 19.35, time-out share 0.10992756710694504
+host xbabe3 a4: contexts 40, candidates 179.675, timeouts 13.075, time-out share 0.06783398184176394
+host xbabe3 a6a: contexts 40, candidates 164.375, timeouts 13.625, time-out share 0.07654494382022473
+da2f4eef989db8165ea9ea100dcfddf722419999e9961d6abc60ac6a595bbc3e  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/medium/FREEZES.xbabe3.jsonl
+freeze xbabe3 a0a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 13.625 elsewhere
+freeze xbabe3 a0b: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 12.3 elsewhere
+freeze xbabe3 a0s: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 8.7 elsewhere
+freeze xbabe3 a0x: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 16.95 elsewhere
+freeze xbabe3 a1: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 12.7 elsewhere
+freeze xbabe3 a2: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 12.1 elsewhere
+freeze xbabe3 a3: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 19.35 elsewhere
+freeze xbabe3 a4: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 13.075 elsewhere
+freeze xbabe3 a6a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 13.625 elsewhere
+wrote /home/ubuntu/jope-data/h458s-quarantine/s9_stack/S9_STACK_P201B_medium_main.json 97ecd66a500e7c37fdca24e7178af5e9533a67f5827e46586109ded171cf3bc1
+a0s {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.041247857809933175, "holm_p": {}, "selection_eligible": false}
+a2 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.026214045522914325, "holm_p": {"a2 - a0a": 1.0, "a2 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a4 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.0570495914448218, "holm_p": {"a4 - a0a": 1.0, "a4 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a6a {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.0038286975720629225, "holm_p": {"a6a - a0a": 1.0, "a6a - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a6b {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.041512587600963165, "holm_p": {}, "selection_eligible": false}
+a1 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.029643223798505057, "holm_p": {"a1 - a0a": 1.0, "a1 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a3 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.05519584043311974, "holm_p": {"a3 - a0a": 1.0, "a3 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+Elo V0 1788.3 rank 2
+Elo a0a 1792.5 rank 2
+Elo a0b 1791.5 rank 2
+Elo a0x 1792.7 rank 2
+Elo a0s 1787.9 rank 2
+Elo a2 1784.0 rank 2
+Elo a4 1776.7 rank 2
+Elo a6a 1791.0 rank 2
+Elo a6b 1796.9 rank 2
+Elo a1 1798.9 rank 2
+Elo a3 1784.7 rank 2
+exit 0 end 2026-11-15T12:09:25Z

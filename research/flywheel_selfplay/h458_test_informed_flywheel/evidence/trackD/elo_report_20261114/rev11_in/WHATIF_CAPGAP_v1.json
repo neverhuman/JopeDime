@@ -1,0 +1,167 @@
+{
+ "schema": "jope.h458.whatif_capgap/v1",
+ "reads_labels": false,
+ "reads_predictions": false,
+ "base_row": "h448.APEX_FAIR_CHAMPION",
+ "line45_receipt_sha256_prefix": "3ff8dfbb40087550",
+ "probe_contexts": {
+  "016648dc8e6f": {
+   "family": "4286560c",
+   "fair_u_audit": 3.399681954001909,
+   "kumo_l_u": 5.44251747143404,
+   "best_external_u": 5.44251747143404,
+   "probe_base_u": 1.4668258658778657,
+   "probe_ft_u": 3.3186118717699604,
+   "delta": 1.8517860058920947,
+   "family_contexts": 5
+  },
+  "0a05f8f58b55": {
+   "family": "469b72b7",
+   "fair_u_audit": 2.827387089215927,
+   "kumo_l_u": 3.6662521748526617,
+   "best_external_u": 3.6662521748526617,
+   "probe_base_u": 1.5029201537476504,
+   "probe_ft_u": 2.0136007239843914,
+   "delta": 0.510680570236741,
+   "family_contexts": 5
+  },
+  "498fc9a0b029": {
+   "family": "ce33f2a8",
+   "fair_u_audit": 1.1689978956561986,
+   "kumo_l_u": 1.4906918999267949,
+   "best_external_u": 2.3437549280307457,
+   "probe_base_u": -0.8881904567313966,
+   "probe_ft_u": -0.6907562657956088,
+   "delta": 0.19743419093578785,
+   "family_contexts": 5
+  },
+  "1b770a1e9840": {
+   "family": "769243ee",
+   "fair_u_audit": 4.508905655397621,
+   "kumo_l_u": 4.080827445552659,
+   "best_external_u": 4.511675362680204,
+   "probe_base_u": 4.412934567513338,
+   "probe_ft_u": 4.415409671754806,
+   "delta": 0.002475104241468351,
+   "family_contexts": 5
+  },
+  "05264057bc22": {
+   "family": "90a58676",
+   "fair_u_audit": 0.7129122282747449,
+   "kumo_l_u": 0.7754439422991505,
+   "best_external_u": 0.7754439422991505,
+   "probe_base_u": 0.6806715357225418,
+   "probe_ft_u": 0.6753608749867867,
+   "delta": -0.005310660735755146,
+   "family_contexts": 5
+  },
+  "15e9e1e67bb6": {
+   "family": "60b608db",
+   "fair_u_audit": 0.49148175188556714,
+   "kumo_l_u": 0.4880463737056399,
+   "best_external_u": 0.5312614610493596,
+   "probe_base_u": 0.2980355602891767,
+   "probe_ft_u": 0.28981875269720314,
+   "delta": -0.008216807591973574,
+   "family_contexts": 5
+  },
+  "23e1d8c03439": {
+   "family": "598bbb77",
+   "fair_u_audit": 0.6625169997694327,
+   "kumo_l_u": 0.7423327699409101,
+   "best_external_u": 0.7423327699409101,
+   "probe_base_u": 0.550844849466297,
+   "probe_ft_u": 0.5351511022882915,
+   "delta": -0.015693747178005424,
+   "family_contexts": 5
+  },
+  "b1a5c1a1fc92": {
+   "family": "866f66b1",
+   "fair_u_audit": 1.112346622008284,
+   "kumo_l_u": 1.8389370512672687,
+   "best_external_u": 1.8957728244718912,
+   "probe_base_u": 1.6452415371573963,
+   "probe_ft_u": 1.6172303893055633,
+   "delta": -0.028011147851833007,
+   "family_contexts": 1
+  },
+  "0b07774cc5e5": {
+   "family": "9f338db6",
+   "fair_u_audit": 1.121408644203306,
+   "kumo_l_u": 1.1894438487854377,
+   "best_external_u": 1.1894438487854377,
+   "probe_base_u": 0.22334429866706507,
+   "probe_ft_u": 0.19205891769328828,
+   "delta": -0.03128538097377678,
+   "family_contexts": 5
+  },
+  "640522f13fee": {
+   "family": "538e6406",
+   "fair_u_audit": 3.037751298831566,
+   "kumo_l_u": 3.1039472706716564,
+   "best_external_u": 3.1039472706716564,
+   "probe_base_u": 2.985770605983834,
+   "probe_ft_u": 2.82974375895926,
+   "delta": -0.1560268470245738,
+   "family_contexts": 5
+  }
+ },
+ "rows": [
+  {
+   "scenario": "fair champion as it is (re-inserted)",
+   "elo": 1823.1,
+   "kumo_l_in_fit": 2075.8,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 285.8,
+   "family_mean_u": 1.6737
+  },
+  {
+   "scenario": "A. line 45's delta added on its own two contexts of 4286 and 469b only",
+   "elo": 1825.6,
+   "kumo_l_in_fit": 2075.7,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 287.0,
+   "family_mean_u": 1.6986
+  },
+  {
+   "scenario": "B. the same on the three contexts line 45 gained on (4286, 469b, ce33)",
+   "elo": 1828.4,
+   "kumo_l_in_fit": 2075.9,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 287.6,
+   "family_mean_u": 1.7007
+  },
+  {
+   "scenario": "C. the two deltas on EVERY context of families 4286 and 469b (optimistic transfer)",
+   "elo": 1849.1,
+   "kumo_l_in_fit": 2073.1,
+   "rank_of_34": 6,
+   "games_vs_22_externals_of_418": 297.6,
+   "family_mean_u": 1.7981
+  },
+  {
+   "scenario": "D. always-on: all ten line-45 deltas, losses included, on their ten contexts",
+   "elo": 1815.2,
+   "kumo_l_in_fit": 2075.6,
+   "rank_of_34": 8,
+   "games_vs_22_externals_of_418": 284.0,
+   "family_mean_u": 1.697
+  },
+  {
+   "scenario": "E. LEVEL, not delta: the two contexts set to max(fair u, the fine-tune stack's u on fresh rows)",
+   "elo": 1823.1,
+   "kumo_l_in_fit": 2075.8,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 285.8,
+   "family_mean_u": 1.6737
+  },
+  {
+   "scenario": "F. ceiling: best in field on every context of families 4286 and 469b",
+   "elo": 1852.9,
+   "kumo_l_in_fit": 2070.4,
+   "rank_of_34": 6,
+   "games_vs_22_externals_of_418": 299.2,
+   "family_mean_u": 1.7682
+  }
+ ]
+}

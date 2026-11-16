@@ -1,0 +1,4526 @@
+{
+ "schema": "jope.h458.elo_report_addendum/v1",
+ "bundle_generated_utc": "2026-11-14T23:14:18Z",
+ "reader_checked_on_h450_arms": 236,
+ "sources": {
+  "H450/diag_results/fleet_x1_ms_0000k/H450_DEV91.json": {
+   "sha256": "16baae076e208a095865cd95b79cbe49789edc3b14d02feff9972344fb5fe1b0",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T03:30Z"
+  },
+  "H450/diag_results/fleet_x1_ms_4525k/H450_DEV91.json": {
+   "sha256": "84d75f83bfa661abba378f21e0a33d3cbbfbe6b139a68a707d0f6c57d7f2d75f",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T05:37Z"
+  },
+  "H450/diag_results/fleet_x1_ms_4825k/H450_DEV91.json": {
+   "sha256": "9d7d76a39c44edf149e4ff421ad60f4a14ebaa0008600c1097e72a39c3620054",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T06:08Z"
+  },
+  "H450/diag_results/fleet_x1_ms_5125k/H450_DEV91.json": {
+   "sha256": "ac55b78281e6a07727eb5b96f41d106f9263f43f6d3ef0805b751d3378055571",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T06:41Z"
+  },
+  "H450/diag_results/fleet_x1_ms_5425k/H450_DEV91.json": {
+   "sha256": "899f6ce78e9a4c74342ab402ac77d41e1ad481ca02c3ea31bd48255ea6b4f794",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T07:15Z"
+  },
+  "H450/diag_results/fleet_x1_ms_5775k/H450_DEV91.json": {
+   "sha256": "2c518d1f1203686456074666212b723fe49025f98a1735d903ead1e473ae842a",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T07:44Z"
+  },
+  "H450/diag_results/fleet_x1_ms_6075k/H450_DEV91.json": {
+   "sha256": "a8effac5e8915a857b732df14aa2552ae70e9ebd5ab0b61af25ab9c8d2a6eff5",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T08:08Z"
+  },
+  "H450/diag_results/fleet_x1_ms_6325k/H450_DEV91.json": {
+   "sha256": "db7b60f4533352a81f544b2f28e841422bf5a4aaf45b95d0cc3636ff1ff16b3e",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T08:36Z"
+  },
+  "H450/diag_results/fleet_x1_ms_6600k/H450_DEV91.json": {
+   "sha256": "d87bad1d7915cabb8aa17fdfc5e9c259489c9339b21245fd6450ae967023726b",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T09:05Z"
+  },
+  "H450/diag_results/fleet_x1_ms_6900k/H450_DEV91.json": {
+   "sha256": "b704c9cf7272944f75aa615979a8c8fb7d138cca8efe2a99ef99837a7b0d53a9",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T09:34Z"
+  },
+  "H450/diag_results/fleet_x1_ms_7200k/H450_DEV91.json": {
+   "sha256": "db3bfbb11d59197f682584ade66e1d43819a6c09f1f37a8cacbbb6d06c7bbbf0",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T10:03Z"
+  },
+  "H450/diag_results/fleet_x1_ms_7500k/H450_DEV91.json": {
+   "sha256": "699d0d4cc606b7dc8164304ff8f79282e98faac3d24189453b89cfb3baf994a1",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T10:31Z"
+  },
+  "H450/diag_results/fleet_x1_ms_7775k/H450_DEV91.json": {
+   "sha256": "ac730bc0c6e3d9a2cd9d259d2f9e7d5c5b0bc0f92f63ad1224899e6849d94734",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T10:55Z"
+  },
+  "H450/diag_results/fleet_x1_ms_8050k/H450_DEV91.json": {
+   "sha256": "aab4aa0e4517eb2a49fb684493119211070ea4f3d94c97e11cd50f6ecd4ae7e1",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T11:18Z"
+  },
+  "H450/diag_results/fleet_x1_ms_8300k/H450_DEV91.json": {
+   "sha256": "95470b5a9fa45a480bf3e949d18e23e16d2dab43e8f20e9e7f0e26f759898b21",
+   "arms": 3,
+   "mtime_utc": "2026-11-13T11:43Z"
+  },
+  "H450/diag_results/fleet_x1_solo_ep186/H450_DEV91.json": {
+   "sha256": "46a7ec798a3e3b5496c1fcff61219a0596130526733395e15ec3154c7b45b5a3",
+   "arms": 4,
+   "mtime_utc": "2026-11-13T16:21Z"
+  },
+  "H450/diag_results/fleet_x1_v4_init_ctrl/H450_DEV91.json": {
+   "sha256": "8db11820595984936fdf89f88e9f1023f565ec28f5a8d3fa593724d92b6c812a",
+   "arms": 4,
+   "mtime_utc": "2026-11-13T14:34Z"
+  },
+  "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json": {
+   "sha256": "1c6e1cef604c9ea40b2d67998b3d331f916f5dd0989e9701b8fd757e95fd0a5f",
+   "arms": 7,
+   "mtime_utc": "2026-11-13T13:13Z"
+  },
+  "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json": {
+   "sha256": "4cb91c704e5e8ca56a18a6a9c7b452cc9aa357337e70c9108836159fd21d4687",
+   "arms": 7,
+   "mtime_utc": "2026-11-13T05:16Z"
+  }
+ },
+ "arms": [
+  {
+   "file": "H450/diag_results/fleet_x1_ms_0000k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1621.0128101789514,
+   "ci95": [
+    1484.5365635225878,
+    1772.6598566520213
+   ],
+   "family_mean_u": 1.4999510085293566,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -63.058839785350074,
+    "vs_h416.SXB": -140.29476793215144,
+    "vs_h448.APEX_FAIR_CHAMPION": -202.5830168000232,
+    "vs_kumo_tabular_large_e8.v1": -450.73492147927254,
+    "vs_kumo_tabular_small_e8.v1": -280.82505041626223,
+    "vs_tabfm_ensemble.v1": -297.43581046361123
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     10,
+     0,
+     9
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.059256372318453064,
+    "h416.SXB": -0.12173306431561712,
+    "h448.APEX_FAIR_CHAMPION": -0.17378760894808795,
+    "kumo_tabular_large_e8.v1": -0.4356259513654024,
+    "kumo_tabular_small_e8.v1": -0.28556628818757746,
+    "tabfm_ensemble.v1": -0.26757780091741085
+   },
+   "kumo_l_in_fit": 2071.747731658224,
+   "mtime": 1794540625,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_0000k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1677.3949289814327,
+   "ci95": [
+    1522.6938808249015,
+    1844.4347398022378
+   ],
+   "family_mean_u": 1.5105244928545851,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -5.122869634430572,
+    "vs_h416.SXB": -83.1030006168935,
+    "vs_h448.APEX_FAIR_CHAMPION": -146.49351600391196,
+    "vs_kumo_tabular_large_e8.v1": -397.96129895762897,
+    "vs_kumo_tabular_small_e8.v1": -225.9771257235775,
+    "vs_tabfm_ensemble.v1": -241.24124014258632
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.048682887993224316,
+    "h416.SXB": -0.11115957999038836,
+    "h448.APEX_FAIR_CHAMPION": -0.16321412462285925,
+    "kumo_tabular_large_e8.v1": -0.42505246704017347,
+    "kumo_tabular_small_e8.v1": -0.2749928038623486,
+    "tabfm_ensemble.v1": -0.25700431659218215
+   },
+   "kumo_l_in_fit": 2075.3562279390617,
+   "mtime": 1794540625,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_0000k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1788.0287020353444,
+   "ci95": [
+    1671.053997236384,
+    1953.8052648076684
+   ],
+   "family_mean_u": 1.7038540025252769,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 106.7431410984791,
+    "vs_h416.SXB": 26.08607446998394,
+    "vs_h448.APEX_FAIR_CHAMPION": -36.876462094892304,
+    "vs_kumo_tabular_large_e8.v1": -290.1031659254145,
+    "vs_kumo_tabular_small_e8.v1": -117.46300712285665,
+    "vs_tabfm_ensemble.v1": -131.98028858812722
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14464662167746736,
+    "h416.SXB": 0.08216992968030329,
+    "h448.APEX_FAIR_CHAMPION": 0.03011538504783244,
+    "kumo_tabular_large_e8.v1": -0.23172295736948184,
+    "kumo_tabular_small_e8.v1": -0.081663294191657,
+    "tabfm_ensemble.v1": -0.06367480692149044
+   },
+   "kumo_l_in_fit": 2078.131867960759,
+   "mtime": 1794540625,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4525k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1621.8622338795005,
+   "ci95": [
+    1479.1799717246577,
+    1775.848525176726
+   ],
+   "family_mean_u": 1.4963848085335003,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -61.846610228782765,
+    "vs_h416.SXB": -139.654184170711,
+    "vs_h448.APEX_FAIR_CHAMPION": -203.34408710804587,
+    "vs_kumo_tabular_large_e8.v1": -450.65672058113864,
+    "vs_kumo_tabular_small_e8.v1": -279.28452811855595,
+    "vs_tabfm_ensemble.v1": -294.5565120127228
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06282257231430932,
+    "h416.SXB": -0.12529926431147337,
+    "h448.APEX_FAIR_CHAMPION": -0.17735380894394417,
+    "kumo_tabular_large_e8.v1": -0.43919215136125855,
+    "kumo_tabular_small_e8.v1": -0.2891324881834337,
+    "tabfm_ensemble.v1": -0.27114400091326707
+   },
+   "kumo_l_in_fit": 2072.518954460639,
+   "mtime": 1794548233,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4525k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1678.5538241817194,
+   "ci95": [
+    1517.5272365005949,
+    1850.3743169816435
+   ],
+   "family_mean_u": 1.5098597724855025,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -3.1625983752444427,
+    "vs_h416.SXB": -82.48143361198163,
+    "vs_h448.APEX_FAIR_CHAMPION": -145.85239217770368,
+    "vs_kumo_tabular_large_e8.v1": -397.7352616934222,
+    "vs_kumo_tabular_small_e8.v1": -226.12860651164397,
+    "vs_tabfm_ensemble.v1": -240.548238444881
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     5,
+     0,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.049347608362307,
+    "h416.SXB": -0.1118243003594711,
+    "h448.APEX_FAIR_CHAMPION": -0.1638788449919419,
+    "kumo_tabular_large_e8.v1": -0.4257171874092561,
+    "kumo_tabular_small_e8.v1": -0.27565752423143125,
+    "tabfm_ensemble.v1": -0.2576690369612648
+   },
+   "kumo_l_in_fit": 2076.2890858751416,
+   "mtime": 1794548233,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4525k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1784.8878261443792,
+   "ci95": [
+    1668.7492584475303,
+    1951.449508247047
+   ],
+   "family_mean_u": 1.69986648553912,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 104.00186179102093,
+    "vs_h416.SXB": 22.741886878804735,
+    "vs_h448.APEX_FAIR_CHAMPION": -39.71374444402818,
+    "vs_kumo_tabular_large_e8.v1": -292.6725096324881,
+    "vs_kumo_tabular_small_e8.v1": -120.08557060346448,
+    "vs_tabfm_ensemble.v1": -133.95574611138
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     8
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14065910469131018,
+    "h416.SXB": 0.07818241269414611,
+    "h448.APEX_FAIR_CHAMPION": 0.02612786806167528,
+    "kumo_tabular_large_e8.v1": -0.23571047435563897,
+    "kumo_tabular_small_e8.v1": -0.08565081117781415,
+    "tabfm_ensemble.v1": -0.06766232390764759
+   },
+   "kumo_l_in_fit": 2077.5603357768673,
+   "mtime": 1794548233,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4825k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1620.3128533389902,
+   "ci95": [
+    1476.5861850769286,
+    1776.7873409938584
+   ],
+   "family_mean_u": 1.490389983965963,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -62.963510268773916,
+    "vs_h416.SXB": -140.69330954193424,
+    "vs_h448.APEX_FAIR_CHAMPION": -203.76981858997897,
+    "vs_kumo_tabular_large_e8.v1": -453.05533096807335,
+    "vs_kumo_tabular_small_e8.v1": -281.3765334682248,
+    "vs_tabfm_ensemble.v1": -296.66486308185245
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06881739688184683,
+    "h416.SXB": -0.1312940888790109,
+    "h448.APEX_FAIR_CHAMPION": -0.18334863351148167,
+    "kumo_tabular_large_e8.v1": -0.44518697592879614,
+    "kumo_tabular_small_e8.v1": -0.2951273127509712,
+    "tabfm_ensemble.v1": -0.2771388254808046
+   },
+   "kumo_l_in_fit": 2073.3681843070635,
+   "mtime": 1794550113,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4825k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1673.0622278171413,
+   "ci95": [
+    1512.8161344656476,
+    1849.5175869312066
+   ],
+   "family_mean_u": 1.49862414873528,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -9.019141175469485,
+    "vs_h416.SXB": -88.19898936122536,
+    "vs_h448.APEX_FAIR_CHAMPION": -150.8996386265594,
+    "vs_kumo_tabular_large_e8.v1": -402.7499521384834,
+    "vs_kumo_tabular_small_e8.v1": -231.15813904973243,
+    "vs_tabfm_ensemble.v1": -246.00709164116552
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     8,
+     0,
+     11
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06058323211252949,
+    "h416.SXB": -0.12305992410969357,
+    "h448.APEX_FAIR_CHAMPION": -0.17511446874216438,
+    "kumo_tabular_large_e8.v1": -0.43695281115947876,
+    "kumo_tabular_small_e8.v1": -0.28689314798165383,
+    "tabfm_ensemble.v1": -0.26890466071148733
+   },
+   "kumo_l_in_fit": 2075.8121799556247,
+   "mtime": 1794550113,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_4825k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1787.8284875054924,
+   "ci95": [
+    1672.2592336624132,
+    1952.0352465993838
+   ],
+   "family_mean_u": 1.7010829911371705,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 107.18346450890431,
+    "vs_h416.SXB": 25.921071522187503,
+    "vs_h448.APEX_FAIR_CHAMPION": -35.989089820282516,
+    "vs_kumo_tabular_large_e8.v1": -289.86023586397823,
+    "vs_kumo_tabular_small_e8.v1": -116.84634045326584,
+    "vs_tabfm_ensemble.v1": -131.55926064208006
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     13,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     1,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1418756102893606,
+    "h416.SXB": 0.0793989182921965,
+    "h448.APEX_FAIR_CHAMPION": 0.027344373659725675,
+    "kumo_tabular_large_e8.v1": -0.23449396875758863,
+    "kumo_tabular_small_e8.v1": -0.08443430557976374,
+    "tabfm_ensemble.v1": -0.06644581830959721
+   },
+   "kumo_l_in_fit": 2077.6887233694706,
+   "mtime": 1794550113,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5125k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1617.7764779965717,
+   "ci95": [
+    1476.5134797025955,
+    1770.3728206746714
+   ],
+   "family_mean_u": 1.4890945994318763,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -65.974930061333,
+    "vs_h416.SXB": -143.84777916234225,
+    "vs_h448.APEX_FAIR_CHAMPION": -206.89687254649516,
+    "vs_kumo_tabular_large_e8.v1": -456.15756897226424,
+    "vs_kumo_tabular_small_e8.v1": -283.88157789305774,
+    "vs_tabfm_ensemble.v1": -298.9727958054284
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     2,
+     0,
+     17
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07011278141593341,
+    "h416.SXB": -0.13258947341309751,
+    "h448.APEX_FAIR_CHAMPION": -0.18464401804556835,
+    "kumo_tabular_large_e8.v1": -0.44648236046288253,
+    "kumo_tabular_small_e8.v1": -0.29642269728505777,
+    "tabfm_ensemble.v1": -0.2784342100148912
+   },
+   "kumo_l_in_fit": 2073.934046968836,
+   "mtime": 1794552094,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5125k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1667.5027564605343,
+   "ci95": [
+    1511.1706828394251,
+    1837.220335973773
+   ],
+   "family_mean_u": 1.4950115246052482,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -15.31541109132013,
+    "vs_h416.SXB": -92.81628361374965,
+    "vs_h448.APEX_FAIR_CHAMPION": -155.85030562403063,
+    "vs_kumo_tabular_large_e8.v1": -407.74756363163215,
+    "vs_kumo_tabular_small_e8.v1": -236.7503352624949,
+    "vs_tabfm_ensemble.v1": -250.97627481255495
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     10,
+     0,
+     9
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06419585624256129,
+    "h416.SXB": -0.12667254823972537,
+    "h448.APEX_FAIR_CHAMPION": -0.17872709287219624,
+    "kumo_tabular_large_e8.v1": -0.44056543528951053,
+    "kumo_tabular_small_e8.v1": -0.29050577211168566,
+    "tabfm_ensemble.v1": -0.2725172848415191
+   },
+   "kumo_l_in_fit": 2075.2503200921665,
+   "mtime": 1794552094,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5125k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1782.8535719377198,
+   "ci95": [
+    1667.6126059861067,
+    1948.7586294666341
+   ],
+   "family_mean_u": 1.6955590631571464,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 101.98695159067825,
+    "vs_h416.SXB": 20.73623411227163,
+    "vs_h448.APEX_FAIR_CHAMPION": -42.24537694144715,
+    "vs_kumo_tabular_large_e8.v1": -294.6653644427122,
+    "vs_kumo_tabular_small_e8.v1": -122.08060381650739,
+    "vs_tabfm_ensemble.v1": -136.16386119869026
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     10,
+     0,
+     9
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.13635168230933684,
+    "h416.SXB": 0.07387499031217272,
+    "h448.APEX_FAIR_CHAMPION": 0.02182044567970191,
+    "kumo_tabular_large_e8.v1": -0.24001789673761237,
+    "kumo_tabular_small_e8.v1": -0.08995823355978752,
+    "tabfm_ensemble.v1": -0.07196974628962098
+   },
+   "kumo_l_in_fit": 2077.518936380432,
+   "mtime": 1794552094,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5425k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1608.8744034944182,
+   "ci95": [
+    1462.6962245197624,
+    1765.826039676325
+   ],
+   "family_mean_u": 1.471760041103694,
+   "rank33": 16,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -74.6741345400817,
+    "vs_h416.SXB": -152.82849426883354,
+    "vs_h448.APEX_FAIR_CHAMPION": -215.8871596064298,
+    "vs_kumo_tabular_large_e8.v1": -464.75476700917056,
+    "vs_kumo_tabular_small_e8.v1": -292.2881149962732,
+    "vs_tabfm_ensemble.v1": -307.5856901760792
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     5,
+     0,
+     14
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.0874473397441156,
+    "h416.SXB": -0.14992403174127972,
+    "h448.APEX_FAIR_CHAMPION": -0.20197857637375052,
+    "kumo_tabular_large_e8.v1": -0.46381691879106485,
+    "kumo_tabular_small_e8.v1": -0.3137572556132399,
+    "tabfm_ensemble.v1": -0.2957687683430734
+   },
+   "kumo_l_in_fit": 2073.6291705035887,
+   "mtime": 1794554106,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5425k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1663.0792582391161,
+   "ci95": [
+    1507.024444898454,
+    1835.1731121463881
+   ],
+   "family_mean_u": 1.4868162266146558,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -19.79168244061725,
+    "vs_h416.SXB": -97.46866189114576,
+    "vs_h448.APEX_FAIR_CHAMPION": -161.0879117574491,
+    "vs_kumo_tabular_large_e8.v1": -410.9993521919321,
+    "vs_kumo_tabular_small_e8.v1": -240.52060288723828,
+    "vs_tabfm_ensemble.v1": -254.52129548649827
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     10,
+     0,
+     9
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07239115423315373,
+    "h416.SXB": -0.1348678462303178,
+    "h448.APEX_FAIR_CHAMPION": -0.1869223908627887,
+    "kumo_tabular_large_e8.v1": -0.4487607332801029,
+    "kumo_tabular_small_e8.v1": -0.2987010701022781,
+    "tabfm_ensemble.v1": -0.2807125828321116
+   },
+   "kumo_l_in_fit": 2074.078610431048,
+   "mtime": 1794554106,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5425k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1784.0782426843923,
+   "ci95": [
+    1668.157073727242,
+    1948.4987240145772
+   ],
+   "family_mean_u": 1.7017841611216789,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.15891231193586,
+    "vs_h416.SXB": 21.577551798553714,
+    "vs_h448.APEX_FAIR_CHAMPION": -41.60201417838584,
+    "vs_kumo_tabular_large_e8.v1": -293.89960441346034,
+    "vs_kumo_tabular_small_e8.v1": -121.28255856538317,
+    "vs_tabfm_ensemble.v1": -135.58310812351283
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     8,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14257678027386902,
+    "h416.SXB": 0.08010008827670491,
+    "h448.APEX_FAIR_CHAMPION": 0.028045543644234103,
+    "kumo_tabular_large_e8.v1": -0.23379279877308018,
+    "kumo_tabular_small_e8.v1": -0.08373313559525533,
+    "tabfm_ensemble.v1": -0.06574464832508878
+   },
+   "kumo_l_in_fit": 2077.9778470978526,
+   "mtime": 1794554106,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1621.4864705726834,
+   "ci95": [
+    1474.6593377899085,
+    1775.63596130805
+   ],
+   "family_mean_u": 1.4820827230353182,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -62.231267962131824,
+    "vs_h416.SXB": -139.8001336620107,
+    "vs_h448.APEX_FAIR_CHAMPION": -203.0462231008853,
+    "vs_kumo_tabular_large_e8.v1": -452.1244931286026,
+    "vs_kumo_tabular_small_e8.v1": -280.4636629367544,
+    "vs_tabfm_ensemble.v1": -295.31784405889493
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07712465781249114,
+    "h416.SXB": -0.13960134980965525,
+    "h448.APEX_FAIR_CHAMPION": -0.19165589444212608,
+    "kumo_tabular_large_e8.v1": -0.45349423685944035,
+    "kumo_tabular_small_e8.v1": -0.30343457368161547,
+    "tabfm_ensemble.v1": -0.285446086411449
+   },
+   "kumo_l_in_fit": 2073.610963701286,
+   "mtime": 1794555887,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1675.2689513658722,
+   "ci95": [
+    1514.647057020827,
+    1848.0781954082645
+   ],
+   "family_mean_u": 1.4908997617926119,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -6.617353678297604,
+    "vs_h416.SXB": -84.96749092236178,
+    "vs_h448.APEX_FAIR_CHAMPION": -148.47049753656574,
+    "vs_kumo_tabular_large_e8.v1": -400.0686968734874,
+    "vs_kumo_tabular_small_e8.v1": -228.1053657940613,
+    "vs_tabfm_ensemble.v1": -242.93459770851837
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     10,
+     0,
+     9
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     1,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.0683076190551977,
+    "h416.SXB": -0.13078431105236177,
+    "h448.APEX_FAIR_CHAMPION": -0.18283885568483255,
+    "kumo_tabular_large_e8.v1": -0.44467719810214684,
+    "kumo_tabular_small_e8.v1": -0.2946175349243221,
+    "tabfm_ensemble.v1": -0.27662904765415547
+   },
+   "kumo_l_in_fit": 2075.3376482393596,
+   "mtime": 1794555887,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_5775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1782.154494420041,
+   "ci95": [
+    1666.0614252920925,
+    1948.3280316361725
+   ],
+   "family_mean_u": 1.6992933904887038,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 101.30955317367307,
+    "vs_h416.SXB": 19.742743262698013,
+    "vs_h448.APEX_FAIR_CHAMPION": -42.55450000563587,
+    "vs_kumo_tabular_large_e8.v1": -295.3295260700761,
+    "vs_kumo_tabular_small_e8.v1": -123.15557382320594,
+    "vs_tabfm_ensemble.v1": -137.03855684823566
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     8
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14008600964089393,
+    "h416.SXB": 0.0776093176437299,
+    "h448.APEX_FAIR_CHAMPION": 0.02555477301125906,
+    "kumo_tabular_large_e8.v1": -0.23628356940605522,
+    "kumo_tabular_small_e8.v1": -0.08622390622823037,
+    "tabfm_ensemble.v1": -0.06823541895806383
+   },
+   "kumo_l_in_fit": 2077.484020490117,
+   "mtime": 1794555887,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6075k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1614.3607608873488,
+   "ci95": [
+    1471.3541522547541,
+    1768.3323283144643
+   ],
+   "family_mean_u": 1.4580164673623113,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -70.17452204453389,
+    "vs_h416.SXB": -148.6613835617295,
+    "vs_h448.APEX_FAIR_CHAMPION": -211.74736053726338,
+    "vs_kumo_tabular_large_e8.v1": -460.2162731681626,
+    "vs_kumo_tabular_small_e8.v1": -287.7782387797836,
+    "vs_tabfm_ensemble.v1": -302.64066924954477
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.10119091348549798,
+    "h416.SXB": -0.1636676054826621,
+    "h448.APEX_FAIR_CHAMPION": -0.2157221501151329,
+    "kumo_tabular_large_e8.v1": -0.4775604925324471,
+    "kumo_tabular_small_e8.v1": -0.3275008293546223,
+    "tabfm_ensemble.v1": -0.3095123420844558
+   },
+   "kumo_l_in_fit": 2074.5770340555114,
+   "mtime": 1794557322,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6075k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1676.7149220835922,
+   "ci95": [
+    1514.8252526063663,
+    1847.2428918871358
+   ],
+   "family_mean_u": 1.486380702099325,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -5.4174912842340746,
+    "vs_h416.SXB": -84.58124466005575,
+    "vs_h448.APEX_FAIR_CHAMPION": -148.31719783732387,
+    "vs_kumo_tabular_large_e8.v1": -399.4302130055403,
+    "vs_kumo_tabular_small_e8.v1": -227.85723929818664,
+    "vs_tabfm_ensemble.v1": -242.27302232550778
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     3,
+     0,
+     16
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07282667874848463,
+    "h416.SXB": -0.13530337074564872,
+    "h448.APEX_FAIR_CHAMPION": -0.18735791537811952,
+    "kumo_tabular_large_e8.v1": -0.44919625779543376,
+    "kumo_tabular_small_e8.v1": -0.299136594617609,
+    "tabfm_ensemble.v1": -0.28114810734744244
+   },
+   "kumo_l_in_fit": 2076.1451350891325,
+   "mtime": 1794557322,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6075k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1784.0250683803097,
+   "ci95": [
+    1668.7962268376516,
+    1951.498750431492
+   ],
+   "family_mean_u": 1.6991360283926766,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.1512715727988,
+    "vs_h416.SXB": 21.740387687910697,
+    "vs_h448.APEX_FAIR_CHAMPION": -41.07431510579272,
+    "vs_kumo_tabular_large_e8.v1": -293.4699369668142,
+    "vs_kumo_tabular_small_e8.v1": -121.31575598627796,
+    "vs_tabfm_ensemble.v1": -134.77009004453043
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     10,
+     0,
+     9
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.13992864754486706,
+    "h416.SXB": 0.07745195554770294,
+    "h448.APEX_FAIR_CHAMPION": 0.025397410915232135,
+    "kumo_tabular_large_e8.v1": -0.23644093150208215,
+    "kumo_tabular_small_e8.v1": -0.0863812683242573,
+    "tabfm_ensemble.v1": -0.06839278105409073
+   },
+   "kumo_l_in_fit": 2077.495005347124,
+   "mtime": 1794557322,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6325k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1620.005325702395,
+   "ci95": [
+    1473.6787537923362,
+    1776.4621491529049
+   ],
+   "family_mean_u": 1.483138907484107,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -63.188531943922044,
+    "vs_h416.SXB": -142.32157887470612,
+    "vs_h448.APEX_FAIR_CHAMPION": -204.34985869962293,
+    "vs_kumo_tabular_large_e8.v1": -454.3903913060781,
+    "vs_kumo_tabular_small_e8.v1": -281.86561193650755,
+    "vs_tabfm_ensemble.v1": -298.03675612080906
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07606847336370251,
+    "h416.SXB": -0.13854516536086664,
+    "h448.APEX_FAIR_CHAMPION": -0.19059970999333745,
+    "kumo_tabular_large_e8.v1": -0.45243805241065177,
+    "kumo_tabular_small_e8.v1": -0.3023783892328269,
+    "tabfm_ensemble.v1": -0.2843899019626603
+   },
+   "kumo_l_in_fit": 2074.395717008473,
+   "mtime": 1794558967,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6325k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1672.379429956243,
+   "ci95": [
+    1510.1307316050882,
+    1845.5756559984209
+   ],
+   "family_mean_u": 1.4927303686103524,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -10.072425529442626,
+    "vs_h416.SXB": -89.93355818934833,
+    "vs_h448.APEX_FAIR_CHAMPION": -151.99948943548384,
+    "vs_kumo_tabular_large_e8.v1": -404.34970727867653,
+    "vs_kumo_tabular_small_e8.v1": -233.08748912141664,
+    "vs_tabfm_ensemble.v1": -247.96086903176024
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     1,
+     11
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06647701223745706,
+    "h416.SXB": -0.12895370423462116,
+    "h448.APEX_FAIR_CHAMPION": -0.181008248867092,
+    "kumo_tabular_large_e8.v1": -0.4428465912844063,
+    "kumo_tabular_small_e8.v1": -0.2927869281065814,
+    "tabfm_ensemble.v1": -0.27479844083641486
+   },
+   "kumo_l_in_fit": 2076.7291372349196,
+   "mtime": 1794558967,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6325k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1782.9859172592367,
+   "ci95": [
+    1668.018315928501,
+    1950.0239563794673
+   ],
+   "family_mean_u": 1.69912885312868,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 102.15520491419534,
+    "vs_h416.SXB": 20.905381714253508,
+    "vs_h448.APEX_FAIR_CHAMPION": -41.0244651011983,
+    "vs_kumo_tabular_large_e8.v1": -294.10183038976515,
+    "vs_kumo_tabular_small_e8.v1": -121.54776552718909,
+    "vs_tabfm_ensemble.v1": -135.41419400382165
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     10,
+     0,
+     9
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1399214722808705,
+    "h416.SXB": 0.07744478028370642,
+    "h448.APEX_FAIR_CHAMPION": 0.025390235651235594,
+    "kumo_tabular_large_e8.v1": -0.23644810676607872,
+    "kumo_tabular_small_e8.v1": -0.08638844358825382,
+    "tabfm_ensemble.v1": -0.06839995631808729
+   },
+   "kumo_l_in_fit": 2077.087747649002,
+   "mtime": 1794558967,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6600k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1602.9129778779588,
+   "ci95": [
+    1459.862464556413,
+    1753.770763537291
+   ],
+   "family_mean_u": 1.4602230414520136,
+   "rank33": 16,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -80.6647687653765,
+    "vs_h416.SXB": -159.81548053292158,
+    "vs_h448.APEX_FAIR_CHAMPION": -222.61716288311027,
+    "vs_kumo_tabular_large_e8.v1": -470.52715255834846,
+    "vs_kumo_tabular_small_e8.v1": -299.1193014010237,
+    "vs_tabfm_ensemble.v1": -314.43946376114127
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     5,
+     0,
+     14
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     2,
+     0,
+     17
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.09898433939579568,
+    "h416.SXB": -0.16146103139295967,
+    "h448.APEX_FAIR_CHAMPION": -0.21351557602543056,
+    "kumo_tabular_large_e8.v1": -0.4753539184427449,
+    "kumo_tabular_small_e8.v1": -0.32529425526492,
+    "tabfm_ensemble.v1": -0.30730576799475345
+   },
+   "kumo_l_in_fit": 2073.4401304363073,
+   "mtime": 1794560734,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6600k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1668.1459063207062,
+   "ci95": [
+    1506.7316315193436,
+    1837.7332570548513
+   ],
+   "family_mean_u": 1.481481782299669,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -14.714289225031507,
+    "vs_h416.SXB": -93.95907129633315,
+    "vs_h448.APEX_FAIR_CHAMPION": -157.08754502171269,
+    "vs_kumo_tabular_large_e8.v1": -408.3728938821055,
+    "vs_kumo_tabular_small_e8.v1": -237.52369434623483,
+    "vs_tabfm_ensemble.v1": -251.97931940030207
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07772559854814039,
+    "h416.SXB": -0.14020229054530448,
+    "h448.APEX_FAIR_CHAMPION": -0.19225683517777525,
+    "kumo_tabular_large_e8.v1": -0.45409517759508955,
+    "kumo_tabular_small_e8.v1": -0.30403551441726473,
+    "tabfm_ensemble.v1": -0.2860470271470982
+   },
+   "kumo_l_in_fit": 2076.5188002028117,
+   "mtime": 1794560734,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6600k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1774.6785922296544,
+   "ci95": [
+    1661.207687136932,
+    1934.4374896589898
+   ],
+   "family_mean_u": 1.6977832155484733,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 93.98730361454159,
+    "vs_h416.SXB": 13.097530087703717,
+    "vs_h448.APEX_FAIR_CHAMPION": -49.50643728509681,
+    "vs_kumo_tabular_large_e8.v1": -301.8242381277105,
+    "vs_kumo_tabular_small_e8.v1": -129.70530970896857,
+    "vs_tabfm_ensemble.v1": -143.15450922573086
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     9,
+     0,
+     10
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     3,
+     0,
+     16
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.13857583470066367,
+    "h416.SXB": 0.07609914270349956,
+    "h448.APEX_FAIR_CHAMPION": 0.024044598071028746,
+    "kumo_tabular_large_e8.v1": -0.23779374434628553,
+    "kumo_tabular_small_e8.v1": -0.08773408116846067,
+    "tabfm_ensemble.v1": -0.06974559389829413
+   },
+   "kumo_l_in_fit": 2076.502830357365,
+   "mtime": 1794560734,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6900k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1617.276557054739,
+   "ci95": [
+    1474.307811662137,
+    1769.056110296999
+   ],
+   "family_mean_u": 1.479815974178997,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -65.77116588631384,
+    "vs_h416.SXB": -145.4980918305489,
+    "vs_h448.APEX_FAIR_CHAMPION": -206.46849610325148,
+    "vs_kumo_tabular_large_e8.v1": -457.2065783130806,
+    "vs_kumo_tabular_small_e8.v1": -285.52387275575234,
+    "vs_tabfm_ensemble.v1": -300.4240626164376
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07939140666881248,
+    "h416.SXB": -0.14186809866597658,
+    "h448.APEX_FAIR_CHAMPION": -0.19392264329844738,
+    "kumo_tabular_large_e8.v1": -0.4557609857157616,
+    "kumo_tabular_small_e8.v1": -0.30570132253793675,
+    "tabfm_ensemble.v1": -0.28771283526777025
+   },
+   "kumo_l_in_fit": 2074.4831353678196,
+   "mtime": 1794562489,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6900k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1671.2957382961795,
+   "ci95": [
+    1511.7589087235995,
+    1842.4413155925015
+   ],
+   "family_mean_u": 1.4930918753284803,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -11.422760594874035,
+    "vs_h416.SXB": -91.31545128103176,
+    "vs_h448.APEX_FAIR_CHAMPION": -152.89689854540188,
+    "vs_kumo_tabular_large_e8.v1": -405.033344725598,
+    "vs_kumo_tabular_small_e8.v1": -234.21059035303574,
+    "vs_tabfm_ensemble.v1": -248.2315417986356
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     13,
+     0,
+     6
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06611550551932915,
+    "h416.SXB": -0.12859219751649326,
+    "h448.APEX_FAIR_CHAMPION": -0.18064674214896406,
+    "kumo_tabular_large_e8.v1": -0.44248508456627833,
+    "kumo_tabular_small_e8.v1": -0.29242542138845345,
+    "tabfm_ensemble.v1": -0.27443693411828696
+   },
+   "kumo_l_in_fit": 2076.3290830217775,
+   "mtime": 1794562489,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_6900k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1785.2671183231885,
+   "ci95": [
+    1669.400846785974,
+    1949.2274629712967
+   ],
+   "family_mean_u": 1.700210856304363,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 104.19126868211447,
+    "vs_h416.SXB": 22.913781345970847,
+    "vs_h448.APEX_FAIR_CHAMPION": -39.73153729235719,
+    "vs_kumo_tabular_large_e8.v1": -292.5479316867538,
+    "vs_kumo_tabular_small_e8.v1": -119.94014871060813,
+    "vs_tabfm_ensemble.v1": -133.81248319123347
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     13,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     8,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14100347545655323,
+    "h416.SXB": 0.07852678345938914,
+    "h448.APEX_FAIR_CHAMPION": 0.026472238826918317,
+    "kumo_tabular_large_e8.v1": -0.23536610359039598,
+    "kumo_tabular_small_e8.v1": -0.0853064404125711,
+    "tabfm_ensemble.v1": -0.06731795314240457
+   },
+   "kumo_l_in_fit": 2077.8150500099423,
+   "mtime": 1794562489,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7200k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1609.839163713656,
+   "ci95": [
+    1465.4637661905517,
+    1761.2751879152424
+   ],
+   "family_mean_u": 1.4715394218726037,
+   "rank33": 16,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -73.67738158294878,
+    "vs_h416.SXB": -153.4472913125437,
+    "vs_h448.APEX_FAIR_CHAMPION": -215.17731669206,
+    "vs_kumo_tabular_large_e8.v1": -464.1473964605243,
+    "vs_kumo_tabular_small_e8.v1": -292.751964496902,
+    "vs_tabfm_ensemble.v1": -308.0711692186944
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.08766795897520589,
+    "h416.SXB": -0.15014465097236998,
+    "h448.APEX_FAIR_CHAMPION": -0.2021991956048408,
+    "kumo_tabular_large_e8.v1": -0.46403753802215514,
+    "kumo_tabular_small_e8.v1": -0.31397787484433026,
+    "tabfm_ensemble.v1": -0.29598938757416365
+   },
+   "kumo_l_in_fit": 2073.9865601741803,
+   "mtime": 1794564182,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7200k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1663.663954739845,
+   "ci95": [
+    1507.2694537175707,
+    1830.379506876877
+   ],
+   "family_mean_u": 1.4838750984778248,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -19.651542132133727,
+    "vs_h416.SXB": -99.29494748233151,
+    "vs_h448.APEX_FAIR_CHAMPION": -160.76714092579573,
+    "vs_kumo_tabular_large_e8.v1": -412.4001331440754,
+    "vs_kumo_tabular_small_e8.v1": -241.55907509014696,
+    "vs_tabfm_ensemble.v1": -255.58202174419762
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07533228236998464,
+    "h416.SXB": -0.13780897436714867,
+    "h448.APEX_FAIR_CHAMPION": -0.18986351899961953,
+    "kumo_tabular_large_e8.v1": -0.45170186141693386,
+    "kumo_tabular_small_e8.v1": -0.3016421982391089,
+    "tabfm_ensemble.v1": -0.28365371096894243
+   },
+   "kumo_l_in_fit": 2076.0640878839204,
+   "mtime": 1794564182,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7200k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1784.7022339381942,
+   "ci95": [
+    1668.9560757010174,
+    1951.8868586565914
+   ],
+   "family_mean_u": 1.700176127330063,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.52111578934273,
+    "vs_h416.SXB": 22.89720159621993,
+    "vs_h448.APEX_FAIR_CHAMPION": -40.40812823948363,
+    "vs_kumo_tabular_large_e8.v1": -292.8141370287044,
+    "vs_kumo_tabular_small_e8.v1": -120.23966152043704,
+    "vs_tabfm_ensemble.v1": -134.10850732724862
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1409687464822534,
+    "h416.SXB": 0.0784920544850893,
+    "h448.APEX_FAIR_CHAMPION": 0.026437509852618467,
+    "kumo_tabular_large_e8.v1": -0.23540083256469582,
+    "kumo_tabular_small_e8.v1": -0.08534116938687095,
+    "tabfm_ensemble.v1": -0.06735268211670442
+   },
+   "kumo_l_in_fit": 2077.5163709668986,
+   "mtime": 1794564182,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7500k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1598.9570012295749,
+   "ci95": [
+    1454.9197306835824,
+    1750.6276410264568
+   ],
+   "family_mean_u": 1.462111569581503,
+   "rank33": 16,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -83.69209734863261,
+    "vs_h416.SXB": -163.44584502881548,
+    "vs_h448.APEX_FAIR_CHAMPION": -225.5343240791301,
+    "vs_kumo_tabular_large_e8.v1": -474.1839846601656,
+    "vs_kumo_tabular_small_e8.v1": -303.17880752766996,
+    "vs_tabfm_ensemble.v1": -318.082248851086
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.09709581126630674,
+    "h416.SXB": -0.15957250326347083,
+    "h448.APEX_FAIR_CHAMPION": -0.21162704789594167,
+    "kumo_tabular_large_e8.v1": -0.47346539031325585,
+    "kumo_tabular_small_e8.v1": -0.3234057271354311,
+    "tabfm_ensemble.v1": -0.30541723986526453
+   },
+   "kumo_l_in_fit": 2073.1409858897405,
+   "mtime": 1794565872,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7500k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1655.7820261410236,
+   "ci95": [
+    1499.9253330743584,
+    1822.7796293664185
+   ],
+   "family_mean_u": 1.4749480967393103,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -27.22140920573065,
+    "vs_h416.SXB": -106.97498024801575,
+    "vs_h448.APEX_FAIR_CHAMPION": -169.1430565532321,
+    "vs_kumo_tabular_large_e8.v1": -420.0641828454907,
+    "vs_kumo_tabular_small_e8.v1": -249.2154034519633,
+    "vs_tabfm_ensemble.v1": -263.2382577781191
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.08425928410849956,
+    "h416.SXB": -0.1467359761056636,
+    "h448.APEX_FAIR_CHAMPION": -0.19879052073813447,
+    "kumo_tabular_large_e8.v1": -0.4606288631554487,
+    "kumo_tabular_small_e8.v1": -0.31056919997762383,
+    "tabfm_ensemble.v1": -0.29258071270745734
+   },
+   "kumo_l_in_fit": 2075.8462089865143,
+   "mtime": 1794565872,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7500k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1782.2840899395956,
+   "ci95": [
+    1666.2877443338823,
+    1945.1250013684535
+   ],
+   "family_mean_u": 1.6986573074620308,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 101.05317539269095,
+    "vs_h416.SXB": 19.751275494294532,
+    "vs_h448.APEX_FAIR_CHAMPION": -43.2811926038853,
+    "vs_kumo_tabular_large_e8.v1": -295.40873808828064,
+    "vs_kumo_tabular_small_e8.v1": -122.78582799587525,
+    "vs_tabfm_ensemble.v1": -137.51464948372768
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1394499266142211,
+    "h416.SXB": 0.07697323461705703,
+    "h448.APEX_FAIR_CHAMPION": 0.024918689984586205,
+    "kumo_tabular_large_e8.v1": -0.23691965243272806,
+    "kumo_tabular_small_e8.v1": -0.08685998925490322,
+    "tabfm_ensemble.v1": -0.06887150198473668
+   },
+   "kumo_l_in_fit": 2077.692828027876,
+   "mtime": 1794565872,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1625.7953696228644,
+   "ci95": [
+    1478.4067218440307,
+    1783.339462888195
+   ],
+   "family_mean_u": 1.4797289895851347,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -58.15838095444542,
+    "vs_h416.SXB": -135.90978594984927,
+    "vs_h448.APEX_FAIR_CHAMPION": -198.46039784414347,
+    "vs_kumo_tabular_large_e8.v1": -447.5727062798012,
+    "vs_kumo_tabular_small_e8.v1": -276.60571795280543,
+    "vs_tabfm_ensemble.v1": -291.8935551528564
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     5,
+     0,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07947839126267468,
+    "h416.SXB": -0.14195508325983877,
+    "h448.APEX_FAIR_CHAMPION": -0.1940096278923096,
+    "kumo_tabular_large_e8.v1": -0.4558479703096239,
+    "kumo_tabular_small_e8.v1": -0.305788307131799,
+    "tabfm_ensemble.v1": -0.2877998198616325
+   },
+   "kumo_l_in_fit": 2073.3680759026656,
+   "mtime": 1794567314,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1677.4078704496378,
+   "ci95": [
+    1515.4349408182266,
+    1851.3148699889427
+   ],
+   "family_mean_u": 1.4866676262353518,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -4.9668075155195766,
+    "vs_h416.SXB": -83.33165163310423,
+    "vs_h448.APEX_FAIR_CHAMPION": -145.77269170729824,
+    "vs_kumo_tabular_large_e8.v1": -398.6621243357945,
+    "vs_kumo_tabular_small_e8.v1": -227.08795816736028,
+    "vs_tabfm_ensemble.v1": -241.93515884499493
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     1,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07253975461245768,
+    "h416.SXB": -0.1350164466096217,
+    "h448.APEX_FAIR_CHAMPION": -0.1870709912420926,
+    "kumo_tabular_large_e8.v1": -0.4489093336594068,
+    "kumo_tabular_small_e8.v1": -0.298849670481582,
+    "tabfm_ensemble.v1": -0.28086118321141545
+   },
+   "kumo_l_in_fit": 2076.0699947854323,
+   "mtime": 1794567314,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_7775k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1784.7884873488742,
+   "ci95": [
+    1668.3044187661565,
+    1950.2511617040382
+   ],
+   "family_mean_u": 1.700577349677974,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.87616370337469,
+    "vs_h416.SXB": 22.58579763543571,
+    "vs_h448.APEX_FAIR_CHAMPION": -39.372372210248614,
+    "vs_kumo_tabular_large_e8.v1": -292.5229514452162,
+    "vs_kumo_tabular_small_e8.v1": -119.92672626274907,
+    "vs_tabfm_ensemble.v1": -134.0113900902286
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     13,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     8,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.14136996883016412,
+    "h416.SXB": 0.07889327683300004,
+    "h448.APEX_FAIR_CHAMPION": 0.02683873220052921,
+    "kumo_tabular_large_e8.v1": -0.23499961021678506,
+    "kumo_tabular_small_e8.v1": -0.0849399470389602,
+    "tabfm_ensemble.v1": -0.06695145976879366
+   },
+   "kumo_l_in_fit": 2077.3114387940905,
+   "mtime": 1794567314,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8050k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1618.3088667039683,
+   "ci95": [
+    1471.9577527544789,
+    1771.8968415953386
+   ],
+   "family_mean_u": 1.4722187327764287,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -64.72030978079374,
+    "vs_h416.SXB": -144.0547708285867,
+    "vs_h448.APEX_FAIR_CHAMPION": -207.05785913235422,
+    "vs_kumo_tabular_large_e8.v1": -454.51586980798766,
+    "vs_kumo_tabular_small_e8.v1": -284.5914407905127,
+    "vs_tabfm_ensemble.v1": -300.33588572999133
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     5,
+     0,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.086988648071381,
+    "h416.SXB": -0.1494653400685451,
+    "h448.APEX_FAIR_CHAMPION": -0.20151988470101592,
+    "kumo_tabular_large_e8.v1": -0.4633582271183303,
+    "kumo_tabular_small_e8.v1": -0.3132985639405053,
+    "tabfm_ensemble.v1": -0.29531007667033876
+   },
+   "kumo_l_in_fit": 2072.824736511956,
+   "mtime": 1794568714,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8050k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1673.5843139740261,
+   "ci95": [
+    1513.671240545931,
+    1843.9991427657897
+   ],
+   "family_mean_u": 1.4828372924626714,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -7.667851536912849,
+    "vs_h416.SXB": -87.93623679434086,
+    "vs_h448.APEX_FAIR_CHAMPION": -151.5454662800487,
+    "vs_kumo_tabular_large_e8.v1": -402.0643475562722,
+    "vs_kumo_tabular_small_e8.v1": -231.54557331787123,
+    "vs_tabfm_ensemble.v1": -246.41478416360405
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     8,
+     0,
+     11
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     1,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07637008838513831,
+    "h416.SXB": -0.13884678038230244,
+    "h448.APEX_FAIR_CHAMPION": -0.19090132501477328,
+    "kumo_tabular_large_e8.v1": -0.4527396674320875,
+    "kumo_tabular_small_e8.v1": -0.30268000425426267,
+    "tabfm_ensemble.v1": -0.28469151698409617
+   },
+   "kumo_l_in_fit": 2075.6486615302983,
+   "mtime": 1794568714,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8050k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1786.832878827037,
+   "ci95": [
+    1669.970390384877,
+    1951.037283707651
+   ],
+   "family_mean_u": 1.701153748612768,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 105.41635911287767,
+    "vs_h416.SXB": 25.4002429189577,
+    "vs_h448.APEX_FAIR_CHAMPION": -38.23120476365989,
+    "vs_kumo_tabular_large_e8.v1": -291.07322522522327,
+    "vs_kumo_tabular_small_e8.v1": -118.45089855496894,
+    "vs_tabfm_ensemble.v1": -132.9661934369865
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     8
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     1,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1419463677649588,
+    "h416.SXB": 0.07946967576779473,
+    "h448.APEX_FAIR_CHAMPION": 0.027415131135323907,
+    "kumo_tabular_large_e8.v1": -0.23442321128199034,
+    "kumo_tabular_small_e8.v1": -0.08436354810416552,
+    "tabfm_ensemble.v1": -0.06637506083399897
+   },
+   "kumo_l_in_fit": 2077.90610405226,
+   "mtime": 1794568714,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8300k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1627.5684599953993,
+   "ci95": [
+    1475.8075034726935,
+    1783.7289131778366
+   ],
+   "family_mean_u": 1.4720669301766123,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -55.50829015530462,
+    "vs_h416.SXB": -135.32908432776594,
+    "vs_h448.APEX_FAIR_CHAMPION": -197.11812672167662,
+    "vs_kumo_tabular_large_e8.v1": -445.94984180022993,
+    "vs_kumo_tabular_small_e8.v1": -275.35157268709645,
+    "vs_tabfm_ensemble.v1": -290.6599350839706
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     8,
+     0,
+     11
+    ],
+    "h416.SXB": [
+     6,
+     0,
+     13
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.08714045067119722,
+    "h416.SXB": -0.14961714266836132,
+    "h448.APEX_FAIR_CHAMPION": -0.20167168730083213,
+    "kumo_tabular_large_e8.v1": -0.46351002971814653,
+    "kumo_tabular_small_e8.v1": -0.31345036654032155,
+    "tabfm_ensemble.v1": -0.29546187927015505
+   },
+   "kumo_l_in_fit": 2073.518301795629,
+   "mtime": 1794570239,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8300k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1680.8365217393505,
+   "ci95": [
+    1520.0141550950345,
+    1854.136902665967
+   ],
+   "family_mean_u": 1.4829415684059317,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -0.904319850565571,
+    "vs_h416.SXB": -80.55052947052104,
+    "vs_h448.APEX_FAIR_CHAMPION": -142.88576658596025,
+    "vs_kumo_tabular_large_e8.v1": -395.4833016923401,
+    "vs_kumo_tabular_small_e8.v1": -223.87272426140225,
+    "vs_tabfm_ensemble.v1": -239.15618071020162
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07626581244187795,
+    "h416.SXB": -0.138742504439042,
+    "h448.APEX_FAIR_CHAMPION": -0.19079704907151288,
+    "kumo_tabular_large_e8.v1": -0.4526353914888271,
+    "kumo_tabular_small_e8.v1": -0.30257572831100227,
+    "tabfm_ensemble.v1": -0.2845872410408357
+   },
+   "kumo_l_in_fit": 2076.3198234316906,
+   "mtime": 1794570239,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_ms_8300k/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1788.04756710958,
+   "ci95": [
+    1670.9295330945827,
+    1952.435194306323
+   ],
+   "family_mean_u": 1.6993626267742599,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 107.39165268078386,
+    "vs_h416.SXB": 27.076624107852695,
+    "vs_h448.APEX_FAIR_CHAMPION": -36.19621301595612,
+    "vs_kumo_tabular_large_e8.v1": -289.3743013929243,
+    "vs_kumo_tabular_small_e8.v1": -116.35071781960346,
+    "vs_tabfm_ensemble.v1": -131.49247746746323
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     13,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     8,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1401552459264504,
+    "h416.SXB": 0.0776785539292863,
+    "h448.APEX_FAIR_CHAMPION": 0.025624009296815464,
+    "kumo_tabular_large_e8.v1": -0.2362143331204988,
+    "kumo_tabular_small_e8.v1": -0.08615466994267396,
+    "tabfm_ensemble.v1": -0.06816618267250742
+   },
+   "kumo_l_in_fit": 2077.4218685025044,
+   "mtime": 1794570239,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_solo_ep186/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1601.6581004052223,
+   "ci95": [
+    1462.193743403032,
+    1757.8111346116532
+   ],
+   "family_mean_u": 1.4829655469189849,
+   "rank33": 16,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -81.48400424212787,
+    "vs_h416.SXB": -159.2977655042671,
+    "vs_h448.APEX_FAIR_CHAMPION": -221.61394264346654,
+    "vs_kumo_tabular_large_e8.v1": -470.41121343807754,
+    "vs_kumo_tabular_small_e8.v1": -299.536378404797,
+    "vs_tabfm_ensemble.v1": -313.1285928011239
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     7,
+     0,
+     12
+    ],
+    "h416.SXB": [
+     5,
+     0,
+     14
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07624183392882458,
+    "h416.SXB": -0.13871852592598866,
+    "h448.APEX_FAIR_CHAMPION": -0.19077307055845946,
+    "kumo_tabular_large_e8.v1": -0.4526114129757738,
+    "kumo_tabular_small_e8.v1": -0.3025517497979489,
+    "tabfm_ensemble.v1": -0.28456326252778236
+   },
+   "kumo_l_in_fit": 2072.0693138433,
+   "mtime": 1794586876,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_solo_ep186/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_legacy_guard_stack_91",
+   "entrant": "h450.FAST_104M_LEGACY_GUARD_STACK",
+   "elo": 1858.7775033001562,
+   "ci95": [
+    1725.820490239998,
+    2043.1125427704574
+   ],
+   "family_mean_u": 1.7266607486078622,
+   "rank33": 6,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 179.98133804514055,
+    "vs_h416.SXB": 100.98714753827039,
+    "vs_h448.APEX_FAIR_CHAMPION": 39.35658039282839,
+    "vs_kumo_tabular_large_e8.v1": -218.34839846160958,
+    "vs_kumo_tabular_small_e8.v1": -46.91560318414099,
+    "vs_tabfm_ensemble.v1": -62.005876073455056
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     18,
+     0,
+     1
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     15,
+     2,
+     2
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     6,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     5,
+     0,
+     14
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.16745336776005276,
+    "h416.SXB": 0.10497667576288867,
+    "h448.APEX_FAIR_CHAMPION": 0.05292213113041786,
+    "kumo_tabular_large_e8.v1": -0.20891621128689647,
+    "kumo_tabular_small_e8.v1": -0.05885654810907157,
+    "tabfm_ensemble.v1": -0.040868060838905026
+   },
+   "kumo_l_in_fit": 2077.125901761766,
+   "mtime": 1794586876,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_solo_ep186/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1665.3063644218666,
+   "ci95": [
+    1507.7981937131428,
+    1839.175442614197
+   ],
+   "family_mean_u": 1.4969891708527678,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -15.87652331158938,
+    "vs_h416.SXB": -94.30330116420919,
+    "vs_h448.APEX_FAIR_CHAMPION": -156.52350604452818,
+    "vs_kumo_tabular_large_e8.v1": -409.3132470235471,
+    "vs_kumo_tabular_small_e8.v1": -238.2045159817444,
+    "vs_tabfm_ensemble.v1": -251.76571466251676
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     5,
+     0,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06221820999504192,
+    "h416.SXB": -0.12469490199220602,
+    "h448.APEX_FAIR_CHAMPION": -0.1767494466246769,
+    "kumo_tabular_large_e8.v1": -0.4385877890419911,
+    "kumo_tabular_small_e8.v1": -0.28852812586416626,
+    "tabfm_ensemble.v1": -0.27053963859399976
+   },
+   "kumo_l_in_fit": 2074.6196114454137,
+   "mtime": 1794586876,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_solo_ep186/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1777.6155567568599,
+   "ci95": [
+    1656.6256665167205,
+    1952.0382201497991
+   ],
+   "family_mean_u": 1.7102534816249004,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 97.34099264588099,
+    "vs_h416.SXB": 15.57359651879733,
+    "vs_h448.APEX_FAIR_CHAMPION": -46.31424321180975,
+    "vs_kumo_tabular_large_e8.v1": -298.87780091412833,
+    "vs_kumo_tabular_small_e8.v1": -125.99804846421966,
+    "vs_tabfm_ensemble.v1": -139.62778543067634
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     16,
+     0,
+     3
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     8
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     9,
+     0,
+     10
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.151046100777091,
+    "h416.SXB": 0.0885694087799269,
+    "h448.APEX_FAIR_CHAMPION": 0.036514864147456076,
+    "kumo_tabular_large_e8.v1": -0.2253234782698582,
+    "kumo_tabular_small_e8.v1": -0.07526381509203334,
+    "tabfm_ensemble.v1": -0.05727532782186681
+   },
+   "kumo_l_in_fit": 2076.493357670988,
+   "mtime": 1794586876,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_v4_init_ctrl/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.FAST_104M_PURE_ICL",
+   "elo": 1628.12676630394,
+   "ci95": [
+    1485.4408671836004,
+    1781.1583780471121
+   ],
+   "family_mean_u": 1.4922081263637081,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -56.9117316917941,
+    "vs_h416.SXB": -134.13318700214018,
+    "vs_h448.APEX_FAIR_CHAMPION": -197.28436868887616,
+    "vs_kumo_tabular_large_e8.v1": -445.59284149154905,
+    "vs_kumo_tabular_small_e8.v1": -274.57062685873234,
+    "vs_tabfm_ensemble.v1": -291.1643922819519
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     9,
+     0,
+     10
+    ],
+    "h416.SXB": [
+     8,
+     0,
+     11
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     1,
+     0,
+     18
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.0669992544841012,
+    "h416.SXB": -0.12947594648126534,
+    "h448.APEX_FAIR_CHAMPION": -0.1815304911137361,
+    "kumo_tabular_large_e8.v1": -0.4433688335310504,
+    "kumo_tabular_small_e8.v1": -0.29330917035322546,
+    "tabfm_ensemble.v1": -0.275320683083059
+   },
+   "kumo_l_in_fit": 2073.719607795489,
+   "mtime": 1794580442,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_v4_init_ctrl/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_legacy_guard_stack_91",
+   "entrant": "h450.FAST_104M_LEGACY_GUARD_STACK",
+   "elo": 1856.3243358979057,
+   "ci95": [
+    1722.8108309533775,
+    2039.1039522972305
+   ],
+   "family_mean_u": 1.716859168252336,
+   "rank33": 6,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 176.92894967974075,
+    "vs_h416.SXB": 98.54834630805453,
+    "vs_h448.APEX_FAIR_CHAMPION": 36.56989112367319,
+    "vs_kumo_tabular_large_e8.v1": -220.78988138465138,
+    "vs_kumo_tabular_small_e8.v1": -49.761491656752014,
+    "vs_tabfm_ensemble.v1": -65.720729189454
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     18,
+     0,
+     1
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     15,
+     2,
+     2
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     6,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     5,
+     0,
+     14
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.15765178740452646,
+    "h416.SXB": 0.09517509540736238,
+    "h448.APEX_FAIR_CHAMPION": 0.04312055077489157,
+    "kumo_tabular_large_e8.v1": -0.21871779164242275,
+    "kumo_tabular_small_e8.v1": -0.06865812846459785,
+    "tabfm_ensemble.v1": -0.05066964119443129
+   },
+   "kumo_l_in_fit": 2077.114217282557,
+   "mtime": 1794580442,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_v4_init_ctrl/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1682.3242597562794,
+   "ci95": [
+    1526.2514020866754,
+    1852.5289963574248
+   ],
+   "family_mean_u": 1.5083743772522944,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -0.6038456751441572,
+    "vs_h416.SXB": -78.93287276928959,
+    "vs_h448.APEX_FAIR_CHAMPION": -142.35638177995452,
+    "vs_kumo_tabular_large_e8.v1": -393.90181057553855,
+    "vs_kumo_tabular_small_e8.v1": -222.29038559832884,
+    "vs_tabfm_ensemble.v1": -237.14300445460594
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     8,
+     0,
+     11
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     5,
+     0,
+     14
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.05083300359551513,
+    "h416.SXB": -0.11330969559267921,
+    "h448.APEX_FAIR_CHAMPION": -0.1653642402251501,
+    "kumo_tabular_large_e8.v1": -0.4272025826424643,
+    "kumo_tabular_small_e8.v1": -0.27714291946463937,
+    "tabfm_ensemble.v1": -0.2591544321944729
+   },
+   "kumo_l_in_fit": 2076.226070331818,
+   "mtime": 1794580442,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/fleet_x1_v4_init_ctrl/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.FAST_104M_EVERY_N_CHAMPION",
+   "elo": 1787.4858276451507,
+   "ci95": [
+    1670.4766894216923,
+    1954.5101113429207
+   ],
+   "family_mean_u": 1.7017107579830684,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 106.54726613034586,
+    "vs_h416.SXB": 25.911648627591376,
+    "vs_h448.APEX_FAIR_CHAMPION": -37.035359463043505,
+    "vs_kumo_tabular_large_e8.v1": -290.22016368189884,
+    "vs_kumo_tabular_small_e8.v1": -117.60470523352228,
+    "vs_tabfm_ensemble.v1": -131.9053786090501
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1425033771352587,
+    "h416.SXB": 0.08002668513809459,
+    "h448.APEX_FAIR_CHAMPION": 0.027972140505623782,
+    "kumo_tabular_large_e8.v1": -0.2338662019116905,
+    "kumo_tabular_small_e8.v1": -0.08380653873386563,
+    "tabfm_ensemble.v1": -0.0658180514636991
+   },
+   "kumo_l_in_fit": 2077.7059913270496,
+   "mtime": 1794580442,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "fair_zero_d91_upgraded_control_91",
+   "entrant": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+   "elo": 1783.6596421224658,
+   "ci95": [
+    1663.5302619927882,
+    1950.6673652018198
+   ],
+   "family_mean_u": 1.6600129957023435,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.41935472095065,
+    "vs_h416.SXB": 21.244318565369895,
+    "vs_h448.APEX_FAIR_CHAMPION": -40.70160902350017,
+    "vs_kumo_tabular_large_e8.v1": -293.84293330381024,
+    "vs_kumo_tabular_small_e8.v1": -121.66135319269824,
+    "vs_tabfm_ensemble.v1": -135.5450665844296
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.10080561485453388,
+    "h416.SXB": 0.038328922857369795,
+    "h448.APEX_FAIR_CHAMPION": -0.013725621775101046,
+    "kumo_tabular_large_e8.v1": -0.2755639641924153,
+    "kumo_tabular_small_e8.v1": -0.12550430101459042,
+    "tabfm_ensemble.v1": -0.10751581374442391
+   },
+   "kumo_l_in_fit": 2077.502575426276,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "fair_zero_d91_upgraded_control_h425_clear",
+   "entrant": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+   "elo": 1760.9387159043156,
+   "ci95": [
+    1630.6585693086595,
+    1933.2533172168498
+   ],
+   "family_mean_u": 1.7475787421492617,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 107.74247775354092,
+    "vs_h416.SXB": 34.018793389033135,
+    "vs_h448.APEX_FAIR_CHAMPION": -31.158209885497627,
+    "vs_kumo_tabular_large_e8.v1": -260.46234436782174,
+    "vs_kumo_tabular_small_e8.v1": -97.56336190732532,
+    "vs_tabfm_ensemble.v1": -120.7634821848078
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     15,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     6,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     16
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     13
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.13527717036146886,
+    "h416.SXB": 0.07820481619416893,
+    "h448.APEX_FAIR_CHAMPION": 0.019605398679646432,
+    "kumo_tabular_large_e8.v1": -0.27465598030306015,
+    "kumo_tabular_small_e8.v1": -0.11222739663202383,
+    "tabfm_ensemble.v1": -0.1096004661979321
+   },
+   "kumo_l_in_fit": 2021.4010602721373,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.ICL_BOOST_ONLY",
+   "elo": 1660.0900868816489,
+   "ci95": [
+    1508.7494859387543,
+    1828.3871188981295
+   ],
+   "family_mean_u": 1.4923041322245592,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -22.125974916000814,
+    "vs_h416.SXB": -100.60041090895538,
+    "vs_h448.APEX_FAIR_CHAMPION": -162.92330970851708,
+    "vs_kumo_tabular_large_e8.v1": -415.7157231743495,
+    "vs_kumo_tabular_small_e8.v1": -243.17787265026072,
+    "vs_tabfm_ensemble.v1": -255.8794669829431
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     10,
+     0,
+     9
+    ],
+    "h416.SXB": [
+     5,
+     0,
+     14
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     3,
+     0,
+     16
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06690324862325066,
+    "h416.SXB": -0.12937994062041472,
+    "h448.APEX_FAIR_CHAMPION": -0.1814344852528856,
+    "kumo_tabular_large_e8.v1": -0.44327282767019976,
+    "kumo_tabular_small_e8.v1": -0.293213164492375,
+    "tabfm_ensemble.v1": -0.27522467722220845
+   },
+   "kumo_l_in_fit": 2075.8058100559983,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_legacy_guard_stack_91",
+   "entrant": "h450.LEGACY_GUARD_STACK",
+   "elo": 1860.868041498259,
+   "ci95": [
+    1725.7680481985458,
+    2046.392788107242
+   ],
+   "family_mean_u": 1.6787570304076158,
+   "rank33": 5,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 182.03323608943447,
+    "vs_h416.SXB": 103.63231274150644,
+    "vs_h448.APEX_FAIR_CHAMPION": 42.34385596251104,
+    "vs_kumo_tabular_large_e8.v1": -216.92217866798205,
+    "vs_kumo_tabular_small_e8.v1": -45.517337634850264,
+    "vs_tabfm_ensemble.v1": -60.86118015483339
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     18,
+     0,
+     1
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     14,
+     2,
+     3
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     5,
+     0,
+     14
+    ],
+    "tabfm_ensemble.v1": [
+     5,
+     0,
+     14
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.11954964955980625,
+    "h416.SXB": 0.05707295756264216,
+    "h448.APEX_FAIR_CHAMPION": 0.005018412930171334,
+    "kumo_tabular_large_e8.v1": -0.25681992948714294,
+    "kumo_tabular_small_e8.v1": -0.10676026630931808,
+    "tabfm_ensemble.v1": -0.08877177903915152
+   },
+   "kumo_l_in_fit": 2077.790220166241,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1685.5318394033575,
+   "ci95": [
+    1525.6887895085322,
+    1862.6951823200136
+   ],
+   "family_mean_u": 1.4925209246147513,
+   "rank33": 14,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 4.822478426119915,
+    "vs_h416.SXB": -74.48975106587363,
+    "vs_h448.APEX_FAIR_CHAMPION": -138.08117037925012,
+    "vs_kumo_tabular_large_e8.v1": -389.6881116637869,
+    "vs_kumo_tabular_small_e8.v1": -218.65889186787308,
+    "vs_tabfm_ensemble.v1": -231.78276179732234
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06668645623305836,
+    "h416.SXB": -0.12916314823022243,
+    "h448.APEX_FAIR_CHAMPION": -0.18121769286269326,
+    "kumo_tabular_large_e8.v1": -0.44305603528000753,
+    "kumo_tabular_small_e8.v1": -0.29299637210218266,
+    "tabfm_ensemble.v1": -0.2750078848320162
+   },
+   "kumo_l_in_fit": 2075.2199510671444,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+   "elo": 1784.7481355487523,
+   "ci95": [
+    1662.878984141296,
+    1954.4191885575974
+   ],
+   "family_mean_u": 1.6692458691011876,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 105.51062975499553,
+    "vs_h416.SXB": 23.884851375921244,
+    "vs_h448.APEX_FAIR_CHAMPION": -37.25670988846059,
+    "vs_kumo_tabular_large_e8.v1": -291.9292811870953,
+    "vs_kumo_tabular_small_e8.v1": -119.78174131526544,
+    "vs_tabfm_ensemble.v1": -133.2344359423762
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     8,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1100384882533777,
+    "h416.SXB": 0.04756179625621363,
+    "h448.APEX_FAIR_CHAMPION": -0.004492748376257213,
+    "kumo_tabular_large_e8.v1": -0.2663310907935714,
+    "kumo_tabular_small_e8.v1": -0.11627142761574663,
+    "tabfm_ensemble.v1": -0.09828294034558008
+   },
+   "kumo_l_in_fit": 2076.6774167358476,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g173_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_h425_clear",
+   "entrant": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+   "elo": 1761.6018841716123,
+   "ci95": [
+    1632.3805791414582,
+    1940.1543856109665
+   ],
+   "family_mean_u": 1.7546186524344074,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 109.46479672802161,
+    "vs_h416.SXB": 36.488999060990864,
+    "vs_h448.APEX_FAIR_CHAMPION": -27.99771583604479,
+    "vs_kumo_tabular_large_e8.v1": -258.95764577044406,
+    "vs_kumo_tabular_small_e8.v1": -96.08563100855463,
+    "vs_tabfm_ensemble.v1": -119.28022468485938
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     16,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     10
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     16
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     13
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1423170806466143,
+    "h416.SXB": 0.08524472647931439,
+    "h448.APEX_FAIR_CHAMPION": 0.02664530896479191,
+    "kumo_tabular_large_e8.v1": -0.2676160700179147,
+    "kumo_tabular_small_e8.v1": -0.10518748634687834,
+    "tabfm_ensemble.v1": -0.10256055591278662
+   },
+   "kumo_l_in_fit": 2020.5595299420563,
+   "mtime": 1794575582,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "fair_zero_d91_upgraded_control_91",
+   "entrant": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+   "elo": 1783.6596421224658,
+   "ci95": [
+    1663.5302619927882,
+    1950.6673652018198
+   ],
+   "family_mean_u": 1.6600129957023435,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 103.41935472095065,
+    "vs_h416.SXB": 21.244318565369895,
+    "vs_h448.APEX_FAIR_CHAMPION": -40.70160902350017,
+    "vs_kumo_tabular_large_e8.v1": -293.84293330381024,
+    "vs_kumo_tabular_small_e8.v1": -121.66135319269824,
+    "vs_tabfm_ensemble.v1": -135.5450665844296
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     12,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.10080561485453388,
+    "h416.SXB": 0.038328922857369795,
+    "h448.APEX_FAIR_CHAMPION": -0.013725621775101046,
+    "kumo_tabular_large_e8.v1": -0.2755639641924153,
+    "kumo_tabular_small_e8.v1": -0.12550430101459042,
+    "tabfm_ensemble.v1": -0.10751581374442391
+   },
+   "kumo_l_in_fit": 2077.502575426276,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "fair_zero_d91_upgraded_control_h425_clear",
+   "entrant": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+   "elo": 1760.9387159043156,
+   "ci95": [
+    1630.6585693086595,
+    1933.2533172168498
+   ],
+   "family_mean_u": 1.7475787421492617,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 107.74247775354092,
+    "vs_h416.SXB": 34.018793389033135,
+    "vs_h448.APEX_FAIR_CHAMPION": -31.158209885497627,
+    "vs_kumo_tabular_large_e8.v1": -260.46234436782174,
+    "vs_kumo_tabular_small_e8.v1": -97.56336190732532,
+    "vs_tabfm_ensemble.v1": -120.7634821848078
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     15,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     6
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     6,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     16
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     13
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.13527717036146886,
+    "h416.SXB": 0.07820481619416893,
+    "h448.APEX_FAIR_CHAMPION": 0.019605398679646432,
+    "kumo_tabular_large_e8.v1": -0.27465598030306015,
+    "kumo_tabular_small_e8.v1": -0.11222739663202383,
+    "tabfm_ensemble.v1": -0.1096004661979321
+   },
+   "kumo_l_in_fit": 2021.4010602721373,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_icl_boost_only_91",
+   "entrant": "h450.ICL_BOOST_ONLY",
+   "elo": 1664.8144275336688,
+   "ci95": [
+    1518.853729651719,
+    1828.0616044199107
+   ],
+   "family_mean_u": 1.4902206396199376,
+   "rank33": 15,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": -16.9440610684926,
+    "vs_h416.SXB": -95.68053449659396,
+    "vs_h448.APEX_FAIR_CHAMPION": -158.61184155324213,
+    "vs_kumo_tabular_large_e8.v1": -410.3332828571149,
+    "vs_kumo_tabular_small_e8.v1": -238.82487574210654,
+    "vs_tabfm_ensemble.v1": -252.84248036244753
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     11,
+     0,
+     8
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.06898674122787207,
+    "h416.SXB": -0.13146343322503617,
+    "h448.APEX_FAIR_CHAMPION": -0.183517977857507,
+    "kumo_tabular_large_e8.v1": -0.44535632027482136,
+    "kumo_tabular_small_e8.v1": -0.2952966570969964,
+    "tabfm_ensemble.v1": -0.2773081698268299
+   },
+   "kumo_l_in_fit": 2075.1477103907837,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_legacy_guard_stack_91",
+   "entrant": "h450.LEGACY_GUARD_STACK",
+   "elo": 1854.714801074189,
+   "ci95": [
+    1719.135724610919,
+    2039.9269256400494
+   ],
+   "family_mean_u": 1.675125234788171,
+   "rank33": 6,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 175.4139909200585,
+    "vs_h416.SXB": 97.86844253059462,
+    "vs_h448.APEX_FAIR_CHAMPION": 36.839392706899844,
+    "vs_kumo_tabular_large_e8.v1": -222.5479756615382,
+    "vs_kumo_tabular_small_e8.v1": -51.27675710195285,
+    "vs_tabfm_ensemble.v1": -65.53824249281433
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     18,
+     0,
+     1
+    ],
+    "h416.SXB": [
+     18,
+     0,
+     1
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     14,
+     2,
+     3
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     5,
+     0,
+     14
+    ],
+    "tabfm_ensemble.v1": [
+     5,
+     0,
+     14
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.11591785394036155,
+    "h416.SXB": 0.05344116194319746,
+    "h448.APEX_FAIR_CHAMPION": 0.001386617310726639,
+    "kumo_tabular_large_e8.v1": -0.2604517251065877,
+    "kumo_tabular_small_e8.v1": -0.11039206192876277,
+    "tabfm_ensemble.v1": -0.09240357465859622
+   },
+   "kumo_l_in_fit": 2077.262776735727,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_neural_plus_tab_no_gp_91",
+   "entrant": "h450.NEURAL_PLUS_TAB_NO_GP",
+   "elo": 1682.9081594657532,
+   "ci95": [
+    1521.6304148383774,
+    1858.705142437189
+   ],
+   "family_mean_u": 1.4843836986582177,
+   "rank33": 14,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 1.356265661826228,
+    "vs_h416.SXB": -76.6071248174535,
+    "vs_h448.APEX_FAIR_CHAMPION": -140.35804783309663,
+    "vs_kumo_tabular_large_e8.v1": -392.63593747173127,
+    "vs_kumo_tabular_small_e8.v1": -221.10524189803027,
+    "vs_tabfm_ensemble.v1": -235.94700558088743
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     12,
+     0,
+     7
+    ],
+    "h416.SXB": [
+     7,
+     0,
+     12
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     4,
+     0,
+     15
+    ],
+    "kumo_tabular_large_e8.v1": [
+     0,
+     0,
+     19
+    ],
+    "kumo_tabular_small_e8.v1": [
+     2,
+     0,
+     17
+    ],
+    "tabfm_ensemble.v1": [
+     2,
+     0,
+     17
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": -0.07482368218959187,
+    "h416.SXB": -0.13730037418675597,
+    "h448.APEX_FAIR_CHAMPION": -0.1893549188192268,
+    "kumo_tabular_large_e8.v1": -0.45119326123654113,
+    "kumo_tabular_small_e8.v1": -0.3011335980587162,
+    "tabfm_ensemble.v1": -0.28314511078854965
+   },
+   "kumo_l_in_fit": 2075.5440969374845,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_91",
+   "entrant": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+   "elo": 1785.786820962142,
+   "ci95": [
+    1664.0627981658342,
+    1955.5331954244261
+   ],
+   "family_mean_u": 1.6618271210907565,
+   "rank33": 9,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 105.88622074681325,
+    "vs_h416.SXB": 24.229111427776843,
+    "vs_h448.APEX_FAIR_CHAMPION": -37.82125664877617,
+    "vs_kumo_tabular_large_e8.v1": -292.4012149013288,
+    "vs_kumo_tabular_small_e8.v1": -119.91111898073927,
+    "vs_tabfm_ensemble.v1": -133.16878076205967
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     17,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     11,
+     0,
+     8
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     7,
+     0,
+     12
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     18
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     15
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     15
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.10261974024294684,
+    "h416.SXB": 0.04014304824578276,
+    "h448.APEX_FAIR_CHAMPION": -0.011911496386688066,
+    "kumo_tabular_large_e8.v1": -0.2737498388040023,
+    "kumo_tabular_small_e8.v1": -0.12369017562617748,
+    "tabfm_ensemble.v1": -0.10570168835601094
+   },
+   "kumo_l_in_fit": 2078.1880358634708,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  },
+  {
+   "file": "H450/diag_results/r4_g67_fleet_L_x1_fleet_L_x1/H450_DEV91.json",
+   "wave": "H450F",
+   "arm": "in_corpus_random_split_champion_h425_clear",
+   "entrant": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+   "elo": 1762.7255822459986,
+   "ci95": [
+    1630.4275232272264,
+    1937.9670009066429
+   ],
+   "family_mean_u": 1.7472012606430232,
+   "rank33": 8,
+   "n_entrants": 34,
+   "gap_elo": {
+    "vs_h335.H335_AGG": 109.87705503510074,
+    "vs_h416.SXB": 36.52231667366459,
+    "vs_h448.APEX_FAIR_CHAMPION": -28.594141655039266,
+    "vs_kumo_tabular_large_e8.v1": -259.39532057682186,
+    "vs_kumo_tabular_small_e8.v1": -96.1985887579724,
+    "vs_tabfm_ensemble.v1": -119.19996105009272
+   },
+   "wtl": {
+    "h335.H335_AGG": [
+     15,
+     0,
+     2
+    ],
+    "h416.SXB": [
+     10,
+     0,
+     7
+    ],
+    "h448.APEX_FAIR_CHAMPION": [
+     6,
+     0,
+     11
+    ],
+    "kumo_tabular_large_e8.v1": [
+     1,
+     0,
+     16
+    ],
+    "kumo_tabular_small_e8.v1": [
+     4,
+     0,
+     13
+    ],
+    "tabfm_ensemble.v1": [
+     4,
+     0,
+     13
+    ]
+   },
+   "gain": {
+    "h335.H335_AGG": 0.1348996888552302,
+    "h416.SXB": 0.07782733468793027,
+    "h448.APEX_FAIR_CHAMPION": 0.019227917173407785,
+    "kumo_tabular_large_e8.v1": -0.2750334618092988,
+    "kumo_tabular_small_e8.v1": -0.11260487813826246,
+    "tabfm_ensemble.v1": -0.10997794770417074
+   },
+   "kumo_l_in_fit": 2022.1209028228204,
+   "mtime": 1794547014,
+   "flags": {},
+   "label": "in-corpus"
+  }
+ ]
+}

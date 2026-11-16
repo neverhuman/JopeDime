@@ -1,0 +1,40 @@
+{
+ "arm": "canon",
+ "by_family": {
+  "866f66b1": {
+   "u_best_mode": 1.7099714649920945,
+   "u_blend": 1.6594923536937682,
+   "u_rg": 1.6088504998618383,
+   "u_rr": 1.4629179714945382,
+   "u_yj": 1.7099714649920945
+  }
+ },
+ "canonical_promotion_forbidden": true,
+ "ckpt": "/home/ubuntu/jope-data/h458-quarantine/runs/r1_866f66b1_canon/spec_e01000.pt",
+ "ckpt_key": "ema",
+ "ckpt_sha256": "a88e6a17043bb826990dd376bbac09dc755e9e0de827c323279c78ec112f7b66",
+ "elapsed_s": 8.3,
+ "in_corpus_dev91_disclosure": true,
+ "label": "r1_866f66b1_canon_e01000",
+ "only_stratum": -1,
+ "per_context": {
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+   "family": "866f66b1",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 14023024629.86139,
+   "sse_rg": 15517746474.036404,
+   "sse_rr": 20777057217.217026,
+   "sse_yj": 12676404760.1162,
+   "sy": 18600.311141314593,
+   "u_best_mode": 1.7099714649920945,
+   "u_blend": 1.6594923536937682,
+   "u_rg": 1.6088504998618383,
+   "u_rr": 1.4629179714945382,
+   "u_yj": 1.7099714649920945
+  }
+ },
+ "protocol": "search-only CV-7 repeat 0, evaluation fold pipeline, direct modes rr/yj/rg",
+ "reads_audit_labels": false,
+ "schema": "jope.h458.probe/v1"
+}

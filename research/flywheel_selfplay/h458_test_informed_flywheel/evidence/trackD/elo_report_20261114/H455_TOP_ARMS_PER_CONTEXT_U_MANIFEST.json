@@ -1,0 +1,61 @@
+{
+  "bit_for_bit_verification": {
+    "H455.LH455V1_MH455V12_50_50.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7042351627102728,
+      "recomputed_family_mean_u": 1.7042351627102728
+    },
+    "H455.LH455V1_MH455V12_50_50.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 4.440892098500626e-16,
+      "matrix_family_mean_u": 1.7148866878857087,
+      "recomputed_family_mean_u": 1.7148866878857092
+    },
+    "H455.L_X1_V2_valley001_soup50.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7033069031081551,
+      "recomputed_family_mean_u": 1.7033069031081551
+    },
+    "H455.L_X1_V2_valley001_soup50.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7154636114045265,
+      "recomputed_family_mean_u": 1.7154636114045265
+    },
+    "H455.M_X2_valley001_002_avg.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.6992107068503814,
+      "recomputed_family_mean_u": 1.6992107068503814
+    },
+    "H455.M_X2_valley001_002_avg.stack_no_ugp_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.701670047678965,
+      "recomputed_family_mean_u": 1.701670047678965
+    },
+    "H455.M_X2_valley001_002_avg.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7239105602494684,
+      "recomputed_family_mean_u": 1.7239105602494684
+    },
+    "H455.ctrl_h450_g16_legacy": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.6804478179581095,
+      "recomputed_family_mean_u": 1.6804478179581095
+    }
+  },
+  "input_dirs": {
+    "cv7_pre_dir": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_pre_h454",
+    "g16_dir": "/home/ubuntu/jope-data/h450-quarantine/r4/cols/g16_r4_L_A_r4_L_B",
+    "l_x1_v2_valley001_soup50": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_l_x1_h455_v1_soup50",
+    "lh455v1_mh455v12_50_50": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_lh455v1_mh455v12_50_50",
+    "m_x2_valley001_002_avg": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_m_h455_v12_avg",
+    "traj_post_dir": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/traj_e8_w2aplus",
+    "ugp_g1000_dir": "/home/ubuntu/jope-data/h452-flywheel/ultra_gp_d91/g1000"
+  },
+  "jsonl_path": "/home/ubuntu/jope_plan/evidence/H455/H455_TOP_ARMS_PER_CONTEXT_U.jsonl",
+  "jsonl_sha256": "cfd37575c8e0345be9517319360c19660f1d2d7794a54a6686878f7a11327623",
+  "schema": "jope.h455.top_arms_per_context_u_manifest/v1",
+  "scorer_code": "/home/ubuntu/h452-stage/code/score_h454_paired_flywheel_matrix.py",
+  "scorer_sha256": "6e4541134bc2dbb692233b215f8a7f23d61e373a9b26a0a77eae05fceb6390e9",
+  "stack_guard_code": "/home/ubuntu/h452-stage/code/stack_guard_cv7_h452.py",
+  "stack_guard_sha256": "8de51475484d6fb41af20ae7257cfb8b0609ef59e8ff4af75e70033eecca1a80",
+  "wall_s": 741.83
+}

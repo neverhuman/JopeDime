@@ -1,0 +1,54 @@
+{
+  "schema": "jope.h458s.s9_expected_receipts/v1",
+  "board": "P201B",
+  "receipt_dir": "/home/ubuntu/jope-data/h458s-quarantine/s9_stack",
+  "rule": "cl_fwriter X1 (shared_CHAT 2026-11-15T03:47Z), accepted by cl_mtc at 04:00Z. Every planned P201B receipt of S9 is named here before the high tier is scored. The selection record (s9_write_selection.sh 412b560f) is written only once every receipt marked holds_eligible_arms=true exists, and its expected-name arguments are exactly the receipts of this list that exist at that time; the selection post states that by this file's sha256. A descriptive-only receipt may land after the record, and the selection post says so. Ultra receipts (AMENDMENT_6 section 5) are written after the record and are not listed. The load-matched second runs (AMENDMENT_6 section 3) write to s9_stack_loadmatch/ and are not listed.",
+  "receipts": [
+    {
+      "name": "S9_STACK_P201B_medium_main.json",
+      "holds_eligible_arms": true,
+      "producer": "cl_h458 arms (gp_chain_h458.py) at medium, scored by cl_mtc: run_s9_p201b_score.sh medium main a1,a3"
+    },
+    {
+      "name": "S9_STACK_P201B_high_main.json",
+      "holds_eligible_arms": true,
+      "producer": "cl_h458 arms at high plus the A1L curve, scored by cl_mtc: run_s9_p201b_score.sh high main a1,a3 a1l_s1,a1l_s2,a1l_s3,a1l_s4,a1l_s5,a1l_s6,a1l_s7,a1l_s8"
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_prod_pure.json",
+      "holds_eligible_arms": true,
+      "producer": "agy_apex_w10 A5 (H459), scored by cl_mtc: run_s9_a5_score.sh <block> medium pure prod"
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_prod_hyb.json",
+      "holds_eligible_arms": true,
+      "producer": "agy_apex_w10 A5, run_s9_a5_score.sh <block> medium hyb prod"
+    },
+    {
+      "name": "S9_STACK_P201B_high_a5_prod_pure.json",
+      "holds_eligible_arms": true,
+      "producer": "agy_apex_w10 A5, run_s9_a5_score.sh <block> high pure prod"
+    },
+    {
+      "name": "S9_STACK_P201B_high_a5_prod_hyb.json",
+      "holds_eligible_arms": true,
+      "producer": "agy_apex_w10 A5, run_s9_a5_score.sh <block> high hyb prod"
+    },
+    {
+      "name": "S9_STACK_P201B_medium_a5_cycle_pure.json",
+      "holds_eligible_arms": false,
+      "producer": "agy_apex_w10 A5 cycle block, run_s9_a5_score.sh <block> medium pure cycle (every non-control column descriptive)"
+    },
+    {
+      "name": "S9_STACK_P201B_high_a5_cycle_pure.json",
+      "holds_eligible_arms": false,
+      "producer": "agy_apex_w10 A5 cycle block, run_s9_a5_score.sh <block> high pure cycle (every non-control column descriptive)"
+    }
+  ],
+  "etas_as_posted": {
+    "agy_apex_w10 2026-11-15T04:02Z": "medium_prod_pure 80/80 done; medium_prod_hyb about 04:15Z; high_prod_pure about 06:30Z; high_prod_hyb about 08:30Z; cycle blocks after high_prod_hyb (about 06:45Z to 11:45Z)",
+    "cl_h458 2026-11-15T03:43Z": "medium six end about 04:35Z (xbabe2) and 05:15Z (xbabe3), A1/A3 after them; high: the eight from about 05:00Z for about 5 h, then A1L about 50 min"
+  },
+  "written_by": "cl_mtc",
+  "written_utc": "2026-11-15T04:08:30Z"
+}

@@ -1,0 +1,226 @@
+{
+ "schema": "jope.h458.whatif_ladder/v2",
+ "board": "dev91-audit-v1",
+ "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+ "reads_labels": false,
+ "reads_predictions": false,
+ "precision_contexts": 28,
+ "rows": [
+  {
+   "scenario": "fair champion as it is",
+   "elo": 1823.1,
+   "kumo_l_in_fit": 2075.8,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 285.8,
+   "contexts_above_kumo_l": 14,
+   "family_mean_u": 1.6737
+  },
+  {
+   "scenario": "FLOOR oracle: never below ridge or CatBoost",
+   "elo": 1883.9,
+   "kumo_l_in_fit": 2079.6,
+   "rank_of_34": 5,
+   "games_vs_22_externals_of_418": 303.9,
+   "contexts_above_kumo_l": 17,
+   "family_mean_u": 1.7224
+  },
+  {
+   "scenario": "FLOOR oracle: never below any of five classic models",
+   "elo": 1896.2,
+   "kumo_l_in_fit": 2080.7,
+   "rank_of_34": 4,
+   "games_vs_22_externals_of_418": 308.1,
+   "contexts_above_kumo_l": 17,
+   "family_mean_u": 1.734
+  },
+  {
+   "scenario": "  the same when the choice is right only where the gap is over 0.05 u",
+   "elo": 1877.5,
+   "kumo_l_in_fit": 2079.8,
+   "rank_of_34": 5,
+   "games_vs_22_externals_of_418": 302.9,
+   "contexts_above_kumo_l": 16,
+   "family_mean_u": 1.7327
+  },
+  {
+   "scenario": "fair champion, best-in-field on the singleton family 866f66b1 only",
+   "elo": 1859.7,
+   "kumo_l_in_fit": 2075.7,
+   "rank_of_34": 6,
+   "games_vs_22_externals_of_418": 294.8,
+   "contexts_above_kumo_l": 15,
+   "family_mean_u": 1.715
+  },
+  {
+   "scenario": "EDGE: fair champion +0.03 u on the 63 ordinary contexts",
+   "elo": 1919.3,
+   "kumo_l_in_fit": 2072.5,
+   "rank_of_34": 3,
+   "games_vs_22_externals_of_418": 319.9,
+   "contexts_above_kumo_l": 26,
+   "family_mean_u": 1.6949
+  },
+  {
+   "scenario": "EDGE: fair champion +0.05 u on the 63 ordinary contexts",
+   "elo": 1953.2,
+   "kumo_l_in_fit": 2068.4,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 334.0,
+   "contexts_above_kumo_l": 35,
+   "family_mean_u": 1.709
+  },
+  {
+   "scenario": "EDGE: fair champion +0.07 u on the 63 ordinary contexts",
+   "elo": 1973.7,
+   "kumo_l_in_fit": 2066.6,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 342.3,
+   "contexts_above_kumo_l": 39,
+   "family_mean_u": 1.7231
+  },
+  {
+   "scenario": "EDGE: fair champion +0.10 u on the 63 ordinary contexts",
+   "elo": 2006.4,
+   "kumo_l_in_fit": 2064.0,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 353.6,
+   "contexts_above_kumo_l": 46,
+   "family_mean_u": 1.7443
+  },
+  {
+   "scenario": "EXACT: fair champion just past Kumo L on all 28 precision contexts",
+   "elo": 1878.2,
+   "kumo_l_in_fit": 2062.4,
+   "rank_of_34": 5,
+   "games_vs_22_externals_of_418": 309.2,
+   "contexts_above_kumo_l": 35,
+   "family_mean_u": 1.8473
+  },
+  {
+   "scenario": "EXACT on the 28 and EDGE +0.03 on the 63",
+   "elo": 1989.7,
+   "kumo_l_in_fit": 2062.5,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 343.3,
+   "contexts_above_kumo_l": 47,
+   "family_mean_u": 1.8685
+  },
+  {
+   "scenario": "EXACT on the 28 and EDGE +0.07 on the 63",
+   "elo": 2058.7,
+   "kumo_l_in_fit": 2059.0,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 365.7,
+   "contexts_above_kumo_l": 60,
+   "family_mean_u": 1.8967
+  },
+  {
+   "scenario": "EXACT on the 28 and EDGE +0.10 on the 63",
+   "elo": 2103.4,
+   "kumo_l_in_fit": 2057.8,
+   "rank_of_34": 1,
+   "games_vs_22_externals_of_418": 377.0,
+   "contexts_above_kumo_l": 67,
+   "family_mean_u": 1.9179
+  },
+  {
+   "scenario": "FLOOR (five classics) and EDGE +0.05 on the 63",
+   "elo": 2022.0,
+   "kumo_l_in_fit": 2075.5,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 349.4,
+   "contexts_above_kumo_l": 37,
+   "family_mean_u": 1.7634
+  },
+  {
+   "scenario": "TabPFN 3.5's row shifted to the fair champion's family-mean utility",
+   "elo": 1956.8,
+   "kumo_l_in_fit": 2051.9,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 354.4,
+   "contexts_above_kumo_l": 49,
+   "family_mean_u": 1.6737
+  },
+  {
+   "scenario": "own prior at TabICL v2 level: perfect per-context pick with the fair champion",
+   "elo": 1895.5,
+   "kumo_l_in_fit": 2078.5,
+   "rank_of_34": 4,
+   "games_vs_22_externals_of_418": 311.7,
+   "contexts_above_kumo_l": 17,
+   "family_mean_u": 1.7174
+  },
+  {
+   "scenario": "  the same, the pick right only where the gap is over 0.05 u",
+   "elo": 1864.7,
+   "kumo_l_in_fit": 2076.0,
+   "rank_of_34": 5,
+   "games_vs_22_externals_of_418": 301.6,
+   "contexts_above_kumo_l": 17,
+   "family_mean_u": 1.7135
+  },
+  {
+   "scenario": "  the same as a 50/50 blend in utility (no pick at all)",
+   "elo": 1768.2,
+   "kumo_l_in_fit": 2077.9,
+   "rank_of_34": 9,
+   "games_vs_22_externals_of_418": 269.9,
+   "contexts_above_kumo_l": 8,
+   "family_mean_u": 1.5808
+  },
+  {
+   "scenario": "own prior at TabPFN 3.5 level: perfect per-context pick with the fair champion",
+   "elo": 1992.5,
+   "kumo_l_in_fit": 2072.7,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 348.3,
+   "contexts_above_kumo_l": 31,
+   "family_mean_u": 1.7921
+  },
+  {
+   "scenario": "  the same, the pick right only where the gap is over 0.05 u",
+   "elo": 1928.9,
+   "kumo_l_in_fit": 2071.5,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 326.9,
+   "contexts_above_kumo_l": 27,
+   "family_mean_u": 1.7844
+  },
+  {
+   "scenario": "  the same as a 50/50 blend in utility (no pick at all)",
+   "elo": 1833.1,
+   "kumo_l_in_fit": 2075.3,
+   "rank_of_34": 7,
+   "games_vs_22_externals_of_418": 296.5,
+   "contexts_above_kumo_l": 11,
+   "family_mean_u": 1.6574
+  },
+  {
+   "scenario": "own prior at Kumo Small level: perfect per-context pick with the fair champion",
+   "elo": 1996.8,
+   "kumo_l_in_fit": 2075.6,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 349.2,
+   "contexts_above_kumo_l": 28,
+   "family_mean_u": 1.8538
+  },
+  {
+   "scenario": "  the same, the pick right only where the gap is over 0.05 u",
+   "elo": 1947.0,
+   "kumo_l_in_fit": 2073.0,
+   "rank_of_34": 2,
+   "games_vs_22_externals_of_418": 334.9,
+   "contexts_above_kumo_l": 26,
+   "family_mean_u": 1.8484
+  },
+  {
+   "scenario": "  the same as a 50/50 blend in utility (no pick at all)",
+   "elo": 1862.9,
+   "kumo_l_in_fit": 2074.3,
+   "rank_of_34": 5,
+   "games_vs_22_externals_of_418": 307.9,
+   "contexts_above_kumo_l": 15,
+   "family_mean_u": 1.7296
+  }
+ ]
+}
