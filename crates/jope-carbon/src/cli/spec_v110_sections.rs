@@ -2,22 +2,8 @@
 //! tables, S3 CAS cryptographic proof table, `<1s` Lambda `:live` rollback table, and
 //! JSON-bound cost/time/concurrency prose builders for `carbon spec-report`.
 
+use crate::cli::spec_report::html_esc;
 use serde_json::Value;
-
-fn html_esc(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len() + 16);
-    for ch in raw.chars() {
-        match ch {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            _ => out.push(ch),
-        }
-    }
-    out
-}
 
 fn j_s<'a>(v: &'a Value, k: &str) -> &'a str {
     v[k].as_str().unwrap_or("")

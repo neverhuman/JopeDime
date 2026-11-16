@@ -1,5 +1,6 @@
 //! CLI execution (`carbon run`) and Free + Pro `r882` zero-knowledge live Lambda benchmark harness (`carbon bench`).
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -49,7 +50,7 @@ use crate::{
 pub fn resolve_objective_argument(raw: &str) -> Result<(String, ObjectiveSpec), String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
-        let spec = ObjectiveSpec::parse("rmse").map_err(|e| e.to_string())?;
+        let spec = ObjectiveSpec::parse("rmse").map_err(crate::error::err_to_string)?;
         return Ok(("rmse".to_owned(), spec));
     }
     let loaded = if let Some(path_part) = trimmed.strip_prefix('@') {
@@ -61,7 +62,7 @@ pub fn resolve_objective_argument(raw: &str) -> Result<(String, ObjectiveSpec), 
     } else {
         trimmed.to_owned()
     };
-    let spec = ObjectiveSpec::parse(&loaded).map_err(|e| format!("invalid objective spec: {e}"))?;
+    let spec = ObjectiveSpec::parse(&loaded).err_ctx("invalid objective spec")?;
     let wire_text = spec.to_wire_objective();
     if wire_text.len() > 65_536 {
         return Err(format!(
@@ -1274,7 +1275,7 @@ pub fn execute_carbon_cli_run_with_ux(
         };
         ptier
             .validate_admission(total_rows, prepared.feature_names.len(), eff)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
         let est_ms = estimate_ms_per_candidate_1vcpu(
             prepared.fit_rows as usize,
             prepared.feature_names.len(),
@@ -1287,7 +1288,7 @@ pub fn execute_carbon_cli_run_with_ux(
             features: prepared.feature_names.len(),
             est_ms_per_candidate_1vcpu: est_ms,
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
         let mode_wire = match plan.mode {
             CarbonExecutionMode::SoloSingleLambda => CarbonExecutionModeWire::SoloSingleLambda,
             CarbonExecutionMode::HybridFanOut => CarbonExecutionModeWire::HybridFanOut,
@@ -2065,7 +2066,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
                 target_was_explicit: true,
                 ..CarbonCliRunUxConfig::default()
             },
-            &ObjectiveSpec::parse("rmse").map_err(|e| e.to_string())?,
+            &ObjectiveSpec::parse("rmse").map_err(crate::error::err_to_string)?,
         )?;
         let sample_hi: Vec<Vec<f64>> = predict_batch_x.into_iter().take(sample_n_hi).collect();
         let s4_baselines =

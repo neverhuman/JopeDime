@@ -451,7 +451,9 @@ pub struct CarbonRegionCatalog {
     pub regions: Vec<CarbonRegionDescriptor>,
 }
 
-/// Canonical 17-region AWS Graviton2 (`arm64`) cell topology from `ADR-0007`.
+/// Canonical 17-region AWS Graviton2 (`arm64`) cell topology from `ADR-0007`
+/// (`opt-in-not-required` regions live in production AWS account):
+/// Americas (`6`), Europe (`5`), APAC (`6`).
 pub const CARBON_DEFAULT_REGIONS: &[(&str, &str)] = &[
     ("us-east-2", "americas"),
     ("us-east-1", "americas"),
@@ -459,17 +461,17 @@ pub const CARBON_DEFAULT_REGIONS: &[(&str, &str)] = &[
     ("us-west-1", "americas"),
     ("ca-central-1", "americas"),
     ("sa-east-1", "americas"),
-    ("eu-west-1", "europe"),
     ("eu-central-1", "europe"),
+    ("eu-west-1", "europe"),
     ("eu-west-2", "europe"),
     ("eu-west-3", "europe"),
     ("eu-north-1", "europe"),
     ("ap-northeast-1", "apac"),
     ("ap-northeast-2", "apac"),
+    ("ap-northeast-3", "apac"),
     ("ap-southeast-1", "apac"),
     ("ap-southeast-2", "apac"),
     ("ap-south-1", "apac"),
-    ("me-central-1", "mea"),
 ];
 
 impl CarbonRegionCatalog {

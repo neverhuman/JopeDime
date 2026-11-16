@@ -76,13 +76,15 @@ pub use cli::coverage_audit::{
 pub use cli::deploy::{
     assemble_verified_carbon_package, build_deterministic_single_bin_tar,
     build_deterministic_single_bin_targz, build_deterministic_zip_bytes, execute_carbon_deploy,
-    execute_carbon_package, execute_carbon_rollback, execute_carbon_rollback_multi,
-    expand_region_targets, generate_public_clouds_manifest, mint_capability_token_from_vault,
-    resolve_cell_stack_endpoint, resolve_cell_stack_public_endpoint,
-    synthesize_cell_template_for_release, try_external_stream_compress, verify_arm64_lambda_binary,
-    verify_static_linux_elf, CarbonDeployOptions, CarbonDeployReport, CarbonLiveAliasVersions,
-    CarbonPackageOptions, CarbonRegionDeployReceipt, CarbonReleaseManifest, CarbonRollbackOptions,
-    CarbonRollbackReceipt, CarbonZipEntry, CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,
+    execute_carbon_drift_check, execute_carbon_package, execute_carbon_rollback,
+    execute_carbon_rollback_multi, expand_region_targets, generate_public_clouds_manifest,
+    mint_capability_token_from_vault, resolve_cell_stack_endpoint,
+    resolve_cell_stack_public_endpoint, synthesize_cell_template_for_release,
+    try_external_stream_compress, verify_arm64_lambda_binary, verify_static_linux_elf,
+    CarbonDeployOptions, CarbonDeployReport, CarbonDriftRegionResult, CarbonDriftReport,
+    CarbonLiveAliasVersions, CarbonPackageOptions, CarbonRegionDeployReceipt,
+    CarbonReleaseManifest, CarbonRollbackOptions, CarbonRollbackReceipt, CarbonZipEntry,
+    CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,
 };
 #[cfg(all(feature = "cli", feature = "emu"))]
 pub use cli::spec_report::{
@@ -135,11 +137,20 @@ pub use cli::{
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};
-#[cfg(feature = "emu")]
-pub use modes::emu::{CarbonEmuConfig, CarbonEmuTelemetrySnapshot, CarbonLocalLambdaEmulator};
 #[cfg(feature = "serve")]
 pub use modes::serve::{
     CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEnterpriseServerHandle,
+};
+#[cfg(feature = "emu")]
+pub use modes::{
+    emu::{CarbonEmuConfig, CarbonEmuTelemetrySnapshot, CarbonLocalLambdaEmulator},
+    emu_aws_services::{
+        CarbonRealWorkerBinaries, EMU_CELL_SECRETS_VERSION, EMU_CLIENT_ACCESS_KEY_ID,
+        EMU_CLIENT_SECRET_ACCESS_KEY, EMU_EDGE_ACCESS_KEY_ID, EMU_EDGE_FUNCTION_NAME,
+        EMU_EDGE_SECRETS_VERSION, EMU_EDGE_SECRET_ACCESS_KEY, EMU_ENGINE_ACCESS_KEY_ID,
+        EMU_ENGINE_FUNCTION_NAME, EMU_ENGINE_SECRET_ACCESS_KEY, EMU_EVAL_ACCESS_KEY_ID,
+        EMU_EVAL_FUNCTION_NAME, EMU_EVAL_SECRET_ACCESS_KEY, EMU_S3_BUCKET,
+    },
 };
 pub use modes::{
     planner::{

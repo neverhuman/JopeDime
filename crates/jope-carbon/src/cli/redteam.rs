@@ -83,7 +83,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         .engine_kek_pubkey_b64
         .clone()
         .ok_or_else(|| "endpoint does not advertise engine_kek_pubkey_b64".to_owned())?;
-    let kek_pub = decode_p256_pubkey_b64(&kek_b64).map_err(|e| e.to_string())?;
+    let kek_pub = decode_p256_pubkey_b64(&kek_b64).map_err(crate::error::err_to_string)?;
     let v1_1_wire = client_a.fetch_server_version()?.is_some();
 
     let anon_a = client_a.authenticate_anonymous()?;
@@ -117,7 +117,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c01, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -181,7 +181,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c03, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -249,7 +249,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
 
     // V-06: Presigned S3 / gateway PUT size-pinning & SHA-256 tamper -> 400/403
     let t = Instant::now();
-    let u_dek_tamper = generate_random_u_dek().map_err(|e| e.to_string())?;
+    let u_dek_tamper = generate_random_u_dek().map_err(crate::error::err_to_string)?;
     let fit_enc_t = encrypt_cuen_payload(
         &u_dek_tamper,
         CuenPayloadKind::FitJmat,
@@ -257,7 +257,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.fit_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let hold_enc_t = encrypt_cuen_payload(
         &u_dek_tamper,
         CuenPayloadKind::HoldoutJmat,
@@ -265,7 +265,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.holdout_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let prep_t_bytes = serde_json::to_vec(&CarbonPrepareUploadRequest {
         tenant_id: anon_a.tenant_id.clone(),
         tier: CarbonTierWire::Free,
@@ -282,7 +282,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (cp_ok, cp_body) = send_raw_edge_http(
         &base,
         "POST",
@@ -324,7 +324,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         },
         encrypted_cuen: false,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c07, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -357,9 +357,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &r08_str,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_08 = wrap_u_dek_to_pubkey(&u_dek_tamper, &kek_pub, &anon_a.tenant_id, &r08_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let swap_req = serde_json::to_vec(&CarbonCreateRunRequest {
         run_id: r08,
         dataset_id: d08,
@@ -382,7 +382,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c08, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -411,9 +411,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &r09_str,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let mut bad_cudk = wrap_u_dek_to_pubkey(&u_dek_tamper, &kek_pub, &anon_a.tenant_id, &r09_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     bad_cudk[132] ^= 0xFF;
     let bad_dek_req = serde_json::to_vec(&CarbonCreateRunRequest {
         run_id: r09,
@@ -437,7 +437,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c09, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -484,9 +484,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &r_legit_str,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let dup_cudk = wrap_u_dek_to_pubkey(&u_dek_tamper, &kek_pub, &anon_a.tenant_id, &r_legit_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let dup_req = serde_json::to_vec(&CarbonCreateRunRequest {
         run_id: r_legit,
         dataset_id: d_legit,
@@ -509,7 +509,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c10, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -532,7 +532,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
     let (r11, d11) = make_ids("v11")?;
     let r11_str = r11.to_string();
     let cudk_11 = wrap_u_dek_to_pubkey(&u_dek_tamper, &kek_pub, &anon_a.tenant_id, &r11_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let huge_lm = vec![0x55u8; 20_000];
     let huge_req = serde_json::to_vec(&CarbonCreateRunRequest {
         run_id: r11,
@@ -556,7 +556,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c11, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -587,7 +587,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         client_response_pubkey_b64: None,
         wrapped_u_dek_b64: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c12, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -607,7 +607,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
 
     // V-13: Zero-cleartext E2E `/predict` wire inspection (fresh explicit U_DEK run so we inspect raw wire JSON)
     let t = Instant::now();
-    let u_dek_13 = generate_random_u_dek().map_err(|e| e.to_string())?;
+    let u_dek_13 = generate_random_u_dek().map_err(crate::error::err_to_string)?;
     let fit_13 = encrypt_cuen_payload(
         &u_dek_13,
         CuenPayloadKind::FitJmat,
@@ -615,7 +615,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.fit_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let hold_13 = encrypt_cuen_payload(
         &u_dek_13,
         CuenPayloadKind::HoldoutJmat,
@@ -623,7 +623,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.holdout_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let prep_13_req = serde_json::to_vec(&CarbonPrepareUploadRequest {
         tenant_id: anon_b.tenant_id.clone(),
         tier: CarbonTierWire::Free,
@@ -640,7 +640,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (_, prep_13_body) = send_raw_edge_http(
         &base,
         "POST",
@@ -649,7 +649,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         Some(&prep_13_req),
     )?;
     let prep_13_resp: jope_api::carbon::CarbonPrepareUploadResponse =
-        serde_json::from_slice(&prep_13_body).map_err(|e| e.to_string())?;
+        serde_json::from_slice(&prep_13_body).map_err(crate::error::err_to_string)?;
     let _ = send_raw_put_url(&prep_13_resp.fit_target.url, &fit_13, true)?;
     let _ = send_raw_put_url(&prep_13_resp.holdout_target.url, &hold_13, true)?;
     let (r13, d13) = make_ids("v13")?;
@@ -661,9 +661,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &r13_str,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_13 = wrap_u_dek_to_pubkey(&u_dek_13, &kek_pub, &anon_b.tenant_id, &r13_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let run_13_req = serde_json::to_vec(&CarbonCreateRunRequest {
         run_id: r13,
         dataset_id: d13,
@@ -686,7 +686,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c13_run, _) = send_raw_edge_http(
         &base,
         "POST",
@@ -694,12 +694,12 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &[("x-carbon-capability-token", &bearer_b)],
         Some(&run_13_req),
     )?;
-    let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+    let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
     let enc_pred_pt = serde_json::to_vec(&CarbonEncryptedPredictPayload {
         feature_names: prepared.feature_names.clone(),
         rows: vec![vec![Some(0.25), Some(-0.25), Some(0.5), Some(-0.5)]],
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let enc_pred_cuen = encrypt_cuen_payload(
         &u_dek_13,
         CuenPayloadKind::PredictFeatures,
@@ -707,9 +707,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &r13_str,
         &enc_pred_pt,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let pred_cudk_13 = wrap_u_dek_to_pubkey(&u_dek_13, &kek_pub, &anon_b.tenant_id, &r13_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let raw_pred_req = serde_json::to_vec(&CarbonPredictRequest {
         tenant_id: anon_b.tenant_id.clone(),
         feature_names: Vec::new(),
@@ -723,7 +723,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(pred_cudk_13)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c13, wire_pred_bytes) = send_raw_edge_http(
         &base,
         "POST",
@@ -732,7 +732,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         Some(&raw_pred_req),
     )?;
     let wire_pred: CarbonPredictResponse =
-        serde_json::from_slice(&wire_pred_bytes).map_err(|e| e.to_string())?;
+        serde_json::from_slice(&wire_pred_bytes).map_err(crate::error::err_to_string)?;
     let wire_cleartext_empty = wire_pred.predictions.is_empty();
     let r_dek_13 = unwrap_u_dek_with_kek(
         &resp_kek,
@@ -742,7 +742,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &anon_b.tenant_id,
         &r13_str,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let dec_out = decrypt_cuen_payload(
         &r_dek_13,
         CuenPayloadKind::PredictOutputs,
@@ -757,7 +757,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
             )
             .unwrap_or_default(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let _ = client_b.shred_run(&anon_b.tenant_id, &r13_str);
     vectors.push(CarbonRedTeamVectorResult {
         vector_id: "V-13".to_owned(),

@@ -3,8 +3,8 @@
 //! Compiled under `--no-default-features --features edge`: enforces `HMAC-SHA256` capability
 //! tokens (`RT-02`), strict `tenant_id` isolation (`RT-08`), sliding-window rate limits (`RT-11`),
 //! zero-knowledge `CUEN\x01`/`CUDK\x01` headers (`RT-01`), conditional `run_id` creation (`RT-03`),
-//! size/SHA-pinned S3 `PUT` presigning (`RT-04`), `/predict` quotas (`RT-10`), async `202` dispatch
-//! (`RT-12`), and `DELETE /v1/carbon/runs/{id}` cryptographic shred.
+//! size/SHA-pinned S3 `PUT` presigning (`RT-04`), atomic `/predict` quotas (`RT-10`), async `202`
+//! dispatch (`RT-12` + API Gateway v2 30s ceiling guard), and `DELETE /v1/carbon/runs/{id}` shred.
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -28,10 +28,11 @@ use jope_prep::{
     cuen::{parse_cudk_v1, parse_cuen_v1, CuenPayloadKind},
     objective::ObjectiveSpec,
 };
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, ser::SerializeStruct, Deserialize, Serialize, Serializer};
 
 use crate::{
     cells::engine_invoker::{now_epoch_ms, CarbonEngineInvoker, CarbonEngineWireCommand},
+    error::{err_to_string, to_json_string, to_json_vec},
     modes::{
         planner::{
             estimate_ms_per_candidate_1vcpu, plan_carbon_execution, CarbonExecutionMode,
@@ -47,9 +48,7 @@ use crate::{
         },
         sigv4::CarbonPresigner,
     },
-    storage::cas::{
-        canonical_blob_scope, canonical_run_state_key, sha256_lower_hex, CarbonCasStore,
-    },
+    storage::cas::{canonical_blob_scope, canonical_run_state_key, CarbonCasStore},
 };
 
 const MAX_LANDMARK_WIRE_BYTES: usize = 16_384;
@@ -58,7 +57,7 @@ const MAX_PREDICT_CAS_BYTES_FREE: u64 = 64 * 1_048_576;
 const MAX_PREDICT_CAS_BYTES_PRO: u64 = 256 * 1_048_576;
 
 /// `CarbonGatewayRequest` is a struct representing an HTTP or Lambda Function URL v2.0 request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CarbonGatewayRequest {
     pub method: String,
     pub path: String,
@@ -72,6 +71,27 @@ pub struct CarbonGatewayRequest {
     pub raw_body: Vec<u8>,
 }
 
+impl Serialize for CarbonGatewayRequest {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // Encode non-empty `raw_body` as compact Base64 across JSON Runtime API wires (`1.33x`)
+        // instead of a JSON integer array (`~4.0x`), while keeping zero-copy `raw_body` in-process!
+        let mut st = serializer.serialize_struct("CarbonGatewayRequest", 5)?;
+        st.serialize_field("method", &self.method)?;
+        st.serialize_field("path", &self.path)?;
+        st.serialize_field("query", &self.query)?;
+        st.serialize_field("headers", &self.headers)?;
+        if let Some(b64) = &self.body_b64 {
+            st.serialize_field("body_b64", &Some(b64))?;
+        } else if !self.raw_body.is_empty() {
+            let encoded = base64::engine::general_purpose::STANDARD.encode(&self.raw_body);
+            st.serialize_field("body_b64", &Some(encoded))?;
+        } else {
+            st.serialize_field("body_b64", &None::<String>)?;
+        }
+        st.end()
+    }
+}
+
 impl CarbonGatewayRequest {
     pub fn body_cow(&self) -> Result<std::borrow::Cow<'_, [u8]>, String> {
         if !self.raw_body.is_empty() || self.body_b64.is_none() {
@@ -83,7 +103,7 @@ impl CarbonGatewayRequest {
             }
             let decoded = base64::engine::general_purpose::STANDARD
                 .decode(b64)
-                .map_err(|e| format!("invalid base64 request body: {e}"))?;
+                .map_err(err_to_string)?;
             return Ok(std::borrow::Cow::Owned(decoded));
         }
         Ok(std::borrow::Cow::Borrowed(&[]))
@@ -112,7 +132,9 @@ impl CarbonGatewayRequest {
 }
 
 /// `CarbonGatewayResponse` is a struct representing an HTTP / Lambda Function URL v2.0 response.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+/// Holds unencoded `raw_body` in-process (`MEM-02`) so `serve` and `emu` never Base64-inflate
+/// multi-hundred-megabyte CAS responses, encoding `body_b64` lazily only when serialized to JSON.
+#[derive(Clone, Debug, Deserialize)]
 pub struct CarbonGatewayResponse {
     pub status: u16,
     pub content_type: String,
@@ -120,17 +142,33 @@ pub struct CarbonGatewayResponse {
     pub body_b64: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub headers: BTreeMap<String, String>,
+    #[serde(skip)]
+    raw_body: Option<Vec<u8>>,
+}
+
+impl Serialize for CarbonGatewayResponse {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let count = if self.headers.is_empty() { 3 } else { 4 };
+        let mut st = serializer.serialize_struct("CarbonGatewayResponse", count)?;
+        st.serialize_field("status", &self.status)?;
+        st.serialize_field("content_type", &self.content_type)?;
+        if let Some(raw) = &self.raw_body {
+            let encoded = base64::engine::general_purpose::STANDARD.encode(raw);
+            st.serialize_field("body_b64", &encoded)?;
+        } else {
+            st.serialize_field("body_b64", &self.body_b64)?;
+        }
+        if !self.headers.is_empty() {
+            st.serialize_field("headers", &self.headers)?;
+        }
+        st.end()
+    }
 }
 
 impl CarbonGatewayResponse {
     pub fn json_ok<T: Serialize>(status: u16, value: &T) -> Self {
         match serde_json::to_vec(value) {
-            Ok(bytes) => Self {
-                status,
-                content_type: "application/json".to_owned(),
-                body_b64: base64::engine::general_purpose::STANDARD.encode(bytes),
-                headers: BTreeMap::new(),
-            },
+            Ok(bytes) => Self::raw_bytes_ok(status, "application/json", bytes),
             Err(err) => Self::text(
                 500,
                 "application/json",
@@ -143,20 +181,20 @@ impl CarbonGatewayResponse {
     }
 
     pub fn text(status: u16, content_type: &str, text: &str) -> Self {
-        Self {
-            status,
-            content_type: content_type.to_owned(),
-            body_b64: base64::engine::general_purpose::STANDARD.encode(text.as_bytes()),
-            headers: BTreeMap::new(),
-        }
+        Self::raw_bytes_ok(status, content_type, text.as_bytes().to_vec())
     }
 
     pub fn bytes_ok(status: u16, content_type: &str, bytes: &[u8]) -> Self {
+        Self::raw_bytes_ok(status, content_type, bytes.to_vec())
+    }
+
+    pub fn raw_bytes_ok(status: u16, content_type: &str, bytes: Vec<u8>) -> Self {
         Self {
             status,
             content_type: content_type.to_owned(),
-            body_b64: base64::engine::general_purpose::STANDARD.encode(bytes),
+            body_b64: String::new(),
             headers: BTreeMap::new(),
+            raw_body: Some(bytes),
         }
     }
 
@@ -174,6 +212,19 @@ impl CarbonGatewayResponse {
     }
 
     pub fn decoded_body(&self) -> Vec<u8> {
+        if let Some(raw) = &self.raw_body {
+            return raw.clone();
+        }
+        base64::engine::general_purpose::STANDARD
+            .decode(&self.body_b64)
+            .unwrap_or_default()
+    }
+
+    /// Consume the response and return its raw body bytes with zero extra copy or Base64 pass.
+    pub fn into_http_body_bytes(self) -> Vec<u8> {
+        if let Some(raw) = self.raw_body {
+            return raw;
+        }
         base64::engine::general_purpose::STANDARD
             .decode(&self.body_b64)
             .unwrap_or_default()
@@ -282,17 +333,15 @@ impl CarbonEdgeRouter {
     }
 
     pub fn handle_lambda_invocation(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
-        let value: serde_json::Value = serde_json::from_slice(payload)
-            .map_err(|e| format!("invalid edge Lambda JSON payload: {e}"))?;
+        let value: serde_json::Value = serde_json::from_slice(payload).map_err(err_to_string)?;
         if value.get("rawPath").is_some() || value.get("requestContext").is_some() {
             let gw_req = parse_lambda_url_v2_event(&value)?;
             let gw_resp = self.handle(&gw_req);
             return encode_lambda_url_v2_response(&gw_resp);
         }
-        let gw_req: CarbonGatewayRequest = serde_json::from_value(value)
-            .map_err(|e| format!("decode CarbonGatewayRequest: {e}"))?;
+        let gw_req: CarbonGatewayRequest = serde_json::from_value(value).map_err(err_to_string)?;
         let gw_resp = self.handle(&gw_req);
-        serde_json::to_vec(&gw_resp).map_err(|e| format!("encode CarbonGatewayResponse: {e}"))
+        to_json_vec(&gw_resp)
     }
 
     pub fn handle(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
@@ -360,96 +409,76 @@ impl CarbonEdgeRouter {
                 self.handle_get_cas_blob(sha, req)
             }
             _ if clean_path.starts_with("/v1/carbon/runs/") => {
-                let rest = &clean_path["/v1/carbon/runs/".len()..];
-                if let Some(run_id) = rest.strip_suffix("/events") {
-                    if method == "GET" {
-                        self.handle_run_events(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/stop") {
-                    if method == "POST" {
-                        self.handle_early_stop(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/resume") {
-                    if method == "POST" {
-                        self.handle_resume(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/predict/prepare") {
-                    if method == "POST" {
-                        self.handle_prepare_predict(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/predict") {
-                    if method == "POST" {
-                        self.handle_predict(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/explain") {
-                    if method == "POST" {
-                        self.handle_explain(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if let Some(run_id) = rest.strip_suffix("/export") {
-                    if method == "POST" {
-                        self.handle_export(run_id, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else if !rest.contains('/') {
-                    if method == "GET" {
-                        self.handle_get_run(rest, req)
-                    } else if method == "DELETE" {
-                        self.handle_shred_run(rest, req)
-                    } else {
-                        CarbonGatewayResponse::error_json(
-                            404,
-                            "not_found",
-                            "unknown Carbon run route",
-                        )
-                    }
-                } else {
-                    CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon run route")
-                }
+                self.route_run_subpath(&method, &clean_path["/v1/carbon/runs/".len()..], req)
             }
             _ => CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon endpoint"),
         };
         self.finalize_gateway_response(&req_id, is_sensitive_route, resp)
+    }
+
+    fn route_run_subpath(
+        &self,
+        method: &str,
+        rest: &str,
+        req: &CarbonGatewayRequest,
+    ) -> CarbonGatewayResponse {
+        if let Some(run_id) = rest.strip_suffix("/events") {
+            return if method == "GET" {
+                self.handle_run_events(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/stop") {
+            return if method == "POST" {
+                self.handle_early_stop(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/resume") {
+            return if method == "POST" {
+                self.handle_resume(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/predict/prepare") {
+            return if method == "POST" {
+                self.handle_prepare_predict(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/predict") {
+            return if method == "POST" {
+                self.handle_predict(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/explain") {
+            return if method == "POST" {
+                self.handle_explain(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if let Some(run_id) = rest.strip_suffix("/export") {
+            return if method == "POST" {
+                self.handle_export(run_id, req)
+            } else {
+                unknown_run_route()
+            };
+        }
+        if !rest.contains('/') {
+            return match method {
+                "GET" => self.handle_get_run(rest, req),
+                "DELETE" => self.handle_shred_run(rest, req),
+                _ => unknown_run_route(),
+            };
+        }
+        unknown_run_route()
     }
 
     fn requires_cloud_encryption(&self) -> bool {
@@ -505,6 +534,176 @@ impl CarbonEdgeRouter {
                 })?;
         }
         Ok(())
+    }
+
+    fn parse_authed_json<T: DeserializeOwned>(
+        &self,
+        req: &CarbonGatewayRequest,
+        max_bytes: usize,
+        size_code: &str,
+        size_msg: &str,
+        type_name: &str,
+    ) -> Result<(T, Vec<u8>), CarbonGatewayResponse> {
+        let body = req.body_cow().map_err(|_| {
+            CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body")
+        })?;
+        if body.len() > max_bytes {
+            return Err(CarbonGatewayResponse::error_json(413, size_code, size_msg));
+        }
+        self.preverify_bearer_before_json(req)?;
+        let parsed = serde_json::from_slice::<T>(&body).map_err(|_| {
+            CarbonGatewayResponse::error_json(400, "invalid_json", &format!("invalid {type_name}"))
+        })?;
+        Ok((parsed, body.into_owned()))
+    }
+
+    fn load_authorized_active_run(
+        &self,
+        req: &CarbonGatewayRequest,
+        tenant_id: &str,
+        run_id: &str,
+        rate_prefix: &str,
+        rate_limit_per_min: usize,
+        rate_msg: &str,
+    ) -> Result<CarbonCreateRunRequest, CarbonGatewayResponse> {
+        self.authorize_tenant(req, tenant_id, None)?;
+        let now_secs = now_epoch_ms() / 1_000;
+        if !self.rate_limiter.check_and_record(
+            &format!("{rate_prefix}:{tenant_id}"),
+            now_secs,
+            rate_limit_per_min,
+        ) {
+            return Err(CarbonGatewayResponse::error_json(
+                429,
+                "rate_limited",
+                rate_msg,
+            ));
+        }
+        if validate_strict_run_id(run_id).is_err() || self.is_run_shredded(tenant_id, run_id) {
+            return Err(CarbonGatewayResponse::error_json(
+                404,
+                "run_not_found",
+                "run not found",
+            ));
+        }
+        let req_key = canonical_run_state_key(tenant_id, run_id, "request.json")
+            .map_err(|_| CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key"))?;
+        match self.cas.get_state_object(&req_key) {
+            Ok(Some(bytes)) => {
+                serde_json::from_slice::<CarbonCreateRunRequest>(&bytes).map_err(|_| {
+                    CarbonGatewayResponse::error_json(
+                        500,
+                        "corrupt_request",
+                        "corrupt stored request",
+                    )
+                })
+            }
+            Ok(None) => Err(CarbonGatewayResponse::error_json(
+                404,
+                "run_not_found",
+                "run not found",
+            )),
+            Err(err) => Err(CarbonGatewayResponse::error_json(
+                500,
+                "cas_read_failed",
+                &err,
+            )),
+        }
+    }
+
+    fn presign_scoped_put_url(
+        &self,
+        req: &CarbonGatewayRequest,
+        blob_scope: &str,
+        sha_lower: &str,
+        exact_bytes: u64,
+        now_secs: u64,
+    ) -> Result<String, CarbonGatewayResponse> {
+        let expires = now_secs.saturating_add(900);
+        if let Some((bucket, prefix)) = &self.s3_upload_target {
+            let creds = crate::security::sigv4::CarbonAwsCredentials::from_env().map_err(|_| {
+                CarbonGatewayResponse::error_json(
+                    500,
+                    "presign_creds_missing",
+                    "missing AWS execution credentials for S3 presigning",
+                )
+            })?;
+            let region = self.active_aws_region();
+            let (_, amz_date) = crate::security::sigv4::format_amz_timestamp_utc(now_secs);
+            let s3_key = join_s3_scoped_prefix(prefix, Some(blob_scope), sha_lower);
+            CarbonPresigner::presign_s3_put_v4_pinned_with_creds(
+                &creds,
+                &region,
+                bucket,
+                &s3_key,
+                &amz_date,
+                900,
+                sha_lower,
+                exact_bytes,
+            )
+            .map_err(|_| {
+                CarbonGatewayResponse::error_json(
+                    500,
+                    "presign_failed",
+                    "failed to sign size-pinned S3 PUT URL",
+                )
+            })
+        } else {
+            let base_url = self.resolve_public_base_url(req);
+            Ok(self.config.presigner.sign_gateway_scoped_upload_url(
+                &base_url,
+                Some(blob_scope),
+                sha_lower,
+                exact_bytes,
+                expires,
+            ))
+        }
+    }
+
+    fn presign_scoped_get_url(
+        &self,
+        req: &CarbonGatewayRequest,
+        out_scope: Option<&str>,
+        sha_lower: &str,
+        now_secs: u64,
+    ) -> Result<String, CarbonGatewayResponse> {
+        if let Some((bucket, prefix)) = &self.s3_upload_target {
+            let creds = crate::security::sigv4::CarbonAwsCredentials::from_env().map_err(|_| {
+                CarbonGatewayResponse::error_json(
+                    500,
+                    "presign_creds_missing",
+                    "missing AWS execution credentials for S3 GET presigning",
+                )
+            })?;
+            let region = self.active_aws_region();
+            let (_, amz_date) = crate::security::sigv4::format_amz_timestamp_utc(now_secs);
+            let s3_key = join_s3_scoped_prefix(prefix, out_scope, sha_lower);
+            CarbonPresigner::presign_s3_get_v4_with_creds(
+                &creds, &region, bucket, &s3_key, &amz_date, 900,
+            )
+            .map_err(|_| {
+                CarbonGatewayResponse::error_json(
+                    500,
+                    "presign_failed",
+                    "failed to sign predict output S3 GET URL",
+                )
+            })
+        } else {
+            let base_url = self.resolve_public_base_url(req);
+            Ok(self.config.presigner.sign_gateway_scoped_download_url(
+                &base_url,
+                out_scope,
+                sha_lower,
+                now_secs.saturating_add(900),
+            ))
+        }
+    }
+
+    fn active_aws_region(&self) -> String {
+        match std::env::var("AWS_REGION") {
+            Ok(val) if !val.trim().is_empty() => val,
+            _ => self.config.region.clone(),
+        }
     }
 
     #[cfg(feature = "serve")]
@@ -742,25 +941,15 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_prepare_upload(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "upload prepare payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(prep) = serde_json::from_slice::<CarbonPrepareUploadRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonPrepareUploadRequest",
-            );
+        let (prep, _) = match self.parse_authed_json::<CarbonPrepareUploadRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "upload prepare payload exceeds 64 KiB limit",
+            "CarbonPrepareUploadRequest",
+        ) {
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
         let (eff_tier_wire, _) = match self.authorize_tenant(req, &prep.tenant_id, Some(prep.tier))
         {
@@ -829,73 +1018,26 @@ impl CarbonEdgeRouter {
         };
         let fit_sha_lower = prep.fit_jmat.sha256.to_ascii_lowercase();
         let holdout_sha_lower = prep.holdout_jmat.sha256.to_ascii_lowercase();
-
         let expires = now_secs.saturating_add(900);
-        let (fit_url, holdout_url) = if let Some((bucket, prefix)) = &self.s3_upload_target {
-            let Ok(creds) = crate::security::sigv4::CarbonAwsCredentials::from_env() else {
-                return CarbonGatewayResponse::error_json(
-                    500,
-                    "presign_creds_missing",
-                    "missing AWS execution credentials for S3 presigning",
-                );
-            };
-            let region = match std::env::var("AWS_REGION") {
-                Ok(val) if !val.trim().is_empty() => val,
-                _ => self.config.region.clone(),
-            };
-            let (_, amz_date) = crate::security::sigv4::format_amz_timestamp_utc(now_secs);
-            let fit_key = join_s3_scoped_prefix(prefix, Some(&blob_scope), &fit_sha_lower);
-            let holdout_key = join_s3_scoped_prefix(prefix, Some(&blob_scope), &holdout_sha_lower);
-            let Ok(f_url) = CarbonPresigner::presign_s3_put_v4_pinned_with_creds(
-                &creds,
-                &region,
-                bucket,
-                &fit_key,
-                &amz_date,
-                900,
-                &fit_sha_lower,
-                prep.fit_jmat.bytes.0,
-            ) else {
-                return CarbonGatewayResponse::error_json(
-                    500,
-                    "presign_failed",
-                    "failed to sign size-pinned fit S3 PUT URL",
-                );
-            };
-            let Ok(h_url) = CarbonPresigner::presign_s3_put_v4_pinned_with_creds(
-                &creds,
-                &region,
-                bucket,
-                &holdout_key,
-                &amz_date,
-                900,
-                &holdout_sha_lower,
-                prep.holdout_jmat.bytes.0,
-            ) else {
-                return CarbonGatewayResponse::error_json(
-                    500,
-                    "presign_failed",
-                    "failed to sign size-pinned holdout S3 PUT URL",
-                );
-            };
-            (f_url, h_url)
-        } else {
-            let base_url = self.resolve_public_base_url(req);
-            let f_url = self.config.presigner.sign_gateway_scoped_upload_url(
-                &base_url,
-                Some(&blob_scope),
-                &fit_sha_lower,
-                prep.fit_jmat.bytes.0,
-                expires,
-            );
-            let h_url = self.config.presigner.sign_gateway_scoped_upload_url(
-                &base_url,
-                Some(&blob_scope),
-                &holdout_sha_lower,
-                prep.holdout_jmat.bytes.0,
-                expires,
-            );
-            (f_url, h_url)
+        let fit_url = match self.presign_scoped_put_url(
+            req,
+            &blob_scope,
+            &fit_sha_lower,
+            prep.fit_jmat.bytes.0,
+            now_secs,
+        ) {
+            Ok(u) => u,
+            Err(resp) => return resp,
+        };
+        let holdout_url = match self.presign_scoped_put_url(
+            req,
+            &blob_scope,
+            &holdout_sha_lower,
+            prep.holdout_jmat.bytes.0,
+            now_secs,
+        ) {
+            Ok(u) => u,
+            Err(resp) => return resp,
         };
         // Persist tenant-local upload_id pointers so legacy v1.0.0 CLIs omitting `upload_id` on
         // `CarbonCreateRunRequest` still resolve their scoped upload cleanly (`GAP-S3-3`).
@@ -999,31 +1141,23 @@ impl CarbonEdgeRouter {
             return CarbonGatewayResponse::error_json(403, "presign_denied", reason);
         }
         match self.cas.get_scoped_blob_verified(scope, sha) {
-            Ok(bytes) => CarbonGatewayResponse::bytes_ok(200, "application/octet-stream", &bytes),
+            Ok(bytes) => {
+                CarbonGatewayResponse::raw_bytes_ok(200, "application/octet-stream", bytes)
+            }
             Err(err) => CarbonGatewayResponse::error_json(404, "blob_not_found", &err),
         }
     }
 
     fn handle_create_run(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "create run request exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(mut create) = serde_json::from_slice::<CarbonCreateRunRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonCreateRunRequest",
-            );
+        let (mut create, _) = match self.parse_authed_json::<CarbonCreateRunRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "create run request exceeds 64 KiB limit",
+            "CarbonCreateRunRequest",
+        ) {
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
         let (eff_tier_wire, _) =
             match self.authorize_tenant(req, &create.tenant_id, Some(create.tier)) {
@@ -1236,7 +1370,7 @@ impl CarbonEdgeRouter {
         // stores even the wrapped U_DEK envelope at rest (`zero-knowledge shred hygiene`)!
         let mut persisted_req = create.clone();
         persisted_req.wrapped_u_dek_b64 = None;
-        let Ok(stored_req_bytes) = serde_json::to_vec(&persisted_req) else {
+        let Ok(stored_req_bytes) = to_json_vec(&persisted_req) else {
             return CarbonGatewayResponse::error_json(
                 500,
                 "serialize_failed",
@@ -1249,10 +1383,6 @@ impl CarbonEdgeRouter {
         {
             Ok(true) => {}
             Ok(false) => {
-                // Retry-idempotent create: if the exact same client retries a byte-identical
-                // `POST /v1/carbon/runs` (e.g. after a transient gateway timeout), return the
-                // existing progress as `202` without double-invoking `engine`. Any modified field
-                // (`seed`, `dataset_id`, `landmark_bundle_b64` nonce, etc.) fails closed with `409`.
                 let same_payload = matches!(
                     self.cas.get_state_object(&req_key),
                     Ok(Some(existing)) if existing == stored_req_bytes
@@ -1320,7 +1450,7 @@ impl CarbonEdgeRouter {
         else {
             return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid status key");
         };
-        let Ok(status_bytes) = serde_json::to_vec(&initial_progress) else {
+        let Ok(status_bytes) = to_json_vec(&initial_progress) else {
             return CarbonGatewayResponse::error_json(
                 500,
                 "serialize_failed",
@@ -1331,8 +1461,10 @@ impl CarbonEdgeRouter {
             return CarbonGatewayResponse::error_json(500, "cas_write_failed", &err);
         }
 
+        let via_public_apigw = req.header_ci("x-carbon-via-apigw-v2") == Some("1");
         let cell_volume = total_rows.saturating_mul(create.feature_names.len());
-        let dispatch_async = effort >= CarbonEffortTier::Medium
+        let dispatch_async = via_public_apigw
+            || effort >= CarbonEffortTier::Medium
             || plan_decision.mode == CarbonExecutionMode::HybridFanOut
             || cell_volume >= 2_500
             || total_rows >= 400;
@@ -1442,7 +1574,7 @@ impl CarbonEdgeRouter {
                     if let Ok(mut prog) = serde_json::from_slice::<CarbonPublicWaveProgress>(&bytes)
                     {
                         prog.eval_fallback_shards = None;
-                        serde_json::to_string(&prog)
+                        to_json_string(&prog)
                             .unwrap_or_else(|_| String::from_utf8_lossy(&bytes).into_owned())
                     } else {
                         String::from_utf8_lossy(&bytes).into_owned()
@@ -1459,25 +1591,15 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_early_stop(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "early stop payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(stop_req) = serde_json::from_slice::<CarbonEarlyStopRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonEarlyStopRequest",
-            );
+        let (stop_req, body) = match self.parse_authed_json::<CarbonEarlyStopRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "early stop payload exceeds 64 KiB limit",
+            "CarbonEarlyStopRequest",
+        ) {
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
         if let Err(resp) = self.authorize_tenant(req, &stop_req.tenant_id, None) {
             return resp;
@@ -1494,6 +1616,16 @@ impl CarbonEdgeRouter {
                 "early stop rate limit exceeded",
             );
         }
+        if validate_strict_run_id(run_id).is_err() {
+            return CarbonGatewayResponse::error_json(400, "invalid_run_id", "invalid run_id");
+        }
+        if self.is_run_shredded(&stop_req.tenant_id, run_id) {
+            return CarbonGatewayResponse::error_json(
+                410,
+                "run_shredded",
+                "run has been shredded and cannot accept stop signals",
+            );
+        }
         let Ok(stop_key) = canonical_run_state_key(&stop_req.tenant_id, run_id, "stop.json") else {
             return CarbonGatewayResponse::error_json(400, "invalid_run_id", "invalid run_id");
         };
@@ -1507,65 +1639,26 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_resume(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "resume payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(resume_req) = serde_json::from_slice::<CarbonResumeRunRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonResumeRunRequest",
-            );
-        };
-        if let Err(resp) = self.authorize_tenant(req, &resume_req.tenant_id, None) {
-            return resp;
-        }
-        let now_secs = now_epoch_ms() / 1_000;
-        if !self.rate_limiter.check_and_record(
-            &format!("resume:{}", resume_req.tenant_id),
-            now_secs,
-            120,
+        let (resume_req, _) = match self.parse_authed_json::<CarbonResumeRunRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "resume payload exceeds 64 KiB limit",
+            "CarbonResumeRunRequest",
         ) {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "resume rate limit exceeded",
-            );
-        }
-        if validate_strict_run_id(run_id).is_err()
-            || self.is_run_shredded(&resume_req.tenant_id, run_id)
-        {
-            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-        }
-        let Ok(req_key) = canonical_run_state_key(&resume_req.tenant_id, run_id, "request.json")
-        else {
-            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
-        let stored_create = match self.cas.get_state_object(&req_key) {
-            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
-                Ok(c) => c,
-                Err(_) => {
-                    return CarbonGatewayResponse::error_json(
-                        500,
-                        "corrupt_request",
-                        "corrupt stored request",
-                    );
-                }
-            },
-            Ok(None) => {
-                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-            }
-            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        let stored_create = match self.load_authorized_active_run(
+            req,
+            &resume_req.tenant_id,
+            run_id,
+            "resume",
+            120,
+            "resume rate limit exceeded",
+        ) {
+            Ok(c) => c,
+            Err(resp) => return resp,
         };
         if let Some(new_eff) = resume_req.effort {
             let tier = wire_to_product_tier(stored_create.tier);
@@ -1587,10 +1680,12 @@ impl CarbonEdgeRouter {
             );
         }
 
+        let via_public_apigw = req.header_ci("x-carbon-via-apigw-v2") == Some("1");
         let extra_waves = resume_req.additional_waves.unwrap_or(2);
         let stored_volume =
             (stored_create.fit_rows as usize).saturating_mul(stored_create.feature_names.len());
-        let async_resume = extra_waves > 2
+        let async_resume = via_public_apigw
+            || extra_waves > 2
             || (extra_waves >= 2
                 && (map_api_effort(resume_req.effort.unwrap_or(stored_create.effort))
                     >= CarbonEffortTier::Medium
@@ -1609,7 +1704,7 @@ impl CarbonEdgeRouter {
                     if let Ok(mut prog) = serde_json::from_slice::<CarbonPublicWaveProgress>(&cur) {
                         prog.state = CarbonRunStateWire::Queued;
                         prog.can_resume = false;
-                        if let Ok(updated) = serde_json::to_vec(&prog) {
+                        if let Ok(updated) = to_json_vec(&prog) {
                             let _ = self.cas.put_state_object(&status_key, &updated);
                         }
                         return match self.engine.invoke_engine_async(&cmd) {
@@ -1641,45 +1736,27 @@ impl CarbonEdgeRouter {
         run_id: &str,
         req: &CarbonGatewayRequest,
     ) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "predict prepare payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(prep) = serde_json::from_slice::<CarbonPreparePredictRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonPreparePredictRequest",
-            );
-        };
-        if let Err(resp) = self.authorize_tenant(req, &prep.tenant_id, None) {
-            return resp;
-        }
-        if validate_strict_run_id(run_id).is_err() || self.is_run_shredded(&prep.tenant_id, run_id)
-        {
-            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-        }
-        let now_secs = now_epoch_ms() / 1_000;
-        if !self.rate_limiter.check_and_record(
-            &format!("pred_prep:{}", prep.tenant_id),
-            now_secs,
-            300,
+        let (prep, _) = match self.parse_authed_json::<CarbonPreparePredictRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "predict prepare payload exceeds 64 KiB limit",
+            "CarbonPreparePredictRequest",
         ) {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "predict prepare rate limit exceeded",
-            );
-        }
+            Ok(v) => v,
+            Err(resp) => return resp,
+        };
+        let stored_create = match self.load_authorized_active_run(
+            req,
+            &prep.tenant_id,
+            run_id,
+            "pred_prep",
+            300,
+            "predict prepare rate limit exceeded",
+        ) {
+            Ok(c) => c,
+            Err(resp) => return resp,
+        };
         if prep.predict_cuen.bytes.0 == 0 || !is_valid_sha256_hex(&prep.predict_cuen.sha256) {
             return CarbonGatewayResponse::error_json(
                 400,
@@ -1687,25 +1764,6 @@ impl CarbonEdgeRouter {
                 "predict_cuen requires non-zero byte count and 64-char hex SHA-256",
             );
         }
-        let Ok(req_key) = canonical_run_state_key(&prep.tenant_id, run_id, "request.json") else {
-            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
-        };
-        let stored_create = match self.cas.get_state_object(&req_key) {
-            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
-                Ok(c) => c,
-                Err(_) => {
-                    return CarbonGatewayResponse::error_json(
-                        500,
-                        "corrupt_request",
-                        "corrupt stored request",
-                    );
-                }
-            },
-            Ok(None) => {
-                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-            }
-            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
-        };
         let max_bytes = match stored_create.tier {
             CarbonTierWire::Free => MAX_PREDICT_CAS_BYTES_FREE,
             CarbonTierWire::Pro | CarbonTierWire::Enterprise => MAX_PREDICT_CAS_BYTES_PRO,
@@ -1727,47 +1785,17 @@ impl CarbonEdgeRouter {
             );
         };
         let sha_lower = prep.predict_cuen.sha256.to_ascii_lowercase();
+        let now_secs = now_epoch_ms() / 1_000;
         let expires = now_secs.saturating_add(900);
-        let put_url = if let Some((bucket, prefix)) = &self.s3_upload_target {
-            let Ok(creds) = crate::security::sigv4::CarbonAwsCredentials::from_env() else {
-                return CarbonGatewayResponse::error_json(
-                    500,
-                    "presign_creds_missing",
-                    "missing AWS execution credentials for S3 presigning",
-                );
-            };
-            let region = match std::env::var("AWS_REGION") {
-                Ok(val) if !val.trim().is_empty() => val,
-                _ => self.config.region.clone(),
-            };
-            let (_, amz_date) = crate::security::sigv4::format_amz_timestamp_utc(now_secs);
-            let s3_key = join_s3_scoped_prefix(prefix, Some(&blob_scope), &sha_lower);
-            let Ok(url) = CarbonPresigner::presign_s3_put_v4_pinned_with_creds(
-                &creds,
-                &region,
-                bucket,
-                &s3_key,
-                &amz_date,
-                900,
-                &sha_lower,
-                prep.predict_cuen.bytes.0,
-            ) else {
-                return CarbonGatewayResponse::error_json(
-                    500,
-                    "presign_failed",
-                    "failed to sign size-pinned predict S3 PUT URL",
-                );
-            };
-            url
-        } else {
-            let base_url = self.resolve_public_base_url(req);
-            self.config.presigner.sign_gateway_scoped_upload_url(
-                &base_url,
-                Some(&blob_scope),
-                &sha_lower,
-                prep.predict_cuen.bytes.0,
-                expires,
-            )
+        let put_url = match self.presign_scoped_put_url(
+            req,
+            &blob_scope,
+            &sha_lower,
+            prep.predict_cuen.bytes.0,
+            now_secs,
+        ) {
+            Ok(u) => u,
+            Err(resp) => return resp,
         };
         CarbonGatewayResponse::json_ok(
             200,
@@ -1785,65 +1813,26 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_predict(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > 32 * 1_048_576 {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "predict_payload_too_large",
-                "predict request exceeds 32 MiB wire limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(pred_req) = serde_json::from_slice::<CarbonPredictRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonPredictRequest",
-            );
-        };
-        if let Err(resp) = self.authorize_tenant(req, &pred_req.tenant_id, None) {
-            return resp;
-        }
-        let now_secs = now_epoch_ms() / 1_000;
-        if !self.rate_limiter.check_and_record(
-            &format!("pred:{}", pred_req.tenant_id),
-            now_secs,
-            300,
+        let (pred_req, _) = match self.parse_authed_json::<CarbonPredictRequest>(
+            req,
+            32 * 1_048_576,
+            "predict_payload_too_large",
+            "predict request exceeds 32 MiB wire limit",
+            "CarbonPredictRequest",
         ) {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "predict rate limit exceeded",
-            );
-        }
-        if validate_strict_run_id(run_id).is_err()
-            || self.is_run_shredded(&pred_req.tenant_id, run_id)
-        {
-            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-        }
-        let Ok(req_key) = canonical_run_state_key(&pred_req.tenant_id, run_id, "request.json")
-        else {
-            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
-        let stored_create = match self.cas.get_state_object(&req_key) {
-            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
-                Ok(c) => c,
-                Err(_) => {
-                    return CarbonGatewayResponse::error_json(
-                        500,
-                        "corrupt_request",
-                        "corrupt stored request",
-                    );
-                }
-            },
-            Ok(None) => {
-                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-            }
-            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        let stored_create = match self.load_authorized_active_run(
+            req,
+            &pred_req.tenant_id,
+            run_id,
+            "pred",
+            300,
+            "predict rate limit exceeded",
+        ) {
+            Ok(c) => c,
+            Err(resp) => return resp,
         };
 
         let tier = wire_to_product_tier(stored_create.tier);
@@ -1906,30 +1895,12 @@ impl CarbonEdgeRouter {
             }
         }
 
-        let quota_state = if let Some(max_calls) = tier.max_predict_calls_per_run() {
-            let Ok(cnt_key) =
-                canonical_run_state_key(&pred_req.tenant_id, run_id, "predict_count.json")
-            else {
-                return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
-            };
-            let current_calls: u32 = self
-                .cas
-                .get_state_object(&cnt_key)
-                .ok()
-                .flatten()
-                .and_then(|b| serde_json::from_slice::<u32>(&b).ok())
-                .unwrap_or(0);
-            if current_calls >= max_calls {
-                return CarbonGatewayResponse::error_json(
-                    403,
-                    "predict_quota_exceeded",
-                    &format!(
-                        "{} tier admits at most {max_calls} /predict calls per run",
-                        tier.as_str()
-                    ),
-                );
+        // Cross-container linearizable `/predict` quota reservation (`RACE-01` / `RT-10`).
+        let reserved_slot_key = if let Some(max_calls) = tier.max_predict_calls_per_run() {
+            match self.reserve_predict_quota_slot(&pred_req.tenant_id, run_id, max_calls, &tier) {
+                Ok(slot_key) => Some(slot_key),
+                Err(resp) => return resp,
             }
-            Some((cnt_key, current_calls))
         } else {
             None
         };
@@ -1943,68 +1914,138 @@ impl CarbonEdgeRouter {
         match self.engine.invoke_engine(&cmd) {
             Ok(bytes) => match serde_json::from_slice::<CarbonPredictResponse>(&bytes) {
                 Ok(mut resp) => {
-                    if let Some((cnt_key, current_calls)) = quota_state {
-                        if let Ok(next_bytes) = serde_json::to_vec(&(current_calls + 1)) {
-                            let _ = self.cas.put_state_object(&cnt_key, &next_bytes);
-                        }
-                    }
                     if let Some(ref out_sha) = resp.encrypted_predictions_cas_sha256 {
                         let out_scope = match pred_upload_id.as_deref() {
                             Some(puid) => canonical_blob_scope(&pred_tenant_id, puid).ok(),
                             None => canonical_blob_scope(&pred_tenant_id, run_id).ok(),
                         };
+                        self.record_predict_output_blob(
+                            &pred_tenant_id,
+                            run_id,
+                            out_scope.as_deref(),
+                            &out_sha.to_ascii_lowercase(),
+                        );
                         let dl_now = now_epoch_ms() / 1_000;
-                        let dl_url = if let Some((bucket, prefix)) = &self.s3_upload_target {
-                            let Ok(creds) =
-                                crate::security::sigv4::CarbonAwsCredentials::from_env()
-                            else {
-                                return CarbonGatewayResponse::error_json(
-                                    500,
-                                    "presign_creds_missing",
-                                    "missing AWS execution credentials for S3 GET presigning",
-                                );
-                            };
-                            let region = match std::env::var("AWS_REGION") {
-                                Ok(val) if !val.trim().is_empty() => val,
-                                _ => self.config.region.clone(),
-                            };
-                            let (_, amz_date) =
-                                crate::security::sigv4::format_amz_timestamp_utc(dl_now);
-                            let s3_key = join_s3_scoped_prefix(
-                                prefix,
-                                out_scope.as_deref(),
-                                &out_sha.to_ascii_lowercase(),
-                            );
-                            let Ok(url) = CarbonPresigner::presign_s3_get_v4_with_creds(
-                                &creds, &region, bucket, &s3_key, &amz_date, 900,
-                            ) else {
-                                return CarbonGatewayResponse::error_json(
-                                    500,
-                                    "presign_failed",
-                                    "failed to sign predict output S3 GET URL",
-                                );
-                            };
-                            url
-                        } else {
-                            let base_url = self.resolve_public_base_url(req);
-                            self.config.presigner.sign_gateway_scoped_download_url(
-                                &base_url,
-                                out_scope.as_deref(),
-                                &out_sha.to_ascii_lowercase(),
-                                dl_now.saturating_add(900),
-                            )
+                        let dl_url = match self.presign_scoped_get_url(
+                            req,
+                            out_scope.as_deref(),
+                            &out_sha.to_ascii_lowercase(),
+                            dl_now,
+                        ) {
+                            Ok(u) => u,
+                            Err(err_resp) => return err_resp,
                         };
                         resp.encrypted_predictions_cas_url = Some(dl_url);
                     }
                     CarbonGatewayResponse::json_ok(200, &resp)
                 }
-                Err(_) => CarbonGatewayResponse::error_json(
-                    500,
-                    "invalid_engine_response",
-                    "malformed predict response",
-                ),
+                Err(_) => {
+                    if let Some(ref sk) = reserved_slot_key {
+                        let _ = self.cas.delete_state_object(sk);
+                    }
+                    CarbonGatewayResponse::error_json(
+                        500,
+                        "invalid_engine_response",
+                        "malformed predict response",
+                    )
+                }
             },
-            Err(err) => CarbonGatewayResponse::error_json(502, "engine_predict_failed", &err),
+            Err(err) => {
+                if let Some(ref sk) = reserved_slot_key {
+                    let _ = self.cas.delete_state_object(sk);
+                }
+                CarbonGatewayResponse::error_json(502, "engine_predict_failed", &err)
+            }
+        }
+    }
+
+    fn reserve_predict_quota_slot(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        max_calls: u32,
+        tier: &CarbonProductTier,
+    ) -> Result<String, CarbonGatewayResponse> {
+        let quota_err = || {
+            CarbonGatewayResponse::error_json(
+                403,
+                "predict_quota_exceeded",
+                &format!(
+                    "{} tier admits at most {max_calls} /predict calls per run",
+                    tier.as_str()
+                ),
+            )
+        };
+        if max_calls == 0 {
+            return Err(quota_err());
+        }
+        let cnt_key = canonical_run_state_key(tenant_id, run_id, "predict_count.json")
+            .map_err(|_| CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key"))?;
+        let hint: u32 = self
+            .cas
+            .get_state_object(&cnt_key)
+            .ok()
+            .flatten()
+            .and_then(|b| serde_json::from_slice::<u32>(&b).ok())
+            .unwrap_or(0);
+        if hint >= max_calls {
+            return Err(quota_err());
+        }
+        let probe_limit = max_calls.saturating_sub(hint).min(32);
+        for offset in 0..probe_limit {
+            let slot = hint.saturating_add(offset).saturating_add(1);
+            let Ok(slot_key) =
+                canonical_run_state_key(tenant_id, run_id, &format!("predict_slot_{slot}.json"))
+            else {
+                continue;
+            };
+            match self.cas.put_state_object_if_absent(&slot_key, b"1") {
+                Ok(true) => {
+                    if let Ok(next_bytes) = to_json_vec(&slot) {
+                        let _ = self.cas.put_state_object(&cnt_key, &next_bytes);
+                    }
+                    return Ok(slot_key);
+                }
+                Ok(false) => continue,
+                Err(err) => {
+                    return Err(CarbonGatewayResponse::error_json(
+                        500,
+                        "cas_write_failed",
+                        &err,
+                    ));
+                }
+            }
+        }
+        let advanced = hint.saturating_add(probe_limit).min(max_calls);
+        if let Ok(next_bytes) = to_json_vec(&advanced) {
+            let _ = self.cas.put_state_object(&cnt_key, &next_bytes);
+        }
+        Err(quota_err())
+    }
+
+    fn record_predict_output_blob(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        scope: Option<&str>,
+        sha_lc: &str,
+    ) {
+        let Ok(list_key) = canonical_run_state_key(tenant_id, run_id, "predict_outputs.json")
+        else {
+            return;
+        };
+        let mut entries: Vec<(Option<String>, String)> = self
+            .cas
+            .get_state_object(&list_key)
+            .ok()
+            .flatten()
+            .and_then(|b| serde_json::from_slice(&b).ok())
+            .unwrap_or_default();
+        if entries.len() < 128 {
+            entries.push((scope.map(str::to_owned), sha_lc.to_owned()));
+            if let Ok(bytes) = to_json_vec(&entries) {
+                let _ = self.cas.put_state_object(&list_key, &bytes);
+            }
         }
     }
 
@@ -2030,9 +2071,22 @@ impl CarbonEdgeRouter {
                 "shred rate limit exceeded",
             );
         }
+        if validate_strict_run_id(run_id).is_err() {
+            return CarbonGatewayResponse::error_json(400, "invalid_run_id", "invalid RunId");
+        }
         let Ok(parsed_run_id) = run_id.parse() else {
             return CarbonGatewayResponse::error_json(400, "invalid_run_id", "invalid RunId");
         };
+        // Persist tombstone FIRST (`RACE-01`) so concurrent GET/POST/stop/resume requests
+        // immediately observe the run as shredded while artifacts are being erased.
+        if let Ok(tomb_key) = canonical_run_state_key(tenant, run_id, "shredded.json") {
+            if let Err(err) = self
+                .cas
+                .put_state_object(&tomb_key, br#"{"shredded":true}"#)
+            {
+                return CarbonGatewayResponse::error_json(500, "cas_write_failed", &err);
+            }
+        }
         let mut deleted = 0u32;
         if let Ok(req_key) = canonical_run_state_key(tenant, run_id, "request.json") {
             if let Ok(Some(req_bytes)) = self.cas.get_state_object(&req_key) {
@@ -2074,6 +2128,37 @@ impl CarbonEdgeRouter {
                 }
             }
         }
+        if let Ok(out_key) = canonical_run_state_key(tenant, run_id, "predict_outputs.json") {
+            if let Ok(Some(out_bytes)) = self.cas.get_state_object(&out_key) {
+                if let Ok(entries) =
+                    serde_json::from_slice::<Vec<(Option<String>, String)>>(&out_bytes)
+                {
+                    for (sc, sha_lc) in entries {
+                        if self
+                            .cas
+                            .delete_scoped_blob(sc.as_deref(), &sha_lc)
+                            .unwrap_or(false)
+                        {
+                            deleted += 1;
+                        }
+                    }
+                }
+                let _ = self.cas.delete_state_object(&out_key);
+            }
+        }
+        let max_slot_to_sweep = canonical_run_state_key(tenant, run_id, "predict_count.json")
+            .ok()
+            .and_then(|ck| self.cas.get_state_object(&ck).ok().flatten())
+            .and_then(|b| serde_json::from_slice::<u32>(&b).ok())
+            .unwrap_or(0)
+            .clamp(32, 1_000);
+        for slot in 1..=max_slot_to_sweep {
+            if let Ok(sk) =
+                canonical_run_state_key(tenant, run_id, &format!("predict_slot_{slot}.json"))
+            {
+                let _ = self.cas.delete_state_object(&sk);
+            }
+        }
         for leaf in [
             "request.json",
             "status.json",
@@ -2089,11 +2174,6 @@ impl CarbonEdgeRouter {
                     deleted += 1;
                 }
             }
-        }
-        if let Ok(tomb_key) = canonical_run_state_key(tenant, run_id, "shredded.json") {
-            let _ = self
-                .cas
-                .put_state_object(&tomb_key, br#"{"shredded":true}"#);
         }
         CarbonGatewayResponse::json_ok(
             200,
@@ -2180,65 +2260,26 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_explain(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "explain payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(explain_req) = serde_json::from_slice::<CarbonExplainRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonExplainRequest",
-            );
-        };
-        if let Err(resp) = self.authorize_tenant(req, &explain_req.tenant_id, None) {
-            return resp;
-        }
-        let now_secs = now_epoch_ms() / 1_000;
-        if !self.rate_limiter.check_and_record(
-            &format!("explain:{}", explain_req.tenant_id),
-            now_secs,
-            120,
+        let (explain_req, _) = match self.parse_authed_json::<CarbonExplainRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "explain payload exceeds 64 KiB limit",
+            "CarbonExplainRequest",
         ) {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "explain rate limit exceeded",
-            );
-        }
-        if validate_strict_run_id(run_id).is_err()
-            || self.is_run_shredded(&explain_req.tenant_id, run_id)
-        {
-            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-        }
-        let Ok(req_key) = canonical_run_state_key(&explain_req.tenant_id, run_id, "request.json")
-        else {
-            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
-        let stored_create = match self.cas.get_state_object(&req_key) {
-            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
-                Ok(c) => c,
-                Err(_) => {
-                    return CarbonGatewayResponse::error_json(
-                        500,
-                        "corrupt_request",
-                        "corrupt stored request",
-                    );
-                }
-            },
-            Ok(None) => {
-                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-            }
-            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        let stored_create = match self.load_authorized_active_run(
+            req,
+            &explain_req.tenant_id,
+            run_id,
+            "explain",
+            120,
+            "explain rate limit exceeded",
+        ) {
+            Ok(c) => c,
+            Err(resp) => return resp,
         };
         if stored_create.encrypted_cuen
             && (explain_req.client_response_pubkey_b64.is_none()
@@ -2269,65 +2310,26 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_export(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
-        let Ok(body) = req.body_cow() else {
-            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
-        };
-        if body.len() > MAX_CONTROL_JSON_BYTES {
-            return CarbonGatewayResponse::error_json(
-                413,
-                "payload_too_large",
-                "export payload exceeds 64 KiB limit",
-            );
-        }
-        if let Err(resp) = self.preverify_bearer_before_json(req) {
-            return resp;
-        }
-        let Ok(export_req) = serde_json::from_slice::<CarbonExportRequest>(&body) else {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_json",
-                "invalid CarbonExportRequest",
-            );
-        };
-        if let Err(resp) = self.authorize_tenant(req, &export_req.tenant_id, None) {
-            return resp;
-        }
-        let now_secs = now_epoch_ms() / 1_000;
-        if !self.rate_limiter.check_and_record(
-            &format!("export:{}", export_req.tenant_id),
-            now_secs,
-            120,
+        let (export_req, _) = match self.parse_authed_json::<CarbonExportRequest>(
+            req,
+            MAX_CONTROL_JSON_BYTES,
+            "payload_too_large",
+            "export payload exceeds 64 KiB limit",
+            "CarbonExportRequest",
         ) {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "export rate limit exceeded",
-            );
-        }
-        if validate_strict_run_id(run_id).is_err()
-            || self.is_run_shredded(&export_req.tenant_id, run_id)
-        {
-            return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-        }
-        let Ok(req_key) = canonical_run_state_key(&export_req.tenant_id, run_id, "request.json")
-        else {
-            return CarbonGatewayResponse::error_json(400, "invalid_key", "invalid key");
+            Ok(v) => v,
+            Err(resp) => return resp,
         };
-        let stored_create = match self.cas.get_state_object(&req_key) {
-            Ok(Some(bytes)) => match serde_json::from_slice::<CarbonCreateRunRequest>(&bytes) {
-                Ok(c) => c,
-                Err(_) => {
-                    return CarbonGatewayResponse::error_json(
-                        500,
-                        "corrupt_request",
-                        "corrupt stored request",
-                    );
-                }
-            },
-            Ok(None) => {
-                return CarbonGatewayResponse::error_json(404, "run_not_found", "run not found");
-            }
-            Err(err) => return CarbonGatewayResponse::error_json(500, "cas_read_failed", &err),
+        let stored_create = match self.load_authorized_active_run(
+            req,
+            &export_req.tenant_id,
+            run_id,
+            "export",
+            120,
+            "export rate limit exceeded",
+        ) {
+            Ok(c) => c,
+            Err(resp) => return resp,
         };
         if stored_create.encrypted_cuen
             && (export_req.client_response_pubkey_b64.is_none()
@@ -2364,177 +2366,15 @@ impl CarbonEdgeRouter {
         req_id: &str,
         req: &CarbonGatewayRequest,
     ) -> CarbonGatewayResponse {
-        let raw_path = req.header_ci("x-carbon-raw-path").unwrap_or(&req.path);
-        let raw_lc = raw_path.to_ascii_lowercase();
-        if raw_path.contains("..")
-            || raw_lc.contains("%2e")
-            || raw_lc.contains("%2f")
-            || raw_lc.contains("%5c")
-            || raw_path.contains('\\')
-            || raw_path.bytes().any(|b| b <= 0x20 || b == 0x7f)
-        {
-            return CarbonGatewayResponse::error_json(
-                400,
-                "invalid_download_target",
-                "download path contains disallowed traversal or encoded characters",
-            )
-            .with_header("cache-control", "private, no-store");
-        }
-
-        let default_pub_tag = std::env::var("CARBON_PUBLISHED_INSTALLER_TAG")
-            .ok()
-            .map(|v| v.trim().to_owned())
-            .filter(|v| is_valid_release_tag(v) && v != "latest")
-            .unwrap_or_else(|| "carbon-cli-v1.1.0".to_owned());
-
-        let (tag, asset, target_url) = match clean_path {
-            "/carbon/install.sh" => (
-                default_pub_tag.clone(),
-                "install.sh".to_owned(),
-                format!(
-                    "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.sh"
-                ),
-            ),
-            "/carbon/install.ps1" => (
-                default_pub_tag.clone(),
-                "install.ps1".to_owned(),
-                format!(
-                    "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.ps1"
-                ),
-            ),
-            "/carbon/carbon-clouds.json" => (
-                "latest".to_owned(),
-                "carbon-clouds.json".to_owned(),
-                "https://github.com/neverhuman/JopeDime/releases/latest/download/carbon-clouds.json"
-                    .to_owned(),
-            ),
-            p if p.starts_with("/carbon/releases/") => {
-                let rem = &p["/carbon/releases/".len()..];
-                let Some((tag_part, asset_part)) = rem.split_once('/') else {
-                    return CarbonGatewayResponse::error_json(
-                        400,
-                        "invalid_download_target",
-                        "expected /carbon/releases/{tag}/{asset}",
-                    )
-                    .with_header("cache-control", "private, no-store");
-                };
-                if asset_part.contains('/')
-                    || !is_valid_release_tag(tag_part)
-                    || !is_valid_release_asset(asset_part)
-                {
-                    return CarbonGatewayResponse::error_json(
-                        400,
-                        "invalid_download_target",
-                        "requested release tag or asset is not on the Carbon download allowlist",
-                    )
-                    .with_header("cache-control", "private, no-store");
-                }
-                let url = if tag_part == "latest" {
-                    format!(
-                        "https://github.com/neverhuman/JopeDime/releases/latest/download/{asset_part}"
-                    )
-                } else {
-                    format!(
-                        "https://github.com/neverhuman/JopeDime/releases/download/{tag_part}/{asset_part}"
-                    )
-                };
-                (tag_part.to_owned(), asset_part.to_owned(), url)
-            }
-            _ => {
-                return CarbonGatewayResponse::error_json(
-                    400,
-                    "invalid_download_target",
-                    "unknown Carbon download route",
-                )
-                .with_header("cache-control", "private, no-store");
-            }
-        };
-
-        let now_ms = now_epoch_ms();
-        let now_secs = now_ms / 1_000;
-        let source_ip = req.trusted_caller_ip("unknown");
-        if !self
-            .rate_limiter
-            .check_and_record(&format!("dl:{source_ip}"), now_secs, 240)
-        {
-            return CarbonGatewayResponse::error_json(
-                429,
-                "rate_limited",
-                "download redirect rate limit exceeded (max 240/min per IP)",
-            )
-            .with_header("cache-control", "private, no-store");
-        }
-        let ip_day_hmac = self
-            .config
-            .presigner
-            .daily_ip_pseudonym_hex(now_secs, source_ip);
-        let mut client_hdr_names: Vec<&str> = req
-            .headers
-            .keys()
-            .map(String::as_str)
-            .filter(|k| {
-                !k.eq_ignore_ascii_case("x-carbon-trusted-source-ip")
-                    && !k.eq_ignore_ascii_case("x-carbon-raw-path")
-            })
-            .collect();
-        client_hdr_names.sort_unstable();
-        let header_names_hash =
-            sha256_lower_hex(client_hdr_names.join(",").as_bytes())[..16].to_owned();
-        let ua = sanitize_download_log_field(req.header_ci("user-agent"), 256);
-        let accept_lang = sanitize_download_log_field(req.header_ci("accept-language"), 128);
-        let sec_ch_ua = sanitize_download_log_field(req.header_ci("sec-ch-ua"), 128);
-        let sec_ch_platform = sanitize_download_log_field(req.header_ci("sec-ch-ua-platform"), 64);
-        let sec_ch_arch = sanitize_download_log_field(req.header_ci("sec-ch-ua-arch"), 64);
-        let viewer_country = sanitize_download_log_field(
-            req.header_ci("cloudfront-viewer-country")
-                .or_else(|| req.header_ci("cf-ipcountry")),
-            16,
-        );
-        let viewer_asn = sanitize_download_log_field(req.header_ci("cloudfront-viewer-asn"), 32);
-        let tls_version = sanitize_download_log_field(
-            req.header_ci("x-amzn-tls-version")
-                .or_else(|| req.header_ci("cloudfront-viewer-tls")),
-            64,
-        );
-        let dnt = matches!(req.header_ci("dnt"), Some("1"))
-            || matches!(req.header_ci("sec-gpc"), Some("1"));
-        let (inf_os, inf_arch, inf_libc, inf_archive) =
-            infer_download_platform(&asset, ua.as_deref().unwrap_or(""));
-
-        let telemetry_event = serde_json::json!({
-            "schema": "carbon.download.v1",
-            "ts_ms": now_ms,
-            "request_id": req_id,
-            "region": self.config.region,
-            "method": method,
-            "path": clean_path,
-            "tag": tag,
-            "asset": asset,
-            "target_url": target_url,
-            "source_ip": source_ip,
-            "ip_day_hmac": ip_day_hmac,
-            "header_names_hash": header_names_hash,
-            "user_agent": ua,
-            "accept_language": accept_lang,
-            "sec_ch_ua": sec_ch_ua,
-            "sec_ch_ua_platform": sec_ch_platform,
-            "sec_ch_ua_arch": sec_ch_arch,
-            "viewer_country": viewer_country,
-            "viewer_asn": viewer_asn,
-            "tls_version": tls_version,
-            "dnt": dnt,
-            "inferred_os": inf_os,
-            "inferred_arch": inf_arch,
-            "inferred_libc": inf_libc,
-            "inferred_archive": inf_archive,
-        });
-        if let Ok(line) = serde_json::to_string(&telemetry_event) {
-            eprintln!("{line}");
-        }
-
-        CarbonGatewayResponse::bytes_ok(302, "text/plain; charset=utf-8", b"")
-            .with_header("location", target_url)
-            .with_header("cache-control", "private, no-store")
+        crate::cells::edge_downloads::execute_passive_download_redirect(
+            &self.config.region,
+            &self.config.presigner,
+            &self.rate_limiter,
+            method,
+            clean_path,
+            req_id,
+            req,
+        )
     }
 
     fn is_run_shredded(&self, tenant_id: &str, run_id: &str) -> bool {
@@ -2563,6 +2403,10 @@ impl CarbonEdgeRouter {
     }
 }
 
+fn unknown_run_route() -> CarbonGatewayResponse {
+    CarbonGatewayResponse::error_json(404, "not_found", "unknown Carbon run route")
+}
+
 pub(crate) fn wire_to_product_tier(wire: CarbonTierWire) -> CarbonProductTier {
     match wire {
         CarbonTierWire::Free => CarbonProductTier::Free,
@@ -2582,178 +2426,6 @@ pub(crate) fn map_api_effort(effort: Effort) -> CarbonEffortTier {
 
 fn is_valid_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
-}
-
-fn is_valid_release_tag(tag: &str) -> bool {
-    if tag == "latest" {
-        return true;
-    }
-    if tag.is_empty() || tag.len() > 64 || tag.contains("..") {
-        return false;
-    }
-    let semver_part = if let Some(rest) = tag.strip_prefix("carbon-cli-v") {
-        rest
-    } else if let Some(rest) = tag.strip_prefix('v') {
-        rest
-    } else {
-        return false;
-    };
-    let (core, prerelease) = match semver_part.split_once('-') {
-        Some((c, pre)) => (c, Some(pre)),
-        None => (semver_part, None),
-    };
-    let mut nums = core.split('.');
-    let (Some(maj), Some(min), Some(pat), None) =
-        (nums.next(), nums.next(), nums.next(), nums.next())
-    else {
-        return false;
-    };
-    let digits_ok = [maj, min, pat].iter().all(|part| {
-        !part.is_empty() && part.len() <= 8 && part.bytes().all(|b| b.is_ascii_digit())
-    });
-    if !digits_ok {
-        return false;
-    }
-    if let Some(pre) = prerelease {
-        if pre.is_empty()
-            || !pre
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
-        {
-            return false;
-        }
-    }
-    true
-}
-
-fn is_valid_release_asset(asset: &str) -> bool {
-    if asset.is_empty()
-        || asset.len() > 128
-        || asset.contains("..")
-        || !asset
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
-    {
-        return false;
-    }
-    if matches!(
-        asset,
-        "SHA256SUMS.txt"
-            | "SHA256SUMS.txt.sig"
-            | "carbon-clouds.json"
-            | "install.sh"
-            | "install.ps1"
-            | "carbon-linux-x86_64-musl"
-            | "carbon-linux-aarch64-musl"
-            | "carbon-linux-armv7-musleabihf"
-            | "carbon-darwin-arm64"
-            | "carbon-darwin-x86_64"
-            | "carbon-darwin-universal"
-    ) {
-        return true;
-    }
-    let has_os_prefix = asset.starts_with("carbon-linux-")
-        || asset.starts_with("carbon-darwin-")
-        || asset.starts_with("carbon-windows-");
-    let has_archive_suffix = asset.ends_with(".tar.zst")
-        || asset.ends_with(".tar.xz")
-        || asset.ends_with(".tar.gz")
-        || asset.ends_with(".zip")
-        || asset.ends_with(".exe");
-    has_os_prefix && has_archive_suffix
-}
-
-fn sanitize_download_log_field(raw: Option<&str>, max_chars: usize) -> Option<String> {
-    let text = raw?.trim();
-    if text.is_empty() {
-        return None;
-    }
-    let redacted = crate::observability::redact_secrets(text);
-    let cleaned: String = redacted
-        .chars()
-        .filter(|c| !c.is_control())
-        .take(max_chars)
-        .collect();
-    if cleaned.is_empty() {
-        None
-    } else {
-        Some(cleaned)
-    }
-}
-
-fn infer_download_platform(
-    asset: &str,
-    user_agent: &str,
-) -> (&'static str, &'static str, &'static str, &'static str) {
-    let archive = if asset.ends_with(".tar.zst") {
-        "tar.zst"
-    } else if asset.ends_with(".tar.gz") {
-        "tar.gz"
-    } else if asset.ends_with(".zip") {
-        "zip"
-    } else if asset.ends_with(".ps1") {
-        "ps1"
-    } else if asset.ends_with(".sh") {
-        "sh"
-    } else {
-        "meta"
-    };
-
-    let ua_lc = user_agent.to_ascii_lowercase();
-    let os = if asset.starts_with("carbon-linux-") || ua_lc.contains("linux") {
-        "linux"
-    } else if asset.starts_with("carbon-darwin-")
-        || ua_lc.contains("darwin")
-        || ua_lc.contains("macintosh")
-        || ua_lc.contains("mac os")
-    {
-        "macos"
-    } else if asset.starts_with("carbon-windows-")
-        || asset.ends_with(".ps1")
-        || ua_lc.contains("windows")
-        || ua_lc.contains("powershell")
-    {
-        "windows"
-    } else {
-        "unknown"
-    };
-
-    let arch = if asset.contains("arm64")
-        || asset.contains("aarch64")
-        || ua_lc.contains("aarch64")
-        || ua_lc.contains("arm64")
-    {
-        "arm64"
-    } else if asset.contains("armv7") || ua_lc.contains("armv7") {
-        "armv7"
-    } else if asset.contains("x86_64")
-        || asset.contains("amd64")
-        || ua_lc.contains("x86_64")
-        || ua_lc.contains("win64")
-        || ua_lc.contains("x64")
-    {
-        "x86_64"
-    } else if asset.contains("universal") {
-        "universal"
-    } else {
-        "unknown"
-    };
-
-    let libc = if asset.contains("musleabihf") {
-        "musleabihf"
-    } else if asset.contains("musl") {
-        "musl"
-    } else if asset.contains("msvc") || os == "windows" {
-        "msvc"
-    } else if os == "macos" {
-        "libsystem"
-    } else if os == "linux" {
-        "gnu_or_musl"
-    } else {
-        "unknown"
-    };
-
-    (os, arch, libc, archive)
 }
 
 fn join_s3_scoped_prefix(prefix: &str, scope: Option<&str>, sha_lower: &str) -> String {
@@ -2800,9 +2472,10 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
     let mut headers = BTreeMap::new();
     if let Some(hdr_map) = event.get("headers").and_then(serde_json::Value::as_object) {
         for (k, v) in hdr_map {
-            // Never trust client-supplied `x-carbon-trusted-source-ip` or `x-carbon-raw-path` (`GAP-SEC-4`).
+            // Strip untrusted synthetic headers (`GAP-SEC-4`).
             if k.eq_ignore_ascii_case("x-carbon-trusted-source-ip")
                 || k.eq_ignore_ascii_case("x-carbon-raw-path")
+                || k.eq_ignore_ascii_case("x-carbon-via-apigw-v2")
             {
                 continue;
             }
@@ -2812,6 +2485,20 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
         }
     }
     headers.insert("x-carbon-raw-path".to_owned(), path.clone());
+    // Detect AWS API Gateway HTTP API v2.0 (30,000 ms hard timeout ceiling) vs direct Function URL
+    // / direct Lambda invoke so `StartRun` / `ResumeRun` dispatch asynchronously (`202 Accepted`).
+    let api_id_present = event
+        .pointer("/requestContext/apiId")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|s| !s.trim().is_empty());
+    let domain_name = event
+        .pointer("/requestContext/domainName")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+    if api_id_present && !domain_name.contains(".lambda-url.") {
+        headers.insert("x-carbon-via-apigw-v2".to_owned(), "1".to_owned());
+    }
+
     if let Some(src_ip) = event
         .pointer("/requestContext/http/sourceIp")
         .and_then(serde_json::Value::as_str)
@@ -2835,7 +2522,7 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
             }
             base64::engine::general_purpose::STANDARD
                 .decode(body_str)
-                .map_err(|e| format!("invalid base64 Function URL v2 body: {e}"))?
+                .map_err(err_to_string)?
         }
         Some(body_str) => {
             if body_str.len() > 36 * 1_048_576 {
@@ -2857,14 +2544,27 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
 }
 
 fn encode_lambda_url_v2_response(resp: &CarbonGatewayResponse) -> Result<Vec<u8>, String> {
+    let raw_slice: Option<&[u8]> = resp.raw_body.as_deref();
     let (body_field, is_b64) = if resp
         .content_type
         .eq_ignore_ascii_case("application/octet-stream")
     {
-        (resp.body_b64.clone(), true)
+        let b64 = match raw_slice {
+            Some(bytes) => base64::engine::general_purpose::STANDARD.encode(bytes),
+            None => resp.body_b64.clone(),
+        };
+        (b64, true)
+    } else if let Some(bytes) = raw_slice {
+        match std::str::from_utf8(bytes) {
+            Ok(utf8_str) => (utf8_str.to_owned(), false),
+            Err(_) => (
+                base64::engine::general_purpose::STANDARD.encode(bytes),
+                true,
+            ),
+        }
     } else {
-        let raw_bytes = resp.decoded_body();
-        match String::from_utf8(raw_bytes) {
+        let decoded = resp.decoded_body();
+        match String::from_utf8(decoded) {
             Ok(utf8_str) => (utf8_str, false),
             Err(_) => (resp.body_b64.clone(), true),
         }
@@ -2883,5 +2583,5 @@ fn encode_lambda_url_v2_response(resp: &CarbonGatewayResponse) -> Result<Vec<u8>
         "body": body_field,
         "isBase64Encoded": is_b64,
     });
-    serde_json::to_vec(&out).map_err(|e| format!("encode Function URL v2 response: {e}"))
+    to_json_vec(&out)
 }

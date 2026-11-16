@@ -4,8 +4,8 @@
 //! `JMAT` v1 encoding, and per-user `ECDH P-256 + HKDF-SHA256 + AES-256-GCM` (`CUEN\x01` / `CUDK\x01`)
 //! envelope encryption strictly on the client before uploading to size/SHA-pinned presigned URLs.
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
-use std::io::Read;
 use std::sync::{
     atomic::{AtomicU32, AtomicUsize, Ordering},
     Arc, Mutex,
@@ -38,8 +38,7 @@ use crate::{
     security::{
         auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
         sigv4::{
-            compute_backoff_with_jitter_ms, sign_aws_v4_headers_with_extra, url_encode_component,
-            CarbonAwsCredentials,
+            compute_backoff_with_jitter_ms, sign_aws_v4_headers_with_extra, CarbonAwsCredentials,
         },
         user_envelope::{
             decode_p256_pubkey_b64, decrypt_cuen_payload, encrypt_cuen_payload,
@@ -54,7 +53,7 @@ use crate::{
 const PREDICT_CAS_THRESHOLD_BYTES: usize = 1_572_864;
 
 fn decode_wire_ping_response(bytes: &[u8]) -> Result<CarbonPingResponse, String> {
-    serde_json::from_slice(bytes).map_err(|e| format!("invalid ping JSON: {e}"))
+    serde_json::from_slice(bytes).err_ctx("invalid ping JSON")
 }
 
 fn is_strict_loopback_host(host: &str) -> bool {
@@ -175,6 +174,7 @@ pub struct CarbonThinClient {
     uploaded_secrets: Arc<Mutex<BTreeMap<String, UploadedEncryptionSecret>>>,
     uploaded_ids: Arc<Mutex<BTreeMap<String, String>>>,
     run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
+    run_upload_keys: Arc<Mutex<BTreeMap<String, String>>>,
     cached_server_version: Arc<Mutex<Option<Option<CarbonVersionResponse>>>>,
     poll_requests: Arc<AtomicU32>,
     http_request_bytes: Arc<AtomicUsize>,
@@ -315,7 +315,8 @@ impl CarbonThinClient {
             match outcome {
                 Ok(probed) => {
                     if let Some(b64) = &probed.engine_kek_pubkey_b64 {
-                        let decoded = decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?;
+                        let decoded =
+                            decode_p256_pubkey_b64(b64).map_err(crate::error::err_to_string)?;
                         endpoint_keks.insert(probed.base_url.clone(), decoded);
                     }
                     healthy.push(probed);
@@ -364,6 +365,7 @@ impl CarbonThinClient {
                 uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
                 uploaded_ids: Arc::new(Mutex::new(BTreeMap::new())),
                 run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
+                run_upload_keys: Arc::new(Mutex::new(BTreeMap::new())),
                 cached_server_version: Arc::new(Mutex::new(None)),
                 poll_requests: Arc::new(AtomicU32::new(0)),
                 http_request_bytes: Arc::new(AtomicUsize::new(0)),
@@ -389,6 +391,14 @@ impl CarbonThinClient {
     {
         self.progress_observer = Some(Arc::new(observer));
         self
+    }
+
+    /// Return `(run_udeks_len, uploaded_secrets_len, uploaded_ids_len)` currently retained in client RAM.
+    pub fn cached_secret_counts(&self) -> (usize, usize, usize) {
+        let udeks = self.run_udeks.lock().map(|g| g.len()).unwrap_or(0);
+        let secrets = self.uploaded_secrets.lock().map(|g| g.len()).unwrap_or(0);
+        let ids = self.uploaded_ids.lock().map(|g| g.len()).unwrap_or(0);
+        (udeks, secrets, ids)
     }
 
     /// Return `(poll_requests, http_request_bytes, http_response_bytes)` observed on this client.
@@ -427,8 +437,8 @@ impl CarbonThinClient {
             Some(b"{}"),
             true,
         )?;
-        let resp: CarbonAnonymousAuthResponse = serde_json::from_slice(&bytes)
-            .map_err(|e| format!("decode CarbonAnonymousAuthResponse: {e}"))?;
+        let resp: CarbonAnonymousAuthResponse =
+            serde_json::from_slice(&bytes).err_ctx("decode CarbonAnonymousAuthResponse")?;
         self.record_verified_endpoint_kek(
             self.active_endpoint(),
             resp.engine_kek_pubkey_b64.as_deref(),
@@ -446,7 +456,7 @@ impl CarbonThinClient {
         let req_body = serde_json::to_vec(&CarbonRegisterFreeRequest {
             label: label.map(str::to_owned),
         })
-        .map_err(|e| format!("encode CarbonRegisterFreeRequest: {e}"))?;
+        .err_ctx("encode CarbonRegisterFreeRequest")?;
         let bytes = self.request_checked_with_policy(
             "POST",
             "/v1/carbon/auth/register",
@@ -455,8 +465,8 @@ impl CarbonThinClient {
             Some(&req_body),
             true,
         )?;
-        let resp: CarbonRegisterFreeResponse = serde_json::from_slice(&bytes)
-            .map_err(|e| format!("decode CarbonRegisterFreeResponse: {e}"))?;
+        let resp: CarbonRegisterFreeResponse =
+            serde_json::from_slice(&bytes).err_ctx("decode CarbonRegisterFreeResponse")?;
         self.record_verified_endpoint_kek(
             self.active_endpoint(),
             resp.engine_kek_pubkey_b64.as_deref(),
@@ -479,7 +489,7 @@ impl CarbonThinClient {
             }
         }
         if let Some(b64) = advertised_b64 {
-            let decoded = decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?;
+            let decoded = decode_p256_pubkey_b64(b64).map_err(crate::error::err_to_string)?;
             if let Ok(mut guard) = self.endpoint_keks.lock() {
                 guard.insert(norm.to_owned(), decoded);
             }
@@ -551,8 +561,7 @@ impl CarbonThinClient {
     pub fn ping_active(&self) -> Result<CarbonPingResponse, String> {
         let bytes =
             self.request_checked_with_policy("GET", "/v1/carbon/ping", None, None, None, true)?;
-        let resp = decode_wire_ping_response(&bytes)
-            .map_err(|e| format!("decode CarbonPingResponse: {e}"))?;
+        let resp = decode_wire_ping_response(&bytes).err_ctx("decode CarbonPingResponse")?;
         self.record_verified_endpoint_kek(
             self.active_endpoint(),
             resp.engine_kek_pubkey_b64.as_deref(),
@@ -614,8 +623,8 @@ impl CarbonThinClient {
                     String::from_utf8_lossy(&body)
                 ));
             }
-            let ver: CarbonVersionResponse = serde_json::from_slice(&body)
-                .map_err(|e| format!("decode CarbonVersionResponse: {e}"))?;
+            let ver: CarbonVersionResponse =
+                serde_json::from_slice(&body).err_ctx("decode CarbonVersionResponse")?;
             if let Ok(mut guard) = self.cached_server_version.lock() {
                 *guard = Some(Some(ver.clone()));
             }
@@ -633,7 +642,7 @@ impl CarbonThinClient {
             None,
             true,
         )?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode CarbonRegionCatalog: {e}"))
+        serde_json::from_slice(&bytes).err_ctx("decode CarbonRegionCatalog")
     }
 
     /// Perform client-side `SplitPlan::deterministic`, `FitLandmarkBundle::extract_fit_only`,
@@ -721,10 +730,10 @@ impl CarbonThinClient {
         };
         let split_plan = if normalized_split.as_deref() == Some("forward") {
             SplitPlan::chronological(total_rows, seed, holdout_fraction)
-                .map_err(|e| format!("chronological split plan failed: {e}"))?
+                .err_ctx("chronological split plan failed")?
         } else {
             SplitPlan::deterministic(total_rows, seed, holdout_fraction)
-                .map_err(|e| format!("split plan failed: {e}"))?
+                .err_ctx("split plan failed")?
         };
 
         let mut full_x = Vec::with_capacity(total_rows * feature_indices.len());
@@ -746,14 +755,14 @@ impl CarbonThinClient {
             &full_y,
             &split_plan,
         )
-        .map_err(|e| format!("FIT-only landmark conditioning failed: {e}"))?;
+        .err_ctx("FIT-only landmark conditioning failed")?;
 
         let artifacts = jope_prep::jmat_lite::split_and_encode_numeric_jmat_v1(
             &headers,
             numeric_rows,
             &split_plan,
         )
-        .map_err(|e| format!("JMAT split encoding failed: {e}"))?;
+        .err_ctx("JMAT split encoding failed")?;
 
         Ok(CarbonClientPreparedDataset {
             fit_rows: split_plan.fit_rows().len() as u32,
@@ -828,7 +837,7 @@ impl CarbonThinClient {
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, mut secret_opt) =
             if self.has_zero_knowledge_kek() {
-                let u_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
+                let u_dek = generate_random_u_dek().map_err(crate::error::err_to_string)?;
                 let fit_enc = encrypt_cuen_payload(
                     &u_dek,
                     CuenPayloadKind::FitJmat,
@@ -836,7 +845,7 @@ impl CarbonThinClient {
                     CAS_BLOB_CUEN_SCOPE,
                     &prepared.artifacts.fit_jmat,
                 )
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
                 let hold_enc = encrypt_cuen_payload(
                     &u_dek,
                     CuenPayloadKind::HoldoutJmat,
@@ -844,7 +853,7 @@ impl CarbonThinClient {
                     CAS_BLOB_CUEN_SCOPE,
                     &prepared.artifacts.holdout_jmat,
                 )
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
                 let f_sha = sha256_lower_hex(&fit_enc);
                 let h_sha = sha256_lower_hex(&hold_enc);
                 let secret = UploadedEncryptionSecret {
@@ -853,14 +862,21 @@ impl CarbonThinClient {
                     fit_cuen_sha256: f_sha.clone(),
                     holdout_cuen_sha256: h_sha.clone(),
                 };
-                (fit_enc, f_sha, hold_enc, h_sha, true, Some(secret))
+                (
+                    std::borrow::Cow::Owned(fit_enc),
+                    f_sha,
+                    std::borrow::Cow::Owned(hold_enc),
+                    h_sha,
+                    true,
+                    Some(secret),
+                )
             } else {
                 let f_sha = pt_fit_sha.clone();
                 let h_sha = hex::encode(prepared.artifacts.holdout_sha256);
                 (
-                    prepared.artifacts.fit_jmat.clone(),
+                    std::borrow::Cow::Borrowed(prepared.artifacts.fit_jmat.as_slice()),
                     f_sha,
-                    prepared.artifacts.holdout_jmat.clone(),
+                    std::borrow::Cow::Borrowed(prepared.artifacts.holdout_jmat.as_slice()),
                     h_sha,
                     false,
                     None,
@@ -883,7 +899,7 @@ impl CarbonThinClient {
             },
             encrypted_cuen,
         };
-        let payload = serde_json::to_vec(&prep_req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&prep_req).err_ctx("encode JSON")?;
         let resp_bytes = self.request_checked_with_policy(
             "POST",
             "/v1/carbon/uploads/prepare",
@@ -892,22 +908,28 @@ impl CarbonThinClient {
             Some(&payload),
             true,
         )?;
-        let prep_resp: CarbonPrepareUploadResponse = serde_json::from_slice(&resp_bytes)
-            .map_err(|e| format!("decode upload prepare response: {e}"))?;
+        let prep_resp: CarbonPrepareUploadResponse =
+            serde_json::from_slice(&resp_bytes).err_ctx("decode upload prepare response")?;
         self.record_verified_endpoint_kek(
             self.active_endpoint(),
             prep_resp.engine_kek_pubkey_b64.as_deref(),
         )?;
 
-        self.put_presigned_bytes(&prep_resp.fit_target.url, &fit_wire)?;
-        self.put_presigned_bytes(&prep_resp.holdout_target.url, &holdout_wire)?;
+        self.put_presigned_bytes(&prep_resp.fit_target.url, fit_wire.as_ref())?;
+        self.put_presigned_bytes(&prep_resp.holdout_target.url, holdout_wire.as_ref())?;
         let upload_key = format!("{tenant_id}:{pt_fit_sha}");
         if let Ok(mut id_guard) = self.uploaded_ids.lock() {
+            while id_guard.len() >= 128 {
+                let _ = id_guard.pop_first();
+            }
             id_guard.insert(upload_key.clone(), prep_resp.upload_id.clone());
         }
         if let Some(ref mut secret) = secret_opt {
             secret.upload_id = prep_resp.upload_id.clone();
             if let Ok(mut guard) = self.uploaded_secrets.lock() {
+                while guard.len() >= 128 {
+                    let _ = guard.pop_first();
+                }
                 guard.insert(upload_key, secret.clone());
             }
         }
@@ -952,11 +974,21 @@ impl CarbonThinClient {
                 &run_str,
                 &lm_wire,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
             let cudk = wrap_u_dek_to_pubkey(&secret.u_dek, &kek_pub, tenant_id, &run_str)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
+            let run_key = format!("{tenant_id}:{run_str}");
             if let Ok(mut run_map) = self.run_udeks.lock() {
-                run_map.insert(format!("{tenant_id}:{run_str}"), secret.u_dek.clone());
+                while run_map.len() >= 128 {
+                    let _ = run_map.pop_first();
+                }
+                run_map.insert(run_key.clone(), secret.u_dek.clone());
+            }
+            if let Ok(mut ukey_map) = self.run_upload_keys.lock() {
+                while ukey_map.len() >= 128 {
+                    let _ = ukey_map.pop_first();
+                }
+                ukey_map.insert(run_key, upload_key.clone());
             }
             CarbonCreateRunRequest {
                 run_id,
@@ -985,6 +1017,12 @@ impl CarbonThinClient {
                 calibration_mode: prepared.calibration_mode.clone(),
             }
         } else {
+            if let Ok(mut ukey_map) = self.run_upload_keys.lock() {
+                while ukey_map.len() >= 128 {
+                    let _ = ukey_map.pop_first();
+                }
+                ukey_map.insert(format!("{tenant_id}:{run_str}"), upload_key.clone());
+            }
             let plain_upload_id = if v1_1_wire {
                 self.uploaded_ids
                     .lock()
@@ -1017,7 +1055,7 @@ impl CarbonThinClient {
             }
         };
 
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let bytes = self.request_checked(
             "POST",
             "/v1/carbon/runs",
@@ -1025,8 +1063,8 @@ impl CarbonThinClient {
             Some(tier),
             Some(&payload),
         )?;
-        let initial: CarbonPublicWaveProgress = serde_json::from_slice(&bytes)
-            .map_err(|e| format!("decode start_run progress: {e}"))?;
+        let initial: CarbonPublicWaveProgress =
+            serde_json::from_slice(&bytes).err_ctx("decode start_run progress")?;
         self.wait_for_run_settlement(tenant_id, &run_str, initial)
     }
 
@@ -1037,13 +1075,13 @@ impl CarbonThinClient {
     ) -> Result<CarbonPublicWaveProgress, String> {
         let path = format!("/v1/carbon/runs/{run_id}?tenant_id={tenant_id}");
         let bytes = self.request_checked("GET", &path, Some(tenant_id), None, None)?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode run status: {e}"))
+        serde_json::from_slice(&bytes).err_ctx("decode run status")
     }
 
     pub fn get_run_events_sse(&self, tenant_id: &str, run_id: &str) -> Result<String, String> {
         let path = format!("/v1/carbon/runs/{run_id}/events?tenant_id={tenant_id}");
         let bytes = self.request_checked("GET", &path, Some(tenant_id), None, None)?;
-        String::from_utf8(bytes).map_err(|e| format!("SSE UTF-8 error: {e}"))
+        String::from_utf8(bytes).err_ctx("SSE UTF-8 error")
     }
 
     pub fn signal_early_stop(
@@ -1057,7 +1095,7 @@ impl CarbonThinClient {
             tenant_id: tenant_id.to_owned(),
             reason,
         };
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let _ = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
         Ok(())
     }
@@ -1078,7 +1116,7 @@ impl CarbonThinClient {
                 .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
             if let Some(u_dek) = u_dek_opt {
                 let cudk = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
-                    .map_err(|e| e.to_string())?;
+                    .map_err(crate::error::err_to_string)?;
                 Some(base64::engine::general_purpose::STANDARD.encode(cudk))
             } else {
                 None
@@ -1092,10 +1130,10 @@ impl CarbonThinClient {
             additional_waves,
             wrapped_u_dek_b64,
         };
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
         let initial: CarbonPublicWaveProgress =
-            serde_json::from_slice(&bytes).map_err(|e| format!("decode resume progress: {e}"))?;
+            serde_json::from_slice(&bytes).err_ctx("decode resume progress")?;
         self.wait_for_run_settlement(tenant_id, run_id, initial)
     }
 
@@ -1114,12 +1152,12 @@ impl CarbonThinClient {
             .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
 
         if let (Some(kek_pub), Some(u_dek)) = (self.active_kek_pubkey(), u_dek_opt) {
-            let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+            let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
             let enc_body = serde_json::to_vec(&CarbonEncryptedPredictPayload {
                 feature_names,
                 rows,
             })
-            .map_err(|e| format!("encode encrypted predict payload: {e}"))?;
+            .err_ctx("encode encrypted predict payload")?;
             let cuen_req = encrypt_cuen_payload(
                 &u_dek,
                 CuenPayloadKind::PredictFeatures,
@@ -1127,9 +1165,9 @@ impl CarbonThinClient {
                 run_id,
                 &enc_body,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
             let cudk_req = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
 
             let force_cas = std::env::var("CARBON_FORCE_PREDICT_CAS")
                 .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
@@ -1143,8 +1181,7 @@ impl CarbonThinClient {
                         bytes: DecimalU64(cuen_req.len() as u64),
                     },
                 };
-                let prep_payload =
-                    serde_json::to_vec(&prep_req).map_err(|e| format!("encode JSON: {e}"))?;
+                let prep_payload = serde_json::to_vec(&prep_req).err_ctx("encode JSON")?;
                 let prep_bytes = self.request_checked(
                     "POST",
                     &prep_path,
@@ -1154,7 +1191,7 @@ impl CarbonThinClient {
                 )?;
                 let prep_resp: CarbonPreparePredictResponse =
                     serde_json::from_slice(&prep_bytes)
-                        .map_err(|e| format!("decode predict prepare response: {e}"))?;
+                        .err_ctx("decode predict prepare response")?;
                 self.put_presigned_bytes(&prep_resp.input_target.url, &cuen_req)?;
                 CarbonPredictRequest {
                     tenant_id: tenant_id.to_owned(),
@@ -1187,18 +1224,18 @@ impl CarbonThinClient {
                 }
             };
 
-            let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+            let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
             let bytes =
                 self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-            let mut resp: CarbonPredictResponse = serde_json::from_slice(&bytes)
-                .map_err(|e| format!("decode predict response: {e}"))?;
+            let mut resp: CarbonPredictResponse =
+                serde_json::from_slice(&bytes).err_ctx("decode predict response")?;
             let cudk_b64 = resp
                 .response_cudk_b64
                 .as_deref()
                 .ok_or_else(|| "missing response_cudk_b64 on encrypted predict".to_owned())?;
             let cudk_raw = base64::engine::general_purpose::STANDARD
                 .decode(cudk_b64)
-                .map_err(|e| format!("decode response_cudk_b64: {e}"))?;
+                .err_ctx("decode response_cudk_b64")?;
             let cuen_raw = if let Some(cas_url) = resp.encrypted_predictions_cas_url.as_deref() {
                 let exp_sha = resp
                     .encrypted_predictions_cas_sha256
@@ -1214,10 +1251,10 @@ impl CarbonThinClient {
                     })?;
                 base64::engine::general_purpose::STANDARD
                     .decode(cuen_b64)
-                    .map_err(|e| format!("decode encrypted_predictions_cuen_b64: {e}"))?
+                    .err_ctx("decode encrypted_predictions_cuen_b64")?
             };
             let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
             let pred_le = decrypt_cuen_payload(
                 &r_dek,
                 CuenPayloadKind::PredictOutputs,
@@ -1225,7 +1262,7 @@ impl CarbonThinClient {
                 run_id,
                 &cuen_raw,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
             if sha256_lower_hex(&pred_le) != resp.predictions_sha256 {
                 return Err("decrypted predictions SHA-256 mismatch".to_owned());
             }
@@ -1253,9 +1290,9 @@ impl CarbonThinClient {
             client_response_pubkey_b64: None,
             wrapped_u_dek_b64: None,
         };
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode predict response: {e}"))
+        serde_json::from_slice(&bytes).err_ctx("decode predict response")
     }
 
     /// Compute holdout permutation feature importances (`POST /v1/carbon/runs/{id}/explain`) with
@@ -1274,20 +1311,20 @@ impl CarbonThinClient {
             .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
 
         if let (Some(kek_pub), Some(u_dek)) = (self.active_kek_pubkey(), u_dek_opt) {
-            let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+            let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
             let cudk_req = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
             let req = CarbonExplainRequest {
                 tenant_id: tenant_id.to_owned(),
                 top_k,
                 client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
                 wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_req)),
             };
-            let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+            let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
             let bytes =
                 self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-            let mut resp: CarbonExplainResponse = serde_json::from_slice(&bytes)
-                .map_err(|e| format!("decode explain response: {e}"))?;
+            let mut resp: CarbonExplainResponse =
+                serde_json::from_slice(&bytes).err_ctx("decode explain response")?;
             let cudk_b64 = resp
                 .response_cudk_b64
                 .as_deref()
@@ -1297,12 +1334,12 @@ impl CarbonThinClient {
             })?;
             let cudk_raw = base64::engine::general_purpose::STANDARD
                 .decode(cudk_b64)
-                .map_err(|e| format!("decode response_cudk_b64: {e}"))?;
+                .err_ctx("decode response_cudk_b64")?;
             let cuen_raw = base64::engine::general_purpose::STANDARD
                 .decode(cuen_b64)
-                .map_err(|e| format!("decode encrypted_explain_cuen_b64: {e}"))?;
+                .err_ctx("decode encrypted_explain_cuen_b64")?;
             let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
             let pt = decrypt_cuen_payload(
                 &r_dek,
                 CuenPayloadKind::ExplainOutputs,
@@ -1310,9 +1347,9 @@ impl CarbonThinClient {
                 run_id,
                 &cuen_raw,
             )
-            .map_err(|e| e.to_string())?;
-            let decoded: CarbonEncryptedExplainPayload = serde_json::from_slice(&pt)
-                .map_err(|e| format!("decode decrypted explain payload: {e}"))?;
+            .map_err(crate::error::err_to_string)?;
+            let decoded: CarbonEncryptedExplainPayload =
+                serde_json::from_slice(&pt).err_ctx("decode decrypted explain payload")?;
             resp.baseline_holdout_loss = decoded.baseline_holdout_loss;
             resp.feature_importances = decoded.feature_importances;
             return Ok(resp);
@@ -1324,9 +1361,9 @@ impl CarbonThinClient {
             client_response_pubkey_b64: None,
             wrapped_u_dek_b64: None,
         };
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode explain response: {e}"))
+        serde_json::from_slice(&bytes).err_ctx("decode explain response")
     }
 
     /// Export a run's winning champion to standalone predictor source code (`POST /v1/carbon/runs/{id}/export`)
@@ -1345,20 +1382,20 @@ impl CarbonThinClient {
             .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
 
         if let (Some(kek_pub), Some(u_dek)) = (self.active_kek_pubkey(), u_dek_opt) {
-            let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+            let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
             let cudk_req = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
             let req = CarbonExportRequest {
                 tenant_id: tenant_id.to_owned(),
                 lang,
                 client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
                 wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_req)),
             };
-            let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+            let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
             let bytes =
                 self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-            let mut resp: CarbonExportResponse = serde_json::from_slice(&bytes)
-                .map_err(|e| format!("decode export response: {e}"))?;
+            let mut resp: CarbonExportResponse =
+                serde_json::from_slice(&bytes).err_ctx("decode export response")?;
             let cudk_b64 = resp
                 .response_cudk_b64
                 .as_deref()
@@ -1368,12 +1405,12 @@ impl CarbonThinClient {
             })?;
             let cudk_raw = base64::engine::general_purpose::STANDARD
                 .decode(cudk_b64)
-                .map_err(|e| format!("decode response_cudk_b64: {e}"))?;
+                .err_ctx("decode response_cudk_b64")?;
             let cuen_raw = base64::engine::general_purpose::STANDARD
                 .decode(cuen_b64)
-                .map_err(|e| format!("decode encrypted_export_cuen_b64: {e}"))?;
+                .err_ctx("decode encrypted_export_cuen_b64")?;
             let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::error::err_to_string)?;
             let pt = decrypt_cuen_payload(
                 &r_dek,
                 CuenPayloadKind::ExportArtifact,
@@ -1381,12 +1418,12 @@ impl CarbonThinClient {
                 run_id,
                 &cuen_raw,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
             if sha256_lower_hex(&pt) != resp.source_sha256 {
                 return Err("decrypted export source SHA-256 mismatch".to_owned());
             }
-            let src_str = String::from_utf8(pt.to_vec())
-                .map_err(|e| format!("decrypted export source is not UTF-8: {e}"))?;
+            let src_str =
+                String::from_utf8(pt.to_vec()).err_ctx("decrypted export source is not UTF-8")?;
             resp.source_code = Some(src_str);
             return Ok(resp);
         }
@@ -1397,12 +1434,12 @@ impl CarbonThinClient {
             client_response_pubkey_b64: None,
             wrapped_u_dek_b64: None,
         };
-        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let payload = serde_json::to_vec(&req).err_ctx("encode JSON")?;
         let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode export response: {e}"))
+        serde_json::from_slice(&bytes).err_ctx("decode export response")
     }
 
-    /// Cryptographically shred all CAS blobs and state objects for `run_id` and purge `U_DEK` from client RAM.
+    /// Cryptographically shred all CAS blobs and state objects for `run_id` and purge `U_DEK` and upload secrets from client RAM.
     pub fn shred_run(
         &self,
         tenant_id: &str,
@@ -1410,10 +1447,28 @@ impl CarbonThinClient {
     ) -> Result<CarbonShredRunResponse, String> {
         let path = format!("/v1/carbon/runs/{run_id}?tenant_id={tenant_id}");
         let bytes = self.request_checked("DELETE", &path, Some(tenant_id), None, None)?;
+        let run_key = format!("{tenant_id}:{run_id}");
         if let Ok(mut g) = self.run_udeks.lock() {
-            g.remove(&format!("{tenant_id}:{run_id}"));
+            g.remove(&run_key);
         }
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode shred response: {e}"))
+        let released_upload_key = self.run_upload_keys.lock().ok().and_then(|mut g| {
+            let ukey = g.remove(&run_key)?;
+            let still_used = g.values().any(|v| v == &ukey);
+            if still_used {
+                None
+            } else {
+                Some(ukey)
+            }
+        });
+        if let Some(ukey) = released_upload_key {
+            if let Ok(mut s) = self.uploaded_secrets.lock() {
+                s.remove(&ukey);
+            }
+            if let Ok(mut ids) = self.uploaded_ids.lock() {
+                ids.remove(&ukey);
+            }
+        }
+        serde_json::from_slice(&bytes).err_ctx("decode shred response")
     }
 
     fn wait_for_run_settlement(
@@ -1717,11 +1772,11 @@ fn send_raw_get_url_with_agent(agent: &ureq::Agent, url: &str) -> Result<(u16, V
         .call()
         .map_err(|e| format!("GET {url} failed: {e}"))?;
     let code = resp.status().as_u16();
-    let mut out = Vec::new();
-    resp.body_mut()
-        .as_reader()
-        .read_to_end(&mut out)
-        .map_err(|e| format!("read GET {url} body: {e}"))?;
+    let out = crate::storage::cas::read_bounded(
+        resp.body_mut().as_reader(),
+        268_435_456,
+        &format!("GET {url} body"),
+    )?;
     Ok((code, out))
 }
 
@@ -1754,8 +1809,9 @@ fn send_raw_put_url_with_agent(
         .send(bytes)
         .map_err(|e| format!("PUT {url} failed: {e}"))?;
     let code = resp.status().as_u16();
-    let mut out = Vec::new();
-    let _ = resp.body_mut().as_reader().read_to_end(&mut out);
+    let out =
+        crate::storage::cas::read_bounded(resp.body_mut().as_reader(), 1024 * 1024, "PUT response")
+            .unwrap_or_default();
     Ok((code, out))
 }
 
@@ -1877,15 +1933,11 @@ fn send_raw_edge_http_with_headers_and_agent(
                 "isBase64Encoded": false
             }),
         };
-        let event_bytes = serde_json::to_vec(&fn_url_event)
-            .map_err(|e| format!("encode Lambda Function URL v2 event: {e}"))?;
+        let event_bytes =
+            serde_json::to_vec(&fn_url_event).err_ctx("encode Lambda Function URL v2 event")?;
         let creds = CarbonAwsCredentials::from_env()?;
-        let host = format!("lambda.{region}.amazonaws.com");
-        let canonical_uri = format!(
-            "/2015-03-31/functions/{}/invocations",
-            url_encode_component(&fn_name)
-        );
-        let url = format!("https://{host}{canonical_uri}");
+        let (host, canonical_uri, canonical_query, url) =
+            crate::security::sigv4::resolve_lambda_invoke_endpoint(&region, &fn_name)?;
         let now_secs = now_epoch_ms() / 1_000;
         let headers = sign_aws_v4_headers_with_extra(
             &creds,
@@ -1894,7 +1946,7 @@ fn send_raw_edge_http_with_headers_and_agent(
             "POST",
             &host,
             &canonical_uri,
-            "",
+            &canonical_query,
             &event_bytes,
             now_secs,
             &[],
@@ -1917,11 +1969,11 @@ fn send_raw_edge_http_with_headers_and_agent(
             .get("x-amz-function-error")
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_owned());
-        let mut out_bytes = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut out_bytes)
-            .map_err(|e| format!("read Lambda edge invoke body: {e}"))?;
+        let out_bytes = crate::storage::cas::read_bounded(
+            resp.body_mut().as_reader(),
+            268_435_456,
+            "Lambda edge invoke body",
+        )?;
         if invoke_code >= 300 {
             return Err(format!(
                 "Lambda invoke HTTP {invoke_code}: {}",
@@ -1935,7 +1987,7 @@ fn send_raw_edge_http_with_headers_and_agent(
             ));
         }
         let envelope: serde_json::Value = serde_json::from_slice(&out_bytes)
-            .map_err(|e| format!("decode Function URL v2 response envelope: {e}"))?;
+            .err_ctx("decode Function URL v2 response envelope")?;
         let status_code = envelope
             .get("statusCode")
             .and_then(|v| v.as_u64())
@@ -1956,7 +2008,7 @@ fn send_raw_edge_http_with_headers_and_agent(
         let decoded_body = if is_b64 {
             base64::engine::general_purpose::STANDARD
                 .decode(body_str)
-                .map_err(|e| format!("decode base64 Lambda response body: {e}"))?
+                .err_ctx("decode base64 Lambda response body")?
         } else {
             body_str.as_bytes().to_vec()
         };
@@ -2082,11 +2134,11 @@ fn send_raw_edge_http_with_headers_and_agent(
             resp_headers.insert(name.as_str().to_ascii_lowercase(), s.to_owned());
         }
     }
-    let mut resp_body = Vec::new();
-    resp.body_mut()
-        .as_reader()
-        .read_to_end(&mut resp_body)
-        .map_err(|e| format!("read {method} body: {e}"))?;
+    let resp_body = crate::storage::cas::read_bounded(
+        resp.body_mut().as_reader(),
+        268_435_456,
+        &format!("{method} {url} body"),
+    )?;
     Ok((code, resp_headers, resp_body))
 }
 
@@ -2300,11 +2352,11 @@ fn fetch_clouds_manifest_bytes(source: &str) -> Result<Vec<u8>, String> {
                 current = resolve_clouds_redirect_target(&current, loc)?;
                 continue;
             }
-            let mut buf = Vec::new();
-            resp.body_mut()
-                .as_reader()
-                .read_to_end(&mut buf)
-                .map_err(|e| format!("read Carbon clouds manifest {current}: {e}"))?;
+            let buf = crate::storage::cas::read_bounded(
+                resp.body_mut().as_reader(),
+                4 * 1024 * 1024,
+                &format!("Carbon clouds manifest {current}"),
+            )?;
             if status >= 300 {
                 return Err(format!(
                     "Carbon clouds manifest {current} returned HTTP {status}: {}",
@@ -2439,7 +2491,7 @@ fn write_private_credentials_file(
         seq
     ));
     let encoded = zeroize::Zeroizing::new(
-        serde_json::to_vec_pretty(store).map_err(|e| format!("encode credentials store: {e}"))?,
+        serde_json::to_vec_pretty(store).err_ctx("encode credentials store")?,
     );
     #[cfg(unix)]
     {
@@ -2485,6 +2537,73 @@ fn write_private_credentials_file(
     Ok(())
 }
 
+struct CredentialsLockGuard {
+    lock_path: std::path::PathBuf,
+}
+
+impl CredentialsLockGuard {
+    fn acquire(config_dir: &std::path::Path) -> Result<Self, String> {
+        std::fs::create_dir_all(config_dir)
+            .map_err(|e| format!("create config dir {}: {e}", config_dir.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(config_dir, std::fs::Permissions::from_mode(0o700));
+        }
+        let lock_path = config_dir.join("carbon-credentials.json.lock");
+        for attempt in 0..300u32 {
+            let mut opts = std::fs::OpenOptions::new();
+            opts.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::OpenOptionsExt;
+                opts.mode(0o600);
+            }
+            match opts.open(&lock_path) {
+                Ok(mut f) => {
+                    use std::io::Write as _;
+                    let _ = writeln!(f, "pid={} ts_ms={}", std::process::id(), now_epoch_ms());
+                    return Ok(Self { lock_path });
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    let is_stale = std::fs::metadata(&lock_path)
+                        .and_then(|m| m.modified())
+                        .ok()
+                        .and_then(|t| std::time::SystemTime::now().duration_since(t).ok())
+                        .is_some_and(|age| age > Duration::from_secs(30));
+                    if is_stale {
+                        let _ = std::fs::remove_file(&lock_path);
+                        continue;
+                    }
+                    if attempt == 299 {
+                        return Err(format!(
+                            "timed out acquiring credential store lock {}",
+                            lock_path.display()
+                        ));
+                    }
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(e) => {
+                    return Err(format!(
+                        "acquire credential lock {}: {e}",
+                        lock_path.display()
+                    ));
+                }
+            }
+        }
+        Err(format!(
+            "timed out acquiring credential store lock {}",
+            lock_path.display()
+        ))
+    }
+}
+
+impl Drop for CredentialsLockGuard {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.lock_path);
+    }
+}
+
 /// Validate and store a `ctk1.*` capability token for `cloud_name` inside the `0600` credentials store.
 pub fn save_stored_cloud_token(
     cloud_name: &str,
@@ -2493,8 +2612,9 @@ pub fn save_stored_cloud_token(
 ) -> Result<crate::security::auth::CarbonCapabilityClaims, String> {
     let trimmed_tok = token.trim();
     let claims = crate::security::auth::CarbonCapabilityClaims::decode_unverified(trimmed_tok)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let config_dir = verified_absolute_jopedime_config_dir()?;
+    let _lock = CredentialsLockGuard::acquire(&config_dir)?;
     let cred_path = config_dir.join("carbon-credentials.json");
     let mut store = if cred_path.is_file() {
         let raw = zeroize::Zeroizing::new(
@@ -2525,11 +2645,9 @@ pub fn save_stored_cloud_token(
     Ok(claims)
 }
 
-/// Load a previously stored `ctk1.*` capability token for `cloud_name`, if present.
-pub fn load_stored_cloud_token(
-    cloud_name: &str,
-) -> Result<Option<CarbonStoredCloudCredential>, String> {
-    let config_dir = verified_absolute_jopedime_config_dir()?;
+fn read_credentials_store_unlocked(
+    config_dir: &std::path::Path,
+) -> Result<Option<CarbonCredentialsStoreFile>, String> {
     let cred_path = config_dir.join("carbon-credentials.json");
     if !cred_path.is_file() {
         return Ok(None);
@@ -2539,6 +2657,17 @@ pub fn load_stored_cloud_token(
     );
     let store: CarbonCredentialsStoreFile =
         serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
+    Ok(Some(store))
+}
+
+/// Load a previously stored `ctk1.*` capability token for `cloud_name`, if present.
+pub fn load_stored_cloud_token(
+    cloud_name: &str,
+) -> Result<Option<CarbonStoredCloudCredential>, String> {
+    let config_dir = verified_absolute_jopedime_config_dir()?;
+    let Some(store) = read_credentials_store_unlocked(&config_dir)? else {
+        return Ok(None);
+    };
     let key = cloud_name.trim().to_ascii_lowercase();
     Ok(store.clouds.get(&key).cloned())
 }
@@ -2546,30 +2675,19 @@ pub fn load_stored_cloud_token(
 /// Load all stored cloud credentials from `carbon-credentials.json` (empty map when absent).
 pub fn list_stored_cloud_tokens() -> Result<BTreeMap<String, CarbonStoredCloudCredential>, String> {
     let config_dir = verified_absolute_jopedime_config_dir()?;
-    let cred_path = config_dir.join("carbon-credentials.json");
-    if !cred_path.is_file() {
-        return Ok(BTreeMap::new());
-    }
-    let raw = zeroize::Zeroizing::new(
-        std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
-    );
-    let store: CarbonCredentialsStoreFile =
-        serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
-    Ok(store.clouds)
+    Ok(read_credentials_store_unlocked(&config_dir)?
+        .map(|s| s.clouds)
+        .unwrap_or_default())
 }
 
 /// Remove stored capability token(s) (`Some(cloud)` removes one cloud; `None` clears all clouds).
 pub fn remove_stored_cloud_token(cloud_name: Option<&str>) -> Result<usize, String> {
     let config_dir = verified_absolute_jopedime_config_dir()?;
-    let cred_path = config_dir.join("carbon-credentials.json");
-    if !cred_path.is_file() {
+    let _lock = CredentialsLockGuard::acquire(&config_dir)?;
+    let Some(mut store) = read_credentials_store_unlocked(&config_dir)? else {
         return Ok(0);
-    }
-    let raw = zeroize::Zeroizing::new(
-        std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
-    );
-    let mut store: CarbonCredentialsStoreFile =
-        serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
+    };
+    let cred_path = config_dir.join("carbon-credentials.json");
     let removed = match cloud_name {
         Some(c) => usize::from(
             store

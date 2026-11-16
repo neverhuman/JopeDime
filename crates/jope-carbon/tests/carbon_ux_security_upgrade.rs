@@ -9,8 +9,41 @@ use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
+
+static TEST_ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+struct ScopedTestEnv {
+    _guard: std::sync::MutexGuard<'static, ()>,
+    key: &'static str,
+    prior: Option<std::ffi::OsString>,
+}
+
+impl ScopedTestEnv {
+    fn set(key: &'static str, val: impl AsRef<std::ffi::OsStr>) -> Self {
+        let guard = TEST_ENV_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let prior = std::env::var_os(key);
+        std::env::set_var(key, val);
+        Self {
+            _guard: guard,
+            key,
+            prior,
+        }
+    }
+}
+
+impl Drop for ScopedTestEnv {
+    fn drop(&mut self) {
+        match &self.prior {
+            Some(v) => std::env::set_var(self.key, v),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
 
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{EcdsaKeyPair, KeyPair, ECDSA_P256_SHA256_ASN1_SIGNING};
@@ -1292,7 +1325,7 @@ mod full_stack {
         // 6. `--save` strips `capability_token` by default & `--embed-token` preserves it when requested!
         let cfg_dir = tmp.path().join("jopedime_cfg");
         fs::create_dir_all(&cfg_dir).expect("mkdir cfg_dir");
-        std::env::set_var("CARBON_CONFIG_DIR", &cfg_dir);
+        let _cfg_env = ScopedTestEnv::set("CARBON_CONFIG_DIR", &cfg_dir);
 
         let save_file = tmp.path().join("model.carbon.json");
         let handle = CarbonSavedModelHandle {
@@ -1400,7 +1433,7 @@ mod full_stack {
                 "stored prod credential leaked to unverified endpoint!\n{seen_req}"
             );
         }
-        std::env::remove_var("CARBON_CONFIG_DIR");
+        drop(_cfg_env);
     }
 
     struct NoopInvoker;

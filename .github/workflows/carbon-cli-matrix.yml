@@ -21,6 +21,10 @@ jobs:
             label: linux-x86_64
             target: x86_64-unknown-linux-musl
             asset: carbon-linux-x86_64-musl
+          - os: ubuntu-24.04-arm
+            label: linux-aarch64
+            target: aarch64-unknown-linux-musl
+            asset: carbon-linux-aarch64-musl
           - os: macos-15
             label: darwin-universal
             target: aarch64-apple-darwin
@@ -50,7 +54,7 @@ jobs:
 
       - name: Build stripped thin carbon CLI
         shell: bash
-        run: bash deploy/carbon/build-cli-matrix.sh "${{ matrix.label }}" "${{ matrix.target }}" "${{ matrix.asset }}"
+        run: bash ops/ci/carbon-cli-matrix.sh "${{ matrix.label }}" "${{ matrix.target }}" "${{ matrix.asset }}"
 
       - name: Save source-bound CLI matrix cache bundle
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

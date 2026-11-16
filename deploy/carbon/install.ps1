@@ -386,12 +386,19 @@ try {
   if ($VersionCode -ne 0) {
     throw "Installed carbon.exe failed 'version' check (exit code $VersionCode)"
   }
+  if (-not [string]::IsNullOrWhiteSpace($SourceDir)) {
+    $SkipPing = $true
+  }
   if (-not $SkipPing) {
-    $PingOut = & $DestExe ping --cloud prod
-    $PingCode = $LASTEXITCODE
-    if ($null -ne $PingOut) { $PingOut | Write-Host }
-    if ($PingCode -ne 0) {
-      throw "Post-install 'carbon ping --cloud prod' failed (exit code $PingCode)"
+    try {
+      $PingOut = & $DestExe ping --cloud prod
+      $PingCode = $LASTEXITCODE
+      if ($null -ne $PingOut) { $PingOut | Write-Host }
+      if ($PingCode -ne 0) {
+        Write-CarbonLog "WARNING: Post-install 'carbon ping --cloud prod' returned exit code $PingCode (binary and cryptographic pins are verified; outbound HTTPS may be offline or restricted)."
+      }
+    } catch {
+      Write-CarbonLog "WARNING: Post-install 'carbon ping --cloud prod' failed ($($_.Exception.Message)); binary and cryptographic pins are verified."
     }
   }
   if ([string]::IsNullOrWhiteSpace($AllowTestPubkey)) {

@@ -40,8 +40,8 @@ use crate::{
     storage::cas::sha256_lower_hex,
 };
 
-#[path = "coverage_audit_v11.rs"]
-mod v11;
+#[path = "coverage_audit_gateway.rs"]
+mod gateway;
 
 /// `CarbonCoverageCheckResult` is a struct recording one capability or adversarial check outcome.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -142,7 +142,7 @@ fn upload_encrypted_dataset(
     tier: CarbonTierWire,
     prepared: &CarbonClientPreparedDataset,
 ) -> Result<EncryptedUploadFixture, String> {
-    let u_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
+    let u_dek = generate_random_u_dek().map_err(crate::error::err_to_string)?;
     let fit_enc = encrypt_cuen_payload(
         &u_dek,
         CuenPayloadKind::FitJmat,
@@ -150,7 +150,7 @@ fn upload_encrypted_dataset(
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.fit_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let hold_enc = encrypt_cuen_payload(
         &u_dek,
         CuenPayloadKind::HoldoutJmat,
@@ -158,7 +158,7 @@ fn upload_encrypted_dataset(
         CAS_BLOB_CUEN_SCOPE,
         &prepared.artifacts.holdout_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let prep_body = serde_json::to_vec(&CarbonPrepareUploadRequest {
         tenant_id: tenant_id.to_owned(),
         tier,
@@ -175,7 +175,7 @@ fn upload_encrypted_dataset(
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (code, resp_bytes) = send_raw_edge_http(
         base,
         "POST",
@@ -190,7 +190,7 @@ fn upload_encrypted_dataset(
         ));
     }
     let prep_resp: CarbonPrepareUploadResponse =
-        serde_json::from_slice(&resp_bytes).map_err(|e| e.to_string())?;
+        serde_json::from_slice(&resp_bytes).map_err(crate::error::err_to_string)?;
     let (fc, _) = send_raw_put_url(&prep_resp.fit_target.url, &fit_enc, true)?;
     let (hc, _) = send_raw_put_url(&prep_resp.holdout_target.url, &hold_enc, true)?;
     if !matches!(fc, 200..=204) || !matches!(hc, 200..=204) {
@@ -235,7 +235,7 @@ fn build_encrypted_create_req(
         split_mode: None,
         calibration_mode: None,
     })
-    .map_err(|e| e.to_string())
+    .map_err(crate::error::err_to_string)
 }
 
 fn poll_run_until_settled(
@@ -262,7 +262,7 @@ fn poll_run_until_settled(
             ));
         }
         let prog: CarbonPublicWaveProgress =
-            serde_json::from_slice(&body).map_err(|e| e.to_string())?;
+            serde_json::from_slice(&body).map_err(crate::error::err_to_string)?;
         if matches!(
             prog.state,
             CarbonRunStateWire::Completed | CarbonRunStateWire::Paused | CarbonRunStateWire::Failed
@@ -288,13 +288,13 @@ fn invoke_encrypted_predict(
     cudk_bytes: &[u8],
     feature_names: &[String],
 ) -> Result<(u16, Vec<u8>), String> {
-    let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+    let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
     let sample_row = vec![vec![Some(0.2); feature_names.len()]];
     let pt = serde_json::to_vec(&CarbonEncryptedPredictPayload {
         feature_names: feature_names.to_vec(),
         rows: sample_row,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let pred_cuen = encrypt_cuen_payload(
         u_dek,
         CuenPayloadKind::PredictFeatures,
@@ -302,7 +302,7 @@ fn invoke_encrypted_predict(
         run_id_str,
         &pt,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let req_bytes = serde_json::to_vec(&CarbonPredictRequest {
         tenant_id: tenant_id.to_owned(),
         feature_names: Vec::new(),
@@ -314,7 +314,7 @@ fn invoke_encrypted_predict(
         client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_bytes)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (code, body) = send_raw_edge_http(
         base,
         "POST",
@@ -324,16 +324,16 @@ fn invoke_encrypted_predict(
     )?;
     if code == 200 {
         let parsed: CarbonPredictResponse =
-            serde_json::from_slice(&body).map_err(|e| e.to_string())?;
+            serde_json::from_slice(&body).map_err(crate::error::err_to_string)?;
         let r_dek = unwrap_u_dek_with_kek(
             &resp_kek,
             &base64::engine::general_purpose::STANDARD
                 .decode(parsed.response_cudk_b64.as_deref().unwrap_or(""))
-                .map_err(|e| e.to_string())?,
+                .map_err(crate::error::err_to_string)?,
             tenant_id,
             run_id_str,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
         let dec = decrypt_cuen_payload(
             &r_dek,
             CuenPayloadKind::PredictOutputs,
@@ -346,9 +346,9 @@ fn invoke_encrypted_predict(
                         .as_deref()
                         .unwrap_or(""),
                 )
-                .map_err(|e| e.to_string())?,
+                .map_err(crate::error::err_to_string)?,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
         if dec.len() != 8 || sha256_lower_hex(&dec) != parsed.predictions_sha256 {
             return Err("decrypted prediction digest mismatch".to_owned());
         }
@@ -371,7 +371,7 @@ fn delete_shred_checked(
     )?;
     if code == 200 {
         let parsed: CarbonShredRunResponse =
-            serde_json::from_slice(&body).map_err(|e| e.to_string())?;
+            serde_json::from_slice(&body).map_err(crate::error::err_to_string)?;
         Ok((code, Some(parsed)))
     } else {
         Ok((code, None))
@@ -521,7 +521,7 @@ fn run_api_and_signature_checks(
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_sig_prep, _) = send_raw_edge_http(
         base,
         "POST",
@@ -574,7 +574,7 @@ fn run_api_and_signature_checks(
 
     // ADV-SIG-03: Tampered S3 / CAS presigned PUT body (checksum/signature pin violation)
     let t = Instant::now();
-    let u_dek_tamper = generate_random_u_dek().map_err(|e| e.to_string())?;
+    let u_dek_tamper = generate_random_u_dek().map_err(crate::error::err_to_string)?;
     let mut fit_ct = encrypt_cuen_payload(
         &u_dek_tamper,
         CuenPayloadKind::FitJmat,
@@ -582,7 +582,7 @@ fn run_api_and_signature_checks(
         CAS_BLOB_CUEN_SCOPE,
         &prepared_small.artifacts.fit_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let hold_ct = encrypt_cuen_payload(
         &u_dek_tamper,
         CuenPayloadKind::HoldoutJmat,
@@ -590,7 +590,7 @@ fn run_api_and_signature_checks(
         CAS_BLOB_CUEN_SCOPE,
         &prepared_small.artifacts.holdout_jmat,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let tamper_prep_req = serde_json::to_vec(&CarbonPrepareUploadRequest {
         tenant_id: inp.pro_tenant_a.to_owned(),
         tier: CarbonTierWire::Pro,
@@ -607,7 +607,7 @@ fn run_api_and_signature_checks(
         },
         encrypted_cuen: true,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (_, tamper_prep_body) = send_raw_edge_http(
         base,
         "POST",
@@ -616,7 +616,7 @@ fn run_api_and_signature_checks(
         Some(&tamper_prep_req),
     )?;
     let tamper_prep: CarbonPrepareUploadResponse =
-        serde_json::from_slice(&tamper_prep_body).map_err(|e| e.to_string())?;
+        serde_json::from_slice(&tamper_prep_body).map_err(crate::error::err_to_string)?;
     let last_idx = fit_ct.len().saturating_sub(1);
     fit_ct[last_idx] ^= 0x5A;
     let (c_s3_tamper, _) = send_raw_put_url(&tamper_prep.fit_target.url, &fit_ct, true)?;
@@ -667,9 +667,10 @@ fn run_kek_replay_and_shred_checks(
     checks: &mut Vec<CarbonCoverageCheckResult>,
 ) -> Result<usize, String> {
     let mut unshredded = 0usize;
-    let kek_pub = decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(|e| e.to_string())?;
-    let wrong_kek_pub =
-        decode_p256_pubkey_b64(inp.wrong_peer_kek_pubkey_b64).map_err(|e| e.to_string())?;
+    let kek_pub =
+        decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(crate::error::err_to_string)?;
+    let wrong_kek_pub = decode_p256_pubkey_b64(inp.wrong_peer_kek_pubkey_b64)
+        .map_err(crate::error::err_to_string)?;
 
     // ADV-KEK-01: Client-side wrong KEK pin fails closed before upload
     let t = Instant::now();
@@ -707,10 +708,10 @@ fn run_kek_replay_and_shred_checks(
         &r_wkek_str,
         &prepared_small.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_wkek =
         wrap_u_dek_to_pubkey(&up_a.u_dek, &wrong_kek_pub, inp.pro_tenant_a, &r_wkek_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
     let req_wkek = build_encrypted_create_req(
         r_wkek,
         d_wkek,
@@ -759,10 +760,10 @@ fn run_kek_replay_and_shred_checks(
         &r_legit_str,
         &prepared_small.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_legit =
         wrap_u_dek_to_pubkey(&up_legit.u_dek, &kek_pub, inp.pro_tenant_a, &r_legit_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
     let req_legit = build_encrypted_create_req(
         r_legit.clone(),
         d_legit.clone(),
@@ -839,7 +840,7 @@ fn run_kek_replay_and_shred_checks(
         inp.pro_tenant_a,
         &r_legit_str,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_wkek_pred, _) = invoke_encrypted_predict(
         base,
         bearer_a,
@@ -920,7 +921,7 @@ fn run_kek_replay_and_shred_checks(
         &r_cudk_b_str,
         &prepared_small.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let req_cudk_replay = build_encrypted_create_req(
         r_cudk_b,
         d_cudk_b,
@@ -948,7 +949,7 @@ fn run_kek_replay_and_shred_checks(
         inp.pro_tenant_a,
         "run_01FOREIGN00000000000000000",
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_rpl_cudk_pred, _) = invoke_encrypted_predict(
         base,
         bearer_a,
@@ -983,7 +984,7 @@ fn run_kek_replay_and_shred_checks(
     let r_cuen_c_str = r_cuen_c.to_string();
     let cudk_c_for_legit_dek =
         wrap_u_dek_to_pubkey(&up_legit.u_dek, &kek_pub, inp.pro_tenant_a, &r_cuen_c_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
     let req_cuen_replay = build_encrypted_create_req(
         r_cuen_c,
         d_cuen_c,
@@ -1026,9 +1027,9 @@ fn run_kek_replay_and_shred_checks(
         &r_xten_str,
         &prepared_small.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_xten = wrap_u_dek_to_pubkey(&up_legit.u_dek, &kek_pub, inp.pro_tenant_b, &r_xten_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let req_xten = build_encrypted_create_req(
         r_xten,
         d_xten,
@@ -1126,7 +1127,7 @@ fn run_kek_replay_and_shred_checks(
         additional_waves: Some(1),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_legit)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_ps_res, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1230,9 +1231,10 @@ fn run_abort_and_resume_checks(
     checks: &mut Vec<CarbonCoverageCheckResult>,
 ) -> Result<usize, String> {
     let mut unshredded = 0usize;
-    let kek_pub = decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(|e| e.to_string())?;
-    let wrong_kek_pub =
-        decode_p256_pubkey_b64(inp.wrong_peer_kek_pubkey_b64).map_err(|e| e.to_string())?;
+    let kek_pub =
+        decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(crate::error::err_to_string)?;
+    let wrong_kek_pub = decode_p256_pubkey_b64(inp.wrong_peer_kek_pubkey_b64)
+        .map_err(crate::error::err_to_string)?;
 
     // Run 1 for standalone abort (`ADV-ABT-01`), cross-tenant `/stop` (`ADV-ABT-03`), and wrong-KEK `/resume` (`ADV-KEK-04`)
     let up_abt = upload_encrypted_dataset(
@@ -1251,9 +1253,9 @@ fn run_abort_and_resume_checks(
         &r_abt_str,
         &prepared_async.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_abt = wrap_u_dek_to_pubkey(&up_abt.u_dek, &kek_pub, inp.pro_tenant_a, &r_abt_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let req_abt = build_encrypted_create_req(
         r_abt,
         d_abt,
@@ -1288,7 +1290,7 @@ fn run_abort_and_resume_checks(
         tenant_id: inp.pro_tenant_a.to_owned(),
         reason: Some("cooperative_abort_test".to_owned()),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_xstop, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1335,14 +1337,14 @@ fn run_abort_and_resume_checks(
     let t_wkek_res = Instant::now();
     let wrong_res_cudk =
         wrap_u_dek_to_pubkey(&up_abt.u_dek, &wrong_kek_pub, inp.pro_tenant_a, &r_abt_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
     let wrong_res_body = serde_json::to_vec(&CarbonResumeRunRequest {
         tenant_id: inp.pro_tenant_a.to_owned(),
         effort: None,
         additional_waves: Some(1),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(wrong_res_cudk)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_wkek_res, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1407,9 +1409,9 @@ fn run_abort_and_resume_checks(
         &r_res_str,
         &prepared_async.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_res = wrap_u_dek_to_pubkey(&up_res.u_dek, &kek_pub, inp.pro_tenant_a, &r_res_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let req_res = build_encrypted_create_req(
         r_res,
         d_res,
@@ -1460,7 +1462,7 @@ fn run_abort_and_resume_checks(
         additional_waves: Some(1),
         wrapped_u_dek_b64: None,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_missing_dek, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1481,14 +1483,14 @@ fn run_abort_and_resume_checks(
     // ADV-ABT-02: Valid encrypted CCKP\x02 POST /resume + /predict + DELETE shred
     let fresh_res_cudk =
         wrap_u_dek_to_pubkey(&up_res.u_dek, &kek_pub, inp.pro_tenant_a, &r_res_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(crate::error::err_to_string)?;
     let valid_res_body = serde_json::to_vec(&CarbonResumeRunRequest {
         tenant_id: inp.pro_tenant_a.to_owned(),
         effort: None,
         additional_waves: Some(1),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(fresh_res_cudk)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_res_ok, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1554,9 +1556,9 @@ fn run_abort_and_resume_checks(
         &r_free_str,
         &prepared_small.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk_free = wrap_u_dek_to_pubkey(&up_free.u_dek, &kek_pub, free_tenant, &r_free_str)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let req_free = build_encrypted_create_req(
         r_free,
         d_free,
@@ -1593,7 +1595,7 @@ fn run_abort_and_resume_checks(
         additional_waves: Some(1),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_free)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (c_esc, _) = send_raw_edge_http(
         base,
         "POST",
@@ -1673,7 +1675,7 @@ pub fn execute_cloud_product_coverage_audit(
         &mut checks,
     )?;
     let rem_3 = if ver_deployed {
-        v11::run_v11_deployed_checks(inp, &base, &bearer_a, &prepared_small, &mut checks)?
+        gateway::run_gateway_deployed_checks(inp, &base, &bearer_a, &prepared_small, &mut checks)?
     } else {
         0
     };
@@ -1698,7 +1700,7 @@ pub fn execute_cloud_product_coverage_audit(
         checks,
         redteam,
     };
-    let receipt_json = serde_json::to_string(&receipt).map_err(|e| e.to_string())?;
+    let receipt_json = serde_json::to_string(&receipt).map_err(crate::error::err_to_string)?;
     assert_clean_receipt_json(&receipt_json)?;
     Ok(receipt)
 }
@@ -1863,14 +1865,14 @@ pub fn execute_live_aws_product_coverage_audit(
         total_redteam_vectors_per_cloud: total_rt,
         clouds,
     };
-    let serialized = serde_json::to_string_pretty(&report).map_err(|e| e.to_string())?;
+    let serialized = serde_json::to_string_pretty(&report).map_err(crate::error::err_to_string)?;
     assert_clean_receipt_json(&serialized)?;
 
     if let Some(out_path) = json_out {
         if let Some(parent) = out_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            fs::create_dir_all(parent).map_err(crate::error::err_to_string)?;
         }
-        fs::write(out_path, format!("{serialized}\n")).map_err(|e| e.to_string())?;
+        fs::write(out_path, format!("{serialized}\n")).map_err(crate::error::err_to_string)?;
     }
     Ok(report)
 }

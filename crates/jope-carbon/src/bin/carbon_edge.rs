@@ -9,10 +9,10 @@ use std::process::ExitCode;
 
 use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor};
 use jope_carbon::{
-    carbon_https_agent, open_engine_invoker, open_remote_cas, parse_s3_cas_url,
-    resolve_edge_secrets, run_lambda_custom_runtime_loop, CarbonEdgeConfig, CarbonEdgeRouter,
-    CarbonError, CarbonRole, CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET, CARBON_GIT_SHA,
-    CARBON_PKG_VERSION, CARBON_RELEASE_TAG,
+    carbon_https_agent, observability::write_stdout_line, open_engine_invoker, open_remote_cas,
+    parse_s3_cas_url, resolve_edge_secrets, run_lambda_custom_runtime_loop, CarbonEdgeConfig,
+    CarbonEdgeRouter, CarbonError, CarbonRole, CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET,
+    CARBON_GIT_SHA, CARBON_PKG_VERSION, CARBON_RELEASE_TAG,
 };
 
 fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<(), String> {
@@ -69,36 +69,36 @@ fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<()
     .map(|_| ())
 }
 
+fn emit_edge_banner() -> ExitCode {
+    let payload = serde_json::json!({
+        "binary": "carbon-edge",
+        "version": CARBON_PKG_VERSION,
+        "release_tag": CARBON_RELEASE_TAG,
+        "git_sha": CARBON_GIT_SHA,
+        "build_target": CARBON_BUILD_TARGET,
+        "build_profile": CARBON_BUILD_PROFILE,
+        "role": CarbonRole::Edge.as_str(),
+        "engine_linked": false,
+    });
+    let _ = write_stdout_line(&payload.to_string());
+    ExitCode::SUCCESS
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.iter().any(|a| a == "--version" || a == "-V") {
-        println!(
-            "{}",
-            serde_json::json!({
-                "binary": "carbon-edge",
-                "version": CARBON_PKG_VERSION,
-                "release_tag": CARBON_RELEASE_TAG,
-                "git_sha": CARBON_GIT_SHA,
-                "build_target": CARBON_BUILD_TARGET,
-                "build_profile": CARBON_BUILD_PROFILE,
-                "role": CarbonRole::Edge.as_str(),
-                "engine_linked": false,
-            })
-        );
-        return ExitCode::SUCCESS;
+        return emit_edge_banner();
     }
 
     if args.iter().any(|a| a == "--healthcheck") {
         let _agent = carbon_https_agent();
-        println!(
-            "{}",
-            serde_json::json!({
-                "status": "ok",
-                "role": CarbonRole::Edge.as_str(),
-                "git_sha": CARBON_GIT_SHA,
-                "tls_provider": "aws_lc_rs",
-            })
-        );
+        let payload = serde_json::json!({
+            "status": "ok",
+            "role": CarbonRole::Edge.as_str(),
+            "git_sha": CARBON_GIT_SHA,
+            "tls_provider": "aws_lc_rs",
+        });
+        let _ = write_stdout_line(&payload.to_string());
         return ExitCode::SUCCESS;
     }
 
@@ -120,20 +120,7 @@ fn main() -> ExitCode {
     }
 
     if args.is_empty() {
-        println!(
-            "{}",
-            serde_json::json!({
-                "binary": "carbon-edge",
-                "version": CARBON_PKG_VERSION,
-                "release_tag": CARBON_RELEASE_TAG,
-                "git_sha": CARBON_GIT_SHA,
-                "build_target": CARBON_BUILD_TARGET,
-                "build_profile": CARBON_BUILD_PROFILE,
-                "role": CarbonRole::Edge.as_str(),
-                "engine_linked": false,
-            })
-        );
-        return ExitCode::SUCCESS;
+        return emit_edge_banner();
     }
 
     let err = CarbonError::InvalidRoleOrCommand {

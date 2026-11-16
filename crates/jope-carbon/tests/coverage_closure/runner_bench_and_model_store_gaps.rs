@@ -194,8 +194,21 @@ fn runner_ops_benchmark_free_pro_enterprise_and_ux_modes() {
     };
     assert!(saved_path.is_file());
     assert!(ux_receipt.saved_model_path.is_some());
+    emu.shutdown();
+}
 
-    // 4. `bench_suite.rs`: `--csv-dir` custom CSV loader + `render_scientific_benchmark_markdown`.
+#[test]
+fn runner_scientific_csv_dir_and_enterprise_benchmark_modes() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let mut emu_cfg = CarbonEmuConfig::for_dir(tmp.path().join("emu_sci_bench"));
+    emu_cfg.force_hybrid_fanout = false;
+    emu_cfg.eval_worker_threads = 2;
+    let mut emu = CarbonLocalLambdaEmulator::start(emu_cfg).expect("start emu");
+    let pro_tok = emu
+        .mint_capability_token("pro_bench_tenant", CarbonTierWire::Pro, false)
+        .expect("mint pro token");
+
+    // 4. `bench_suite.rs`: `--csv-dir` + `--datasets-dir` (`PreSplitTables`) + `render_scientific_benchmark_markdown`.
     let csv_dir = tmp.path().join("sci_csvs");
     fs::create_dir_all(&csv_dir).expect("mkdir csv_dir");
     let mut csv_a = String::from("x1,x2,y\n");
@@ -205,7 +218,13 @@ fn runner_ops_benchmark_free_pro_enterprise_and_ux_modes() {
         let y = 2.5 * x1 - 0.8 * x2 + 1.0;
         csv_a.push_str(&format!("{x1:.4},{x2:.4},{y:.4}\n"));
     }
-    fs::write(csv_dir.join("task_alpha.csv"), csv_a).expect("write task_alpha.csv");
+    fs::write(csv_dir.join("task_alpha.csv"), &csv_a).expect("write task_alpha.csv");
+
+    let datasets_dir = tmp.path().join("sci_datasets");
+    let ds_sub = datasets_dir.join("ds_real_01");
+    fs::create_dir_all(&ds_sub).expect("mkdir ds_real_01");
+    fs::write(ds_sub.join("train.csv"), &csv_a).expect("write train.csv");
+    fs::write(ds_sub.join("test.csv"), &csv_a).expect("write test.csv");
 
     let sci_rep = execute_scientific_benchmark_suite(
         &CarbonScientificBenchmarkOptions {
@@ -216,16 +235,16 @@ fn runner_ops_benchmark_free_pro_enterprise_and_ux_modes() {
             tenant_id: "pro_bench_tenant".to_owned(),
             auth_token: Some(pro_tok),
             suite: "smoke".to_owned(),
-            datasets_dir: None,
+            datasets_dir: Some(datasets_dir),
             csv_dir: Some(csv_dir),
             seed: 42,
         },
         true,
     )
-    .expect("scientific benchmark csv_dir");
-    assert_eq!(sci_rep.tasks.len(), 4);
+    .expect("scientific benchmark csv_dir + datasets_dir");
+    assert_eq!(sci_rep.tasks.len(), 5);
     let sci_md = render_scientific_benchmark_markdown(&sci_rep);
-    assert!(sci_md.contains("task_alpha"));
+    assert!(sci_md.contains("task_alpha") && sci_md.contains("ds_real_01"));
 
     emu.shutdown();
 

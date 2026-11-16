@@ -4,6 +4,7 @@
 //! `Lambda-Runtime-Aws-Request-Id` and `Lambda-Runtime-Deadline-Ms`, invokes the cell handler,
 //! and posts the response or structured runtime error back to the Lambda Runtime API.
 
+use crate::error::CarbonErrCtx as _;
 use std::io::Read;
 use std::time::Duration;
 
@@ -48,7 +49,7 @@ where
         let mut next_resp = agent
             .get(&next_url)
             .call()
-            .map_err(|e| format!("Lambda Runtime API /next poll failed: {e}"))?;
+            .err_ctx("Lambda Runtime API /next poll failed")?;
         let status = next_resp.status().as_u16();
         if status == 410 {
             return Ok(processed);
@@ -76,7 +77,7 @@ where
             .as_reader()
             .take(MAX_LAMBDA_EVENT_BYTES.saturating_add(1))
             .read_to_end(&mut payload)
-            .map_err(|e| format!("read invocation payload: {e}"))?;
+            .err_ctx("read invocation payload")?;
         if payload.len() as u64 > MAX_LAMBDA_EVENT_BYTES {
             return Err(format!(
                 "Lambda Runtime API /next payload exceeds {MAX_LAMBDA_EVENT_BYTES} byte limit"
@@ -94,7 +95,7 @@ where
                 let post_resp = agent
                     .post(&resp_url)
                     .send(&response_bytes)
-                    .map_err(|e| format!("post invocation response failed: {e}"))?;
+                    .err_ctx("post invocation response failed")?;
                 if post_resp.status().as_u16() >= 300 {
                     return Err(format!(
                         "Lambda Runtime API /response returned HTTP {}",
@@ -108,8 +109,7 @@ where
                     "errorMessage": err_msg,
                     "errorType": "CarbonHandlerError"
                 });
-                let body = serde_json::to_vec(&err_json)
-                    .map_err(|e| format!("encode Lambda error payload failed: {e}"))?;
+                let body = crate::error::to_json_vec(&err_json)?;
                 let _ = agent
                     .post(&err_url)
                     .header("content-type", "application/json")

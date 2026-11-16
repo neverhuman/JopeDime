@@ -5,9 +5,9 @@
 //! Compliant with `PYTHON_EXCEPTIONS.md` and `PY_TO_RUST_PLAN.md`: zero Python or shell wrapper
 //! scripts, zero external `zip` binary dependencies, and zero plaintext secrets on disk or `argv`.
 
-use std::collections::BTreeMap;
+use crate::error::CarbonErrCtx as _;
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -23,12 +23,19 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use zeroize::Zeroizing;
 
+pub use crate::cli::deploy_drift::{
+    execute_carbon_drift_check, execute_carbon_rollback, execute_carbon_rollback_multi,
+    generate_public_clouds_manifest, resolve_cell_stack_endpoint,
+    resolve_cell_stack_public_endpoint, CarbonDriftRegionResult, CarbonDriftReport,
+    CarbonRollbackOptions, CarbonRollbackReceipt,
+};
 use crate::{
     cells::engine_invoker::now_epoch_ms,
     cli::{
-        client::{
-            CarbonCloudCellEntry, CarbonCloudRegionPin, CarbonPublicCloudsManifest,
-            CarbonThinClient,
+        client::CarbonThinClient,
+        deploy_drift::{
+            decommission_unstacked_prototype_resources, read_current_live_aliases,
+            read_stack_outputs_map,
         },
         redteam::execute_carbon_redteam_suite,
         runner::{execute_carbon_cli_run, CarbonCliRunOptions},
@@ -49,25 +56,26 @@ use crate::{
 pub const CLOUDFORMATION_CELL_TEMPLATE_JSON: &str =
     include_str!("../../../../deploy/carbon/cloudformation-cell.json");
 
-/// Canonical 17 global Carbon serving regions ordered by wave promotion sequence.
+/// Canonical 17 global Carbon serving regions (`opt-in-not-required` regions live in production AWS account)
+/// ordered by wave promotion sequence.
 pub const CANONICAL_17_REGIONS: &[&str] = &[
     "us-east-2",
     "us-east-1",
     "us-west-2",
     "us-west-1",
     "ca-central-1",
+    "sa-east-1",
     "eu-central-1",
     "eu-west-1",
     "eu-west-2",
+    "eu-west-3",
     "eu-north-1",
-    "sa-east-1",
-    "il-central-1",
     "ap-northeast-1",
     "ap-northeast-2",
+    "ap-northeast-3",
     "ap-southeast-1",
     "ap-southeast-2",
     "ap-south-1",
-    "ap-east-1",
 ];
 
 const WAVE1_REGIONS: &[&str] = &[
@@ -181,24 +189,6 @@ pub struct CarbonDeployReport {
     pub regions: Vec<CarbonRegionDeployReceipt>,
 }
 
-/// `CarbonRollbackOptions` is a struct configuring `carbon rollback`.
-#[derive(Clone, Debug)]
-pub struct CarbonRollbackOptions {
-    pub environment: String,
-    pub region: String,
-    pub target_versions: Option<CarbonLiveAliasVersions>,
-}
-
-/// `CarbonRollbackReceipt` is a struct recording an atomic `:live` alias rollback.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CarbonRollbackReceipt {
-    pub timestamp_epoch_ms: u64,
-    pub stack_name: String,
-    pub region: String,
-    pub restored_versions: CarbonLiveAliasVersions,
-    pub ping_verified: bool,
-}
-
 #[derive(Serialize, Deserialize)]
 struct CellSecretDocument {
     presign_secret_hex: String,
@@ -228,13 +218,13 @@ struct EdgeSecretDocument {
     engine_kek_pubkey_b64: String,
 }
 
-struct VaultSecretBinding {
-    secret_arn: String,
+pub(crate) struct VaultSecretBinding {
+    pub(crate) secret_arn: String,
     version_id: String,
     edge_secret_arn: String,
     edge_version_id: String,
-    engine_kek_pubkey_b64: String,
-    auth_secret_hex: Zeroizing<String>,
+    pub(crate) engine_kek_pubkey_b64: String,
+    pub(crate) auth_secret_hex: Zeroizing<String>,
 }
 
 /// Expand region preset tokens (`canary`, `wave1`, `all-17`) or validate explicit region names.
@@ -463,7 +453,7 @@ pub fn synthesize_cell_template_for_release(release_id: &str) -> Result<String, 
     }
 
     let mut root: serde_json::Value = serde_json::from_str(CLOUDFORMATION_CELL_TEMPLATE_JSON)
-        .map_err(|e| format!("parse embedded cloudformation-cell.json: {e}"))?;
+        .err_ctx("parse embedded cloudformation-cell.json")?;
 
     let edge_ver_id = format!("EdgeVersion{suffix}");
     let engine_ver_id = format!("EngineVersion{suffix}");
@@ -516,8 +506,7 @@ pub fn synthesize_cell_template_for_release(release_id: &str) -> Result<String, 
         }
     }
 
-    serde_json::to_string_pretty(&root)
-        .map_err(|e| format!("serialize synthesized CloudFormation template: {e}"))
+    serde_json::to_string_pretty(&root).err_ctx("serialize synthesized CloudFormation template")
 }
 
 fn collect_files_recursively(
@@ -591,6 +580,17 @@ struct ZigMuslWrappers {
     linker: PathBuf,
 }
 
+fn find_executable_in_path(bin_name: &str) -> Option<PathBuf> {
+    let path_os = std::env::var_os("PATH")?;
+    for dir in std::env::split_paths(&path_os) {
+        let candidate = dir.join(bin_name);
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
 fn ensure_zig_musl_wrappers_for_arch(
     wrapper_dir: &Path,
     zig_target: &str,
@@ -598,6 +598,7 @@ fn ensure_zig_musl_wrappers_for_arch(
 ) -> Result<Option<ZigMuslWrappers>, String> {
     let zig_candidates = [
         std::env::var_os("CARBON_ZIG_BIN").map(PathBuf::from),
+        find_executable_in_path("zig"),
         Some(PathBuf::from(
             "target/zig-stage/zig-linux-x86_64-0.13.0/zig",
         )),
@@ -615,8 +616,9 @@ fn ensure_zig_musl_wrappers_for_arch(
     let local_cache_dir = cache_dir.join("local");
     fs::create_dir_all(&local_cache_dir)
         .map_err(|e| format!("create zig cache dir {}: {e}", local_cache_dir.display()))?;
-    let cache_abs = fs::canonicalize(&cache_dir).map_err(|e| e.to_string())?;
-    let local_cache_abs = fs::canonicalize(&local_cache_dir).map_err(|e| e.to_string())?;
+    let cache_abs = fs::canonicalize(&cache_dir).map_err(crate::error::err_to_string)?;
+    let local_cache_abs =
+        fs::canonicalize(&local_cache_dir).map_err(crate::error::err_to_string)?;
 
     let cc_script = wrapper_dir.join(format!("{zig_target}-cc"));
     let cxx_script = wrapper_dir.join(format!("{zig_target}-cxx"));
@@ -667,10 +669,10 @@ fn ensure_zig_musl_wrappers_for_arch(
         }
     }
     Ok(Some(ZigMuslWrappers {
-        cc: fs::canonicalize(&cc_script).map_err(|e| e.to_string())?,
-        cxx: fs::canonicalize(&cxx_script).map_err(|e| e.to_string())?,
-        ar: fs::canonicalize(&ar_script).map_err(|e| e.to_string())?,
-        linker: fs::canonicalize(&link_script).map_err(|e| e.to_string())?,
+        cc: fs::canonicalize(&cc_script).map_err(crate::error::err_to_string)?,
+        cxx: fs::canonicalize(&cxx_script).map_err(crate::error::err_to_string)?,
+        ar: fs::canonicalize(&ar_script).map_err(crate::error::err_to_string)?,
+        linker: fs::canonicalize(&link_script).map_err(crate::error::err_to_string)?,
     }))
 }
 
@@ -692,7 +694,7 @@ fn cross_compile_musl_thin_cli_binary(
     let build_tmp = wrapper_dir.join("build-tmp");
     fs::create_dir_all(&build_tmp)
         .map_err(|e| format!("create build-tmp {}: {e}", build_tmp.display()))?;
-    let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(|e| e.to_string())?;
+    let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(crate::error::err_to_string)?;
     let zig_wrappers = ensure_zig_musl_wrappers_for_arch(&wrapper_dir, zig_target, rust_target)?;
     let jobs_str = jobs.max(1).to_string();
     let snake = rust_target.replace('-', "_");
@@ -736,12 +738,12 @@ fn cross_compile_musl_thin_cli_binary(
     let meta_out = Command::new("cargo")
         .args(["metadata", "--no-deps", "--format-version", "1"])
         .output()
-        .map_err(|e| format!("cargo metadata failed: {e}"))?;
+        .err_ctx("cargo metadata failed")?;
     if !meta_out.status.success() {
         return Err("cargo metadata failed when resolving target_directory".to_owned());
     }
-    let meta_json: serde_json::Value = serde_json::from_slice(&meta_out.stdout)
-        .map_err(|e| format!("parse cargo metadata JSON: {e}"))?;
+    let meta_json: serde_json::Value =
+        serde_json::from_slice(&meta_out.stdout).err_ctx("parse cargo metadata JSON")?;
     let target_root = meta_json
         .get("target_directory")
         .and_then(|v| v.as_str())
@@ -795,9 +797,8 @@ pub fn build_deterministic_single_bin_targz(
 ) -> Result<Vec<u8>, String> {
     let tar = build_deterministic_single_bin_tar(entry_name, bytes)?;
     let mut enc = GzEncoder::new(Vec::new(), Compression::best());
-    enc.write_all(&tar)
-        .map_err(|e| format!("gzip write tar stream: {e}"))?;
-    enc.finish().map_err(|e| format!("gzip finish tar.gz: {e}"))
+    enc.write_all(&tar).err_ctx("gzip write tar stream")?;
+    enc.finish().err_ctx("gzip finish tar.gz")
 }
 
 /// Pipe `input` into an external stream compressor/decompressor (`xz`, `zstd`, etc.) while
@@ -842,7 +843,7 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
     let build_tmp = wrapper_dir.join("build-tmp");
     fs::create_dir_all(&build_tmp)
         .map_err(|e| format!("create build-tmp {}: {e}", build_tmp.display()))?;
-    let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(|e| e.to_string())?;
+    let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(crate::error::err_to_string)?;
     let zig_wrappers = ensure_zig_musl_wrappers(&wrapper_dir)?;
     let jobs_str = jobs.max(1).to_string();
 
@@ -914,12 +915,12 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
     let meta_out = Command::new("cargo")
         .args(["metadata", "--no-deps", "--format-version", "1"])
         .output()
-        .map_err(|e| format!("cargo metadata failed: {e}"))?;
+        .err_ctx("cargo metadata failed")?;
     if !meta_out.status.success() {
         return Err("cargo metadata failed when resolving target_directory".to_owned());
     }
-    let meta_json: serde_json::Value = serde_json::from_slice(&meta_out.stdout)
-        .map_err(|e| format!("parse cargo metadata JSON: {e}"))?;
+    let meta_json: serde_json::Value =
+        serde_json::from_slice(&meta_out.stdout).err_ctx("parse cargo metadata JSON")?;
     let target_root = meta_json
         .get("target_directory")
         .and_then(|v| v.as_str())
@@ -1078,8 +1079,7 @@ pub fn assemble_verified_carbon_package(
             }
         }
         let sums = format!("{}\n", sum_lines.join("\n"));
-        fs::write(opts.out_dir.join("CLI-SHA256SUMS"), sums)
-            .map_err(|e| format!("write CLI-SHA256SUMS: {e}"))?;
+        fs::write(opts.out_dir.join("CLI-SHA256SUMS"), sums).err_ctx("write CLI-SHA256SUMS")?;
     }
 
     // Clean up temporary zig wrapper dir if created inside out_dir
@@ -1133,15 +1133,15 @@ pub fn assemble_verified_carbon_package(
         r882_layer_sha256_b64: layer_b64,
     };
 
-    let manifest_bytes = serde_json::to_vec_pretty(&manifest)
-        .map_err(|e| format!("encode release-manifest.json: {e}"))?;
+    let manifest_bytes =
+        serde_json::to_vec_pretty(&manifest).err_ctx("encode release-manifest.json")?;
     fs::write(opts.out_dir.join("release-manifest.json"), manifest_bytes)
-        .map_err(|e| format!("write release-manifest.json: {e}"))?;
+        .err_ctx("write release-manifest.json")?;
 
     Ok(manifest)
 }
 
-fn run_aws_json(region: &str, args: &[&str]) -> Result<serde_json::Value, String> {
+pub(crate) fn run_aws_json(region: &str, args: &[&str]) -> Result<serde_json::Value, String> {
     let aws_bin = resolve_aws_cli_binary();
     let out = Command::new(&aws_bin)
         .arg("--region")
@@ -1162,10 +1162,13 @@ fn run_aws_json(region: &str, args: &[&str]) -> Result<serde_json::Value, String
     if out.stdout.iter().all(|b| b.is_ascii_whitespace()) {
         return Ok(serde_json::Value::Null);
     }
-    serde_json::from_slice(&out.stdout).map_err(|e| format!("decode aws JSON output: {e}"))
+    serde_json::from_slice(&out.stdout).err_ctx("decode aws JSON output")
 }
 
-fn run_aws_allow_missing(region: &str, args: &[&str]) -> Result<Option<serde_json::Value>, String> {
+pub(crate) fn run_aws_allow_missing(
+    region: &str,
+    args: &[&str],
+) -> Result<Option<serde_json::Value>, String> {
     let aws_bin = resolve_aws_cli_binary();
     let out = Command::new(&aws_bin)
         .arg("--region")
@@ -1195,8 +1198,7 @@ fn run_aws_allow_missing(region: &str, args: &[&str]) -> Result<Option<serde_jso
     if out.stdout.iter().all(|b| b.is_ascii_whitespace()) {
         return Ok(Some(serde_json::Value::Null));
     }
-    let val =
-        serde_json::from_slice(&out.stdout).map_err(|e| format!("decode aws JSON output: {e}"))?;
+    let val = serde_json::from_slice(&out.stdout).err_ctx("decode aws JSON output")?;
     Ok(Some(val))
 }
 
@@ -1236,12 +1238,12 @@ fn call_secrets_manager_rpc(
         .send(payload)
         .map_err(|e| format!("SecretsManager {target_op} TLS request failed: {e}"))?;
     let status = resp.status().as_u16();
-    let mut body = Zeroizing::new(Vec::new());
-    resp.body_mut()
-        .as_reader()
-        .read_to_end(&mut body)
-        .map_err(|e| format!("read SecretsManager {target_op} response: {e}"))?;
-    Ok((status, body))
+    let raw_vec = crate::storage::cas::read_bounded(
+        resp.body_mut().as_reader(),
+        4 * 1024 * 1024,
+        &format!("SecretsManager {target_op} response"),
+    )?;
+    Ok((status, Zeroizing::new(raw_vec)))
 }
 
 fn random_32byte_hex() -> Result<Zeroizing<String>, String> {
@@ -1283,9 +1285,8 @@ fn generate_cell_secret_document(
         previous_engine_kek_hex: None,
         engine_kek_pubkey_b64: pub_b64.clone(),
     };
-    let serialized = Zeroizing::new(
-        serde_json::to_string(&doc).map_err(|e| format!("serialize CellSecretDocument: {e}"))?,
-    );
+    let serialized =
+        Zeroizing::new(serde_json::to_string(&doc).err_ctx("serialize CellSecretDocument")?);
     Ok((serialized, pub_b64, auth))
 }
 
@@ -1315,20 +1316,18 @@ fn ensure_edge_secrets_in_vault(
         previous_auth_secret_hex: cell_doc.previous_auth_secret_hex.clone(),
         engine_kek_pubkey_b64: cell_doc.engine_kek_pubkey_b64.clone(),
     };
-    let desired_json = Zeroizing::new(
-        serde_json::to_string(&desired)
-            .map_err(|e| format!("serialize EdgeSecretDocument: {e}"))?,
-    );
+    let desired_json =
+        Zeroizing::new(serde_json::to_string(&desired).err_ctx("serialize EdgeSecretDocument")?);
 
     let get_req = serde_json::to_vec(&serde_json::json!({
         "SecretId": secret_id,
         "VersionStage": "AWSCURRENT",
     }))
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (status, body) = call_secrets_manager_rpc(creds, region, "GetSecretValue", &get_req)?;
     if status == 200 {
-        let val: serde_json::Value = serde_json::from_slice(&body)
-            .map_err(|e| format!("parse EdgeSecrets GetSecretValue response: {e}"))?;
+        let val: serde_json::Value =
+            serde_json::from_slice(&body).err_ctx("parse EdgeSecrets GetSecretValue response")?;
         let arn = val
             .get("ARN")
             .and_then(|v| v.as_str())
@@ -1362,7 +1361,7 @@ fn ensure_edge_secrets_in_vault(
                     "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
                     "SecretString": &*desired_json,
                 }))
-                .map_err(|e| e.to_string())?,
+                .map_err(crate::error::err_to_string)?,
             );
             let (p_status, p_body) =
                 call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
@@ -1372,7 +1371,7 @@ fn ensure_edge_secrets_in_vault(
                 ));
             }
             let put_val: serde_json::Value = serde_json::from_slice(&p_body)
-                .map_err(|e| format!("parse EdgeSecrets PutSecretValue response: {e}"))?;
+                .err_ctx("parse EdgeSecrets PutSecretValue response")?;
             version_id = put_val
                 .get("VersionId")
                 .and_then(|v| v.as_str())
@@ -1400,7 +1399,7 @@ fn ensure_edge_secrets_in_vault(
             "Description": format!("JopeDime Carbon {environment} isolated edge secrets (zero engine KEK / seal keys)"),
             "SecretString": &*desired_json,
         }))
-        .map_err(|e| e.to_string())?,
+        .map_err(crate::error::err_to_string)?,
     );
     let (c_status, c_body) =
         call_secrets_manager_rpc(creds, region, "CreateSecret", &create_payload)?;
@@ -1409,8 +1408,8 @@ fn ensure_edge_secrets_in_vault(
             "SecretsManager CreateSecret '{secret_id}' failed (HTTP {c_status})"
         ));
     }
-    let created: serde_json::Value = serde_json::from_slice(&c_body)
-        .map_err(|e| format!("parse EdgeSecrets CreateSecret response: {e}"))?;
+    let created: serde_json::Value =
+        serde_json::from_slice(&c_body).err_ctx("parse EdgeSecrets CreateSecret response")?;
     let arn = created
         .get("ARN")
         .and_then(|v| v.as_str())
@@ -1424,7 +1423,7 @@ fn ensure_edge_secrets_in_vault(
     Ok((arn, version_id))
 }
 
-fn ensure_cell_secrets_in_vault(
+pub(crate) fn ensure_cell_secrets_in_vault(
     creds: &CarbonAwsCredentials,
     region: &str,
     environment: &str,
@@ -1437,12 +1436,12 @@ fn ensure_cell_secrets_in_vault(
         "SecretId": secret_id,
         "VersionStage": "AWSCURRENT",
     }))
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
 
     let (status, body) = call_secrets_manager_rpc(creds, region, "GetSecretValue", &get_req)?;
     if status == 200 {
         let val: serde_json::Value = serde_json::from_slice(&body)
-            .map_err(|e| format!("parse SecretsManager GetSecretValue response: {e}"))?;
+            .err_ctx("parse SecretsManager GetSecretValue response")?;
         let arn = val
             .get("ARN")
             .and_then(|v| v.as_str())
@@ -1470,7 +1469,7 @@ fn ensure_cell_secrets_in_vault(
                 }
                 let updated_json = Zeroizing::new(
                     serde_json::to_string(&parsed_doc)
-                        .map_err(|e| format!("serialize synced CellSecretDocument: {e}"))?,
+                        .err_ctx("serialize synced CellSecretDocument")?,
                 );
                 let tok_hex = random_32byte_hex()?;
                 let put_payload = Zeroizing::new(
@@ -1479,7 +1478,7 @@ fn ensure_cell_secrets_in_vault(
                         "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
                         "SecretString": &*updated_json,
                     }))
-                    .map_err(|e| e.to_string())?,
+                    .map_err(crate::error::err_to_string)?,
                 );
                 let (p_status, p_body) =
                     call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
@@ -1488,8 +1487,8 @@ fn ensure_cell_secrets_in_vault(
                         "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status})"
                     ));
                 }
-                let put_val: serde_json::Value = serde_json::from_slice(&p_body)
-                    .map_err(|e| format!("parse PutSecretValue response: {e}"))?;
+                let put_val: serde_json::Value =
+                    serde_json::from_slice(&p_body).err_ctx("parse PutSecretValue response")?;
                 version_id = put_val
                     .get("VersionId")
                     .and_then(|v| v.as_str())
@@ -1534,8 +1533,8 @@ fn ensure_cell_secrets_in_vault(
 
     let (secret_json, pubkey_b64, auth_hex) =
         generate_cell_secret_document(required_auth_secret_hex)?;
-    let parsed_doc: CellSecretDocument = serde_json::from_str(&secret_json)
-        .map_err(|e| format!("parse generated CellSecretDocument: {e}"))?;
+    let parsed_doc: CellSecretDocument =
+        serde_json::from_str(&secret_json).err_ctx("parse generated CellSecretDocument")?;
     let tok_hex = random_32byte_hex()?;
     let client_req_token = format_uuid_from_random_hex(&tok_hex);
     let create_payload = Zeroizing::new(
@@ -1545,7 +1544,7 @@ fn ensure_cell_secrets_in_vault(
             "Description": format!("JopeDime Carbon {environment} cell cryptographic secrets (managed by carbon deploy)"),
             "SecretString": &*secret_json,
         }))
-        .map_err(|e| e.to_string())?,
+        .map_err(crate::error::err_to_string)?,
     );
     let (c_status, c_body) =
         call_secrets_manager_rpc(creds, region, "CreateSecret", &create_payload)?;
@@ -1555,7 +1554,7 @@ fn ensure_cell_secrets_in_vault(
         ));
     }
     let created: serde_json::Value =
-        serde_json::from_slice(&c_body).map_err(|e| format!("parse CreateSecret response: {e}"))?;
+        serde_json::from_slice(&c_body).err_ctx("parse CreateSecret response")?;
     let arn = created
         .get("ARN")
         .and_then(|v| v.as_str())
@@ -1601,7 +1600,7 @@ pub fn mint_capability_token_from_vault(
         "SecretId": secret_id,
         "VersionStage": "AWSCURRENT",
     }))
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (status, body) = call_secrets_manager_rpc(&creds, region, "GetSecretValue", &get_req)?;
     if status != 200 {
         return Err(format!(
@@ -1609,8 +1608,7 @@ pub fn mint_capability_token_from_vault(
             String::from_utf8_lossy(&body)
         ));
     }
-    let val: serde_json::Value =
-        serde_json::from_slice(&body).map_err(|e| format!("parse secret JSON: {e}"))?;
+    let val: serde_json::Value = serde_json::from_slice(&body).err_ctx("parse secret JSON")?;
     let secret_str = Zeroizing::new(
         val.get("SecretString")
             .and_then(|v| v.as_str())
@@ -1618,9 +1616,9 @@ pub fn mint_capability_token_from_vault(
             .to_owned(),
     );
     let doc: CellSecretDocument =
-        serde_json::from_str(&secret_str).map_err(|e| format!("parse secret schema: {e}"))?;
+        serde_json::from_str(&secret_str).err_ctx("parse secret schema")?;
     let auth_hex = Zeroizing::new(doc.auth_secret_hex);
-    let verifier = CarbonAuthVerifier::from_hex(&auth_hex).map_err(|e| e.to_string())?;
+    let verifier = CarbonAuthVerifier::from_hex(&auth_hex).map_err(crate::error::err_to_string)?;
     let exp = (now_epoch_ms() / 1_000).saturating_add(ttl_secs);
     verifier
         .mint_token(&CarbonCapabilityClaims {
@@ -1629,75 +1627,7 @@ pub fn mint_capability_token_from_vault(
             exp_epoch_secs: exp,
             admin,
         })
-        .map_err(|e| e.to_string())
-}
-
-/// Resolve the live `EdgeEndpointUrl` from CloudFormation stack `jopedime-carbon-<env>` in `region`.
-pub fn resolve_cell_stack_endpoint(environment: &str, region: &str) -> Result<String, String> {
-    let stack_name = format!("jopedime-carbon-{environment}");
-    let desc = run_aws_json(
-        region,
-        &[
-            "cloudformation",
-            "describe-stacks",
-            "--stack-name",
-            &stack_name,
-        ],
-    )?;
-    let outputs = desc
-        .get("Stacks")
-        .and_then(|s| s.as_array())
-        .and_then(|a| a.first())
-        .and_then(|st| st.get("Outputs"))
-        .and_then(|o| o.as_array())
-        .ok_or_else(|| format!("stack '{stack_name}' in {region} has no Outputs"))?;
-    for out in outputs {
-        if out.get("OutputKey").and_then(|k| k.as_str()) == Some("EdgeEndpointUrl") {
-            if let Some(url) = out.get("OutputValue").and_then(|v| v.as_str()) {
-                return Ok(url.to_owned());
-            }
-        }
-    }
-    Err(format!(
-        "stack '{stack_name}' in {region} missing EdgeEndpointUrl output"
-    ))
-}
-
-/// Resolve the live `PublicEdgeEndpointUrl` (falling back to `EdgeEndpointUrl` if absent) from
-/// CloudFormation stack `jopedime-carbon-<env>` in `region`.
-pub fn resolve_cell_stack_public_endpoint(
-    environment: &str,
-    region: &str,
-) -> Result<String, String> {
-    let stack_name = format!("jopedime-carbon-{environment}");
-    let desc = run_aws_json(
-        region,
-        &[
-            "cloudformation",
-            "describe-stacks",
-            "--stack-name",
-            &stack_name,
-        ],
-    )?;
-    let outputs = desc
-        .get("Stacks")
-        .and_then(|s| s.as_array())
-        .and_then(|a| a.first())
-        .and_then(|st| st.get("Outputs"))
-        .and_then(|o| o.as_array())
-        .ok_or_else(|| format!("stack '{stack_name}' in {region} has no Outputs"))?;
-    for key in ["PublicEdgeEndpointUrl", "EdgeEndpointUrl"] {
-        for out in outputs {
-            if out.get("OutputKey").and_then(|k| k.as_str()) == Some(key) {
-                if let Some(url) = out.get("OutputValue").and_then(|v| v.as_str()) {
-                    return Ok(url.to_owned());
-                }
-            }
-        }
-    }
-    Err(format!(
-        "stack '{stack_name}' in {region} missing PublicEdgeEndpointUrl / EdgeEndpointUrl output"
-    ))
+        .map_err(crate::error::err_to_string)
 }
 
 fn ensure_artifacts_bucket(region: &str, bucket: &str, dry_run: bool) -> Result<bool, String> {
@@ -1903,190 +1833,18 @@ fn s3_stage_object_verified(
         .map_err(|e| format!("S3 PUT s3://{bucket}/{key} failed: {e}"))?;
     let status = resp.status().as_u16();
     if status >= 300 {
-        let mut err_body = Vec::new();
-        let _ = resp.body_mut().as_reader().read_to_end(&mut err_body);
+        let err_body = crate::storage::cas::read_bounded(
+            resp.body_mut().as_reader(),
+            1024 * 1024,
+            "S3 PUT error body",
+        )
+        .unwrap_or_default();
         return Err(format!(
             "S3 PUT s3://{bucket}/{key} HTTP {status}: {}",
             String::from_utf8_lossy(&err_body)
         ));
     }
     Ok(true)
-}
-
-fn decommission_unstacked_prototype_resources(
-    region: &str,
-    stack_name: &str,
-) -> Result<(), String> {
-    for suffix in ["edge", "engine", "eval"] {
-        let fn_name = format!("{stack_name}-{suffix}");
-        let _ = run_aws_allow_missing(
-            region,
-            &[
-                "lambda",
-                "delete-function-url-config",
-                "--function-name",
-                &fn_name,
-            ],
-        )?;
-        let _ = run_aws_allow_missing(
-            region,
-            &["lambda", "delete-function", "--function-name", &fn_name],
-        )?;
-
-        for role_name in [
-            format!("{stack_name}-{suffix}-role"),
-            format!("{stack_name}-{region}-{suffix}-role"),
-        ] {
-            if let Some(pols) = run_aws_allow_missing(
-                region,
-                &["iam", "list-role-policies", "--role-name", &role_name],
-            )? {
-                if let Some(names) = pols.get("PolicyNames").and_then(|v| v.as_array()) {
-                    for p in names.iter().filter_map(|v| v.as_str()) {
-                        let _ = run_aws_allow_missing(
-                            region,
-                            &[
-                                "iam",
-                                "delete-role-policy",
-                                "--role-name",
-                                &role_name,
-                                "--policy-name",
-                                p,
-                            ],
-                        )?;
-                    }
-                }
-            }
-            if let Some(attached) = run_aws_allow_missing(
-                region,
-                &[
-                    "iam",
-                    "list-attached-role-policies",
-                    "--role-name",
-                    &role_name,
-                ],
-            )? {
-                if let Some(list) = attached.get("AttachedPolicies").and_then(|v| v.as_array()) {
-                    for item in list {
-                        if let Some(arn) = item.get("PolicyArn").and_then(|v| v.as_str()) {
-                            let _ = run_aws_allow_missing(
-                                region,
-                                &[
-                                    "iam",
-                                    "detach-role-policy",
-                                    "--role-name",
-                                    &role_name,
-                                    "--policy-arn",
-                                    arn,
-                                ],
-                            )?;
-                        }
-                    }
-                }
-            }
-            let _ =
-                run_aws_allow_missing(region, &["iam", "delete-role", "--role-name", &role_name])?;
-        }
-
-        let log_group = format!("/aws/lambda/{stack_name}-{suffix}");
-        let _ = run_aws_allow_missing(
-            region,
-            &["logs", "delete-log-group", "--log-group-name", &log_group],
-        )?;
-    }
-    Ok(())
-}
-
-struct StackStateSnapshot {
-    status: String,
-    outputs: BTreeMap<String, String>,
-}
-
-fn read_stack_outputs_map(
-    region: &str,
-    stack_name: &str,
-) -> Result<Option<StackStateSnapshot>, String> {
-    let Some(desc) = run_aws_allow_missing(
-        region,
-        &[
-            "cloudformation",
-            "describe-stacks",
-            "--stack-name",
-            stack_name,
-        ],
-    )?
-    else {
-        return Ok(None);
-    };
-    let Some(stack) = desc
-        .get("Stacks")
-        .and_then(|v| v.as_array())
-        .and_then(|a| a.first())
-    else {
-        return Ok(None);
-    };
-    let status = stack
-        .get("StackStatus")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_owned();
-    let mut outputs = BTreeMap::new();
-    if let Some(outs) = stack.get("Outputs").and_then(|v| v.as_array()) {
-        for item in outs {
-            if let (Some(k), Some(v)) = (
-                item.get("OutputKey").and_then(|k| k.as_str()),
-                item.get("OutputValue").and_then(|v| v.as_str()),
-            ) {
-                outputs.insert(k.to_owned(), v.to_owned());
-            }
-        }
-    }
-    Ok(Some(StackStateSnapshot { status, outputs }))
-}
-
-fn read_current_live_aliases(region: &str, stack_name: &str) -> Option<CarbonLiveAliasVersions> {
-    let edge = run_aws_allow_missing(
-        region,
-        &[
-            "lambda",
-            "get-alias",
-            "--function-name",
-            &format!("{stack_name}-edge"),
-            "--name",
-            "live",
-        ],
-    )
-    .ok()??;
-    let engine = run_aws_allow_missing(
-        region,
-        &[
-            "lambda",
-            "get-alias",
-            "--function-name",
-            &format!("{stack_name}-engine"),
-            "--name",
-            "live",
-        ],
-    )
-    .ok()??;
-    let eval = run_aws_allow_missing(
-        region,
-        &[
-            "lambda",
-            "get-alias",
-            "--function-name",
-            &format!("{stack_name}-eval"),
-            "--name",
-            "live",
-        ],
-    )
-    .ok()??;
-
-    Some(CarbonLiveAliasVersions {
-        edge_version: edge.get("FunctionVersion")?.as_str()?.to_owned(),
-        engine_version: engine.get("FunctionVersion")?.as_str()?.to_owned(),
-        eval_version: eval.get("FunctionVersion")?.as_str()?.to_owned(),
-    })
 }
 
 fn wait_for_change_set(
@@ -2311,16 +2069,42 @@ fn deploy_single_region(
                         &stack_name,
                     ],
                 )?;
-                thread::sleep(Duration::from_secs(5));
+                let del_deadline = Instant::now() + Duration::from_secs(60);
+                while Instant::now() < del_deadline {
+                    match read_stack_outputs_map(region, &stack_name)? {
+                        None => break,
+                        Some(snap) if snap.status == "DELETE_COMPLETE" => break,
+                        Some(_) => thread::sleep(Duration::from_millis(500)),
+                    }
+                }
             }
             "CREATE"
         }
         Some(_) => "UPDATE",
     };
 
-    // 4. Synthesize release-bound CloudFormation template & validate / create ChangeSet
+    // 4. Synthesize release-bound CloudFormation template inside a private 0700 stage dir
     let synthesized_json = synthesize_cell_template_for_release(&manifest.release_id)?;
-    let synth_path = manifest_dir.join(format!(
+    struct SynthStageGuard(PathBuf);
+    impl Drop for SynthStageGuard {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    let synth_dir = manifest_dir.join(format!(
+        ".cfn-synth-{}-{}-{}",
+        region,
+        std::process::id(),
+        now_epoch_ms()
+    ));
+    fs::create_dir_all(&synth_dir).map_err(|e| format!("create {}: {e}", synth_dir.display()))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&synth_dir, fs::Permissions::from_mode(0o700));
+    }
+    let _synth_guard = SynthStageGuard(synth_dir.clone());
+    let synth_path = synth_dir.join(format!(
         "synthesized-{stack_name}-{region}-{}.json",
         manifest.release_id
     ));
@@ -2345,7 +2129,7 @@ fn deploy_single_region(
         let _ = fs::remove_file(&synth_path);
         val_res?;
         let tpl_val: serde_json::Value =
-            serde_json::from_str(&synthesized_json).map_err(|e| e.to_string())?;
+            serde_json::from_str(&synthesized_json).map_err(crate::error::err_to_string)?;
         let planned_resources: Vec<String> = tpl_val
             .get("Resources")
             .and_then(|r| r.as_object())
@@ -2735,25 +2519,25 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
     )?;
 
     let mut receipts = Vec::with_capacity(target_regions.len());
-    for (idx, region) in target_regions.iter().enumerate() {
-        let receipt = deploy_single_region(
+    if let Some(canary_region) = target_regions.first() {
+        let canary_receipt = deploy_single_region(
             &creds,
             &account_id,
             &manifest,
             &manifest_dir,
             opts,
-            region,
+            canary_region,
             &primary_vault.auth_secret_hex,
         )?;
         // Progressive wave promotion gate: before rolling out beyond the first (canary) region,
         // verify a live zero-knowledge `r882` GP inference & cryptographic shred round-trip!
-        if idx == 0 && target_regions.len() > 1 && !opts.dry_run && !opts.skip_redteam {
-            if let Some(canary_url) = receipt
+        if target_regions.len() > 1 && !opts.dry_run && !opts.skip_redteam {
+            if let Some(canary_url) = canary_receipt
                 .public_edge_endpoint_url
                 .as_ref()
-                .or(receipt.edge_endpoint_url.as_ref())
+                .or(canary_receipt.edge_endpoint_url.as_ref())
             {
-                let canary_receipt = execute_carbon_cli_run(&CarbonCliRunOptions {
+                let canary_gate = execute_carbon_cli_run(&CarbonCliRunOptions {
                     endpoints: vec![canary_url.clone()],
                     csv_path: None,
                     target_column: "y".to_owned(),
@@ -2773,17 +2557,72 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
                 })
                 .map_err(|e| {
                     format!(
-                        "canary region '{region}' failed post-deploy E2E inference gate before multi-region wave promotion: {e}"
+                        "canary region '{canary_region}' failed post-deploy E2E inference gate before multi-region wave promotion: {e}"
                     )
-                })?;
-                if !canary_receipt.encrypted_cuen || !canary_receipt.shredded_after_run {
-                    return Err(format!(
-                        "canary region '{region}' E2E gate violated zero-knowledge encryption/shred invariant"
-                    ));
+                })
+                .and_then(|e2e_receipt| {
+                    if !e2e_receipt.encrypted_cuen || !e2e_receipt.shredded_after_run {
+                        Err(format!(
+                            "canary region '{canary_region}' E2E gate violated zero-knowledge encryption/shred invariant"
+                        ))
+                    } else {
+                        Ok(())
+                    }
+                });
+                if let Err(canary_err) = canary_gate {
+                    if let Some(prev) = &canary_receipt.previous_versions {
+                        let _ = execute_carbon_rollback(&CarbonRollbackOptions {
+                            environment: opts.environment.clone(),
+                            region: canary_region.clone(),
+                            target_versions: Some(prev.clone()),
+                        });
+                        return Err(format!(
+                            "{canary_err} — automatically rolled :live aliases back to edge={}, engine={}, eval={}",
+                            prev.edge_version, prev.engine_version, prev.eval_version
+                        ));
+                    }
+                    return Err(canary_err);
                 }
             }
         }
-        receipts.push(receipt);
+        receipts.push(canary_receipt);
+
+        let creds_ref = &creds;
+        let manifest_ref = &manifest;
+        for chunk in target_regions[1..].chunks(4) {
+            let chunk_results: Vec<Result<CarbonRegionDeployReceipt, String>> =
+                thread::scope(|s| {
+                    let mut handles = Vec::with_capacity(chunk.len());
+                    for region in chunk {
+                        let reg = region.as_str();
+                        let auth_hex = primary_vault.auth_secret_hex.as_str();
+                        let acc = account_id.as_str();
+                        let mdir = manifest_dir.as_path();
+                        handles.push(s.spawn(move || {
+                            deploy_single_region(
+                                creds_ref,
+                                acc,
+                                manifest_ref,
+                                mdir,
+                                opts,
+                                reg,
+                                auth_hex,
+                            )
+                        }));
+                    }
+                    handles
+                        .into_iter()
+                        .map(|h| {
+                            h.join().unwrap_or_else(|_| {
+                                Err("regional deploy worker panicked".to_owned())
+                            })
+                        })
+                        .collect()
+                });
+            for res in chunk_results {
+                receipts.push(res?);
+            }
+        }
     }
 
     Ok(CarbonDeployReport {
@@ -2793,206 +2632,5 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
         git_sha: manifest.git_sha,
         dry_run: opts.dry_run,
         regions: receipts,
-    })
-}
-
-fn find_previous_published_version(
-    region: &str,
-    fn_name: &str,
-    current: &str,
-) -> Result<String, String> {
-    let list = run_aws_json(
-        region,
-        &[
-            "lambda",
-            "list-versions-by-function",
-            "--function-name",
-            fn_name,
-        ],
-    )?;
-    let mut numeric_versions: Vec<u64> = list
-        .get("Versions")
-        .and_then(|v| v.as_array())
-        .into_iter()
-        .flatten()
-        .filter_map(|item| item.get("Version").and_then(|v| v.as_str()))
-        .filter(|v| *v != "$LATEST" && *v != current)
-        .filter_map(|v| v.parse::<u64>().ok())
-        .collect();
-    numeric_versions.sort_unstable();
-    numeric_versions
-        .pop()
-        .map(|v| v.to_string())
-        .ok_or_else(|| {
-            format!("no prior retained version available on '{fn_name}' to roll back to")
-        })
-}
-
-/// Atomically repoint `{edge,engine,eval}:live` Lambda aliases back to the prior retained immutable
-/// versions (`< 1 s` zero-downtime traffic cutover) and verify `/v1/carbon/ping`.
-pub fn execute_carbon_rollback(
-    opts: &CarbonRollbackOptions,
-) -> Result<CarbonRollbackReceipt, String> {
-    let stack_name = format!("jopedime-carbon-{}", opts.environment);
-    let target = match &opts.target_versions {
-        Some(explicit) => explicit.clone(),
-        None => {
-            let current =
-                read_current_live_aliases(&opts.region, &stack_name).ok_or_else(|| {
-                    format!(
-                        "unable to read current :live aliases for '{stack_name}' in {}",
-                        opts.region
-                    )
-                })?;
-            CarbonLiveAliasVersions {
-                edge_version: find_previous_published_version(
-                    &opts.region,
-                    &format!("{stack_name}-edge"),
-                    &current.edge_version,
-                )?,
-                engine_version: find_previous_published_version(
-                    &opts.region,
-                    &format!("{stack_name}-engine"),
-                    &current.engine_version,
-                )?,
-                eval_version: find_previous_published_version(
-                    &opts.region,
-                    &format!("{stack_name}-eval"),
-                    &current.eval_version,
-                )?,
-            }
-        }
-    };
-
-    for (suffix, ver) in [
-        ("eval", &target.eval_version),
-        ("engine", &target.engine_version),
-        ("edge", &target.edge_version),
-    ] {
-        let fn_name = format!("{stack_name}-{suffix}");
-        let _ = run_aws_json(
-            &opts.region,
-            &[
-                "lambda",
-                "update-alias",
-                "--function-name",
-                &fn_name,
-                "--name",
-                "live",
-                "--function-version",
-                ver,
-            ],
-        )?;
-    }
-
-    let snap = read_stack_outputs_map(&opts.region, &stack_name)?
-        .ok_or_else(|| format!("stack '{stack_name}' not found in {}", opts.region))?;
-    let mut ping_verified = true;
-    for key in ["EdgeEndpointUrl", "PublicEdgeEndpointUrl"] {
-        if let Some(url) = snap.outputs.get(key) {
-            let (_, probed) = CarbonThinClient::connect_fastest(vec![url.clone()])?;
-            ping_verified = ping_verified && !probed.is_empty();
-        }
-    }
-
-    Ok(CarbonRollbackReceipt {
-        timestamp_epoch_ms: now_epoch_ms(),
-        stack_name,
-        region: opts.region.clone(),
-        restored_versions: target,
-        ping_verified,
-    })
-}
-
-/// Execute atomic `:live` alias rollback across one or more regions (`canary`, `wave1`, `all-17`).
-pub fn execute_carbon_rollback_multi(
-    environment: &str,
-    raw_regions: &[String],
-    target_versions: Option<CarbonLiveAliasVersions>,
-) -> Result<Vec<CarbonRollbackReceipt>, String> {
-    let regions = expand_region_targets(raw_regions)?;
-    let mut out = Vec::with_capacity(regions.len());
-    for region in regions {
-        out.push(execute_carbon_rollback(&CarbonRollbackOptions {
-            environment: environment.to_owned(),
-            region,
-            target_versions: target_versions.clone(),
-        })?);
-    }
-    Ok(out)
-}
-
-/// Query live CloudFormation stacks across `dev` and `prod` regions, probe `/v1/carbon/ping` on
-/// every regional `PublicEdgeEndpointUrl`, verify regional `engine_kek_pubkey_b64` against AWS
-/// Secrets Manager, and produce a signed-release-ready `jope-carbon-clouds-v2` manifest.
-pub fn generate_public_clouds_manifest(
-    dev_regions: &[String],
-    prod_regions: &[String],
-) -> Result<CarbonPublicCloudsManifest, String> {
-    let creds = CarbonAwsCredentials::from_env()?;
-    let mut clouds = BTreeMap::new();
-
-    for (cloud_name, raw_list) in [("dev", dev_regions), ("prod", prod_regions)] {
-        if raw_list.iter().all(|s| s.trim().is_empty()) {
-            continue;
-        }
-        let expanded = expand_region_targets(raw_list)?;
-        let stack_name = format!("jopedime-carbon-{cloud_name}");
-        let mut pins = Vec::with_capacity(expanded.len());
-
-        for region in &expanded {
-            let snap = read_stack_outputs_map(region, &stack_name)?.ok_or_else(|| {
-                format!("CloudFormation stack '{stack_name}' not found in region {region}")
-            })?;
-            let pub_url = snap
-                .outputs
-                .get("PublicEdgeEndpointUrl")
-                .or_else(|| snap.outputs.get("EdgeEndpointUrl"))
-                .cloned()
-                .ok_or_else(|| {
-                    format!("stack '{stack_name}' in {region} missing PublicEdgeEndpointUrl")
-                })?;
-            let release_id = snap.outputs.get("ReleaseId").cloned();
-            let vault =
-                ensure_cell_secrets_in_vault(&creds, region, cloud_name, false, None, true)?;
-            let (_, probed) = CarbonThinClient::connect_fastest(vec![pub_url.clone()])?;
-            let first = probed.first().ok_or_else(|| {
-                format!("live /v1/carbon/ping probe returned empty for {pub_url} ({region})")
-            })?;
-            if first.engine_kek_pubkey_b64.as_deref() != Some(vault.engine_kek_pubkey_b64.as_str())
-            {
-                return Err(format!(
-                    "live KEK mismatch on {cloud_name} ({region}): ping advertised {:?}, vault holds {}",
-                    first.engine_kek_pubkey_b64, vault.engine_kek_pubkey_b64
-                ));
-            }
-            pins.push(CarbonCloudRegionPin {
-                region: region.clone(),
-                public_endpoint: pub_url.trim_end_matches('/').to_owned(),
-                engine_kek_pubkey_b64: Some(vault.engine_kek_pubkey_b64),
-                release_id,
-            });
-        }
-
-        let primary = pins.first().cloned().ok_or_else(|| {
-            format!("no active regional endpoints discovered for cloud '{cloud_name}'")
-        })?;
-        clouds.insert(
-            cloud_name.to_owned(),
-            CarbonCloudCellEntry {
-                environment: cloud_name.to_owned(),
-                region: primary.region,
-                public_endpoint: primary.public_endpoint,
-                engine_kek_pubkey_b64: primary.engine_kek_pubkey_b64,
-                release_id: primary.release_id,
-                regions: pins,
-            },
-        );
-    }
-
-    Ok(CarbonPublicCloudsManifest {
-        schema: "jope-carbon-clouds-v2".to_owned(),
-        generated_epoch_ms: now_epoch_ms(),
-        clouds,
     })
 }

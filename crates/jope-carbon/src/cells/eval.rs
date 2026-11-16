@@ -4,8 +4,8 @@
 //! in `Zeroizing` RAM using a 60-second ephemeral `FitJmat` slot subkey granted by `carbon-engine`,
 //! bounds warm RAM caching to 2 entries with a 60-second TTL, and never accesses `holdout.jmat`.
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
-use std::io::Read;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -21,7 +21,11 @@ use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::{
-    cells::engine_invoker::now_epoch_ms,
+    cells::{
+        engine_invoker::now_epoch_ms,
+        lambda_client::{post_json_http_bounded, CarbonLambdaRpcClient},
+    },
+    error::{err_to_string, to_json_vec},
     security::user_envelope::{decrypt_cuen_with_slot_subkey, CAS_BLOB_CUEN_SCOPE},
     storage::cas::{sha256_lower_hex, CarbonCasStore},
 };
@@ -99,47 +103,28 @@ impl CarbonEvalInvoker for CarbonHttpEvalInvoker {
         &self,
         payload: &CarbonEvalWireRequest,
     ) -> Result<CarbonShardEvalOutcome, String> {
-        let req_bytes =
-            serde_json::to_vec(payload).map_err(|e| format!("encode eval payload: {e}"))?;
-        let mut resp = self
-            .agent
-            .post(&self.invoke_url)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .header("content-type", "application/json")
-            .send(&req_bytes)
-            .map_err(|e| format!("HTTP eval invoke failed: {e}"))?;
-        let status = resp.status().as_u16();
-        let mut body = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut body)
-            .map_err(|e| format!("read eval invoke response: {e}"))?;
-        if status >= 300 {
-            return Err(format!(
-                "eval shard HTTP {status}: {}",
-                String::from_utf8_lossy(&body)
-            ));
-        }
-        serde_json::from_slice(&body).map_err(|e| format!("decode eval outcome: {e}"))
+        let req_bytes = to_json_vec(payload)?;
+        let body = post_json_http_bounded(
+            &self.agent,
+            &self.invoke_url,
+            &req_bytes,
+            false,
+            "eval shard",
+        )?;
+        serde_json::from_slice(&body).map_err(err_to_string)
     }
 }
 
 /// `CarbonAwsLambdaEvalInvoker` is a struct invoking a real AWS Lambda `eval` shard function
 /// (`lambda://<function_name>`) via signed AWS SigV4 `POST /2015-03-31/functions/{name}/invocations`.
 pub struct CarbonAwsLambdaEvalInvoker {
-    region: String,
-    function_name: String,
-    agent: ureq::Agent,
+    rpc: CarbonLambdaRpcClient,
 }
 
 impl CarbonAwsLambdaEvalInvoker {
     pub fn new(region: impl Into<String>, function_name: impl Into<String>) -> Self {
         Self {
-            region: region.into(),
-            function_name: function_name.into(),
-            agent: crate::tls::carbon_https_agent().clone(),
+            rpc: CarbonLambdaRpcClient::new(region, function_name, "eval"),
         }
     }
 }
@@ -149,105 +134,9 @@ impl CarbonEvalInvoker for CarbonAwsLambdaEvalInvoker {
         &self,
         payload: &CarbonEvalWireRequest,
     ) -> Result<CarbonShardEvalOutcome, String> {
-        let req_bytes =
-            serde_json::to_vec(payload).map_err(|e| format!("encode eval payload: {e}"))?;
-        let creds = crate::security::sigv4::CarbonAwsCredentials::from_env()?;
-        let host = format!("lambda.{}.amazonaws.com", self.region);
-        let (fn_base, qualifier) =
-            crate::security::sigv4::split_lambda_name_and_qualifier(&self.function_name);
-        let uri = format!(
-            "/2015-03-31/functions/{}/invocations",
-            crate::security::sigv4::url_encode_component(fn_base)
-        );
-        let canonical_query = match qualifier {
-            Some(q) => format!(
-                "Qualifier={}",
-                crate::security::sigv4::url_encode_component(q)
-            ),
-            None => String::new(),
-        };
-        let url = if canonical_query.is_empty() {
-            format!("https://{host}{uri}")
-        } else {
-            format!("https://{host}{uri}?{canonical_query}")
-        };
-        const MAX_EVAL_ATTEMPTS: usize = 3;
-        let mut last_err = String::new();
-        for attempt in 0..MAX_EVAL_ATTEMPTS {
-            if attempt > 0 {
-                let wait_ms =
-                    crate::security::sigv4::compute_backoff_with_jitter_ms(attempt - 1, 120, 1_500);
-                std::thread::sleep(std::time::Duration::from_millis(wait_ms));
-            }
-            let headers = crate::security::sigv4::sign_aws_v4_headers(
-                &creds,
-                &self.region,
-                "lambda",
-                "POST",
-                &host,
-                &uri,
-                &canonical_query,
-                &req_bytes,
-                now_epoch_ms() / 1_000,
-            );
-            let mut req = self
-                .agent
-                .post(&url)
-                .config()
-                .http_status_as_error(false)
-                .build()
-                .header("content-type", "application/json");
-            for (k, v) in &headers {
-                req = req.header(k, v);
-            }
-            let mut resp = match req.send(&req_bytes) {
-                Ok(r) => r,
-                Err(e) => {
-                    last_err = format!(
-                        "AWS Lambda eval invoke '{}' failed: {e}",
-                        self.function_name
-                    );
-                    if attempt + 1 < MAX_EVAL_ATTEMPTS {
-                        continue;
-                    }
-                    return Err(last_err);
-                }
-            };
-            let status = resp.status().as_u16();
-            let fn_err = resp
-                .headers()
-                .get("x-amz-function-error")
-                .and_then(|v| v.to_str().ok())
-                .map(str::to_owned);
-            let mut body = Vec::new();
-            resp.body_mut()
-                .as_reader()
-                .read_to_end(&mut body)
-                .map_err(|e| format!("read AWS Lambda eval invoke response: {e}"))?;
-            if matches!(status, 429 | 502 | 503 | 504) && attempt + 1 < MAX_EVAL_ATTEMPTS {
-                last_err = format!(
-                    "AWS Lambda eval shard HTTP {status}: {}",
-                    String::from_utf8_lossy(&body)
-                );
-                continue;
-            }
-            if status >= 300 {
-                return Err(format!(
-                    "AWS Lambda eval shard HTTP {status}: {}",
-                    String::from_utf8_lossy(&body)
-                ));
-            }
-            if let Some(err_kind) = fn_err {
-                return Err(format!(
-                    "AWS Lambda eval '{}' function error ({err_kind}): {}",
-                    self.function_name,
-                    String::from_utf8_lossy(&body)
-                ));
-            }
-            return serde_json::from_slice(&body)
-                .map_err(|e| format!("decode AWS Lambda eval outcome: {e}"));
-        }
-        Err(last_err)
+        let req_bytes = to_json_vec(payload)?;
+        let body = self.rpc.invoke_bytes(&req_bytes, false, 3)?;
+        serde_json::from_slice(&body).map_err(err_to_string)
     }
 }
 
@@ -280,8 +169,7 @@ pub struct CarbonEvalWorker {
 
 impl CarbonEvalWorker {
     pub fn new(cas: Arc<dyn CarbonCasStore>, scratch_root: PathBuf) -> Result<Self, String> {
-        std::fs::create_dir_all(&scratch_root)
-            .map_err(|e| format!("create eval scratch dir: {e}"))?;
+        std::fs::create_dir_all(&scratch_root).err_ctx("create eval scratch dir")?;
         Ok(Self {
             cas,
             scratch_root,
@@ -326,7 +214,7 @@ impl CarbonEvalWorker {
             let subkey_vec = Zeroizing::new(
                 base64::engine::general_purpose::STANDARD
                     .decode(&g.fit_slot_subkey_b64)
-                    .map_err(|e| format!("invalid fit_slot_subkey_b64: {e}"))?,
+                    .err_ctx("invalid fit_slot_subkey_b64")?,
             );
             if subkey_vec.len() != 32 {
                 return Err("fit_slot_subkey must be 32 bytes".to_owned());
@@ -340,7 +228,7 @@ impl CarbonEvalWorker {
                 CAS_BLOB_CUEN_SCOPE,
                 &raw_blob,
             )
-            .map_err(|e| format!("eval FitJmat CUEN decryption failed: {e}"))?;
+            .err_ctx("eval FitJmat CUEN decryption failed")?;
             let actual_pt_sha = sha256_lower_hex(&decrypted);
             if actual_pt_sha != g.fit_plaintext_sha256.to_ascii_lowercase() {
                 return Err("eval decrypted FitJmat SHA-256 mismatch".to_owned());
@@ -353,7 +241,7 @@ impl CarbonEvalWorker {
         let plain_owned = std::mem::take(&mut *pt_vec);
         let exec = Arc::new(
             CarbonInProcessExecutor::open_fit(plain_owned, &pt_sha, self.scratch_root.clone())
-                .map_err(|e| format!("open eval FIT matrix failed: {e}"))?,
+                .err_ctx("open eval FIT matrix failed")?,
         );
 
         let ttl_exp = grant
@@ -380,10 +268,9 @@ impl CarbonEvalWorker {
     }
 
     pub fn handle_wire_bytes(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
-        let wire: CarbonEvalWireRequest =
-            serde_json::from_slice(payload).map_err(|e| format!("invalid eval wire json: {e}"))?;
+        let wire: CarbonEvalWireRequest = serde_json::from_slice(payload).map_err(err_to_string)?;
         let outcome = self.evaluate_shard(&wire)?;
-        serde_json::to_vec(&outcome).map_err(|e| format!("serialize eval outcome: {e}"))
+        to_json_vec(&outcome)
     }
 
     pub fn evaluate_shard(
@@ -396,7 +283,7 @@ impl CarbonEvalWorker {
             wire.decryption_grant.as_ref(),
         )?;
         evaluate_carbon_eval_shard_with_executor(&exec, &wire.request, wire.fit_champion)
-            .map_err(|e| format!("eval shard execution error: {e}"))
+            .err_ctx("eval shard execution error")
     }
 }
 

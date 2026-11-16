@@ -3,6 +3,7 @@
 //! one-hot & smoothed leave-one-out categorical, missing-value imputation, custom objective `aux` separation),
 //! fuzzy column suggestion, and instant local dataset preflight inspector (`carbon inspect`).
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::Read;
@@ -329,14 +330,14 @@ fn days_from_civil(y: i32, m: u32, d: u32) -> i64 {
 
 /// Parse ISO-8601 `YYYY-MM-DD` or `YYYY-MM-DD[T ]HH:MM[:SS[.fff]][Z|±HH[:MM]]` into `(epoch_days, month, dow)`.
 fn parse_iso8601_date(raw: &str) -> Option<(f64, f64, f64)> {
-    let s = raw.trim();
-    let bytes = s.as_bytes();
-    if bytes.len() < 10 || bytes.len() > 40 || bytes[4] != b'-' || bytes[7] != b'-' {
+    let trimmed = raw.trim_matches(|c: char| c.is_ascii_whitespace());
+    let bytes = trimmed.as_bytes();
+    if !(10..=40).contains(&bytes.len()) || bytes[4] != b'-' || bytes[7] != b'-' {
         return None;
     }
-    let year: i32 = s.get(0..4)?.parse().ok()?;
-    let month: u32 = s.get(5..7)?.parse().ok()?;
-    let day: u32 = s.get(8..10)?.parse().ok()?;
+    let year: i32 = trimmed.get(0..4)?.parse().ok()?;
+    let month: u32 = trimmed.get(5..7)?.parse().ok()?;
+    let day: u32 = trimmed.get(8..10)?.parse().ok()?;
     if !(1500..=2500).contains(&year)
         || !(1..=12).contains(&month)
         || day < 1
@@ -353,7 +354,7 @@ fn parse_iso8601_date(raw: &str) -> Option<(f64, f64, f64)> {
     if !matches!(sep, b'T' | b't' | b' ') {
         return None;
     }
-    let rest = s.get(11..)?.trim();
+    let rest = trimmed.get(11..)?.trim();
     if rest.len() < 5 || rest.as_bytes()[2] != b':' {
         return None;
     }
@@ -540,28 +541,60 @@ fn decode_utf8_or_utf16_bytes(bytes: Vec<u8>, label: &str) -> Result<String, Str
     }
 }
 
-fn read_bounded_bytes<R: Read>(mut reader: R, cap: u64, label: &str) -> Result<Vec<u8>, String> {
-    let mut buf = Vec::new();
-    let mut limited = (&mut reader).take(cap + 1);
-    limited
-        .read_to_end(&mut buf)
-        .map_err(|e| format!("read {label}: {e}"))?;
-    if (buf.len() as u64) > cap {
-        return Err(format!(
-            "{label} exceeded maximum uncompressed table size limit ({} MiB)",
-            cap / (1024 * 1024)
-        ));
+fn decode_bounded_table_stream<R: Read>(
+    reader: R,
+    cap: u64,
+    label: &str,
+    stem: String,
+) -> Result<(String, String), String> {
+    let bytes = crate::storage::cas::read_bounded(reader, cap, label)?;
+    let decoded = decode_utf8_or_utf16_bytes(bytes, label)?;
+    Ok((decoded, stem))
+}
+
+fn read_xz_table_bytes(path: &Path, label: &str) -> Result<Vec<u8>, String> {
+    use std::process::{Command, Stdio};
+    let file = fs::File::open(path).map_err(|e| format!("open {label}: {e}"))?;
+    let mut child = Command::new("xz")
+        .arg("-dc")
+        .stdin(Stdio::from(file))
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| format!("spawn xz -dc for {label}: {e}"))?;
+    let read_res = match child.stdout.take() {
+        Some(mut stdout) => {
+            crate::storage::cas::read_bounded(&mut stdout, MAX_DECOMPRESSED_TABLE_BYTES, label)
+        }
+        None => Err("xz -dc missing stdout pipe".to_owned()),
+    };
+    let bytes = match read_res {
+        Ok(b) => b,
+        Err(err) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(err);
+        }
+    };
+    let status = child
+        .wait()
+        .map_err(|e| format!("wait xz -dc for {label}: {e}"))?;
+    if !status.success() {
+        return Err(format!("decompress xz table {label} failed ({status})"));
     }
-    Ok(buf)
+    Ok(bytes)
 }
 
 fn read_decoded_table_text(path: &Path) -> Result<(String, String), String> {
     let label = path.display().to_string();
     if path == Path::new("-") {
         let stdin = std::io::stdin();
-        let bytes = read_bounded_bytes(stdin.lock(), MAX_STDIN_TABLE_BYTES, "stdin ('-')")?;
-        let decoded = decode_utf8_or_utf16_bytes(bytes, "stdin ('-')")?;
-        return Ok((decoded, "-".to_owned()));
+        return decode_bounded_table_stream(
+            stdin.lock(),
+            MAX_STDIN_TABLE_BYTES,
+            "stdin ('-')",
+            "-".to_owned(),
+        );
     }
     let file_name_lc = path
         .file_name()
@@ -571,22 +604,31 @@ fn read_decoded_table_text(path: &Path) -> Result<(String, String), String> {
     if let Some(stem) = file_name_lc.strip_suffix(".gz") {
         let file = fs::File::open(path).map_err(|e| format!("open {label}: {e}"))?;
         let decoder = flate2::read::GzDecoder::new(file);
-        let bytes = read_bounded_bytes(decoder, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
-        let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
-        return Ok((decoded, stem.to_owned()));
+        return decode_bounded_table_stream(
+            decoder,
+            MAX_DECOMPRESSED_TABLE_BYTES,
+            &label,
+            stem.to_owned(),
+        );
     }
     if let Some(stem) = file_name_lc.strip_suffix(".zst") {
         let file = fs::File::open(path).map_err(|e| format!("open {label}: {e}"))?;
         let decoder = ruzstd::decoding::StreamingDecoder::new(file)
             .map_err(|e| format!("init zstd decoder for {label}: {e}"))?;
-        let bytes = read_bounded_bytes(decoder, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
+        return decode_bounded_table_stream(
+            decoder,
+            MAX_DECOMPRESSED_TABLE_BYTES,
+            &label,
+            stem.to_owned(),
+        );
+    }
+    if let Some(stem) = file_name_lc.strip_suffix(".xz") {
+        let bytes = read_xz_table_bytes(path, &label)?;
         let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
         return Ok((decoded, stem.to_owned()));
     }
     let file = fs::File::open(path).map_err(|e| format!("read {label}: {e}"))?;
-    let bytes = read_bounded_bytes(file, MAX_DECOMPRESSED_TABLE_BYTES, &label)?;
-    let decoded = decode_utf8_or_utf16_bytes(bytes, &label)?;
-    Ok((decoded, file_name_lc))
+    decode_bounded_table_stream(file, MAX_DECOMPRESSED_TABLE_BYTES, &label, file_name_lc)
 }
 
 fn parse_jsonl_str(
@@ -1072,10 +1114,10 @@ pub fn prepare_encoded_training_set_with_options(
     let total_rows = valid_rows.len();
     let split_plan = if normalized_split.as_deref() == Some("forward") {
         SplitPlan::chronological(total_rows, opts.seed, opts.holdout_fraction)
-            .map_err(|e| format!("chronological split plan failed: {e}"))?
+            .err_ctx("chronological split plan failed")?
     } else {
         SplitPlan::deterministic(total_rows, opts.seed, opts.holdout_fraction)
-            .map_err(|e| format!("split plan failed: {e}"))?
+            .err_ctx("split plan failed")?
     };
     let fit_indices = split_plan.fit_rows();
     let fit_set: BTreeSet<usize> = fit_indices.iter().copied().collect();
@@ -1302,7 +1344,6 @@ pub fn prepare_encoded_training_set_with_options(
     let mut full_x_f32 = Vec::with_capacity(total_rows * n_enc);
     let mut full_y_f32 = Vec::with_capacity(total_rows);
     let mut jmat_numeric_rows: Vec<Vec<f64>> = Vec::with_capacity(total_rows);
-    let mut all_encoded_rows: Vec<Vec<f64>> = Vec::with_capacity(total_rows);
 
     for (r_i, row) in valid_rows.iter().enumerate() {
         let is_fit_row = fit_set.contains(&r_i);
@@ -1317,12 +1358,11 @@ pub fn prepare_encoded_training_set_with_options(
             full_x_f32.push(v as f32);
         }
         full_y_f32.push(y_val as f32);
-        let mut jmat_row = Vec::with_capacity(n_enc + n_aux + 1);
-        jmat_row.extend_from_slice(&enc_row);
+        let mut jmat_row = enc_row;
+        jmat_row.reserve(n_aux + 1);
         jmat_row.extend_from_slice(&valid_aux_rows[r_i]);
         jmat_row.push(y_val);
         jmat_numeric_rows.push(jmat_row);
-        all_encoded_rows.push(enc_row);
     }
 
     let landmark_bundle = FitLandmarkBundle::extract_fit_only(
@@ -1332,7 +1372,9 @@ pub fn prepare_encoded_training_set_with_options(
         &full_y_f32,
         &split_plan,
     )
-    .map_err(|e| format!("FIT-only landmark conditioning failed: {e}"))?;
+    .err_ctx("FIT-only landmark conditioning failed")?;
+    drop(full_x_f32);
+    drop(full_y_f32);
 
     let aux_column_names: Vec<String> = aux_indices.iter().map(|(_, n)| n.clone()).collect();
     let mut jmat_headers = encoded_feature_names.clone();
@@ -1340,7 +1382,7 @@ pub fn prepare_encoded_training_set_with_options(
     jmat_headers.push(target_col.clone());
     let artifacts =
         split_and_encode_numeric_jmat_v1(&jmat_headers, &jmat_numeric_rows, &split_plan)
-            .map_err(|e| format!("JMAT v1 split encoding failed: {e}"))?;
+            .err_ctx("JMAT v1 split encoding failed")?;
 
     let mut fit_x = Vec::with_capacity(split_plan.fit_rows().len());
     let mut fit_y = Vec::with_capacity(split_plan.fit_rows().len());
@@ -1349,7 +1391,7 @@ pub fn prepare_encoded_training_set_with_options(
         .map(|n| (n.clone(), Vec::with_capacity(split_plan.fit_rows().len())))
         .collect();
     for &idx in split_plan.fit_rows() {
-        fit_x.push(all_encoded_rows[idx].clone());
+        fit_x.push(jmat_numeric_rows[idx][..n_enc].to_vec());
         fit_y.push(valid_targets[idx]);
         for (a_pos, a_name) in aux_column_names.iter().enumerate() {
             if let Some(vec) = fit_aux_cols.get_mut(a_name) {
@@ -1370,7 +1412,7 @@ pub fn prepare_encoded_training_set_with_options(
         })
         .collect();
     for &idx in split_plan.holdout_rows() {
-        holdout_x.push(all_encoded_rows[idx].clone());
+        holdout_x.push(jmat_numeric_rows[idx][..n_enc].to_vec());
         holdout_y.push(valid_targets[idx]);
         for (a_pos, a_name) in aux_column_names.iter().enumerate() {
             if let Some(vec) = holdout_aux_cols.get_mut(a_name) {
@@ -1378,6 +1420,7 @@ pub fn prepare_encoded_training_set_with_options(
             }
         }
     }
+    drop(jmat_numeric_rows);
 
     // Pre-upload target-leakage & duplicate-header hygiene diagnostics on `FIT`.
     let mut hygiene_warnings = Vec::new();

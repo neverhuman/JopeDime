@@ -460,8 +460,9 @@ fn edge_auth_resume_predict_prepare_predict_and_s3_presign_branches() {
     )));
 
     // API-04: 300 anonymous calls succeed, 301st hits 429 `rate_limited` (with retry-after: 1).
+    // Bound to 605 iterations so a UTC minute-boundary rollover mid-loop still reaches 301 in the new window.
     let mut anon_429_seen = false;
-    for _ in 0..302 {
+    for _ in 0..605 {
         let r = s3_router.handle(&make_gw_req(
             "POST",
             "/v1/carbon/auth/anonymous",
@@ -531,7 +532,7 @@ fn edge_auth_resume_predict_prepare_predict_and_s3_presign_branches() {
         400
     );
     let mut reg_429_seen = false;
-    for _ in 0..125 {
+    for _ in 0..250 {
         let r = s3_router.handle(&make_gw_req(
             "POST",
             "/v1/carbon/auth/register",

@@ -4,6 +4,7 @@
 //! / `create_new(true)` / `?if_none_match=1`), `RT-08` (injective strict `tenant_id` state keys),
 //! and zero-knowledge cryptographic shred (`delete_blob`).
 
+use crate::error::CarbonErrCtx as _;
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -239,6 +240,31 @@ pub fn open_remote_cas(
     Ok(Arc::new(CarbonHttpCas::new(cas_url, internal_token)))
 }
 
+/// Maximum byte ceiling for a single CAS `JMAT`/`CUEN` blob (`268 MiB`).
+pub const MAX_CAS_BLOB_BYTES: u64 = 268 * 1024 * 1024;
+/// Maximum byte ceiling for a CAS JSON/checkpoint state object (`16 MiB`).
+pub const MAX_CAS_STATE_BYTES: u64 = 16 * 1024 * 1024;
+/// Maximum byte ceiling for an internal Lambda/HTTP RPC response body (`16 MiB`).
+pub const MAX_RPC_RESPONSE_BYTES: u64 = 16 * 1024 * 1024;
+/// Maximum byte ceiling for control-plane JSON responses (`4 MiB`).
+pub const MAX_CONTROL_RESPONSE_BYTES: u64 = 4 * 1024 * 1024;
+
+/// Read up to `max_bytes` from `reader` without trusting `Content-Length`, failing closed if the
+/// stream exceeds `max_bytes` (`MEM-03`).
+pub fn read_bounded<R: Read>(reader: R, max_bytes: u64, label: &str) -> Result<Vec<u8>, String> {
+    let mut buf = Vec::new();
+    reader
+        .take(max_bytes.saturating_add(1))
+        .read_to_end(&mut buf)
+        .map_err(|e| format!("read {label}: {e}"))?;
+    if buf.len() as u64 > max_bytes {
+        return Err(format!(
+            "{label} exceeded maximum size ceiling ({max_bytes} bytes)"
+        ));
+    }
+    Ok(buf)
+}
+
 /// `CarbonFsCas` is a struct storing verified CAS blobs and run state objects on a local directory.
 #[derive(Clone, Debug)]
 pub struct CarbonFsCas {
@@ -248,8 +274,15 @@ pub struct CarbonFsCas {
 impl CarbonFsCas {
     pub fn open(root: impl Into<PathBuf>) -> Result<Self, String> {
         let root = root.into();
-        fs::create_dir_all(root.join("blobs")).map_err(|e| format!("create CAS blobs dir: {e}"))?;
-        fs::create_dir_all(root.join("state")).map_err(|e| format!("create CAS state dir: {e}"))?;
+        fs::create_dir_all(root.join("blobs")).map_err(crate::error::err_to_string)?;
+        fs::create_dir_all(root.join("state")).map_err(crate::error::err_to_string)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&root, fs::Permissions::from_mode(0o700));
+            let _ = fs::set_permissions(root.join("blobs"), fs::Permissions::from_mode(0o700));
+            let _ = fs::set_permissions(root.join("state"), fs::Permissions::from_mode(0o700));
+        }
         Ok(Self { root })
     }
 
@@ -257,14 +290,34 @@ impl CarbonFsCas {
         &self.root
     }
 
-    fn atomic_write(dest: &Path, bytes: &[u8]) -> Result<(), String> {
+    fn write_synced_private_temp(dest: &Path, bytes: &[u8]) -> Result<PathBuf, String> {
         if let Some(parent) = dest.parent() {
-            fs::create_dir_all(parent).map_err(|e| format!("create parent dir: {e}"))?;
+            fs::create_dir_all(parent).map_err(crate::error::err_to_string)?;
         }
         let nonce = ulid::Ulid::new().to_string();
         let tmp = dest.with_extension(format!("tmp.{nonce}"));
-        fs::write(&tmp, bytes).map_err(|e| format!("write temp object: {e}"))?;
-        fs::rename(&tmp, dest).map_err(|e| format!("atomic rename object: {e}"))?;
+        let mut opts = OpenOptions::new();
+        opts.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            opts.mode(0o600);
+        }
+        let mut file = opts.open(&tmp).map_err(crate::error::err_to_string)?;
+        if let Err(err) = file.write_all(bytes).and_then(|()| file.sync_all()) {
+            let _ = fs::remove_file(&tmp);
+            return Err(format!("write temp object {}: {err}", tmp.display()));
+        }
+        drop(file);
+        Ok(tmp)
+    }
+
+    fn atomic_write(dest: &Path, bytes: &[u8]) -> Result<(), String> {
+        let tmp = Self::write_synced_private_temp(dest, bytes)?;
+        if let Err(err) = fs::rename(&tmp, dest) {
+            let _ = fs::remove_file(&tmp);
+            return Err(format!("atomic rename object: {err}"));
+        }
         Ok(())
     }
     fn blob_fs_path(&self, scope: Option<&str>, sha256_lower: &str) -> PathBuf {
@@ -324,17 +377,16 @@ impl CarbonCasStore for CarbonFsCas {
     fn put_state_object_if_absent(&self, key: &str, bytes: &[u8]) -> Result<bool, String> {
         validate_state_key(key)?;
         let dest = self.root.join("state").join(key);
-        if let Some(parent) = dest.parent() {
-            fs::create_dir_all(parent).map_err(|e| format!("create parent dir: {e}"))?;
+        if dest.exists() {
+            return Ok(false);
         }
-        match OpenOptions::new().write(true).create_new(true).open(&dest) {
-            Ok(mut file) => {
-                file.write_all(bytes)
-                    .map_err(|e| format!("write new state object '{key}': {e}"))?;
-                Ok(true)
-            }
+        let tmp = Self::write_synced_private_temp(&dest, bytes)?;
+        let link_res = fs::hard_link(&tmp, &dest);
+        let _ = fs::remove_file(&tmp);
+        match link_res {
+            Ok(()) => Ok(true),
             Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => Ok(false),
-            Err(err) => Err(format!("create_new state object '{key}': {err}")),
+            Err(err) => Err(format!("atomic hard_link state object '{key}': {err}")),
         }
     }
 
@@ -482,14 +534,25 @@ impl CarbonS3Cas {
             };
 
             let status = resp.status().as_u16();
-            let mut body = Vec::new();
-            if let Err(e) = resp.body_mut().as_reader().read_to_end(&mut body) {
-                last_err = format!("read S3 {method} {object_key} body: {e}");
-                if attempt == 3 {
-                    return Err(last_err);
+            let max_cap = if object_key.contains("/state/") || object_key.starts_with("state/") {
+                MAX_CAS_STATE_BYTES
+            } else {
+                MAX_CAS_BLOB_BYTES
+            };
+            let body = match read_bounded(
+                resp.body_mut().as_reader(),
+                max_cap,
+                &format!("S3 {method} {object_key} body"),
+            ) {
+                Ok(b) => b,
+                Err(e) => {
+                    last_err = e;
+                    if attempt == 3 {
+                        return Err(last_err);
+                    }
+                    continue;
                 }
-                continue;
-            }
+            };
             if matches!(status, 408 | 429 | 500 | 502 | 503 | 504) && attempt < 3 {
                 continue;
             }
@@ -665,7 +728,7 @@ impl CarbonCasStore for CarbonHttpCas {
             .build()
             .header("x-carbon-internal-token", &self.internal_token)
             .send(bytes)
-            .map_err(|e| format!("HTTP CAS put blob failed: {e}"))?;
+            .err_ctx("HTTP CAS put blob failed")?;
         if resp.status().as_u16() >= 300 {
             return Err(format!(
                 "HTTP CAS put blob returned status {}",
@@ -689,7 +752,7 @@ impl CarbonCasStore for CarbonHttpCas {
             .build()
             .header("x-carbon-internal-token", &self.internal_token)
             .call()
-            .map_err(|e| format!("HTTP CAS get blob failed: {e}"))?;
+            .err_ctx("HTTP CAS get blob failed")?;
         let code = resp.status().as_u16();
         if code == 404 {
             return Ok(None);
@@ -697,11 +760,11 @@ impl CarbonCasStore for CarbonHttpCas {
         if code != 200 {
             return Err(format!("HTTP CAS get blob status {}", resp.status()));
         }
-        let mut buf = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut buf)
-            .map_err(|e| format!("read HTTP CAS blob body: {e}"))?;
+        let buf = read_bounded(
+            resp.body_mut().as_reader(),
+            MAX_CAS_BLOB_BYTES,
+            "HTTP CAS blob body",
+        )?;
         Ok(Some(buf))
     }
 
@@ -715,7 +778,7 @@ impl CarbonCasStore for CarbonHttpCas {
             .build()
             .header("x-carbon-internal-token", &self.internal_token)
             .call()
-            .map_err(|e| format!("HTTP CAS delete blob failed: {e}"))?;
+            .err_ctx("HTTP CAS delete blob failed")?;
         let code = resp.status().as_u16();
         if code == 200 || code == 204 {
             Ok(true)
@@ -737,7 +800,7 @@ impl CarbonCasStore for CarbonHttpCas {
             .build()
             .header("x-carbon-internal-token", &self.internal_token)
             .send(bytes)
-            .map_err(|e| format!("HTTP CAS put state failed: {e}"))?;
+            .err_ctx("HTTP CAS put state failed")?;
         if resp.status().as_u16() >= 300 {
             return Err(format!("HTTP CAS put state status {}", resp.status()));
         }
@@ -755,7 +818,7 @@ impl CarbonCasStore for CarbonHttpCas {
             .build()
             .header("x-carbon-internal-token", &self.internal_token)
             .send(bytes)
-            .map_err(|e| format!("HTTP CAS conditional put state failed: {e}"))?;
+            .err_ctx("HTTP CAS conditional put state failed")?;
         let code = resp.status().as_u16();
         if code == 409 || code == 412 {
             return Ok(false);
@@ -787,11 +850,11 @@ impl CarbonCasStore for CarbonHttpCas {
         if code != 200 {
             return Err(format!("HTTP CAS get state '{key}' status {code}"));
         }
-        let mut buf = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut buf)
-            .map_err(|e| format!("read HTTP CAS state body: {e}"))?;
+        let buf = read_bounded(
+            resp.body_mut().as_reader(),
+            MAX_CAS_STATE_BYTES,
+            "HTTP CAS state body",
+        )?;
         Ok(Some(buf))
     }
 
