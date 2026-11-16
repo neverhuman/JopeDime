@@ -118,11 +118,21 @@ Receipt: [`evidence/trackD/look2/SCORE.json`](../../../../research/flywheel_self
 | Against Kumo Large: families won, tied, lost | 16, 0, 3 | 1, 0, 18 |
 | Against Kumo Large: contexts won, lost | 74, 17 | |
 
+The intervals above are the scorer's own bootstrap in the look-2 receipt (`SCORE.json`, a 34-entrant fit). The ladder
+table below is a later re-fit of the whole ladder with the no-specialist row added as an entrant (35 rows, report
+revision 20), so its intervals differ slightly: 2195 to 2612 and 1723 to 2038. The Elo values are the same.
+
 Pair test, specialists against the stack alone: families won 17, tied 1, lost 1; mean gain +1.035 u; clipped mean
 +0.369; sign-flip p = 7.6e-6; leave-one-family-out minimum +0.361; RMSE cut 64% on average. Pass.
 
 Against the three models the owner named, contexts won and lost by the recall system: TabPFN 3.5 86 and 5; TabFM 81
 and 10 (ensemble 82 and 9); Kumo small 83 and 8.
+
+**A later look scored higher, and is not the headline.** Ledger lines 19 and 20 (`h465.WP4_FSCAN_V1`, 15 Nov
+23:10Z): the look-2 system plus closed-form formula columns scored 2368.3 (recall), and 1876.5 without the
+specialists (in-corpus, post hoc), against the same 1859.0 base. Those columns then failed their gate on tables
+outside dev91 (201 contexts: 45 won, 47 lost, 109 tied, against a 70% bar), one formula was posted after per-context
+AUDIT utilities had been read, and no ladder row was added. So 2343.8 stays the number of record.
 
 **Gate D-4 was not met.** The pre-registered gate asked for the system to beat the field's best on every context of
 at least 13 of 16 target families. It did so in 11.
@@ -156,7 +166,9 @@ families. Two (9f67f144, 769243ee) are lost by 0.02 u or less. Two need a 2 to 3
 this training gives: 280b1a13 sits on a resolution floor (RMSE/SD about 0.011 on rows it trained on, evenly spread),
 and 4286560c is heavy-tailed (kurtosis 130 to 148; 87 to 99% of the squared error in the worst 1% of rows).
 
-**The ladder at look 2** (35 rows; "ours" marks our systems; file
+**The ladder at look 2** (35 rows; "ours" marks our systems; in this file the label `field` marks every entrant
+that was on the board before look 2, ours or external, so our rows labelled `field` are the ones that never trained
+on dev91, "fair" in section 2's terms; file
 [`evidence/trackS/leaderboard_look2_rev20/LEADERBOARD.csv`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/trackS/leaderboard_look2_rev20/LEADERBOARD.csv)):
 
 | Rank | Entrant | Ours | Label | Elo | 95% interval |
@@ -278,16 +290,22 @@ is blind until its second read.
 - **Single-table models (WP1a, ledger line 23), recall.** A model fine-tuned on one table beat the stack alone on 10
   of 10 probe tables (+1.585 u) and beat the family specialist on 7 of the 9 multi-table families. Per-table models
   for all 91 tables were in training when this was written (81 runs; one look to follow, ledger line 26).
-- **Tree memory (ledger lines 27 to 31), recall, a separate labelled system by the owner's ruling.** Per table, 32
+- **Tree memory (ledger lines 27 to 31 for the pilot, 33 to 36 for the other 81 tables), recall, a separate labelled system by the owner's ruling.** Per table, 32
   bags of boosted trees fitted on random 80% subsets of all rows, plus one fully grown residual tree per bag (dose
-  T2, chosen by the owner). On ten tables: beats the stack alone on 9 (+1.314 u) and adds +0.219 u to the single-table
+  T2, chosen by the owner on 2026-11-16 at 02:27Z; the system itself was allowed by his answer "Separate labelled
+  system" at 01:23Z, both given on cl_h458's screen and relayed in the shared chat). Each AUDIT answer is the mean
+  of all 32 bags, and about 80% of the bags were fitted on that row with its label, so these answers are in-sample.
+  Whether such a number counts under the owner's "different random split" rule is his call and is open; it stays
+  on its own line as memory fitted on the test rows' labels. On ten tables: beats the stack alone on 9 (+1.314 u) and adds +0.219 u to the single-table
   neural model on 7. On the other 81 tables (one look, scored 04:20Z to 04:38Z on 16 Nov): it beats the stack alone
   on 77 of 81 (+1.152 u) and adds +0.385 u to the look-2 system (stack + family specialists) over 18 families, 17
   won, 1 tied, 0 lost, p = 7.6e-6. No Elo was computed for that look. Its receipts are on the training host, not
   yet in this repository.
 - **Recipe test.** Three forks of one model on one card decide the share of clean and augmented episodes; blind until
-  its second read (about 17 Nov 01:00Z). The new operator checks every episode's split key before the forward pass:
-  177,000 datasets so far, 0 splits reused.
+  its second read (about 17 Nov 01:00Z). The new operator (first run 2026-11-16) checks every episode's split key before the forward pass:
+  177,000 datasets so far, 0 splits reused. The key is a hash of the realised split: the table's id, the sorted
+  keys of its context rows and the sorted keys of its query rows. Trainers before it had no split key (the Elo
+  report's build script of 15 Nov says so); their duplicate counters hash an episode's contents, not its split.
 - **Public benchmarks.** TabArena fold 0 (51 tasks) and BeyondArena core (142 tasks) are each scored once before
   they enter training; target 18 Nov. A checkpoint snapshot for those reads is planned for 17 Nov 12:00Z.
 - **Last clean read.** The sealed cohorts are read once, with Kumo Large, TabPFN 3.5 and TabFM beside our entrants,
