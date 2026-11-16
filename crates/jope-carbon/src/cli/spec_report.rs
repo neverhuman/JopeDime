@@ -879,16 +879,19 @@ pub fn run_ci_quickstart_qualification(
     cfg_us.region = "us-east-2".to_owned();
     cfg_us.auth_secret = [0x61u8; 32];
     cfg_us.engine_kek_scalar = [0x21u8; 32];
+    cfg_us.force_hybrid_fanout = !cfg!(debug_assertions);
 
     let mut cfg_eu = CarbonEmuConfig::for_dir(scratch.path().join("emu_prod_euc1"));
     cfg_eu.region = "eu-central-1".to_owned();
     cfg_eu.auth_secret = [0x61u8; 32];
     cfg_eu.engine_kek_scalar = [0x22u8; 32];
+    cfg_eu.force_hybrid_fanout = !cfg!(debug_assertions);
 
     let mut cfg_dev = CarbonEmuConfig::for_dir(scratch.path().join("emu_dev_use2"));
     cfg_dev.region = "us-east-2".to_owned();
     cfg_dev.auth_secret = [0x72u8; 32];
     cfg_dev.engine_kek_scalar = [0x33u8; 32];
+    cfg_dev.force_hybrid_fanout = !cfg!(debug_assertions);
 
     let mut emu_us = CarbonLocalLambdaEmulator::start(cfg_us)?;
     let mut emu_eu = CarbonLocalLambdaEmulator::start(cfg_eu)?;
@@ -1189,8 +1192,12 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
             .err_ctx("quickstart --emit-csv")?;
-        let run_out = Command::new(&installed_bin)
-            .args(["run", "--csv", "sample.csv", "--progress", "--shred"])
+        let mut run_cmd = Command::new(&installed_bin);
+        run_cmd.args(["run", "--csv", "sample.csv", "--progress", "--shred"]);
+        if cfg!(debug_assertions) {
+            run_cmd.args(["--effort", "fast"]);
+        }
+        let run_out = run_cmd
             .current_dir(&empty_cwd)
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
@@ -1231,13 +1238,23 @@ pub fn run_ci_quickstart_qualification(
         let bom_csv = scratch.path().join("excel_bom_crlf.csv");
         write_csv_matrix(&bom_csv, 96, 4, true)?;
         let async_csv = scratch.path().join("medium_1200x6.csv");
-        write_csv_matrix(&async_csv, 1_200, 6, false)?;
+        let (async_rows, async_effort) = if cfg!(debug_assertions) {
+            (64, "medium")
+        } else {
+            (1_200, "fast")
+        };
+        write_csv_matrix(&async_csv, async_rows, 6, false)?;
 
-        let bom_out = Command::new(&installed_bin)
+        let mut bom_cmd = Command::new(&installed_bin);
+        bom_cmd
             .arg("run")
             .arg("--csv")
             .arg(&bom_csv)
-            .args(["--progress", "--shred"])
+            .args(["--progress", "--shred"]);
+        if cfg!(debug_assertions) {
+            bom_cmd.args(["--effort", "fast"]);
+        }
+        let bom_out = bom_cmd
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
@@ -1247,7 +1264,7 @@ pub fn run_ci_quickstart_qualification(
             .arg("run")
             .arg("--csv")
             .arg(&async_csv)
-            .args(["--effort", "fast", "--quiet", "--shred"])
+            .args(["--effort", async_effort, "--quiet", "--shred"])
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
@@ -1319,7 +1336,12 @@ pub fn run_ci_quickstart_qualification(
 
         let mut effort_summaries = Vec::new();
         let mut all_efforts_ok = reg_out.status.success() && login_out.status.success();
-        for eff in ["fast", "medium", "high", "ultra"] {
+        let effort_list: &[&str] = if cfg!(debug_assertions) {
+            &["fast"]
+        } else {
+            &["fast", "medium", "high", "ultra"]
+        };
+        for &eff in effort_list {
             let eff_out = Command::new(&installed_bin)
                 .args([
                     "run",

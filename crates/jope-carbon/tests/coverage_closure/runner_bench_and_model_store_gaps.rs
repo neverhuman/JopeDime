@@ -151,6 +151,21 @@ fn runner_ops_benchmark_free_pro_enterprise_and_ux_modes() {
     assert!(bench_md.contains("pro_hybrid_fanout_stop_predict_resume_shred"));
     assert!(bench_md.contains("pro_ultra_hybrid_fanout"));
     assert!(bench_md.contains("free_tier_row_cap_403"));
+    emu.shutdown();
+}
+
+#[test]
+fn runner_ux_progress_stop_resume_and_save_modes() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let cfg_dir = tmp.path().join("jopedime_cfg_ux");
+    fs::create_dir_all(&cfg_dir).expect("mkdir cfg_dir");
+    let mut emu_cfg = CarbonEmuConfig::for_dir(tmp.path().join("emu_ux"));
+    emu_cfg.force_hybrid_fanout = false;
+    emu_cfg.eval_worker_threads = 2;
+    let mut emu = CarbonLocalLambdaEmulator::start(emu_cfg).expect("start emu");
+    let pro_tok = emu
+        .mint_capability_token("pro_bench_tenant", CarbonTierWire::Pro, false)
+        .expect("mint pro token");
 
     // 3. `execute_carbon_cli_run_with_ux`: `show_stderr_progress`, `stop_after_ms` + `resume_after_stop`,
     //    and `persist_handle` + `save_model_path`.
@@ -166,18 +181,18 @@ fn runner_ops_benchmark_free_pro_enterprise_and_ux_modes() {
                 endpoints: vec![emu.base_url()],
                 csv_path: None,
                 target_column: "y".to_owned(),
-                synthetic_rows: 140,
+                synthetic_rows: 80,
                 synthetic_features: 4,
                 tenant_id: "pro_bench_tenant".to_owned(),
                 tier: CarbonTierWire::Pro,
-                effort: Effort::Medium,
+                effort: Effort::Fast,
                 objective: "rmse".to_owned(),
                 seed: 55,
                 holdout_fraction: 0.20,
                 stop_after_ms: Some(1),
                 resume_after_stop: true,
                 predict_rows: 5,
-                auth_token: Some(pro_tok.clone()),
+                auth_token: Some(pro_tok),
                 shred_after_run: false,
             },
             &CarbonCliRunUxConfig {

@@ -39,7 +39,7 @@ pub(crate) fn execute_passive_download_redirect(
         .ok()
         .map(|v| v.trim().to_owned())
         .filter(|v| is_valid_release_tag(v) && v != "latest")
-        .unwrap_or_else(|| "carbon-cli-v1.1.0".to_owned());
+        .unwrap_or_else(|| crate::CARBON_PUBLISHED_INSTALLER_TAG.to_owned());
 
     let (tag, asset, target_url) = match clean_path {
         "/carbon/install.sh" => (

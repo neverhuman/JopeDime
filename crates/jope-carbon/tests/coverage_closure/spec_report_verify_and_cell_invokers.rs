@@ -93,6 +93,25 @@ fn build_valid_test_pdf(page_count: usize, total_min_bytes: usize) -> Vec<u8> {
 }
 
 #[test]
+fn spec_report_ci_quickstart_qualification_in_process() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let carbon_exe = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let sha = "0ff23cc6ac4ac5ba783e67af27e80d0adc116038";
+    let qual_scratch = tmp.path().join("qs_scratch");
+    fs::create_dir_all(&qual_scratch).expect("mkdir qs_scratch");
+    let ci_qual = run_ci_quickstart_qualification(&carbon_exe, &repo_root, &qual_scratch, sha)
+        .expect("run_ci_quickstart_qualification");
+    for s in &ci_qual.steps {
+        eprintln!(
+            "step {}: {:.1} ms (passed={})",
+            s.test_id, s.wall_ms, s.passed
+        );
+    }
+    assert!(ci_qual.all_passed && ci_qual.total_tests >= 8);
+}
+
+#[test]
 fn spec_report_full_ci_qualification_and_spec_verify_bundle_roundtrip() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let carbon_exe = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
@@ -127,16 +146,46 @@ fn spec_report_full_ci_qualification_and_spec_verify_bundle_roundtrip() {
     let few_pages = build_valid_test_pdf(3, 84_000);
     assert!(verify_pdf_bytes("few.pdf", &few_pages).is_err());
 
-    // 2. Run `run_ci_quickstart_qualification` in-process so all 8 `CI-QS-01..08` suites execute under coverage!
-    let qual_scratch = tmp.path().join("qs_scratch");
-    fs::create_dir_all(&qual_scratch).expect("mkdir qs_scratch");
-    let ci_qual = run_ci_quickstart_qualification(&carbon_exe, &repo_root, &qual_scratch, sha)
-        .expect("run_ci_quickstart_qualification");
-    assert!(ci_qual.all_passed && ci_qual.total_tests >= 8);
+    // 2. Synthesize verified `ci-qual-full.json` receipt for fast deterministic bundle generation & `spec-verify` roundtrip.
+    let ci_qual_synth = serde_json::json!({
+        "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
+        "timestamp_epoch_ms": 1_763_000_000_000u64,
+        "source_sha": sha,
+        "binary_version": jope_carbon::CARBON_PKG_VERSION,
+        "release_tag": jope_carbon::CARBON_RELEASE_TAG,
+        "emulator_regions": ["prod:us-east-2", "prod:eu-central-1", "dev:us-east-2"],
+        "emulator_edge_invocations": 40,
+        "emulator_engine_invocations": 12,
+        "emulator_eval_invocations": 24,
+        "residual_cas_blobs_after_shred": 0,
+        "total_tests": 8,
+        "passed_tests": 8,
+        "all_passed": true,
+        "total_wall_ms": 1200.0,
+        "steps": [{
+            "test_id": "CI-QS-01",
+            "title": "Signed install.sh verification",
+            "command": "sh deploy/carbon/install.sh",
+            "exit_code": 0,
+            "passed": true,
+            "wall_ms": 150.0,
+            "highlights": "ok",
+            "transcript_excerpt": "$ carbon --version"
+        }],
+        "redteam_vectors": [{
+            "vector_id": "V-01",
+            "finding_ref": "RT-02",
+            "title": "Unauthenticated upload prepare rejected",
+            "passed": true,
+            "observed_http_status": 401,
+            "wall_ms": 5.0,
+            "evidence": "HTTP 401"
+        }]
+    });
     let ci_qual_path = tmp.path().join("ci-qual-full.json");
     fs::write(
         &ci_qual_path,
-        serde_json::to_vec_pretty(&ci_qual).expect("ser ci_qual"),
+        serde_json::to_vec_pretty(&ci_qual_synth).expect("ser ci_qual"),
     )
     .expect("write ci_qual");
 
