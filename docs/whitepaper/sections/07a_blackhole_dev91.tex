@@ -8,7 +8,8 @@ The reference board of Section~\ref{sec:results} holds 91 regression tables in 1
 split into training-side and test-side rows. We report three regimes and never merge them. \emph{Unseen}: the system
 never trained on any board table. \emph{In-corpus}: board tables were in the training corpus of the general model,
 with no per-table fitting. \emph{Absorbed}: models were fitted on all rows of the scored tables, test labels
-included, always on random splits and never on the official split; at scoring time the system still reads only a
+included, always on random splits; that no training episode equalled an official split is audited (see
+\emph{Splits} below for what the audit does and does not cover); at scoring time the system still reads only a
 table's training-side rows. The external models saw no test row in any regime, so an absorbed result is a statement
 about what a system retains of tables it has studied, not about tables it has never seen.
 
@@ -19,39 +20,45 @@ about what a system retains of tables it has studied, not about tables it has ne
 \hline
 System & Regime & Elo \\
 \hline
+\multicolumn{3}{@{}l}{\emph{Fit 1: the ladder fitted with the per-table system}} \\
 Stack + family models + per-table models & absorbed & 2408.5 \\
-Stack + family models & absorbed & 2343.8 \\
 Kumo-Tabular large & external & 2071.7 \\
+\hline
+\multicolumn{3}{@{}l}{\emph{Fit 2: the ladder fitted with the family-model system}} \\
+Stack + family models & absorbed & 2343.8 \\
+Kumo-Tabular large & external & 2070.2 \\
 TabFM ensemble & external & 1915.6 \\
 Kumo-Tabular small & external & 1900.2 \\
 TabFM & external & 1888.1 \\
 Stack alone & in-corpus & 1859.0 \\
 TabPFN 3.5 & external & 1851.6 \\
-Best system that never saw the board & unseen & 1821.5 \\
+Pre-registered system that never saw the board & unseen & 1821.5 \\
 \hline
 \end{tabular}
-\caption{The dev91 reference board under three regimes. Absorbed systems were fitted on the scored tables' rows,
-test labels included, on random splits only; external models saw no test row. The top row and Kumo-Tabular large
-come from one ladder fit (95\% interval of the top row: 2237 to 2726); the other rows come from the ladder fit of
-the second row, in which Kumo-Tabular large is 2070.2. Intervals are about 150 to 250 Elo wide.}
+\caption{The dev91 reference board under three regimes, in two separate ladder fits. Elo values compare only
+within a fit; no row of one block is ranked against the other block. Absorbed systems were fitted on the scored
+tables' rows, test labels included, on random splits; external models saw no test row. 95\% intervals are about 300
+to 500 Elo wide (2237 to 2726 for the top row). The unseen row is the single pre-registered read; a later series of
+seven adaptive reads reached 1842.0 in another fit.}
 \label{tab:blackhole-dev91}
 \end{table}
 
 \paragraph{Result.} With one fitted model per table family the absorbed system reaches Elo 2343.8, first on the
-ladder. Adding one fitted model per table reaches 2408.5. The second step was registered before any training and
-passed its paired test: all 19 families gain, by 0.38 in mean utility (a 32\% lower error on average), with an
-exact sign-flip $p = 1.9\times10^{-6}$. Head to head, the absorbed system beats TabPFN 3.5 on 18 of 19 families,
+ladder. Adding one fitted model per table reaches 2408.5 in its own fit. The second step was registered after a
+ten-table pilot had been scored once and before the other 81 per-table models were trained. It passed its paired
+test against the family-model system: all 19 families gain, by 0.38 in mean utility (a 32\% lower RMSE on
+average), with an exact one-sided sign-flip $p = 1.9\times10^{-6}$. Head to head, the absorbed system beats TabPFN 3.5 on 18 of 19 families,
 TabFM on 17, Kumo-Tabular small on 19 and Kumo-Tabular large on 16.
 
 \paragraph{What the other regimes say.} The same stack without fitted models scores 1859.0 in-corpus: above
 TabPFN 3.5 on the ladder by 7 Elo, but it loses to it head to head on 15 of 19 families, and it is below TabFM and
-both Kumo models. Our best system that never saw the board scores 1821.5, below all three. The gain therefore comes
+both Kumo models. The pre-registered system that never saw the board scores 1821.5, below all three. The gain therefore comes
 from absorption, and we claim nothing here about unseen tables.
 
-\paragraph{Splits.} For the family models, an exact audit of the training ledgers found that none of 61,814
-training episodes used an official split, on any of the 91 tables. The same audit for the per-table models is
-pending; their logs show no repeated split within a run.
+\paragraph{Splits.} For the family models, an exact audit of the training ledgers found that none of 61,814 training episodes used an official split, on any of the 91 tables. For the per-table models the same audit replayed all 155,937 training episodes and found none equal to an official split; on 24 of the 91 tables the training pool holds 1 to 178 fewer rows than the official table, so an exact match could not occur there and the audit tests nothing, and on the other 67 it is a measured zero. How close any episode came to an official split (the largest overlap) has not been measured yet.
 
-\paragraph{Cost.} A per-table model takes 4 to 16 minutes to fit on one 24\,GB card; the 81 new ones took 3.2 hours
-on four card slots. Scoring a table takes 28\,s end to end on average, of which 0.56\,s is on the GPU: the reader
-processes 3.9 million table cells per GPU-second, and feature preparation on the CPU is the rest.
+\paragraph{Cost.} A per-table model takes 2 to 16 minutes to fit on one 24\,GB card; the 81 new ones took 3.2 hours
+on four card slots. Producing the reader's predictions for one table takes 28\,s on average over 18 tables, of
+which 0.56\,s is on the GPU: the reader processes 3.9 million table cells per GPU-second, and feature preparation
+on the CPU is the rest. This was measured with a general model of the same size on a shared, busy host, so it is
+an upper bound; the rest of the stack was not timed.

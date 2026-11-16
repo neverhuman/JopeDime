@@ -15,8 +15,8 @@ AUDIT rows), our stack with one fine-tuned neural specialist per table family sc
 AUDIT rows: first of 35 entrants, 273 Elo above Kumo Large (2070.2). Adding one fine-tuned model per table raises this to **2408.5**
 (section 5b; same label), 337 Elo above Kumo Large in the same fit. The specialists were trained on **all rows of
 those tables, the AUDIT rows and their labels included**, on random splits. At assessment the system reads only a
-table's SEARCH rows. The same stack without the specialists scores 1859.0, and our best system that never trained on
-any dev91 table scores 1842.0. The owner's programme, called the black hole, is to do this on purpose and at scale:
+table's SEARCH rows. The same stack without the specialists scores 1859.0, and the pre-registered system that never trained on
+any dev91 table scores 1821.5 (a later series of seven adaptive reads reached 1842.0 in another fit). The owner's programme, called the black hole, is to do this on purpose and at scale:
 train a tabular foundation model on every table we can obtain, test rows included, always on random splits and under
 heavy augmentation, then assess it on the official splits of dev91, TabArena and BeyondArena, and say plainly in the
 paper that this is what was done.
@@ -27,7 +27,7 @@ Three labels are used on every dev91 number. They say what the model had seen of
 
 | Label | What the model saw | Best number | What it supports |
 |---|---|---|---|
-| fair, 0% dev91 | no dev91 table in training | 1842.0 | prediction on unseen tables |
+| fair, 0% dev91 | no dev91 table in training | 1821.5 (the single pre-registered read; 1842.0 is the best of seven adaptive reads, in another fit) | prediction on unseen tables |
 | in-corpus | dev91 tables in the generalist's training corpus (about 2% of episodes), no per-table fine-tuning | 1859.0 | a generalist that has seen the tables |
 | recall | a model fine-tuned on the scored tables' rows, AUDIT labels included, random splits only | 2408.5 (2343.8 without per-table models) | the black-hole claim: memory of seen tables |
 
@@ -46,7 +46,8 @@ What is and is not established about "a different random split":
 
 - Family specialists: their logs show `dup_splits 0`, which says no training episode repeated another. It does not say
   that no episode's split equalled the official split. A label-free check exists in design (look up the official
-  split's commitment in each run's split ledger) and **has not been run**. The chance of a coincidence is below 1e-20
+  split's commitment in each run's split ledger) and has since been run: 0 of 61,814 episodes equalled an official split, exact on all 91
+  tables (receipt 3e74ee6b..., verified by the reviewer). The chance of a coincidence is below 1e-20
   per episode for a table of 100 rows or more.
 - The r4 generalists behind the stack's other neural columns log no split identity. For a table larger than the
   largest training crop the official split cannot occur, by construction; for smaller tables the same bound applies.
@@ -162,7 +163,7 @@ at least 13 of 16 target families. It did so in 11.
 | f2893c38 | 5 | 0.797 | 1.164 | +0.366 |
 | f8fd51f3 | 5 | 1.719 | 2.818 | +1.099 |
 
-Where it still loses. Over all (context, entrant) pairs the recall system loses 79 of 3,003; 69 of those are in four
+Where it still loses. Over all (context, entrant) pairs the recall system loses 77 of 3,003 and ties 5 (look-2 receipt); most of the losses are in four
 families. Two (9f67f144, 769243ee) are lost by 0.02 u or less. Two need a 2 to 3 times lower error than any dose of
 this training gives: 280b1a13 sits on a resolution floor (RMSE/SD about 0.011 on rows it trained on, evenly spread),
 and 4286560c is heavy-tailed (kurtosis 130 to 148; 87 to 99% of the squared error in the worst 1% of rows).
@@ -217,7 +218,8 @@ successive dev91 reads, so it is an adaptive series and slightly optimistic; its
 
 Label: **recall**. Each of the 91 tables gets its own model, fine-tuned on all rows of that one table (test labels
 included, random splits), with the same recipe as the family specialists. The stack is offered both blocks.
-Spec, written before any pool or training: [`evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt).
+Spec, written after a ten-table pilot (WP1a) had been trained and scored once (ledger line 23) and before any new
+pool or any of the other 81 trainings: [`evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt).
 Receipts: [`evidence/h465_gen2a/look/`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/look/) (run A sha256 61220dcf..., run B e7ffd5c0..., rule output 60633345...).
 
 | Quantity | Stack + family specialists + per-table models (run B) | Stack + family specialists (run A) |
@@ -228,7 +230,7 @@ Receipts: [`evidence/h465_gen2a/look/`](../../../../research/flywheel_selfplay/h
 
 The two Elo values come from two separate fits, so their difference (64.7) is descriptive. The registered evidence is
 the pair test of B against A over the 19 families: all 19 gain; mean gain +0.382 u; clipped mean +0.271; family
-median +0.305; leave-one-family-out minimum +0.258; sign-flip p = 1.9e-6; RMSE cut 32% on average. All five
+median +0.305; leave-one-family-out minimum +0.258; one-sided sign-flip p = 1.9e-6 (2^-19, all 19 families positive); RMSE 32% lower on average. All five
 registered conditions hold: PASS. Against the stack alone, B wins 18 families, loses 1, +1.417 u.
 
 Head to head, run B against the named external models (the externals saw no test row):
@@ -241,7 +243,7 @@ Head to head, run B against the named external models (the externals saw no test
 | TabFM ensemble | 18, 0, 1 | 83, 0, 8 |
 | TabPFN 3.5 | 18, 0, 1 | 88, 0, 3 |
 
-Over all (table, entrant) pairs B loses 55 of 3,003; look 2 lost 79.
+Over all (table, entrant) pairs B loses 55 of 3,003; with 1 tie; look 2 lost 77, with 5 ties (its own receipt).
 
 Per family (utility, mean over the family's tables):
 
@@ -279,15 +281,21 @@ hashes: `HANDOVER_MANIFEST_91.tsv` beside it.
 
 What is checked about splits. For the 19 family specialists the official-split audit is now exact: 0 of 61,814
 training episodes used an official split, over all 91 tables (receipt 3e74ee6b..., verified by the reviewer; the
-receipt is on the training host and will enter the repository with the H465 records). **For the 81 new per-table
-models that audit has not been run.** Their logs show no repeated split within a run. Until the audit exists the
-paper says "by construction, audit pending" for the per-table block.
+receipt is on the training host and will enter the repository with the H465 records). For the per-table models a second audit (receipt c6d07e88..., code 962db014...) replayed all 155,937
+training episodes of the 91 runs, reproduced every ledger entry, and found no episode equal to an official split.
+Read with its limits, as the reviewer set them: on 24 of the 91 tables the training pool holds 1 to 178 fewer rows
+than the official table (why is not yet explained), so an exact match could not occur there and the audit tests
+nothing; on the other 67 the zero is measured. The audit tests exact equality only; how close any episode came to an
+official split (the largest overlap) has not been measured. Both receipts are on the training host and enter the
+repository with the H465 records.
 
 Inference cost, measured on 18 of these tables with the 23.7M-parameter reader on one RTX 3090
 ([`evidence/h465_gen2a/paper_data/INFER_BENCH_M_xbabe0_20261116.json`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/paper_data/INFER_BENCH_M_xbabe0_20261116.json)):
-28.1 s per table end to end (median 14.0 s), of which 0.56 s is on the GPU; 3.88M cell tokens per GPU-second;
-16.3 test rows answered per second end to end. The GPU is 2% of the time; CPU feature preparation is the rest, on
-a busy host, so the end-to-end figures are an upper bound. A cell token is one table cell presented to the reader.
+28.1 s on average to produce the reader's predictions for one table (median 14.0 s; that is 2 x 7-fold
+cross-validation on the training-side rows plus the refit, three heads), of which 0.56 s is on the GPU; 3.88M cell tokens per GPU-second;
+16.3 test rows answered per second end to end. The GPU is 2% of the time; CPU feature preparation is the rest. It was run at
+low priority on a shared host under load, with a general model of the same size, not the specialists, so the
+end-to-end figures are an upper bound; the other blocks of the stack and the stacker were not timed. A cell token is one table cell presented to the reader.
 No external model was timed.
 
 ## 6. Training and validation curves
@@ -398,7 +406,8 @@ Can say, with the label:
 - The gain over the same stack without specialists is +1.035 u in board mean utility, 17 of 19 families, p = 7.6e-6.
 - The generalist-only stack (1859.0, in-corpus) is above TabPFN 3.5 (1851.6) and below TabFM, Kumo small and Kumo
   Large; all intervals overlap.
-- The system that never saw dev91 (1842.0) is below all three named models; intervals overlap.
+- The pre-registered system that never saw dev91 (1821.5; 1842.0 in a later adaptive series, another fit) is below
+  all three named models; intervals overlap.
 
 Cannot say from this record:
 - That any of our models beats those models on tables it never saw. That needs the last clean read.

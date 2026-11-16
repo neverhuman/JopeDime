@@ -21,9 +21,10 @@ The full account, with the per-family table, the ladder, the training curves and
 **Label: recall.** Stack + family specialists + one model per table: Elo **2408.5** (95% interval 2237 to 2726) in its
 own fit, rank 1; Kumo Large 2071.7 in the same fit. Pair test against the look-2 system: 19 of 19 families gain,
 mean +0.382 u, sign-flip p 1.9e-6, PASS (ledger line 26; receipts under `evidence/h465_gen2a/look/`). Head to head
-against TabPFN 3.5: 18 families won, 1 lost; TabFM 17 and 2; Kumo Large 16 and 3; Kumo small 19 and 0. The
-official-split audit is exact for the family specialists (0 of 61,814 episodes) and has not been run for the 81 new
-per-table models. Details: section 5b of the context document.
+against TabPFN 3.5: 18 families won, 1 lost; TabFM 17 and 2; Kumo Large 16 and 3; Kumo small 19 and 0. The official-split audit found no training episode equal to an official split: 0 of 61,814 for the family
+specialists, 0 of 155,937 for the per-table models (a measured zero on 67 tables; on 24 the pool lacks official rows,
+so a match could not occur; the largest overlap is not yet measured). The look was registered after a ten-table
+pilot had been scored once and before the other 81 models were trained. Details: section 5b of the context document.
 
 `evidence/h465_gen2a/` holds: the spec; both runs' `SCORE.json` and logs; the rule output and host table; the
 checkpoint manifest (`HANDOVER_MANIFEST_91.tsv`) and pool manifest; the merged block's sidecar and checksums (no
