@@ -17,12 +17,18 @@ emit_posix_tarballs() {
   mkdir -p "$stage_dir"
   cp "$bin_src" "$stage_dir/carbon"
   chmod 0755 "$stage_dir/carbon"
-  tar -C "$stage_dir" -czf "target/carbon-matrix/${asset_name}.tar.gz" carbon
+  local tar_flags=()
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    tar_flags=(--no-xattrs --no-mac-metadata)
+  elif tar --version 2>/dev/null | grep -q 'GNU tar'; then
+    tar_flags=(--format=ustar --owner=0 --group=0 --numeric-owner --mtime='@0')
+  fi
+  COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -czf "target/carbon-matrix/${asset_name}.tar.gz" carbon
   if command -v xz >/dev/null 2>&1; then
-    tar -C "$stage_dir" -cf - carbon | xz -c > "target/carbon-matrix/${asset_name}.tar.xz"
+    COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | xz -c > "target/carbon-matrix/${asset_name}.tar.xz"
   fi
   if command -v zstd >/dev/null 2>&1; then
-    tar -C "$stage_dir" -cf - carbon | zstd -q -19 -o "target/carbon-matrix/${asset_name}.tar.zst"
+    COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | zstd -q -19 -o "target/carbon-matrix/${asset_name}.tar.zst"
   fi
   rm -rf "$stage_dir"
 }
@@ -94,7 +100,7 @@ fi
   cd target/carbon-matrix
   rm -f "SHA256SUMS-${MATRIX_LABEL}.txt"
   if command -v sha256sum >/dev/null 2>&1; then
-    find . -maxdepth 1 -type f ! -name 'SHA256SUMS*' -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > "SHA256SUMS-${MATRIX_LABEL}.txt"
+    find . -maxdepth 1 -type f ! -name 'SHA256SUMS*' -exec basename {} \; | LC_ALL=C sort | xargs sha256sum > "SHA256SUMS-${MATRIX_LABEL}.txt"
   else
     find . -maxdepth 1 -type f ! -name 'SHA256SUMS*' -exec basename {} \; | LC_ALL=C sort | xargs shasum -a 256 > "SHA256SUMS-${MATRIX_LABEL}.txt"
   fi

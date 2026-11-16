@@ -295,8 +295,9 @@ fn verify_sigv4_header_request(
         canonical_headers.push('\n');
     }
     let canonical_query = canonicalize_query_excluding(raw_query, None);
+    let normalized_uri = crate::security::sigv4::canonicalize_sigv4_uri(canonical_uri, service);
     let canonical_request = format!(
-        "{}\n{canonical_uri}\n{canonical_query}\n{canonical_headers}\n{signed_hdrs_str}\n{actual_payload_sha}",
+        "{}\n{normalized_uri}\n{canonical_query}\n{canonical_headers}\n{signed_hdrs_str}\n{actual_payload_sha}",
         method.to_ascii_uppercase()
     );
     let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));

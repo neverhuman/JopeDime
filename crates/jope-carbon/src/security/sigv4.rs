@@ -323,9 +323,10 @@ pub fn sign_aws_v4_headers_with_extra(
         signed_header_names.push(name.as_str());
     }
     let signed_headers_list = signed_header_names.join(";");
+    let normalized_uri = canonicalize_sigv4_uri(canonical_uri, service);
 
     let canonical_request = format!(
-        "{}\n{canonical_uri}\n{canonical_query}\n{canonical_headers_str}\n{signed_headers_list}\n{payload_hash}",
+        "{}\n{normalized_uri}\n{canonical_query}\n{canonical_headers_str}\n{signed_headers_list}\n{payload_hash}",
         method.to_ascii_uppercase()
     );
     let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
@@ -789,6 +790,48 @@ pub fn url_encode_component(input: &str) -> String {
             }
             _ => out.push_str(&format!("%{byte:02X}")),
         }
+    }
+    out
+}
+
+/// Canonicalize `raw_path` per AWS Signature Version 4 (`RFC 3986`):
+/// - For `"s3"`, preserve exact segment structure and existing percent-encoding (prefixing `/` if absent).
+/// - For all other AWS services (`"lambda"`, `"secretsmanager"`, etc.), collapse redundant slashes,
+///   resolve `.` and `..` path segments, preserve a trailing slash when non-root, and RFC-3986
+///   URI-encode each segment (`url_encode_component`), matching `botocore.auth.SigV4Auth`.
+#[cfg(feature = "edge")]
+pub fn canonicalize_sigv4_uri(raw_path: &str, service: &str) -> String {
+    if raw_path.is_empty() || raw_path == "/" {
+        return "/".to_owned();
+    }
+    if service.eq_ignore_ascii_case("s3") {
+        return if raw_path.starts_with('/') {
+            raw_path.to_owned()
+        } else {
+            format!("/{raw_path}")
+        };
+    }
+    let trailing_slash = raw_path.ends_with('/');
+    let mut segments: Vec<&str> = Vec::new();
+    for seg in raw_path.split('/') {
+        match seg {
+            "" | "." => {}
+            ".." => {
+                segments.pop();
+            }
+            other => segments.push(other),
+        }
+    }
+    if segments.is_empty() {
+        return "/".to_owned();
+    }
+    let mut out = String::with_capacity(raw_path.len() + 8);
+    for seg in segments {
+        out.push('/');
+        out.push_str(&url_encode_component(seg));
+    }
+    if trailing_slash {
+        out.push('/');
     }
     out
 }

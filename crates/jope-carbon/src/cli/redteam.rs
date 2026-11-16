@@ -445,14 +445,46 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &[("x-carbon-capability-token", &bearer_a)],
         Some(&bad_dek_req),
     )?;
+    let (v09_passed, v09_evidence) = if c09 == 502 {
+        (true, format!("Flipped GCM auth byte in CUDK -> HTTP {c09}"))
+    } else if c09 == 202 {
+        let poll_deadline = Instant::now() + std::time::Duration::from_secs(60);
+        let mut final_state = CarbonRunStateWire::Queued;
+        while Instant::now() < poll_deadline {
+            if let Ok(prog) = client_a.get_run_status(&anon_a.tenant_id, &r09_str) {
+                final_state = prog.state;
+                if matches!(
+                    final_state,
+                    CarbonRunStateWire::Failed
+                        | CarbonRunStateWire::Completed
+                        | CarbonRunStateWire::Paused
+                ) {
+                    break;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(250));
+        }
+        (
+            final_state == CarbonRunStateWire::Failed,
+            format!(
+                "Flipped GCM auth byte in CUDK -> async HTTP 202 settled as {:?}",
+                final_state
+            ),
+        )
+    } else {
+        (
+            false,
+            format!("Flipped GCM auth byte in CUDK -> HTTP {c09}"),
+        )
+    };
     vectors.push(CarbonRedTeamVectorResult {
         vector_id: "V-09".to_owned(),
         finding_ref: "RT-01".to_owned(),
         title: "Tampered CUDK v1 wrapped U_DEK envelope rejected by engine".to_owned(),
-        passed: c09 == 502,
+        passed: v09_passed,
         observed_http_status: c09,
         wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
-        evidence: format!("Flipped GCM auth byte in CUDK -> HTTP {c09}"),
+        evidence: v09_evidence,
     });
 
     // Legitimate encrypted Free run `r_legit` for V-10, V-12, V-13, V-14, V-16.
@@ -694,6 +726,26 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &[("x-carbon-capability-token", &bearer_b)],
         Some(&run_13_req),
     )?;
+    if c13_run == 202 {
+        let poll_deadline = Instant::now() + std::time::Duration::from_secs(90);
+        loop {
+            let status_prog = client_b.get_run_status(&anon_b.tenant_id, &r13_str)?;
+            if matches!(
+                status_prog.state,
+                CarbonRunStateWire::Completed
+                    | CarbonRunStateWire::Paused
+                    | CarbonRunStateWire::Failed
+            ) {
+                break;
+            }
+            if Instant::now() >= poll_deadline {
+                return Err(format!(
+                    "V-13 async run {r13_str} timed out waiting to settle"
+                ));
+            }
+            std::thread::sleep(std::time::Duration::from_millis(250));
+        }
+    }
     let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
     let enc_pred_pt = serde_json::to_vec(&CarbonEncryptedPredictPayload {
         feature_names: prepared.feature_names.clone(),
@@ -731,6 +783,12 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         &[("x-carbon-capability-token", &bearer_b)],
         Some(&raw_pred_req),
     )?;
+    if c13 != 200 {
+        return Err(format!(
+            "V-13 /predict returned HTTP {c13}: {}",
+            String::from_utf8_lossy(&wire_pred_bytes)
+        ));
+    }
     let wire_pred: CarbonPredictResponse =
         serde_json::from_slice(&wire_pred_bytes).map_err(crate::error::err_to_string)?;
     let wire_cleartext_empty = wire_pred.predictions.is_empty();
@@ -829,6 +887,9 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
     // V-16: Cryptographic DELETE shred & post-shred resurrection refusal
     let t = Instant::now();
     let shred_resp = client_a.shred_run(&anon_a.tenant_id, &r_legit_str)?;
+    if c09 == 202 {
+        let _ = client_a.shred_run(&anon_a.tenant_id, &r09_str);
+    }
     let (c16_get, _) = send_raw_edge_http(
         &base,
         "GET",

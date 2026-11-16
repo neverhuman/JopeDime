@@ -181,9 +181,9 @@ pub use security::{
         CarbonRuntimeSecrets,
     },
     sigv4::{
-        compute_backoff_with_jitter_ms, format_amz_timestamp_utc, sign_aws_v4_headers,
-        sign_aws_v4_headers_with_extra, url_encode_component, url_encode_s3_key,
-        CarbonAwsCredentials, CarbonPresigner,
+        canonicalize_sigv4_uri, compute_backoff_with_jitter_ms, format_amz_timestamp_utc,
+        sign_aws_v4_headers, sign_aws_v4_headers_with_extra, url_encode_component,
+        url_encode_s3_key, CarbonAwsCredentials, CarbonPresigner,
     },
     user_envelope::{
         decode_p256_pubkey_b64, decrypt_cuen_payload, decrypt_cuen_with_slot_subkey,
