@@ -4,9 +4,10 @@ use std::fs;
 use zeroize::Zeroizing;
 
 use jope_carbon::security::sigv4::{
-    compute_backoff_with_jitter_ms, format_amz_timestamp_utc, resolve_s3_request_target,
-    resolve_secretsmanager_endpoint, sign_aws_v4_headers, sign_aws_v4_headers_with_extra,
-    split_lambda_name_and_qualifier, url_encode_component, url_encode_s3_key,
+    canonicalize_sigv4_uri, compute_backoff_with_jitter_ms, format_amz_timestamp_utc,
+    resolve_s3_request_target, resolve_secretsmanager_endpoint, sign_aws_v4_headers,
+    sign_aws_v4_headers_with_extra, split_lambda_name_and_qualifier, url_encode_component,
+    url_encode_s3_key,
 };
 use jope_carbon::{
     decode_p256_pubkey_b64, decrypt_cuen_payload, decrypt_cuen_with_slot_subkey,
@@ -209,6 +210,36 @@ fn sigv4_gateway_presigner_and_s3_presign_all_functions_and_errors() {
     assert_eq!(url_encode_s3_key("/"), "/");
     assert_eq!(url_encode_s3_key("/a b/c~d"), "/a%20b/c~d");
     assert_eq!(url_encode_component("a/b+c"), "a%2Fb%2Bc");
+    assert_eq!(canonicalize_sigv4_uri("", "lambda"), "/");
+    assert_eq!(canonicalize_sigv4_uri("/", "lambda"), "/");
+    assert_eq!(
+        canonicalize_sigv4_uri("/v1/carbon/ping", "lambda"),
+        "/v1/carbon/ping"
+    );
+    assert_eq!(
+        canonicalize_sigv4_uri("/carbon/releases/v1.1.0/..%2f..%2fetc%2fpasswd", "lambda"),
+        "/carbon/releases/v1.1.0/..%252f..%252fetc%252fpasswd"
+    );
+    assert_eq!(
+        canonicalize_sigv4_uri("/a/b/../c/./d/", "lambda"),
+        "/a/c/d/"
+    );
+    assert_eq!(canonicalize_sigv4_uri("/a//b", "lambda"), "/a/b");
+    assert_eq!(
+        canonicalize_sigv4_uri(
+            "/2015-03-31/functions/arn%3Aaws%3Alambda%3Aus-east-2%3A123%3Afunction%3Afn/invocations",
+            "lambda"
+        ),
+        "/2015-03-31/functions/arn%253Aaws%253Alambda%253Aus-east-2%253A123%253Afunction%253Afn/invocations"
+    );
+    assert_eq!(
+        canonicalize_sigv4_uri("/cell-v1/blobs/sha256/ab%2Fcd", "s3"),
+        "/cell-v1/blobs/sha256/ab%2Fcd"
+    );
+    assert_eq!(
+        canonicalize_sigv4_uri("cell-v1/blobs/sha256/ab%2Fcd", "s3"),
+        "/cell-v1/blobs/sha256/ab%2Fcd"
+    );
 
     let creds_sess = CarbonAwsCredentials {
         access_key_id: "TESTKEYS301".to_owned(),
