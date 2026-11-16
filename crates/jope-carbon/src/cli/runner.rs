@@ -2004,15 +2004,21 @@ pub fn execute_carbon_cli_benchmark_with_token(
     ));
 
     // Scenario 3: Pro Medium async `202 Accepted` multi-wave (`4` waves, `multi_wave_learned`).
+    let s3_rows = if cfg!(debug_assertions) { 64 } else { 250 };
+    let s3_effort = if cfg!(debug_assertions) {
+        Effort::Fast
+    } else {
+        Effort::Medium
+    };
     let medium_run = execute_carbon_cli_run(&CarbonCliRunOptions {
         endpoints: vec![active_ep.clone()],
         csv_path: None,
         target_column: "y".to_owned(),
-        synthetic_rows: 250,
+        synthetic_rows: s3_rows,
         synthetic_features: 6,
         tenant_id: tenant_id.to_owned(),
         tier,
-        effort: Effort::Medium,
+        effort: s3_effort,
         objective: "rmse".to_owned(),
         seed: 303,
         holdout_fraction: 0.20,
@@ -2032,6 +2038,13 @@ pub fn execute_carbon_cli_benchmark_with_token(
     // Scenario 4: Pro High HybridFanOut (8 eval shards w/ 60s FitJmat subkey grants) + early-stop ->
     // E2E encrypted `/predict` -> cross-container `/resume` -> cryptographic `DELETE` shred!
     if tier != CarbonTierWire::Free {
+        let s4_rows = if cfg!(debug_assertions) { 64 } else { 300 };
+        let s4_effort = if cfg!(debug_assertions) {
+            Effort::Medium
+        } else {
+            Effort::High
+        };
+        let s4_resume_waves = if cfg!(debug_assertions) { 1 } else { 2 };
         client.reset_telemetry_counters();
         let t_s4 = Instant::now();
         let PreparedDatasetWithSplitRows {
@@ -2048,11 +2061,11 @@ pub fn execute_carbon_cli_benchmark_with_token(
                 endpoints: vec![active_ep.clone()],
                 csv_path: None,
                 target_column: "y".to_owned(),
-                synthetic_rows: 300,
+                synthetic_rows: s4_rows,
                 synthetic_features: 6,
                 tenant_id: tenant_id.to_owned(),
                 tier,
-                effort: Effort::High,
+                effort: s4_effort,
                 objective: "rmse".to_owned(),
                 seed: 404,
                 holdout_fraction: 0.20,
@@ -2108,14 +2121,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
 
         let t_search4 = Instant::now();
         let first_prog = client_arc.start_run(
-            run_hi,
-            ds_hi,
-            tenant_id,
-            tier,
-            Effort::High,
-            "rmse",
-            404,
-            &prep_hi,
+            run_hi, ds_hi, tenant_id, tier, s4_effort, "rmse", 404, &prep_hi,
         )?;
         let signaled_stop_s4 = stopper.join().unwrap_or(true);
 
@@ -2134,7 +2140,12 @@ pub fn execute_carbon_cli_benchmark_with_token(
 
         let was_paused = first_prog.state == CarbonRunStateWire::Paused;
         let final_prog = if was_paused {
-            client.resume_run(tenant_id, &run_hi_str, Some(Effort::High), Some(2))?
+            client.resume_run(
+                tenant_id,
+                &run_hi_str,
+                Some(s4_effort),
+                Some(s4_resume_waves),
+            )?
         } else {
             first_prog.clone()
         };
@@ -2226,15 +2237,21 @@ pub fn execute_carbon_cli_benchmark_with_token(
         });
 
         // Scenario 4b: Pro Ultra deep multi-wave (`HybridFanOut`, `32` waves + `r882 multi_wave_learned`).
+        let ultra_rows = if cfg!(debug_assertions) { 64 } else { 180 };
+        let ultra_effort = if cfg!(debug_assertions) {
+            Effort::Fast
+        } else {
+            Effort::Ultra
+        };
         let ultra_run = execute_carbon_cli_run(&CarbonCliRunOptions {
             endpoints: vec![active_ep.clone()],
             csv_path: None,
             target_column: "y".to_owned(),
-            synthetic_rows: 180,
+            synthetic_rows: ultra_rows,
             synthetic_features: 5,
             tenant_id: tenant_id.to_owned(),
             tier,
-            effort: Effort::Ultra,
+            effort: ultra_effort,
             objective: "rmse".to_owned(),
             seed: 454,
             holdout_fraction: 0.20,
