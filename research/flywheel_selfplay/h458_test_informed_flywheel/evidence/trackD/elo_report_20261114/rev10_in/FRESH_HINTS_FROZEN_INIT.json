@@ -1,0 +1,669 @@
+{
+ "arm": "h458d.FRESH_HINTS_FROZEN_INIT",
+ "baseline": "init_mean3",
+ "block_dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/cmp_hints",
+ "block_files_sha256": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": "b9ec7fc1b1e5f657de2d893d36f3f5dd9cdd70b36aba032ee56335423b04f43e",
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": "3996cf3a303148a2a45c00910c0cad4b946c5f16f9509a831624a585d92266c0",
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": "8fa148e436da61a05d483b33dd227b4690408e53aa167d7a0714fd5f1e63c7bf",
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": "25d4d30c641a6804a098561d8527381ea7681bb56f4cb6e8c033a798f4f1166c",
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": "6ac44e774fb5a441305311496cada92b8586cf27f28eb593becbb053fbb9bcd6",
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": "93d4dd775b603b3685740ff88f15fa13dcb8e12e2875280038abe25c58eb0d08",
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": "bbb76da6cb03c924efcbf8ee9bffe12ada7025f1b9a59ece70b08c198b0d97cd",
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": "7350ff891da09c38237cb52ecb00d9daaf20e19df0cc933a6d085518eb164e1d",
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": "16496853d98c048e75c39a82bea988c9bc2abfbfde1acc13367ccbfd4f95e19a",
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": "9005d4cf64325cd2ff044ecc14f2ba28fd1c21a1cd68c2786938c9fa017cb2f3"
+ },
+ "board": "dev91-freshprobe-v1",
+ "columns": [
+  "inith_mean3",
+  "init_mean3",
+  "hridge_mean3",
+  "hknn_mean3",
+  "hgbm_mean3"
+ ],
+ "families": [
+  "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+  "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+  "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+  "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+  "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+  "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+  "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+  "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+  "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+  "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+ ],
+ "family_mean_u": {
+  "hgbm_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.7792166815713337,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.4083136414623394,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.993488755555384,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.6490624474777108,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.367747013951494,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.3831242384304803,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.9109072082514815,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.7382791365706175,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.5196432803800978,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 1.070864014559417
+  },
+  "hknn_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.765458413692231,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.5696748146204664,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.48782762881115743,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.41909957874188203,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.3103120054496938,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.5614375893415027,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.5939542089863434,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6146547066748008,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.13234984627278712,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.5424410569983694
+  },
+  "hridge_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.3131031978580825,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.1650872325683546,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.176036859513545,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.35830900599542004,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.29097215464654247,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 4.416287787940747,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 1.7022365857071637,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.4922902507238336,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.11432493515177712,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -1.6830489253803327
+  },
+  "init_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.0104309275033345,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.576905284084281,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.147964785736969,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.10781251730635476,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.12534034809456454,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.839908690007887,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8699766921254792,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6169788397764655,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.08571177973266617,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.13766679135668228
+  },
+  "inith_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.7003348580323057,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.8452526861459375,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.41363261761239,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.33591703664573047,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.1449095409025933,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.7728746385285434,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.9645061877357098,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6712030789798632,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.17933240071325024,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.873771852981866
+  }
+ },
+ "inputs": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "board_sums": {
+   "PROBE_BOARD.json": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+   "PROBE_YA.npz": "faeff3583372a6b5ea7f002f3b2c08c7427915924a051106449e2824ea35f1a5",
+   "bank_d91probe_f64.npz": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632"
+  }
+ },
+ "label": "fresh-probe: scoring only",
+ "missing_contexts": [],
+ "n_scored": 10,
+ "paired": {
+  "hgbm_mean3 - init_mean3": {
+   "contexts_wtl": [
+    8,
+    0,
+    2
+   ],
+   "families_wtl": [
+    8,
+    0,
+    2
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.2312142459320008,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": -0.1685916426219416,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.8455239698184154,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.541249930171356,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.24240666585692947,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.5432155484225932,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.04093051612600229,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.121300296794152,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.4339315006474316,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.9331972232027348
+   },
+   "mean_context_du": 0.33019497624856725,
+   "mean_family_du": 0.33019497624856725,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.03125
+  },
+  "hknn_mean3 - init_mean3": {
+   "contexts_wtl": [
+    4,
+    0,
+    6
+   ],
+   "families_wtl": [
+    4,
+    0,
+    6
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.2449725138111034,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": -1.0072304694638146,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -1.6601371569258114,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.31128706143552726,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.18497165735512924,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.27847110066638436,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": -0.2760224831391358,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": -0.0023241331016646827,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.046638066540120954,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.40477426564168717
+   },
+   "mean_context_du": -0.25214868061354495,
+   "mean_family_du": -0.252148680613545,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.287109375
+  },
+  "hridge_mean3 - init_mean3": {
+   "contexts_wtl": [
+    6,
+    0,
+    4
+   ],
+   "families_wtl": [
+    6,
+    0,
+    4
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.697327729645252,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": -1.4118180515159264,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.02807207377657628,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.25049648868906527,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.16563180655197793,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 3.57637909793286,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8322598935816845,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": -0.12468858905263192,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.028613155419110956,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -1.820715716737015
+   },
+   "mean_context_du": 0.08269024290004497,
+   "mean_family_du": 0.08269024290004494,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.876953125
+  },
+  "inith_mean3 - init_mean3": {
+   "contexts_wtl": [
+    9,
+    0,
+    1
+   ],
+   "families_wtl": [
+    9,
+    0,
+    1
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.31009606947102886,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.2683474020616565,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.2656678318754211,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.2281045193393757,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.019569192808028768,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.9329659485206564,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.09452949561023061,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.054224239203397695,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.09362062098058407,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.7361050616251837
+   },
+   "mean_context_du": 0.23830382425535057,
+   "mean_family_du": 0.23830382425535057,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.048828125
+  }
+ },
+ "per_context": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 1.4703444102023167,
+     "u": 1.7792166815713337
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 1.4907136035759523,
+     "u": 1.765458413692231
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 2.34341706813258,
+     "u": 1.3131031978580825
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.1668203737422311,
+     "u": 2.0104309275033345
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 1.5910250428336874,
+     "u": 1.7003348580323057
+    }
+   },
+   "family": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+   "n_probe": 2000
+  },
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 3.1360554687250195,
+     "u": 0.7382791365706175
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 3.5487315151548375,
+     "u": 0.6146547066748008
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 4.010655426269051,
+     "u": 0.4922902507238336
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 3.54049336775534,
+     "u": 0.6169788397764655
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 3.3536249909497875,
+     "u": 0.6712030789798632
+    }
+   },
+   "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+   "n_probe": 1999
+  },
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 185.10230145853913,
+     "u": 1.4083136414623394
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 428.18163223427024,
+     "u": 0.5696748146204664
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 641.7090847621582,
+     "u": 0.1650872325683546
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 156.38438930094298,
+     "u": 1.576905284084281
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 119.5780873285766,
+     "u": 1.8452526861459375
+    }
+   },
+   "family": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+   "n_probe": 2000
+  },
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 974.6756598188193,
+     "u": 0.5196432803800978
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 1435.686187244049,
+     "u": 0.13234984627278712
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 1461.7989361627408,
+     "u": 0.11432493515177712
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1504.2297613643598,
+     "u": 0.08571177973266617
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 1369.7939947583604,
+     "u": 0.17933240071325024
+    }
+   },
+   "family": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+   "n_probe": 1999
+  },
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 1.0660788884994128,
+     "u": 0.367747013951494
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 1.1291016716606306,
+     "u": 0.3103120054496938
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 1.1511508562521906,
+     "u": 0.29097215464654247
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.3585174475978516,
+     "u": 0.12534034809456454
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 1.3321907935683253,
+     "u": 0.1449095409025933
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 1.4475710721956445,
+     "u": 1.3831242384304803
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 3.2922580880900036,
+     "u": 0.5614375893415027
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 0.06971941003479476,
+     "u": 4.416287787940747
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 2.492042306344067,
+     "u": 0.839908690007887
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 0.9803326061422244,
+     "u": 1.7728746385285434
+    }
+   },
+   "family": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+   "n_probe": 1999
+  },
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 1.1426717083383375,
+     "u": 0.6490624474777108
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 1.438113223507357,
+     "u": 0.41909957874188203
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 1.5282488932591138,
+     "u": 0.35830900599542004
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.963284928794346,
+     "u": 0.10781251730635476
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 1.562855403631331,
+     "u": 0.33591703664573047
+    }
+   },
+   "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+   "n_probe": 2000
+  },
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 18386.721634894704,
+     "u": 1.070864014559417
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 31188.570930766065,
+     "u": 0.5424410569983694
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 288744.3497740076,
+     "u": -1.6830489253803327
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 46750.547973547684,
+     "u": 0.13766679135668228
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 22392.384321380803,
+     "u": 0.873771852981866
+    }
+   },
+   "family": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+   "n_probe": 2000
+  },
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 0.644125217044825,
+     "u": 2.993488755555384
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 7.891600700241157,
+     "u": 0.48782762881115743
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 1.4587643775839756,
+     "u": 2.176036859513545
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.500295118533593,
+     "u": 2.147964785736969
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 1.1502669001912222,
+     "u": 2.41363261761239
+    }
+   },
+   "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+   "n_probe": 1997
+  },
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+   "cols": {
+    "hgbm_mean3": {
+     "finite": true,
+     "rmse": 9472.733990163617,
+     "u": 0.9109072082514815
+    },
+    "hknn_mean3": {
+     "finite": true,
+     "rmse": 13005.476850325942,
+     "u": 0.5939542089863434
+    },
+    "hridge_mean3": {
+     "finite": true,
+     "rmse": 4293.439621229939,
+     "u": 1.7022365857071637
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 9868.502127342676,
+     "u": 0.8699766921254792
+    },
+    "inith_mean3": {
+     "finite": true,
+     "rmse": 8978.372108202546,
+     "u": 0.9645061877357098
+    }
+   },
+   "family": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+   "n_probe": 2000
+  }
+ },
+ "pre": {
+  "arm": "h458d.FRESH_HINTS_FROZEN_INIT",
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "baseline": "init_mean3",
+  "board": "dev91-freshprobe-v1",
+  "by": "cl_h458",
+  "columns": [
+   "inith_mean3",
+   "init_mean3",
+   "hridge_mean3",
+   "hknn_mean3",
+   "hgbm_mean3"
+  ],
+  "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+  "spec": "Track D, the hint probe on the FROZEN model (first step of the \"feed it search\" idea of tips/core/v2: SYMBIONT's hint compiler, tested on our own model without any training). Same ten contexts as ledger lines 25 to 36, fresh rows. Columns: init = the frozen 23.7M checkpoint (fleet_M_x2 valley_002, in-corpus lineage), random slots, four views, as in every earlier read; inith = the SAME frozen checkpoint with three label-derived hint columns appended to its input (a ridge, a 16-nearest-neighbour target mean and a small boosted-tree model; SEARCH rows get each hint out of fold on the bank's five folds, so no row's hint saw its own label; fresh rows get the mean of the five fold models); hridge, hknn, hgbm = each hint alone as a predictor (the fold-model mean on fresh rows). Baseline init_mean3. Only the fresh-row predictions are scored; the SEARCH-row column of a hinted block is not out of fold as a whole and is never stacked. Registered before any hinted column exists (the builder option is not yet staged). READING RULE, fixed now, over the ten contexts: (U) the model USES hints if inith beats init on at least 7 of 10 with a positive family-mean difference; (A) the model ADDS to its hints if inith also beats the best of its three hints on that context on at least 6 of 10. U and A: hints are worth feeding to our model as it is, and worth training for. U without A: the frozen model is a copier of its best hint, so hint-conditioned training (with corrupted hints and a beat-your-hint loss) is needed before hints can pay at stack level, where the same classic columns already sit. Not U: the model ignores columns it was never trained on, and the hint route needs training before it can be judged. Prediction: U holds (7 or more of 10, mean gain between +0.2 and +0.8 u, the largest on 769243ee where a ridge is far above the frozen model); A fails (inith beats its best hint on 4 or fewer of 10). Descriptive: ten contexts, one seed, in-corpus init; at 7 of 10 the chance under a fair coin is about 0.17, so U and A are direction calls, not tests.",
+  "time_utc": "2026-11-15T06:16:37Z",
+  "type": "pre",
+  "use": "ref"
+ },
+ "schema": "jope.h458s.s7_probe_score/v1",
+ "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+ "sidecar": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "canonical_promotion_forbidden": true,
+  "closure": "fresh-probe",
+  "contexts": [
+   "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+   "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+   "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755",
+   "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+   "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689",
+   "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631",
+   "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38",
+   "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042",
+   "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8"
+  ],
+  "in_corpus_dev91_disclosure": true,
+  "merged_from": {
+   "hgbm": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hgbm",
+    "probe_role": "hint",
+    "sidecar_sha256": "56c6a732fd3056de3a0437b90a7c5a11c9c080f3d5faec40ffafb9d14ff94e0c",
+    "weights_sha256": "55f599d3e9810856132c82801e02eb0a80d805d863d85cb363e74821ae0056d6"
+   },
+   "hknn": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hknn",
+    "probe_role": "hint",
+    "sidecar_sha256": "78f6d8b9fe77e33fb77b765865fc3e88bb793911f3347b0676d12765524e783c",
+    "weights_sha256": "55f599d3e9810856132c82801e02eb0a80d805d863d85cb363e74821ae0056d6"
+   },
+   "hridge": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hridge",
+    "probe_role": "hint",
+    "sidecar_sha256": "dfeb6a58b31160e16e78ac0c9f1d7a57fdb6f3b858fe7d6f0537454783751ae1",
+    "weights_sha256": "55f599d3e9810856132c82801e02eb0a80d805d863d85cb363e74821ae0056d6"
+   },
+   "init": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/init_rand",
+    "probe_role": "init",
+    "sidecar_sha256": "8c07da14666fa8c6e4b9ec10fbcd9e20699a12c492b32441af928ac48cda8deb",
+    "weights_sha256": "30c93f80451c14a9ea2947b428a38053dbb3bfeff2e376fdb3f9e7b07b0e51c4"
+   },
+   "inith": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/inith_rand",
+    "probe_role": "init",
+    "sidecar_sha256": "7cf1b03861e3b60ee2d9ad2b2c048262f41cb83021aaf7122cd525c84e6622ec",
+    "weights_sha256": "dbdcd0bb0378b07b5272de80a806cbe321f55b88c649e960c9f3a99384f4ad97"
+   }
+  },
+  "names": [
+   "init_rr",
+   "init_yj",
+   "init_rg",
+   "init_mean3",
+   "inith_rr",
+   "inith_yj",
+   "inith_rg",
+   "inith_mean3",
+   "hridge_rr",
+   "hridge_yj",
+   "hridge_rg",
+   "hridge_mean3",
+   "hknn_rr",
+   "hknn_yj",
+   "hknn_rg",
+   "hknn_mean3",
+   "hgbm_rr",
+   "hgbm_yj",
+   "hgbm_rg",
+   "hgbm_mean3"
+  ],
+  "notes": "H458 Track D fresh-row probe comparison block: <tag>_mean3 is the equal-weight mean of a source's three direct columns; not a board block",
+  "probe_bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "probe_board_sha256": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+  "producer": "cl_h458 cols_h458.py @ 425e0700e7106c8f6368f3efec337f40eea8db1e",
+  "reads_audit_labels": false
+ },
+ "sidecar_sha256": "c69d8184343894985c9d4eafb58545021205089381b55dd034df6d4f958d66f1",
+ "summary": {
+  "hgbm_mean3": {
+   "context_mean_u": 1.1820646418210354,
+   "family_mean_u": 1.1820646418210357
+  },
+  "hknn_mean3": {
+   "context_mean_u": 0.5997209849589235,
+   "family_mean_u": 0.5997209849589235
+  },
+  "hridge_mean3": {
+   "context_mean_u": 0.9345599084725134,
+   "family_mean_u": 0.9345599084725134
+  },
+  "init_mean3": {
+   "context_mean_u": 0.8518696655724683,
+   "family_mean_u": 0.8518696655724683
+  },
+  "inith_mean3": {
+   "context_mean_u": 1.0901734898278188,
+   "family_mean_u": 1.0901734898278188
+  }
+ },
+ "time_utc": "2026-11-15T07:24:59Z",
+ "use": "ref",
+ "wall_s": 0.02
+}

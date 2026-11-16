@@ -1,0 +1,107 @@
+{
+  "schema": "jope.h458s.s10f_declared_sample/v1",
+  "purpose": "P2 declared sample (shared_CHAT post 74, 16:38:36Z): the real-SEARCH canary (F3) and the tau jackknife (option (a)) run on exactly these 19 contexts",
+  "rule": "one context per family: the cid with the smallest sha256(cid) (hex of the UTF-8 cid string) within its BOARD.json family_id",
+  "board": "/home/ubuntu/jope_plan/evidence/H450/board_post_h448/dev91-audit-v1/BOARD.json",
+  "board_sha256": "fa34bc9cfd428ac16a7a8bdeeb44948758749db81aa22957e627afe6b14c5fed",
+  "declared_before_any_run": true,
+  "contexts": [
+    {
+      "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+      "sha256_cid": "08794564ec5fcba69d596b12d4e463a0bb5a441c8ec514a14eef7552d51ffd90",
+      "cid": "65cfbf5b12763b855fa54f54d1ef627123f33f59776b7602240ba3a509298a6f"
+    },
+    {
+      "family_id": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+      "sha256_cid": "0186c40065c53dbaaf3f929992f1ff9e38b89ca267691fe4698b227248a1d974",
+      "cid": "9a3bd46cd866ea55d3f99f9d713cbcc789e1fb8ea427b02aba6ee75e732f883f"
+    },
+    {
+      "family_id": "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+      "sha256_cid": "009779d61f8697bae1272d346100e93fcc68a7c648d32980b5d32991d081b356",
+      "cid": "9c22e2651db3b28da0963a6365612e70c82e0aceaa70336abff13a23aca77c6b"
+    },
+    {
+      "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+      "sha256_cid": "2c00bfcc87ee479474c4106e2e7f9a43760bb27d27f9f6ce50983ed2bee77e91",
+      "cid": "55a2d1b0fbc8ae57936d3a1301cf26d020186d46528ffd6e589c2c4fb62d46de"
+    },
+    {
+      "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+      "sha256_cid": "40a243b528e38951f2602b544ddafeefd50c1ddffd8d039b5f9a47578326af36",
+      "cid": "d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b"
+    },
+    {
+      "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+      "sha256_cid": "1b5cf18c24c430a77e327206e697db52d9e3c59355a7fd21d30fd9b90b82d89d",
+      "cid": "ae7517ee777c8424af919eb9c4c9c266f420920e8e30f533b0140e352abb1a74"
+    },
+    {
+      "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+      "sha256_cid": "05f94e6dbb6d946aff7ddeb0c520f7da671fc9dd3bbb58fda84bb2e1864cb0cc",
+      "cid": "3abd4bab0e6b2454b393ac2c8e8f47badda291a0cd8edaa95e7b1985326c4a38"
+    },
+    {
+      "family_id": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+      "sha256_cid": "5fd6e5d1bec709445eeb5acac7640de2211eb7ec28a900037029b9b81c50bab9",
+      "cid": "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf"
+    },
+    {
+      "family_id": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+      "sha256_cid": "7474fa0682f2710a043cad4c157207a8cb0724ae071b6deeb0cf17300502f092",
+      "cid": "283fb463e021e3cef432a5e46ccf21d95731e25af46eb52be91099d1e248a6ae"
+    },
+    {
+      "family_id": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+      "sha256_cid": "4be33abedb747e88168e22b7d585170cc381646d48f6a810836243e94b2e81d8",
+      "cid": "293dd9add416aa1ea1b54ae5476780f1fbe84ebc2a95e949f1a29b1d93754b6b"
+    },
+    {
+      "family_id": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+      "sha256_cid": "65e5c2f10413cbec8a8f56c9160f70380ca13170aab74acdac613a70c767a893",
+      "cid": "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8"
+    },
+    {
+      "family_id": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+      "sha256_cid": "55cefe8a32983e608cd6b53c6f3ad47145adea9014124c313e444f576a1acfa4",
+      "cid": "ef2a5b74b537b84846779a8980d058d1e54d89a3308ad5373f703f63a930c825"
+    },
+    {
+      "family_id": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+      "sha256_cid": "3f6592dd34c21ea4f2965970123f1cfc813a3502596e124290c12aeaab814f0f",
+      "cid": "e9d0481cc6545966fa4dbadb785ab9c85198c1d237549eae009c42250434cdf8"
+    },
+    {
+      "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+      "sha256_cid": "812c99027bb83f5fba455b0012a021e4781aa7d509e5c71ec24b2e1123be1b1d",
+      "cid": "0d316ab90ca1558fd69b22a01fce4821edafe8c13d51686aae5d71f19564f83e"
+    },
+    {
+      "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+      "sha256_cid": "23d1f4ed05881cef68a09606f13a78f9886201fc110b3d04cdc8083a8098cf7f",
+      "cid": "f84cf79d872e75573689f53559944dca750d5e087206646364f7f28862b8b589"
+    },
+    {
+      "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+      "sha256_cid": "256f24948f6cd435b04d19e17cc683f48dd7250d25cd404f220b8f9b2d4a7c6c",
+      "cid": "59aae6f8f8fdedc6caae8e929b0882d99bc8a75d38205a3a99dad3ad95a5376a"
+    },
+    {
+      "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+      "sha256_cid": "4472ff7f3993e873513ccfca4f870e09e489d10748425eeb3dbd8d6c1f33bfa5",
+      "cid": "fcfd54c8f474349f7bd6a5003252fccec8ac1e83e902615a3c2416242cc1ada7"
+    },
+    {
+      "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+      "sha256_cid": "154b801d0495cf2f0620d1ac139f316721047e5e36d0180bf948fba87175a5cd",
+      "cid": "4ec0e23fdfb640c76a38f5a3d649ef24b871e5a6dad9338d77fa8582fc8cdc07"
+    },
+    {
+      "family_id": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4",
+      "sha256_cid": "63c60e085779f666e926527459c5819e3504393bc3d4623cade242dc07206be0",
+      "cid": "e7bc043b55c6a460b6c80463e1818adbf57c90c089cd73f50489275849263ee2"
+    }
+  ],
+  "written_by": "cl_mtc",
+  "written_utc": "2026-11-15T16:38:48Z"
+}

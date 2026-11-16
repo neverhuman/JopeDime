@@ -1,0 +1,128 @@
+{
+  "all_passed": true,
+  "gates": [
+    {
+      "elapsed_s": 0.035,
+      "gate": "gate_01_shared_chat_untracked_and_flock",
+      "status": "PASS",
+      "tracked_files": 0
+    },
+    {
+      "elapsed_s": 5.773,
+      "gate": "gate_02_isolated_h458_paths_guard",
+      "legacy_overwrite_refused": true,
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.044,
+      "gate": "gate_03_qhat_v4_require_ok_guard",
+      "missing_ckpt_raises": true,
+      "qhat_version": 4,
+      "status": "PASS"
+    },
+    {
+      "ctx44_l2_norm": 7.9072,
+      "dope_sha256": "c51a56d031a4af40",
+      "elapsed_s": 3.009,
+      "gate": "gate_04_dope_sha256_frozen_and_nonzero_ctx44",
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.005,
+      "gate": "gate_05_qhat_v4_three_heads_and_gap_nonneg",
+      "max_gap_pred": 0.006572,
+      "min_gap_pred": 0.001517,
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 4.217,
+      "gate": "gate_06_causal_harvester_zero_yq_leakage",
+      "max_diff_pred_q_real": 0.0,
+      "status": "PASS",
+      "u_cv7": 1.5474
+    },
+    {
+      "elapsed_s": 2.609,
+      "gate": "gate_07_harvester_v2_zero_loser_admission_gate",
+      "losers": 0,
+      "max_overfit_gap": 0.118918,
+      "status": "PASS",
+      "v2_shards_checked": 500
+    },
+    {
+      "elapsed_s": 0.005,
+      "gate": "gate_08_track_s_interface_iv_telemetry_schema",
+      "ledger_episodes": 12251,
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.355,
+      "gate": "gate_09_s8_canonical_confirm_exclusion",
+      "s8_bad_tables": 281,
+      "status": "PASS",
+      "v2_s8_leaked": 0
+    },
+    {
+      "elapsed_s": 0.011,
+      "f2893c38_counts": [
+        1170,
+        1274,
+        1230,
+        1238,
+        1195
+      ],
+      "gate": "gate_10_k5_feature_strata_canonical_and_twin_safe",
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.086,
+      "gate": "gate_11_skill_xfit5_label_free_routing_and_colblock",
+      "status": "PASS",
+      "twin_fold_model": 0
+    },
+    {
+      "cid": "1904558704af",
+      "elapsed_s": 16.186,
+      "gate": "gate_12_three_tier_hyper_cv_disjoint_folds_and_monotonic_ratchet",
+      "horizons": 2,
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.097,
+      "gate": "gate_13_stack_hyper_cv_query_permutation_equivariance",
+      "query_equivariance_max_diff": 0.0,
+      "status": "PASS",
+      "tierc_admitted": true
+    },
+    {
+      "elapsed_s": 0.0,
+      "gate": "gate_14_selection_multiplicity_debiasing_monotonic",
+      "m1_identity": true,
+      "shrink_ratio_m3000": 0.90989,
+      "status": "PASS"
+    },
+    {
+      "elapsed_s": 0.001,
+      "files_audited": 6,
+      "gate": "gate_15_zero_sealed_and_zero_ya_source_audit",
+      "status": "PASS",
+      "violations": 0
+    },
+    {
+      "elapsed_s": 0.213,
+      "gate": "gate_16_x3b_eval_variety_bounded_ring_and_s8_gate",
+      "s8_b7_masked": 540,
+      "status": "PASS",
+      "valley_ring_files": [
+        "ckpt_valley_slot0.pt",
+        "ckpt_valley_slot1.pt"
+      ]
+    }
+  ],
+  "gates_collected": 16,
+  "gates_failed": 0,
+  "gates_passed": 16,
+  "schema": "jope.h458.track_g_selftest/v1",
+  "utc": "2026-11-15T13:48:28Z",
+  "wave": "H458_TrackG"
+}

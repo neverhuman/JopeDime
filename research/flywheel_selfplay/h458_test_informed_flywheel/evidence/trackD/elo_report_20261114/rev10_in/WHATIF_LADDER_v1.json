@@ -1,0 +1,214 @@
+{
+ "schema": "jope.h458.whatif_ladder/v1",
+ "board": "dev91-audit-v1",
+ "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+ "reads_labels": false,
+ "reads_predictions": false,
+ "base": {
+  "kumo_l": 2070.1544736932824,
+  "fair_champion": 1821.4524584792262
+ },
+ "precision_contexts": 28,
+ "rows": [
+  {
+   "scenario": "fair champion as it is (re-inserted)",
+   "elo": 1823.1,
+   "kumo_l_in_fit": 2075.8,
+   "rank_of_34": 7,
+   "family_mean_u": 1.6737,
+   "games_vs_22_externals_of_418": 285.8,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 14
+  },
+  {
+   "scenario": "fair champion +0.05 u on all 91 contexts",
+   "elo": 1985.2,
+   "kumo_l_in_fit": 2070.1,
+   "rank_of_34": 2,
+   "family_mean_u": 1.7237,
+   "games_vs_22_externals_of_418": 340.6,
+   "contexts_above_every_entrant": 29,
+   "contexts_above_kumo_l": 36
+  },
+  {
+   "scenario": "fair champion +0.10 u on all 91 contexts",
+   "elo": 2054.9,
+   "kumo_l_in_fit": 2063.9,
+   "rank_of_34": 2,
+   "family_mean_u": 1.7737,
+   "games_vs_22_externals_of_418": 363.4,
+   "contexts_above_every_entrant": 46,
+   "contexts_above_kumo_l": 52
+  },
+  {
+   "scenario": "fair champion +0.15 u on all 91 contexts",
+   "elo": 2105.3,
+   "kumo_l_in_fit": 2059.4,
+   "rank_of_34": 1,
+   "family_mean_u": 1.8237,
+   "games_vs_22_externals_of_418": 376.9,
+   "contexts_above_every_entrant": 57,
+   "contexts_above_kumo_l": 64
+  },
+  {
+   "scenario": "fair champion +0.20 u on all 91 contexts",
+   "elo": 2128.6,
+   "kumo_l_in_fit": 2060.1,
+   "rank_of_34": 1,
+   "family_mean_u": 1.8737,
+   "games_vs_22_externals_of_418": 382.4,
+   "contexts_above_every_entrant": 61,
+   "contexts_above_kumo_l": 66
+  },
+  {
+   "scenario": "fair champion +0.30 u on all 91 contexts",
+   "elo": 2175.6,
+   "kumo_l_in_fit": 2059.7,
+   "rank_of_34": 1,
+   "family_mean_u": 1.9737,
+   "games_vs_22_externals_of_418": 391.2,
+   "contexts_above_every_entrant": 66,
+   "contexts_above_kumo_l": 73
+  },
+  {
+   "scenario": "fair champion +0.10 u on the 63 ordinary contexts only",
+   "elo": 2006.4,
+   "kumo_l_in_fit": 2064.0,
+   "rank_of_34": 2,
+   "family_mean_u": 1.7443,
+   "games_vs_22_externals_of_418": 353.6,
+   "contexts_above_every_entrant": 34,
+   "contexts_above_kumo_l": 46
+  },
+  {
+   "scenario": "fair champion +0.20 u on the 63 ordinary contexts only",
+   "elo": 2057.2,
+   "kumo_l_in_fit": 2058.8,
+   "rank_of_34": 2,
+   "family_mean_u": 1.8148,
+   "games_vs_22_externals_of_418": 369.8,
+   "contexts_above_every_entrant": 48,
+   "contexts_above_kumo_l": 59
+  },
+  {
+   "scenario": "fair champion +0.30 u on the 63 ordinary contexts only",
+   "elo": 2083.8,
+   "kumo_l_in_fit": 2058.1,
+   "rank_of_34": 1,
+   "family_mean_u": 1.8853,
+   "games_vs_22_externals_of_418": 376.4,
+   "contexts_above_every_entrant": 51,
+   "contexts_above_kumo_l": 64
+  },
+  {
+   "scenario": "fair champion +0.5 u on the 28 precision contexts only",
+   "elo": 1868.2,
+   "kumo_l_in_fit": 2070.3,
+   "rank_of_34": 5,
+   "family_mean_u": 1.8211,
+   "games_vs_22_externals_of_418": 303.4,
+   "contexts_above_every_entrant": 16,
+   "contexts_above_kumo_l": 23
+  },
+  {
+   "scenario": "fair champion +1.0 u on the 28 precision contexts only",
+   "elo": 1877.1,
+   "kumo_l_in_fit": 2066.4,
+   "rank_of_34": 5,
+   "family_mean_u": 1.9685,
+   "games_vs_22_externals_of_418": 307.8,
+   "contexts_above_every_entrant": 22,
+   "contexts_above_kumo_l": 29
+  },
+  {
+   "scenario": "fair champion +2.0 u on the 28 precision contexts only",
+   "elo": 1883.9,
+   "kumo_l_in_fit": 2064.3,
+   "rank_of_34": 5,
+   "family_mean_u": 2.2632,
+   "games_vs_22_externals_of_418": 310.6,
+   "contexts_above_every_entrant": 26,
+   "contexts_above_kumo_l": 33
+  },
+  {
+   "scenario": "best of {fair champion, TabPFN 3.5} per context (selection oracle)",
+   "elo": 1992.5,
+   "kumo_l_in_fit": 2072.7,
+   "rank_of_34": 2,
+   "family_mean_u": 1.7921,
+   "games_vs_22_externals_of_418": 348.3,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 31
+  },
+  {
+   "scenario": "best of {fair champion, 6 open tabular FMs} per context",
+   "elo": 2177.4,
+   "kumo_l_in_fit": 2081.2,
+   "rank_of_34": 1,
+   "family_mean_u": 1.8787,
+   "games_vs_22_externals_of_418": 384.6,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 44
+  },
+  {
+   "scenario": "  the same minus 0.02 u (a stack rarely equals its best member)",
+   "elo": 1980.2,
+   "kumo_l_in_fit": 2070.3,
+   "rank_of_34": 2,
+   "family_mean_u": 1.8587,
+   "games_vs_22_externals_of_418": 341.5,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 33
+  },
+  {
+   "scenario": "best of {fair champion, open FMs, trees and AutoGluon}",
+   "elo": 2186.4,
+   "kumo_l_in_fit": 2082.2,
+   "rank_of_34": 1,
+   "family_mean_u": 1.8809,
+   "games_vs_22_externals_of_418": 386.2,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 44
+  },
+  {
+   "scenario": "best of {fair champion, TabFM, TabFM ensemble}",
+   "elo": 2013.6,
+   "kumo_l_in_fit": 2078.0,
+   "rank_of_34": 2,
+   "family_mean_u": 1.8244,
+   "games_vs_22_externals_of_418": 354.1,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 27
+  },
+  {
+   "scenario": "best of all 11 of our own entrants per context",
+   "elo": 1920.6,
+   "kumo_l_in_fit": 2083.5,
+   "rank_of_34": 3,
+   "family_mean_u": 1.7484,
+   "games_vs_22_externals_of_418": 309.4,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 17
+  },
+  {
+   "scenario": "best of every entrant except the two Kumo models",
+   "elo": 2278.8,
+   "kumo_l_in_fit": 2088.3,
+   "rank_of_34": 1,
+   "family_mean_u": 1.9142,
+   "games_vs_22_externals_of_418": 396.0,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 46
+  },
+  {
+   "scenario": "best of every entrant except Kumo, minus 0.02 u",
+   "elo": 2022.1,
+   "kumo_l_in_fit": 2071.9,
+   "rank_of_34": 2,
+   "family_mean_u": 1.8942,
+   "games_vs_22_externals_of_418": 352.4,
+   "contexts_above_every_entrant": 0,
+   "contexts_above_kumo_l": 36
+  }
+ ]
+}

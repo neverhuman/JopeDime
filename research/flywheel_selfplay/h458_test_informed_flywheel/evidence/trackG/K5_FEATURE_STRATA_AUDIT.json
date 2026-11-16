@@ -1,0 +1,250 @@
+{
+  "all_19_families_min_train_retention": 0.761,
+  "audit_labels_read": 0,
+  "by_family": {
+    "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.79525,
+      "stratum_counts_0_to_4": [
+        1550,
+        1638,
+        1632,
+        1563,
+        1617
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.791875,
+      "stratum_counts_0_to_4": [
+        1665,
+        1630,
+        1588,
+        1581,
+        1536
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.784,
+      "stratum_counts_0_to_4": [
+        1585,
+        1458,
+        1554,
+        1675,
+        1728
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.781625,
+      "stratum_counts_0_to_4": [
+        1540,
+        1595,
+        1747,
+        1530,
+        1588
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.782125,
+      "stratum_counts_0_to_4": [
+        1495,
+        1597,
+        1743,
+        1526,
+        1639
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.793375,
+      "stratum_counts_0_to_4": [
+        1508,
+        1584,
+        1610,
+        1653,
+        1645
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.79375,
+      "stratum_counts_0_to_4": [
+        1649,
+        1587,
+        1650,
+        1529,
+        1585
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.787875,
+      "stratum_counts_0_to_4": [
+        1448,
+        1648,
+        1561,
+        1697,
+        1646
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.794625,
+      "stratum_counts_0_to_4": [
+        1573,
+        1636,
+        1510,
+        1638,
+        1643
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.783459,
+      "stratum_counts_0_to_4": [
+        972,
+        1112,
+        1000,
+        1084,
+        1152
+      ],
+      "total_search_plus_audit_rows": 5320
+    },
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": {
+      "contexts": 1,
+      "min_fold_train_retention_frac": 0.7875,
+      "stratum_counts_0_to_4": [
+        334,
+        328,
+        340,
+        304,
+        294
+      ],
+      "total_search_plus_audit_rows": 1600
+    },
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.784875,
+      "stratum_counts_0_to_4": [
+        1580,
+        1593,
+        1721,
+        1591,
+        1515
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.796,
+      "stratum_counts_0_to_4": [
+        1600,
+        1588,
+        1632,
+        1577,
+        1603
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.791125,
+      "stratum_counts_0_to_4": [
+        1622,
+        1585,
+        1522,
+        1600,
+        1671
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.79225,
+      "stratum_counts_0_to_4": [
+        1593,
+        1657,
+        1465,
+        1662,
+        1623
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.795125,
+      "stratum_counts_0_to_4": [
+        1639,
+        1613,
+        1582,
+        1581,
+        1585
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.761,
+      "stratum_counts_0_to_4": [
+        1437,
+        1435,
+        1494,
+        1722,
+        1912
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.794,
+      "stratum_counts_0_to_4": [
+        1517,
+        1648,
+        1627,
+        1625,
+        1583
+      ],
+      "total_search_plus_audit_rows": 8000
+    },
+    "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4": {
+      "contexts": 5,
+      "min_fold_train_retention_frac": 0.785361,
+      "stratum_counts_0_to_4": [
+        776,
+        828,
+        824,
+        748,
+        868
+      ],
+      "total_search_plus_audit_rows": 4044
+    }
+  },
+  "families_total": 19,
+  "family_pool_v1_f2893c38_test_vector": {
+    "family": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+    "feature_cols": 6,
+    "rows": 6107,
+    "stratum_counts_0_to_4": [
+      1170,
+      1274,
+      1230,
+      1238,
+      1195
+    ]
+  },
+  "hash_spec": "blake2b-8-le:h458-k5-strata-v1",
+  "schema": "jope.h458.k5_feature_strata_audit/v1",
+  "utc": "2026-11-14T21:57:47Z"
+}

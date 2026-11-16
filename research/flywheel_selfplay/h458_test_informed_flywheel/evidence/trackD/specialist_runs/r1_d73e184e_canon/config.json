@@ -1,0 +1,12 @@
+{
+ "arm": "canon",
+ "families": [
+  "d73e184e"
+ ],
+ "save_at_exposures": [
+  1000,
+  1500,
+  2000
+ ],
+ "size": "M"
+}

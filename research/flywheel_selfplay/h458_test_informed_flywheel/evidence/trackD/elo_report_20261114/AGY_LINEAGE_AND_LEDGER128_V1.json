@@ -1,0 +1,6201 @@
+{
+  "schema": "jope.h464.agy_lineage_and_ledger128/v1",
+  "generated_utc": "2026-11-15T20:31:21Z",
+  "author": "agy_apex_w10",
+  "bound_report_tables_sha256": "1c9058327289602bd6dec58ec7bb95d93354ab2f3f179dbcbbc0b5cad559fcfc",
+  "bound_kpi_rev19_sha256": "3abf32907f737dd1be3328f718bbc0ee6a29da55a879f77c8649e2004f4dba18",
+  "f4_rule": "For each row of ours, the own counters of the checkpoints it uses; a shared init lineage is counted once, never summed across members; external models n/a.",
+  "base_apex_foundation_lineage": {
+    "runs": [
+      "ICL_L_g1_w2 (h030 snapshot=6076797; full run 7,280,982)",
+      "ICL_M_r3 (h040 snapshot; full run 25,311,090)"
+    ],
+    "note": "Shared pre-H447 APEX foundation pretraining (counted at most once in lineage, never summed across ensemble members)."
+  },
+  "ledger128_audit": {
+    "total_runs_with_ledger128_logged": 15,
+    "all_15_pre_forward_dedup": true,
+    "all_15_inherited_ledger_on_init": false,
+    "all_15_resumed_own_ledger_on_resume": true,
+    "all_15_duplicates_fed": 0,
+    "strict_zero_oom_12_runs_datasets_fed": 21820102,
+    "oom_skip_3_runs_datasets_fed": 20077108,
+    "all_15_runs_pre_forward_verified_unique_fed": 41897210,
+    "code_citations": [
+      "train_mps_104m_h450.py:1460-1466 (ledger.load only inside if a.resume; --init loads model weights only)",
+      "train_104m_gp_flywheel_h455_maxent.py:1165-1185 (--resume loads ck['ledger']; --init starts fresh Ledger128)",
+      "train_104m_gp_flywheel_h455_maxent.py:1449-1531 (keep_idx = ledger.filter_unseen_indices(fps) runs BEFORE model forward pass; CUDA OOM micro-batches at line 1507 continue before state['datasets'] += B_cur at line 1531, explaining why unique_logged exceeds datasets_fed by +709 on fleet_L_x1 [oom_skips=29], +50,422 on fleet_L_x1_h455_maxent_v2 [oom_skips=4,153+], and +175,271 on fleet_M_x2_h455_maxent [oom_skips=25,411+])",
+      "train_104m_h464_alldata_stream.py:888-909,1173-1257 (same pre-forward filter_unseen_indices & fresh Ledger128 on --init)"
+    ],
+    "runs": [
+      {
+        "run": "fleet_L_x1",
+        "host": "xbabe1",
+        "datasets_fed": 11916945,
+        "unique_logged": 11917654,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 709,
+        "diff_cause": "ledger.filter_unseen_indices(fps) inserts unseen 128-bit fingerprints BEFORE model forward pass; 709 episodes were in micro-batches that hit CUDA OutOfMemoryError (oom_skips) and continued before state['datasets'] += B_cur. All 11916945 fed datasets were pre-forward verified unique within this run (dup_fed=0)."
+      },
+      {
+        "run": "r4_L_B",
+        "host": "xbabe2",
+        "datasets_fed": 8296510,
+        "unique_logged": 8296510,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "r4_L_A",
+        "host": "xbabe2",
+        "datasets_fed": 7123603,
+        "unique_logged": 7123603,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "fleet_L_x1_h455_maxent_v2",
+        "host": "xbabe1",
+        "datasets_fed": 6700791,
+        "unique_logged": 6751213,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 50422,
+        "diff_cause": "ledger.filter_unseen_indices(fps) inserts unseen 128-bit fingerprints BEFORE model forward pass; 50422 episodes were in micro-batches that hit CUDA OutOfMemoryError (oom_skips) and continued before state['datasets'] += B_cur. All 6700791 fed datasets were pre-forward verified unique within this run (dup_fed=0)."
+      },
+      {
+        "run": "h458_x3b_L_eval_variety_r3",
+        "host": "xbabe3",
+        "datasets_fed": 4744644,
+        "unique_logged": 4744644,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "fleet_M_x2_h455_maxent",
+        "host": "xbabe2",
+        "datasets_fed": 1459372,
+        "unique_logged": 1634643,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 175271,
+        "diff_cause": "ledger.filter_unseen_indices(fps) inserts unseen 128-bit fingerprints BEFORE model forward pass; 175271 episodes were in micro-batches that hit CUDA OutOfMemoryError (oom_skips) and continued before state['datasets'] += B_cur. All 1459372 fed datasets were pre-forward verified unique within this run (dup_fed=0)."
+      },
+      {
+        "run": "h458_x3b_M_eval_variety_r1",
+        "host": "xbabe2",
+        "datasets_fed": 663867,
+        "unique_logged": 663867,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "h464_alldata_M_x2",
+        "host": "xbabe2",
+        "datasets_fed": 465786,
+        "unique_logged": 465786,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "h464_alldata_L_x2",
+        "host": "xbabe2",
+        "datasets_fed": 222162,
+        "unique_logged": 222162,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "h464_alldata_L_x4",
+        "host": "xbabe4",
+        "datasets_fed": 98130,
+        "unique_logged": 98130,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "h464_alldata_M_x3",
+        "host": "xbabe3",
+        "datasets_fed": 90160,
+        "unique_logged": 90160,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "r4_M_B",
+        "host": "xbabe3",
+        "datasets_fed": 39814,
+        "unique_logged": 39814,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "r4_M_A",
+        "host": "xbabe2",
+        "datasets_fed": 35569,
+        "unique_logged": 35569,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "h464_alldata_M_x4",
+        "host": "xbabe4",
+        "datasets_fed": 32981,
+        "unique_logged": 32981,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      },
+      {
+        "run": "r4_L_C",
+        "host": "xbabe3",
+        "datasets_fed": 6876,
+        "unique_logged": 6876,
+        "dups_logged": 0,
+        "dup_fed": 0,
+        "pre_forward_dedup": true,
+        "inherited_ledger_on_init": false,
+        "resumed_own_ledger": true,
+        "unique_minus_fed": 0,
+        "diff_cause": "0 OOM/nonfinite skips: unique_logged == datasets_fed exactly"
+      }
+    ]
+  },
+  "live_unranked_lineage_f4": {
+    "h458_x3b_L_eval_variety_r3": {
+      "own_datasets": 4744644,
+      "shared_init_lineage": [
+        {
+          "run": "r4_L_A",
+          "datasets": 7123603
+        },
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "own_plus_r4_L_A": 11868247,
+      "own_plus_full_post_apex_lineage": 11970298,
+      "note": "Report own (4.74M+) and lineage separately per F4; never sum r4_L_A twice."
+    },
+    "h462_unlocked_passes_1_2": {
+      "m_valley_1865_stack_no_ugp_in_corpus.pred_avg_2": {
+        "elo": 1872.3233528631674,
+        "f4_display": "26.44M",
+        "own_checkpoint_datasets": 26439231,
+        "note": "Unlocked Pass 1 read (2 GP/meta seeds over same H455 M-valley + traj_e8_w2aplus + g16 checkpoints; checkpoints counted once = 26.44M)."
+      },
+      "stage3_lm_1869_stack_no_ugp_in_corpus.pred_avg_2": {
+        "elo": 1871.65479295025,
+        "f4_display": "29.00M",
+        "own_checkpoint_datasets": 28997064,
+        "note": "Unlocked Pass 1 read (2 GP/meta seeds over H456 Stage 3 checkpoints; checkpoints counted once = 29.00M)."
+      }
+    }
+  },
+  "run_catalog": {
+    "ICL_L_g1_w2": {
+      "host": "xbabe2",
+      "size": "L",
+      "init_parent": null,
+      "run_end_datasets": 7280982,
+      "ckpt_h030_datasets": 6076797,
+      "ledger128": false,
+      "note": "APEX base L pretraining; h030 snapshot initialized wc_L"
+    },
+    "ICL_M_r3": {
+      "host": "xbabe1",
+      "size": "M",
+      "init_parent": null,
+      "run_end_datasets": 25311090,
+      "ckpt_h040_datasets": null,
+      "ledger128": false,
+      "note": "APEX base M pretraining; h040 snapshot initialized wc_M"
+    },
+    "wc_L": {
+      "host": "xbabe2",
+      "size": "L",
+      "init_parent": "ICL_L_g1_w2",
+      "run_end_datasets": 22861,
+      "checkpoint_datasets": 22861,
+      "ledger128": false,
+      "note": "H447 pub-r3 wide-context residual/structural L fine-tune (0% dev91)"
+    },
+    "wc_M": {
+      "host": "xbabe1",
+      "size": "M",
+      "init_parent": "ICL_M_r3",
+      "run_end_datasets": 23615,
+      "checkpoint_datasets": 23615,
+      "ledger128": false,
+      "note": "H447 pub-r3 wide-context residual/structural M fine-tune (0% dev91)"
+    },
+    "all_non_d91_L": {
+      "host": "xbabe1",
+      "size": "L",
+      "init_parent": "wc_L",
+      "run_end_datasets": 79190,
+      "checkpoint_datasets": 79190,
+      "ledger128": false,
+      "note": "H449 clean 0% dev91 L checkpoint (ckpts_v2, sha256 b854b518...)"
+    },
+    "all_non_d91_M_v1": {
+      "host": "xbabe1",
+      "size": "M",
+      "init_parent": "wc_M",
+      "run_end_datasets": 91657,
+      "checkpoint_datasets": 91657,
+      "ledger128": false,
+      "note": "H449 clean 0% dev91 M checkpoint v1 (H449_UNFAIR_DEV91)"
+    },
+    "all_non_d91_M_v2": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "wc_M",
+      "run_end_datasets": 86463,
+      "checkpoint_datasets": 86463,
+      "ledger128": false,
+      "note": "H449 clean 0% dev91 M checkpoint v2 (initialized H450 g00 & fleet_M_x2_h455_maxent)"
+    },
+    "all_d91_L": {
+      "host": "xbabe0",
+      "size": "L",
+      "init_parent": "wc_L",
+      "run_end_datasets": 167,
+      "checkpoint_datasets": 167,
+      "ledger128": false,
+      "note": "H449 diagnostic L trained on all dev91 SEARCH tables"
+    },
+    "all_d91_M": {
+      "host": "xbabe0",
+      "size": "M",
+      "init_parent": "wc_M",
+      "run_end_datasets": 825,
+      "checkpoint_datasets": 825,
+      "ledger128": false,
+      "note": "H449 diagnostic M trained on all dev91 SEARCH tables"
+    },
+    "r4_L_A": {
+      "host": "xbabe2",
+      "size": "L",
+      "init_parent": "all_non_d91_L",
+      "run_end_datasets": 7123603,
+      "ckpt_g16_datasets": 2067344,
+      "ckpt_g48_datasets": 7123603,
+      "ledger128": true,
+      "note": "H450 r4 L seed A (48h, 0 duplicates fed)"
+    },
+    "r4_L_B": {
+      "host": "xbabe2",
+      "size": "L",
+      "init_parent": "all_non_d91_L",
+      "run_end_datasets": 8296510,
+      "ckpt_g16_datasets": 2643874,
+      "ckpt_g48_datasets": 8296510,
+      "ledger128": true,
+      "note": "H450 r4 L seed B (48h, 0 duplicates fed)"
+    },
+    "fleet_L_x1": {
+      "host": "xbabe1",
+      "size": "L",
+      "init_parent": "all_non_d91_L",
+      "run_end_datasets": 11916945,
+      "ckpt_pre_h454_datasets": 8275114,
+      "ckpt_post_h454_datasets": 8564820,
+      "ckpt_w2aplus_datasets": 9264390,
+      "ledger128": true,
+      "note": "H450F/H452/H454 continuous L flywheel on xbabe1 RTX 4090 (oom_skips=29)"
+    },
+    "fleet_L_x4": {
+      "host": "xbabe4",
+      "size": "L",
+      "init_parent": "all_non_d91_L",
+      "run_end_datasets": 1297080,
+      "ckpt_p0_datasets": 436843,
+      "ckpt_pre_h454_datasets": 719629,
+      "ckpt_post_h454_datasets": 761055,
+      "ckpt_w2aplus_datasets": 848735,
+      "ledger128": false,
+      "note": "H450F/H452/H454 L flywheel on xbabe4 M3 Ultra MPS"
+    },
+    "fleet_L_x1_h455_maxent_v2": {
+      "host": "xbabe1",
+      "size": "L",
+      "init_parent": "fleet_L_x1",
+      "run_end_datasets": 6700791,
+      "ckpt_valley001_datasets": 539688,
+      "ckpt_valley004_datasets": 2170326,
+      "ledger128": true,
+      "note": "H455/H456 max-entropy cosine-valley L run on xbabe1 (init from fleet_L_x1@w2aplus 9,264,390)"
+    },
+    "fleet_M_x2_h455_maxent": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "all_non_d91_M_v2",
+      "run_end_datasets": 1459372,
+      "ckpt_valley001_datasets": 441786,
+      "ckpt_valley002_datasets": 905993,
+      "ckpt_valley003_datasets": 1293500,
+      "ledger128": true,
+      "note": "H455/H456 max-entropy cosine-valley M run on xbabe2 (init from all_non_d91_M_v2 86,463)"
+    },
+    "h462_m_clean_s46201": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "wc_M",
+      "run_end_datasets": 139576,
+      "checkpoint_datasets": 139576,
+      "ledger128": false,
+      "note": "H462 fast-clock clean 0% dev91 M seed 46201 (init wc_M)"
+    },
+    "h462_m_clean_s46202": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "wc_M",
+      "run_end_datasets": 137623,
+      "checkpoint_datasets": 137623,
+      "ledger128": false,
+      "note": "H462 fast-clock clean 0% dev91 M seed 46202 (init wc_M)"
+    },
+    "h458_look2_19_specialists": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "fleet_M_x2_h455_maxent",
+      "run_ids": [
+        "p1_60b608db_canon",
+        "p1_f2893c38_canon",
+        "p1b_90a58676_canon",
+        "p1_469b72b7_canon",
+        "r1_f8fd51f3_canon",
+        "r1_7d4e2dc9_canon",
+        "r1_866f66b1_canon",
+        "r1_3a6cda83_canon",
+        "r1_9f67f144_canon",
+        "r1_9f338db6_canon",
+        "r1_94f2455b_canon",
+        "r1_538e6406_canon",
+        "r1_598bbb77_canon",
+        "r1_ce33f2a8_canon",
+        "r1_d73e184e_canon",
+        "r1_769243ee_canon",
+        "r1_4286560c_canon",
+        "r1_08c91457_canon",
+        "r1_280b1a13_canon"
+      ],
+      "run_end_datasets": 61814,
+      "checkpoint_datasets": 38000,
+      "ledger128": false,
+      "note": "19 per-family M specialists initialized from fleet_M_x2_h455_maxent/ckpt_valley_002.pt (905,993 own), evaluated at spec_e02000.pt (2,000 audit-labeled exposures per family = 38,000 exposures; 61,814 total items logged across the 19 runs)"
+    },
+    "h458_x3b_L_eval_variety_r3": {
+      "host": "xbabe3",
+      "size": "L",
+      "init_parent": "r4_L_A",
+      "run_end_datasets": 4744644,
+      "checkpoint_datasets": 4744644,
+      "ledger128": true,
+      "note": "Live X3-B L eval-variety trainer on xbabe3 (own=4.74M+, init r4_L_A=7.12M + all_non_d91_L=79k + wc_L=23k; unmasked since 19:22Z)"
+    },
+    "h458_x3b_M_eval_variety_r1": {
+      "host": "xbabe2",
+      "size": "M",
+      "init_parent": "fleet_M_x2_h455_maxent",
+      "run_end_datasets": 663867,
+      "checkpoint_datasets": 663867,
+      "ledger128": true,
+      "note": "X3-B M eval-variety trainer on xbabe2 (initialized h464_alldata_M_x2/x3/x4)"
+    }
+  },
+  "ladder_rows": [
+    {
+      "pos": 1,
+      "key": "look2_arm",
+      "id": "h458.look2.look2_arm",
+      "name": "H458 all-data stack + 19 dev91 family specialists",
+      "kind": "ours_recall",
+      "f4_display": "26.44M + 38k spec",
+      "own_checkpoint_datasets": 26477231,
+      "own_run_end_datasets": 30155324,
+      "specialist_exposures_at_e2000": 38000,
+      "specialist_logged_items_run_end": 61814,
+      "own_runs": [
+        {
+          "run": "19x spec_e02000 (p1/p1b/r1_*_canon)",
+          "checkpoint_datasets": 38000,
+          "run_end_datasets": 61814
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002 (counted ONCE for base stack & 19-specialist init)",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 #1 entrant (2343.8): base stack (26.44M) + 19 per-family specialists at e2000 (38,000 exposures = 19 x 2,000 on audit-labeled family pools; 61,814 items logged to run end). Shared init fleet_M_x2@valley002 counted once per F4."
+    },
+    {
+      "pos": 2,
+      "key": null,
+      "id": "kumo_tabular_large_e8.v1",
+      "name": "Kumo Tabular Large (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 3,
+      "key": null,
+      "id": "tabfm_ensemble.v1",
+      "name": "TabFM 1.0 ensemble (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 4,
+      "key": null,
+      "id": "kumo_tabular_small_e8.v1",
+      "name": "Kumo Tabular Small (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 5,
+      "key": null,
+      "id": "tabfm.v1",
+      "name": "TabFM 1.0 (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 6,
+      "key": "s_h462_p5_mv",
+      "id": "h462.M6_MULTISEED_PRICE.m_valley_zero_g16_multiseed.prec_avg_6_all",
+      "name": "H462 all-data M-valley stack, 6 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.72M",
+      "own_checkpoint_datasets": 26716430,
+      "own_run_end_datasets": 30370709,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "h462_m_clean_s46201",
+          "checkpoint_datasets": 139576,
+          "run_end_datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "checkpoint_datasets": 137623,
+          "run_end_datasets": 137623
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H462 Pass 5 locked 6-prediction all-data M-valley stack (1870.0): fleet_M_x2 valleys 1-2 + clean M seeds s46201/s46202 + traj_e8_w2aplus (zero g16); shared init counted once."
+    },
+    {
+      "pos": 7,
+      "key": "s_h456_stack",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H456 Stage 3 stack: GP/tree pool + flywheel ICL columns (mean of 5 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "29.00M",
+      "own_checkpoint_datasets": 28997064,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley004",
+          "checkpoint_datasets": 2170326,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley003",
+          "checkpoint_datasets": 1293500,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (parent & traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H456 Stage 3 stack (5 checkpoints up to L-v4 2.17M + M-v3 1.29M + traj_e8_w2aplus + g16; shared init lineage counted once)."
+    },
+    {
+      "pos": 8,
+      "key": "s_stack_icl",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H455 stack: GP/tree pool + flywheel ICL columns (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    {
+      "pos": 9,
+      "key": "s_h452_guard",
+      "id": "h452.PHASE0A_STACK_CV7_GUARD",
+      "name": "H452 stack with CV-7 guard",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    {
+      "pos": 10,
+      "key": "s_stack_ugp10",
+      "id": "h453.STACK_UGP_G10_CV7",
+      "name": "H453 stack + Ultra-GP, 10 generations (mean of 5 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    {
+      "pos": 11,
+      "key": "s_stack_ugp1000",
+      "id": "h454.STACK_UGP_G1000_CONS_POST_H454",
+      "name": "H455 stack + Ultra-GP, 1000 generations (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    {
+      "pos": 12,
+      "key": "s_legacy_ctrl",
+      "id": "h452.CTRL_H450_G16_LEGACY",
+      "name": "Legacy stack control (r4 epoch-16 ICL columns)",
+      "kind": "ours_incorpus",
+      "f4_display": "4.71M (g16)",
+      "own_checkpoint_datasets": 4711218,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A@g16",
+          "checkpoint_datasets": 2067344,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B@g16",
+          "checkpoint_datasets": 2643874,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Epoch-16 snapshot of r4_L_A (2,067,344) + r4_L_B (2,643,874) = 4,711,218 own datasets at g16 (15,420,113 at run end g48)."
+    },
+    {
+      "pos": 13,
+      "key": "look2_nr",
+      "id": "h458.look2.look2_nr",
+      "name": "H458 look-2 stack without the specialists (same look)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.44M",
+      "own_checkpoint_datasets": 26439231,
+      "own_run_end_datasets": 30093510,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 control stack without the 19 specialists (ARM_NR = 1859.0): base H455 M-valley stack + traj_e8_w2aplus + g16."
+    },
+    {
+      "pos": 14,
+      "key": "s_r4_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 r4 legacy guard stack (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    {
+      "pos": 15,
+      "key": "s_fleet_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 fleet L-x1 legacy guard stack (mean of 3 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 11.92M",
+      "own_checkpoint_datasets": 11916945,
+      "own_run_end_datasets": 11916945,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1 (3 early snapshots)",
+          "run_end_datasets": 11916945
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 3 H450F single-checkpoint scorings of fleet_L_x1 (run-end 11,916,945)."
+    },
+    {
+      "pos": 16,
+      "key": "f_fair_oos",
+      "id": "h453.FAIR_OOS_0PCT_D91_NO_UGP",
+      "name": "H453 fair stack: ICL trained with 0% dev91 (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    {
+      "pos": 17,
+      "key": "f_h449_clean",
+      "id": "h452.CTRL_H449_CLEAN_G00_LEGACY",
+      "name": "Fair legacy stack control (H449 clean epoch-0 ICL)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    {
+      "pos": 18,
+      "key": null,
+      "id": "tabpfn_v3p5.v1",
+      "name": "TabPFN 3.5 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 19,
+      "key": "s_h462_p5_hyb",
+      "id": "h462.M6_MULTISEED_PRICE.fair_cv7_hyb_m_multiseed.prec_avg_6_all",
+      "name": "H462 hybrid stack, 6 predictions averaged (GP anchors carried dev91)",
+      "kind": "ours_incorpus",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 Pass 5 locked 6-prediction hybrid stack: clean M seeds s46201+s46202 (277,199) + wc_L/wc_M (46,476) with in-corpus GP-residual anchors."
+    },
+    {
+      "pos": 20,
+      "key": "f_fair_ugp100",
+      "id": "h453.FAIR_OOS_0PCT_D91_UGP_G100_RAW_CV7",
+      "name": "H453 fair stack + Ultra-GP, 100 generations (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    {
+      "pos": 21,
+      "key": "f_h462_p7",
+      "id": "h462.M6_TABCV7_CVREP_PRICE.tabcv7_cvrep8_prec48_all",
+      "name": "H462 fair stack, 48 predictions averaged (+ per-table classical learners)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    {
+      "pos": 22,
+      "key": "f_h462_p6",
+      "id": "h462.M6_CVREP8_PRICE_V2.cvrep4_pred_avg_16_s12",
+      "name": "H462 fair stack, 16 predictions averaged (+ repeated cross-validation)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    {
+      "pos": 23,
+      "key": null,
+      "id": "tabpfn_v3p5_e1.v1",
+      "name": "TabPFN 3.5, 1 estimator (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 24,
+      "key": "f_pure_ugp50",
+      "id": "h453.PURE_UGP_G50_CV7",
+      "name": "Ultra-GP alone, 50 generations (no ICL, no trees) (mean of 5 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "0 (GP only)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pure 50-generation per-table Ultra-GP evolution on SEARCH rows (0 neural checkpoints, 0 trees)."
+    },
+    {
+      "pos": 25,
+      "key": "s_pure_neural",
+      "id": "h454.NEURAL_104M_ALL_POST_H454",
+      "name": "H455 neural columns (incl. the GP-residual hybrid) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    {
+      "pos": 26,
+      "key": "f_h462_p3",
+      "id": "h462.M6_FAIR_R4E8_PRICE.fair_h448_r4e8_m_multiseed.pred_avg_4_s12_only",
+      "name": "H462 fair stack, 4 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    {
+      "pos": 27,
+      "key": "s_h449_unfair_stack",
+      "id": "h449.UNFAIR_ALL_D91_STACK",
+      "name": "H449 stack, ICL trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    {
+      "pos": 28,
+      "key": "s_hyb_gpresid",
+      "id": "h454.HYB_104M_GPRESID_CV7_POST_H454",
+      "name": "H455 ICL with GP-residual column (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    {
+      "pos": 29,
+      "key": "f_h449_fair_stack",
+      "id": "h449.FAIR_ALL_NON_D91_STACK",
+      "name": "H449 fair stack (ICL trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    {
+      "pos": 30,
+      "key": "s_neural_e8",
+      "id": "h452.NEURAL_104M_E8_ONLY",
+      "name": "H452 neural 104M e8 columns only",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    {
+      "pos": 31,
+      "key": null,
+      "id": "h448.APEX_FAIR_CHAMPION",
+      "name": "H448 APEX fair champion (pre-registered)",
+      "kind": "ours_fair",
+      "f4_display": "46.5k (+APEX base)",
+      "own_checkpoint_datasets": 46476,
+      "own_run_end_datasets": 46476,
+      "own_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "ICL_L_g1_w2@h030",
+          "full_run_datasets": 7280982
+        },
+        {
+          "run": "ICL_M_r3@h040",
+          "full_run_datasets": 25311090
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "H448 locked fair champion: wc_L (22,861) + wc_M (23,615) fine-tuned from ICL_L_g1_w2@h030 and ICL_M_r3@h040."
+    },
+    {
+      "pos": 32,
+      "key": "s_hyb_only",
+      "id": "h454.HYB_104M_ONLY_CV7_POST_H454",
+      "name": "H455 ICL hybrid columns only (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    {
+      "pos": 33,
+      "key": null,
+      "id": "tabpfn_v3.v1",
+      "name": "TabPFN v3 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 34,
+      "key": "s_r4_champion",
+      "id": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+      "name": "H450 r4 champion (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    {
+      "pos": 35,
+      "key": "s_fleet_champion",
+      "id": "h450.FAST_104M_EVERY_N_CHAMPION",
+      "name": "H450 fleet L-x1 champion (mean of 18 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 28.63M (4 runs)",
+      "own_checkpoint_datasets": 28634138,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1",
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4",
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 18 H450F scorings (4 fleet_L_x1 snapshots + 14 4-model soups of fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B; each run and shared init counted once)."
+    },
+    {
+      "pos": 36,
+      "key": "f_r4_fair_ctrl",
+      "id": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+      "name": "H449 init (0% dev91) under the H450 stack",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    {
+      "pos": 37,
+      "key": null,
+      "id": "h416.SXB",
+      "name": "H416 SXB",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 38,
+      "key": null,
+      "id": "mitra_v2_zeroshot.v1",
+      "name": "Mitra v2, zero-shot (AutoGluon)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 39,
+      "key": null,
+      "id": "tabicl_v2.v1",
+      "name": "TabICL v2 (soda-inria)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 40,
+      "key": null,
+      "id": "h364.XSTACK_2L",
+      "name": "H364 two-level stack",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 41,
+      "key": null,
+      "id": "tabdpt_1p3.v1",
+      "name": "TabDPT 1.3 (Layer6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 42,
+      "key": "s_r4_nogp",
+      "id": "h450.NEURAL_PLUS_TAB_NO_GP",
+      "name": "H450 r4 neural + tabular, no GP (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    {
+      "pos": 43,
+      "key": "s_pure_cv7",
+      "id": "h454.PURE_104M_CV7_POST_H454",
+      "name": "H455 ICL 104M alone (CV-7 columns) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    {
+      "pos": 44,
+      "key": null,
+      "id": "h335.H335_AGG",
+      "name": "H335 aggregate",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 45,
+      "key": "s_h449_unfair_icl",
+      "id": "h449.UNFAIR_ALL_D91_ICL_ONLY",
+      "name": "H449 ICL only, trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    {
+      "pos": 46,
+      "key": "f_h449_fair_icl",
+      "id": "h449.FAIR_ALL_NON_D91_ICL_ONLY",
+      "name": "H449 fair ICL only (trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    {
+      "pos": 47,
+      "key": "s_r4_icl",
+      "id": "h450.ICL_BOOST_ONLY",
+      "name": "H450 r4 ICL only (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    {
+      "pos": 48,
+      "key": null,
+      "id": "h335.OLD_MATCHED_CV3",
+      "name": "H335 old matched (CV-3)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 49,
+      "key": "s_pure_only",
+      "id": "h454.PURE_104M_ONLY_CV7_POST_H454",
+      "name": "H454 ICL 104M alone (single column family) (mean of 6 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "10.11M",
+      "own_checkpoint_datasets": 10113125,
+      "own_run_end_datasets": 13214025,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 6 H454 Wave-2 cooled CV-7 hybrid scorings (fleet_L_x1 + fleet_L_x4 up to w2aplus = 10,113,125)."
+    },
+    {
+      "pos": 50,
+      "key": null,
+      "id": "h335.Opus5p5_Extra",
+      "name": "Opus 5.5 Extra (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 51,
+      "key": null,
+      "id": "h335.OLD_MATCHED",
+      "name": "H335 old matched",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 52,
+      "key": null,
+      "id": "h335.H317_BASE",
+      "name": "H317 base",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 53,
+      "key": null,
+      "id": "h335.Gemini4_argon_high",
+      "name": "Gemini 4 argon high (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 54,
+      "key": null,
+      "id": "h335.GPT6p1_Sol_Max",
+      "name": "GPT-6.1 Sol Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 55,
+      "key": null,
+      "id": "autogluon_300s.v1",
+      "name": "AutoGluon Tabular (default, 300 s)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 56,
+      "key": null,
+      "id": "h335.H257_REPLICA",
+      "name": "H257 replica (anchor = 1500)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 57,
+      "key": null,
+      "id": "catboost.v1",
+      "name": "CatBoost (1000 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 58,
+      "key": null,
+      "id": "h335.BANK_NN8_PORTFOLIO",
+      "name": "H335 bank NN-8 portfolio",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 59,
+      "key": null,
+      "id": "h335.BANK_NN8_PICK",
+      "name": "H335 bank NN-8 pick",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 60,
+      "key": null,
+      "id": "h414.kimik3p1_max",
+      "name": "Kimi K3.1 max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 61,
+      "key": null,
+      "id": "xgboost.v1",
+      "name": "XGBoost (500 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 62,
+      "key": null,
+      "id": "random_forest.v1",
+      "name": "Random forest (300 trees)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 63,
+      "key": null,
+      "id": "h335.GPT6_Astra_Max",
+      "name": "GPT-6 Astra Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 64,
+      "key": null,
+      "id": "lightgbm.v1",
+      "name": "LightGBM (500 x 31 leaves)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 65,
+      "key": null,
+      "id": "ridge.v1",
+      "name": "Ridge (RidgeCV)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    {
+      "pos": 66,
+      "key": null,
+      "id": "h335.BANK_NN1",
+      "name": "H335 bank NN-1",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    {
+      "pos": 67,
+      "key": null,
+      "id": "h412.grok4p7_xhigh",
+      "name": "Grok 4.7 xhigh (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    }
+  ],
+  "ladder_by_pos": {
+    "1": {
+      "pos": 1,
+      "key": "look2_arm",
+      "id": "h458.look2.look2_arm",
+      "name": "H458 all-data stack + 19 dev91 family specialists",
+      "kind": "ours_recall",
+      "f4_display": "26.44M + 38k spec",
+      "own_checkpoint_datasets": 26477231,
+      "own_run_end_datasets": 30155324,
+      "specialist_exposures_at_e2000": 38000,
+      "specialist_logged_items_run_end": 61814,
+      "own_runs": [
+        {
+          "run": "19x spec_e02000 (p1/p1b/r1_*_canon)",
+          "checkpoint_datasets": 38000,
+          "run_end_datasets": 61814
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002 (counted ONCE for base stack & 19-specialist init)",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 #1 entrant (2343.8): base stack (26.44M) + 19 per-family specialists at e2000 (38,000 exposures = 19 x 2,000 on audit-labeled family pools; 61,814 items logged to run end). Shared init fleet_M_x2@valley002 counted once per F4."
+    },
+    "2": {
+      "pos": 2,
+      "key": null,
+      "id": "kumo_tabular_large_e8.v1",
+      "name": "Kumo Tabular Large (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "3": {
+      "pos": 3,
+      "key": null,
+      "id": "tabfm_ensemble.v1",
+      "name": "TabFM 1.0 ensemble (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "4": {
+      "pos": 4,
+      "key": null,
+      "id": "kumo_tabular_small_e8.v1",
+      "name": "Kumo Tabular Small (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "5": {
+      "pos": 5,
+      "key": null,
+      "id": "tabfm.v1",
+      "name": "TabFM 1.0 (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "6": {
+      "pos": 6,
+      "key": "s_h462_p5_mv",
+      "id": "h462.M6_MULTISEED_PRICE.m_valley_zero_g16_multiseed.prec_avg_6_all",
+      "name": "H462 all-data M-valley stack, 6 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.72M",
+      "own_checkpoint_datasets": 26716430,
+      "own_run_end_datasets": 30370709,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "h462_m_clean_s46201",
+          "checkpoint_datasets": 139576,
+          "run_end_datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "checkpoint_datasets": 137623,
+          "run_end_datasets": 137623
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H462 Pass 5 locked 6-prediction all-data M-valley stack (1870.0): fleet_M_x2 valleys 1-2 + clean M seeds s46201/s46202 + traj_e8_w2aplus (zero g16); shared init counted once."
+    },
+    "7": {
+      "pos": 7,
+      "key": "s_h456_stack",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H456 Stage 3 stack: GP/tree pool + flywheel ICL columns (mean of 5 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "29.00M",
+      "own_checkpoint_datasets": 28997064,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley004",
+          "checkpoint_datasets": 2170326,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley003",
+          "checkpoint_datasets": 1293500,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (parent & traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H456 Stage 3 stack (5 checkpoints up to L-v4 2.17M + M-v3 1.29M + traj_e8_w2aplus + g16; shared init lineage counted once)."
+    },
+    "8": {
+      "pos": 8,
+      "key": "s_stack_icl",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H455 stack: GP/tree pool + flywheel ICL columns (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "9": {
+      "pos": 9,
+      "key": "s_h452_guard",
+      "id": "h452.PHASE0A_STACK_CV7_GUARD",
+      "name": "H452 stack with CV-7 guard",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "10": {
+      "pos": 10,
+      "key": "s_stack_ugp10",
+      "id": "h453.STACK_UGP_G10_CV7",
+      "name": "H453 stack + Ultra-GP, 10 generations (mean of 5 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "11": {
+      "pos": 11,
+      "key": "s_stack_ugp1000",
+      "id": "h454.STACK_UGP_G1000_CONS_POST_H454",
+      "name": "H455 stack + Ultra-GP, 1000 generations (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "12": {
+      "pos": 12,
+      "key": "s_legacy_ctrl",
+      "id": "h452.CTRL_H450_G16_LEGACY",
+      "name": "Legacy stack control (r4 epoch-16 ICL columns)",
+      "kind": "ours_incorpus",
+      "f4_display": "4.71M (g16)",
+      "own_checkpoint_datasets": 4711218,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A@g16",
+          "checkpoint_datasets": 2067344,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B@g16",
+          "checkpoint_datasets": 2643874,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Epoch-16 snapshot of r4_L_A (2,067,344) + r4_L_B (2,643,874) = 4,711,218 own datasets at g16 (15,420,113 at run end g48)."
+    },
+    "13": {
+      "pos": 13,
+      "key": "look2_nr",
+      "id": "h458.look2.look2_nr",
+      "name": "H458 look-2 stack without the specialists (same look)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.44M",
+      "own_checkpoint_datasets": 26439231,
+      "own_run_end_datasets": 30093510,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 control stack without the 19 specialists (ARM_NR = 1859.0): base H455 M-valley stack + traj_e8_w2aplus + g16."
+    },
+    "14": {
+      "pos": 14,
+      "key": "s_r4_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 r4 legacy guard stack (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "15": {
+      "pos": 15,
+      "key": "s_fleet_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 fleet L-x1 legacy guard stack (mean of 3 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 11.92M",
+      "own_checkpoint_datasets": 11916945,
+      "own_run_end_datasets": 11916945,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1 (3 early snapshots)",
+          "run_end_datasets": 11916945
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 3 H450F single-checkpoint scorings of fleet_L_x1 (run-end 11,916,945)."
+    },
+    "16": {
+      "pos": 16,
+      "key": "f_fair_oos",
+      "id": "h453.FAIR_OOS_0PCT_D91_NO_UGP",
+      "name": "H453 fair stack: ICL trained with 0% dev91 (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "17": {
+      "pos": 17,
+      "key": "f_h449_clean",
+      "id": "h452.CTRL_H449_CLEAN_G00_LEGACY",
+      "name": "Fair legacy stack control (H449 clean epoch-0 ICL)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "18": {
+      "pos": 18,
+      "key": null,
+      "id": "tabpfn_v3p5.v1",
+      "name": "TabPFN 3.5 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "19": {
+      "pos": 19,
+      "key": "s_h462_p5_hyb",
+      "id": "h462.M6_MULTISEED_PRICE.fair_cv7_hyb_m_multiseed.prec_avg_6_all",
+      "name": "H462 hybrid stack, 6 predictions averaged (GP anchors carried dev91)",
+      "kind": "ours_incorpus",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 Pass 5 locked 6-prediction hybrid stack: clean M seeds s46201+s46202 (277,199) + wc_L/wc_M (46,476) with in-corpus GP-residual anchors."
+    },
+    "20": {
+      "pos": 20,
+      "key": "f_fair_ugp100",
+      "id": "h453.FAIR_OOS_0PCT_D91_UGP_G100_RAW_CV7",
+      "name": "H453 fair stack + Ultra-GP, 100 generations (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "21": {
+      "pos": 21,
+      "key": "f_h462_p7",
+      "id": "h462.M6_TABCV7_CVREP_PRICE.tabcv7_cvrep8_prec48_all",
+      "name": "H462 fair stack, 48 predictions averaged (+ per-table classical learners)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "22": {
+      "pos": 22,
+      "key": "f_h462_p6",
+      "id": "h462.M6_CVREP8_PRICE_V2.cvrep4_pred_avg_16_s12",
+      "name": "H462 fair stack, 16 predictions averaged (+ repeated cross-validation)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "23": {
+      "pos": 23,
+      "key": null,
+      "id": "tabpfn_v3p5_e1.v1",
+      "name": "TabPFN 3.5, 1 estimator (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "24": {
+      "pos": 24,
+      "key": "f_pure_ugp50",
+      "id": "h453.PURE_UGP_G50_CV7",
+      "name": "Ultra-GP alone, 50 generations (no ICL, no trees) (mean of 5 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "0 (GP only)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pure 50-generation per-table Ultra-GP evolution on SEARCH rows (0 neural checkpoints, 0 trees)."
+    },
+    "25": {
+      "pos": 25,
+      "key": "s_pure_neural",
+      "id": "h454.NEURAL_104M_ALL_POST_H454",
+      "name": "H455 neural columns (incl. the GP-residual hybrid) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "26": {
+      "pos": 26,
+      "key": "f_h462_p3",
+      "id": "h462.M6_FAIR_R4E8_PRICE.fair_h448_r4e8_m_multiseed.pred_avg_4_s12_only",
+      "name": "H462 fair stack, 4 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "27": {
+      "pos": 27,
+      "key": "s_h449_unfair_stack",
+      "id": "h449.UNFAIR_ALL_D91_STACK",
+      "name": "H449 stack, ICL trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    "28": {
+      "pos": 28,
+      "key": "s_hyb_gpresid",
+      "id": "h454.HYB_104M_GPRESID_CV7_POST_H454",
+      "name": "H455 ICL with GP-residual column (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "29": {
+      "pos": 29,
+      "key": "f_h449_fair_stack",
+      "id": "h449.FAIR_ALL_NON_D91_STACK",
+      "name": "H449 fair stack (ICL trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    "30": {
+      "pos": 30,
+      "key": "s_neural_e8",
+      "id": "h452.NEURAL_104M_E8_ONLY",
+      "name": "H452 neural 104M e8 columns only",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "31": {
+      "pos": 31,
+      "key": null,
+      "id": "h448.APEX_FAIR_CHAMPION",
+      "name": "H448 APEX fair champion (pre-registered)",
+      "kind": "ours_fair",
+      "f4_display": "46.5k (+APEX base)",
+      "own_checkpoint_datasets": 46476,
+      "own_run_end_datasets": 46476,
+      "own_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "ICL_L_g1_w2@h030",
+          "full_run_datasets": 7280982
+        },
+        {
+          "run": "ICL_M_r3@h040",
+          "full_run_datasets": 25311090
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "H448 locked fair champion: wc_L (22,861) + wc_M (23,615) fine-tuned from ICL_L_g1_w2@h030 and ICL_M_r3@h040."
+    },
+    "32": {
+      "pos": 32,
+      "key": "s_hyb_only",
+      "id": "h454.HYB_104M_ONLY_CV7_POST_H454",
+      "name": "H455 ICL hybrid columns only (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "33": {
+      "pos": 33,
+      "key": null,
+      "id": "tabpfn_v3.v1",
+      "name": "TabPFN v3 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "34": {
+      "pos": 34,
+      "key": "s_r4_champion",
+      "id": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+      "name": "H450 r4 champion (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "35": {
+      "pos": 35,
+      "key": "s_fleet_champion",
+      "id": "h450.FAST_104M_EVERY_N_CHAMPION",
+      "name": "H450 fleet L-x1 champion (mean of 18 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 28.63M (4 runs)",
+      "own_checkpoint_datasets": 28634138,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1",
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4",
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 18 H450F scorings (4 fleet_L_x1 snapshots + 14 4-model soups of fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B; each run and shared init counted once)."
+    },
+    "36": {
+      "pos": 36,
+      "key": "f_r4_fair_ctrl",
+      "id": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+      "name": "H449 init (0% dev91) under the H450 stack",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "37": {
+      "pos": 37,
+      "key": null,
+      "id": "h416.SXB",
+      "name": "H416 SXB",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "38": {
+      "pos": 38,
+      "key": null,
+      "id": "mitra_v2_zeroshot.v1",
+      "name": "Mitra v2, zero-shot (AutoGluon)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "39": {
+      "pos": 39,
+      "key": null,
+      "id": "tabicl_v2.v1",
+      "name": "TabICL v2 (soda-inria)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "40": {
+      "pos": 40,
+      "key": null,
+      "id": "h364.XSTACK_2L",
+      "name": "H364 two-level stack",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "41": {
+      "pos": 41,
+      "key": null,
+      "id": "tabdpt_1p3.v1",
+      "name": "TabDPT 1.3 (Layer6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "42": {
+      "pos": 42,
+      "key": "s_r4_nogp",
+      "id": "h450.NEURAL_PLUS_TAB_NO_GP",
+      "name": "H450 r4 neural + tabular, no GP (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "43": {
+      "pos": 43,
+      "key": "s_pure_cv7",
+      "id": "h454.PURE_104M_CV7_POST_H454",
+      "name": "H455 ICL 104M alone (CV-7 columns) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "44": {
+      "pos": 44,
+      "key": null,
+      "id": "h335.H335_AGG",
+      "name": "H335 aggregate",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "45": {
+      "pos": 45,
+      "key": "s_h449_unfair_icl",
+      "id": "h449.UNFAIR_ALL_D91_ICL_ONLY",
+      "name": "H449 ICL only, trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    "46": {
+      "pos": 46,
+      "key": "f_h449_fair_icl",
+      "id": "h449.FAIR_ALL_NON_D91_ICL_ONLY",
+      "name": "H449 fair ICL only (trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    "47": {
+      "pos": 47,
+      "key": "s_r4_icl",
+      "id": "h450.ICL_BOOST_ONLY",
+      "name": "H450 r4 ICL only (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "48": {
+      "pos": 48,
+      "key": null,
+      "id": "h335.OLD_MATCHED_CV3",
+      "name": "H335 old matched (CV-3)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "49": {
+      "pos": 49,
+      "key": "s_pure_only",
+      "id": "h454.PURE_104M_ONLY_CV7_POST_H454",
+      "name": "H454 ICL 104M alone (single column family) (mean of 6 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "10.11M",
+      "own_checkpoint_datasets": 10113125,
+      "own_run_end_datasets": 13214025,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 6 H454 Wave-2 cooled CV-7 hybrid scorings (fleet_L_x1 + fleet_L_x4 up to w2aplus = 10,113,125)."
+    },
+    "50": {
+      "pos": 50,
+      "key": null,
+      "id": "h335.Opus5p5_Extra",
+      "name": "Opus 5.5 Extra (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "51": {
+      "pos": 51,
+      "key": null,
+      "id": "h335.OLD_MATCHED",
+      "name": "H335 old matched",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "52": {
+      "pos": 52,
+      "key": null,
+      "id": "h335.H317_BASE",
+      "name": "H317 base",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "53": {
+      "pos": 53,
+      "key": null,
+      "id": "h335.Gemini4_argon_high",
+      "name": "Gemini 4 argon high (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "54": {
+      "pos": 54,
+      "key": null,
+      "id": "h335.GPT6p1_Sol_Max",
+      "name": "GPT-6.1 Sol Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "55": {
+      "pos": 55,
+      "key": null,
+      "id": "autogluon_300s.v1",
+      "name": "AutoGluon Tabular (default, 300 s)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "56": {
+      "pos": 56,
+      "key": null,
+      "id": "h335.H257_REPLICA",
+      "name": "H257 replica (anchor = 1500)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "57": {
+      "pos": 57,
+      "key": null,
+      "id": "catboost.v1",
+      "name": "CatBoost (1000 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "58": {
+      "pos": 58,
+      "key": null,
+      "id": "h335.BANK_NN8_PORTFOLIO",
+      "name": "H335 bank NN-8 portfolio",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "59": {
+      "pos": 59,
+      "key": null,
+      "id": "h335.BANK_NN8_PICK",
+      "name": "H335 bank NN-8 pick",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "60": {
+      "pos": 60,
+      "key": null,
+      "id": "h414.kimik3p1_max",
+      "name": "Kimi K3.1 max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "61": {
+      "pos": 61,
+      "key": null,
+      "id": "xgboost.v1",
+      "name": "XGBoost (500 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "62": {
+      "pos": 62,
+      "key": null,
+      "id": "random_forest.v1",
+      "name": "Random forest (300 trees)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "63": {
+      "pos": 63,
+      "key": null,
+      "id": "h335.GPT6_Astra_Max",
+      "name": "GPT-6 Astra Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "64": {
+      "pos": 64,
+      "key": null,
+      "id": "lightgbm.v1",
+      "name": "LightGBM (500 x 31 leaves)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "65": {
+      "pos": 65,
+      "key": null,
+      "id": "ridge.v1",
+      "name": "Ridge (RidgeCV)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "66": {
+      "pos": 66,
+      "key": null,
+      "id": "h335.BANK_NN1",
+      "name": "H335 bank NN-1",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "67": {
+      "pos": 67,
+      "key": null,
+      "id": "h412.grok4p7_xhigh",
+      "name": "Grok 4.7 xhigh (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    }
+  },
+  "ladder_by_key_or_id": {
+    "look2_arm": {
+      "pos": 1,
+      "key": "look2_arm",
+      "id": "h458.look2.look2_arm",
+      "name": "H458 all-data stack + 19 dev91 family specialists",
+      "kind": "ours_recall",
+      "f4_display": "26.44M + 38k spec",
+      "own_checkpoint_datasets": 26477231,
+      "own_run_end_datasets": 30155324,
+      "specialist_exposures_at_e2000": 38000,
+      "specialist_logged_items_run_end": 61814,
+      "own_runs": [
+        {
+          "run": "19x spec_e02000 (p1/p1b/r1_*_canon)",
+          "checkpoint_datasets": 38000,
+          "run_end_datasets": 61814
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002 (counted ONCE for base stack & 19-specialist init)",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 #1 entrant (2343.8): base stack (26.44M) + 19 per-family specialists at e2000 (38,000 exposures = 19 x 2,000 on audit-labeled family pools; 61,814 items logged to run end). Shared init fleet_M_x2@valley002 counted once per F4."
+    },
+    "kumo_tabular_large_e8.v1": {
+      "pos": 2,
+      "key": null,
+      "id": "kumo_tabular_large_e8.v1",
+      "name": "Kumo Tabular Large (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "tabfm_ensemble.v1": {
+      "pos": 3,
+      "key": null,
+      "id": "tabfm_ensemble.v1",
+      "name": "TabFM 1.0 ensemble (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "kumo_tabular_small_e8.v1": {
+      "pos": 4,
+      "key": null,
+      "id": "kumo_tabular_small_e8.v1",
+      "name": "Kumo Tabular Small (8 estimators)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "tabfm.v1": {
+      "pos": 5,
+      "key": null,
+      "id": "tabfm.v1",
+      "name": "TabFM 1.0 (Google)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "s_h462_p5_mv": {
+      "pos": 6,
+      "key": "s_h462_p5_mv",
+      "id": "h462.M6_MULTISEED_PRICE.m_valley_zero_g16_multiseed.prec_avg_6_all",
+      "name": "H462 all-data M-valley stack, 6 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.72M",
+      "own_checkpoint_datasets": 26716430,
+      "own_run_end_datasets": 30370709,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "h462_m_clean_s46201",
+          "checkpoint_datasets": 139576,
+          "run_end_datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "checkpoint_datasets": 137623,
+          "run_end_datasets": 137623
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H462 Pass 5 locked 6-prediction all-data M-valley stack (1870.0): fleet_M_x2 valleys 1-2 + clean M seeds s46201/s46202 + traj_e8_w2aplus (zero g16); shared init counted once."
+    },
+    "s_h456_stack": {
+      "pos": 7,
+      "key": "s_h456_stack",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H456 Stage 3 stack: GP/tree pool + flywheel ICL columns (mean of 5 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "29.00M",
+      "own_checkpoint_datasets": 28997064,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley004",
+          "checkpoint_datasets": 2170326,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley003",
+          "checkpoint_datasets": 1293500,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (parent & traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H456 Stage 3 stack (5 checkpoints up to L-v4 2.17M + M-v3 1.29M + traj_e8_w2aplus + g16; shared init lineage counted once)."
+    },
+    "s_stack_icl": {
+      "pos": 8,
+      "key": "s_stack_icl",
+      "id": "h454.STACK_NO_UGP_POST_H454",
+      "name": "H455 stack: GP/tree pool + flywheel ICL columns (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "s_h452_guard": {
+      "pos": 9,
+      "key": "s_h452_guard",
+      "id": "h452.PHASE0A_STACK_CV7_GUARD",
+      "name": "H452 stack with CV-7 guard",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "s_stack_ugp10": {
+      "pos": 10,
+      "key": "s_stack_ugp10",
+      "id": "h453.STACK_UGP_G10_CV7",
+      "name": "H453 stack + Ultra-GP, 10 generations (mean of 5 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "s_stack_ugp1000": {
+      "pos": 11,
+      "key": "s_stack_ugp1000",
+      "id": "h454.STACK_UGP_G1000_CONS_POST_H454",
+      "name": "H455 stack + Ultra-GP, 1000 generations (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "s_legacy_ctrl": {
+      "pos": 12,
+      "key": "s_legacy_ctrl",
+      "id": "h452.CTRL_H450_G16_LEGACY",
+      "name": "Legacy stack control (r4 epoch-16 ICL columns)",
+      "kind": "ours_incorpus",
+      "f4_display": "4.71M (g16)",
+      "own_checkpoint_datasets": 4711218,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A@g16",
+          "checkpoint_datasets": 2067344,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B@g16",
+          "checkpoint_datasets": 2643874,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Epoch-16 snapshot of r4_L_A (2,067,344) + r4_L_B (2,643,874) = 4,711,218 own datasets at g16 (15,420,113 at run end g48)."
+    },
+    "look2_nr": {
+      "pos": 13,
+      "key": "look2_nr",
+      "id": "h458.look2.look2_nr",
+      "name": "H458 look-2 stack without the specialists (same look)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.44M",
+      "own_checkpoint_datasets": 26439231,
+      "own_run_end_datasets": 30093510,
+      "own_runs": [
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "fleet_L_x1@w2aplus (traj_e8)",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus (traj_e8)",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A (traj_e8 + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8 + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "H458 look-2 control stack without the 19 specialists (ARM_NR = 1859.0): base H455 M-valley stack + traj_e8_w2aplus + g16."
+    },
+    "s_r4_legacy": {
+      "pos": 14,
+      "key": "s_r4_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 r4 legacy guard stack (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "s_fleet_legacy": {
+      "pos": 15,
+      "key": "s_fleet_legacy",
+      "id": "h450.LEGACY_GUARD_STACK",
+      "name": "H450 fleet L-x1 legacy guard stack (mean of 3 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 11.92M",
+      "own_checkpoint_datasets": 11916945,
+      "own_run_end_datasets": 11916945,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1 (3 early snapshots)",
+          "run_end_datasets": 11916945
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 3 H450F single-checkpoint scorings of fleet_L_x1 (run-end 11,916,945)."
+    },
+    "f_fair_oos": {
+      "pos": 16,
+      "key": "f_fair_oos",
+      "id": "h453.FAIR_OOS_0PCT_D91_NO_UGP",
+      "name": "H453 fair stack: ICL trained with 0% dev91 (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "f_h449_clean": {
+      "pos": 17,
+      "key": "f_h449_clean",
+      "id": "h452.CTRL_H449_CLEAN_G00_LEGACY",
+      "name": "Fair legacy stack control (H449 clean epoch-0 ICL)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "tabpfn_v3p5.v1": {
+      "pos": 18,
+      "key": null,
+      "id": "tabpfn_v3p5.v1",
+      "name": "TabPFN 3.5 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "s_h462_p5_hyb": {
+      "pos": 19,
+      "key": "s_h462_p5_hyb",
+      "id": "h462.M6_MULTISEED_PRICE.fair_cv7_hyb_m_multiseed.prec_avg_6_all",
+      "name": "H462 hybrid stack, 6 predictions averaged (GP anchors carried dev91)",
+      "kind": "ours_incorpus",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 Pass 5 locked 6-prediction hybrid stack: clean M seeds s46201+s46202 (277,199) + wc_L/wc_M (46,476) with in-corpus GP-residual anchors."
+    },
+    "f_fair_ugp100": {
+      "pos": 20,
+      "key": "f_fair_ugp100",
+      "id": "h453.FAIR_OOS_0PCT_D91_UGP_G100_RAW_CV7",
+      "name": "H453 fair stack + Ultra-GP, 100 generations (mean of 3 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "f_h462_p7": {
+      "pos": 21,
+      "key": "f_h462_p7",
+      "id": "h462.M6_TABCV7_CVREP_PRICE.tabcv7_cvrep8_prec48_all",
+      "name": "H462 fair stack, 48 predictions averaged (+ per-table classical learners)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "f_h462_p6": {
+      "pos": 22,
+      "key": "f_h462_p6",
+      "id": "h462.M6_CVREP8_PRICE_V2.cvrep4_pred_avg_16_s12",
+      "name": "H462 fair stack, 16 predictions averaged (+ repeated cross-validation)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "tabpfn_v3p5_e1.v1": {
+      "pos": 23,
+      "key": null,
+      "id": "tabpfn_v3p5_e1.v1",
+      "name": "TabPFN 3.5, 1 estimator (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "f_pure_ugp50": {
+      "pos": 24,
+      "key": "f_pure_ugp50",
+      "id": "h453.PURE_UGP_G50_CV7",
+      "name": "Ultra-GP alone, 50 generations (no ICL, no trees) (mean of 5 scorings)",
+      "kind": "ours_fair",
+      "f4_display": "0 (GP only)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pure 50-generation per-table Ultra-GP evolution on SEARCH rows (0 neural checkpoints, 0 trees)."
+    },
+    "s_pure_neural": {
+      "pos": 25,
+      "key": "s_pure_neural",
+      "id": "h454.NEURAL_104M_ALL_POST_H454",
+      "name": "H455 neural columns (incl. the GP-residual hybrid) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "26.98M",
+      "own_checkpoint_datasets": 26978919,
+      "own_run_end_datasets": 36794301,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        },
+        {
+          "run": "r4_L_A (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (traj_e8_w2aplus + g16)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints + traj_e8_w2aplus + g16 across 6 distinct runs (shared init counted once)."
+    },
+    "f_h462_p3": {
+      "pos": 26,
+      "key": "f_h462_p3",
+      "id": "h462.M6_FAIR_R4E8_PRICE.fair_h448_r4e8_m_multiseed.pred_avg_4_s12_only",
+      "name": "H462 fair stack, 4 predictions averaged (GP seeds x neural seeds)",
+      "kind": "ours_fair",
+      "f4_display": "277.2k (+46.5k wc)",
+      "own_checkpoint_datasets": 277199,
+      "own_run_end_datasets": 277199,
+      "own_runs": [
+        {
+          "run": "h462_m_clean_s46201",
+          "datasets": 139576
+        },
+        {
+          "run": "h462_m_clean_s46202",
+          "datasets": 137623
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H462 locked fair (0% dev91) multi-seed stack: 2 clean M seeds (139,576 + 137,623 = 277,199) + H448 wc_L/wc_M (46,476, counted once)."
+    },
+    "s_h449_unfair_stack": {
+      "pos": 27,
+      "key": "s_h449_unfair_stack",
+      "id": "h449.UNFAIR_ALL_D91_STACK",
+      "name": "H449 stack, ICL trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    "s_hyb_gpresid": {
+      "pos": 28,
+      "key": "s_hyb_gpresid",
+      "id": "h454.HYB_104M_GPRESID_CV7_POST_H454",
+      "name": "H455 ICL with GP-residual column (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "f_h449_fair_stack": {
+      "pos": 29,
+      "key": "f_h449_fair_stack",
+      "id": "h449.FAIR_ALL_NON_D91_STACK",
+      "name": "H449 fair stack (ICL trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    "s_neural_e8": {
+      "pos": 30,
+      "key": "s_neural_e8",
+      "id": "h452.NEURAL_104M_E8_ONLY",
+      "name": "H452 neural 104M e8 columns only",
+      "kind": "ours_incorpus",
+      "f4_display": "24.13M",
+      "own_checkpoint_datasets": 24132070,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@p0/pre",
+          "checkpoint_datasets": 8275114,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@p0",
+          "checkpoint_datasets": 436843,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Uses 4 distinct 104M runs (fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B) in traj_e8_v1 + cv7_hyb_p0 + g16; shared init all_non_d91_L counted once."
+    },
+    "h448.APEX_FAIR_CHAMPION": {
+      "pos": 31,
+      "key": null,
+      "id": "h448.APEX_FAIR_CHAMPION",
+      "name": "H448 APEX fair champion (pre-registered)",
+      "kind": "ours_fair",
+      "f4_display": "46.5k (+APEX base)",
+      "own_checkpoint_datasets": 46476,
+      "own_run_end_datasets": 46476,
+      "own_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "ICL_L_g1_w2@h030",
+          "full_run_datasets": 7280982
+        },
+        {
+          "run": "ICL_M_r3@h040",
+          "full_run_datasets": 25311090
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "H448 locked fair champion: wc_L (22,861) + wc_M (23,615) fine-tuned from ICL_L_g1_w2@h030 and ICL_M_r3@h040."
+    },
+    "s_hyb_only": {
+      "pos": 32,
+      "key": "s_hyb_only",
+      "id": "h454.HYB_104M_ONLY_CV7_POST_H454",
+      "name": "H455 ICL hybrid columns only (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "tabpfn_v3.v1": {
+      "pos": 33,
+      "key": null,
+      "id": "tabpfn_v3.v1",
+      "name": "TabPFN v3 (Prior Labs)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "s_r4_champion": {
+      "pos": 34,
+      "key": "s_r4_champion",
+      "id": "h450.AGGRESSIVE_RANDOM_ALL_CHAMPION",
+      "name": "H450 r4 champion (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "s_fleet_champion": {
+      "pos": 35,
+      "key": "s_fleet_champion",
+      "id": "h450.FAST_104M_EVERY_N_CHAMPION",
+      "name": "H450 fleet L-x1 champion (mean of 18 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "<= 28.63M (4 runs)",
+      "own_checkpoint_datasets": 28634138,
+      "own_run_end_datasets": 28634138,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1",
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4",
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "r4_L_A",
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B",
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 18 H450F scorings (4 fleet_L_x1 snapshots + 14 4-model soups of fleet_L_x1, fleet_L_x4, r4_L_A, r4_L_B; each run and shared init counted once)."
+    },
+    "f_r4_fair_ctrl": {
+      "pos": 36,
+      "key": "f_r4_fair_ctrl",
+      "id": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
+      "name": "H449 init (0% dev91) under the H450 stack",
+      "kind": "ours_fair",
+      "f4_display": "165.7k",
+      "own_checkpoint_datasets": 165653,
+      "own_run_end_datasets": 165653,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "Uses H450 g00 clean 0% dev91 init (all_non_d91_L 79,190 + all_non_d91_M v2 86,463 = 165,653) + H448 wc_L/wc_M base (counted once)."
+    },
+    "h416.SXB": {
+      "pos": 37,
+      "key": null,
+      "id": "h416.SXB",
+      "name": "H416 SXB",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "mitra_v2_zeroshot.v1": {
+      "pos": 38,
+      "key": null,
+      "id": "mitra_v2_zeroshot.v1",
+      "name": "Mitra v2, zero-shot (AutoGluon)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "tabicl_v2.v1": {
+      "pos": 39,
+      "key": null,
+      "id": "tabicl_v2.v1",
+      "name": "TabICL v2 (soda-inria)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h364.XSTACK_2L": {
+      "pos": 40,
+      "key": null,
+      "id": "h364.XSTACK_2L",
+      "name": "H364 two-level stack",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "tabdpt_1p3.v1": {
+      "pos": 41,
+      "key": null,
+      "id": "tabdpt_1p3.v1",
+      "name": "TabDPT 1.3 (Layer6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "s_r4_nogp": {
+      "pos": 42,
+      "key": "s_r4_nogp",
+      "id": "h450.NEURAL_PLUS_TAB_NO_GP",
+      "name": "H450 r4 neural + tabular, no GP (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 125666,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "s_pure_cv7": {
+      "pos": 43,
+      "key": "s_pure_cv7",
+      "id": "h454.PURE_104M_CV7_POST_H454",
+      "name": "H455 ICL 104M alone (CV-7 columns) (mean of 12 checkpoints)",
+      "kind": "ours_incorpus",
+      "f4_display": "11.56M",
+      "own_checkpoint_datasets": 11558806,
+      "own_run_end_datasets": 21374188,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        },
+        {
+          "run": "fleet_L_x1_h455_maxent_v2@valley001",
+          "checkpoint_datasets": 539688,
+          "run_end_datasets": 6700791
+        },
+        {
+          "run": "fleet_M_x2_h455_maxent@valley002",
+          "checkpoint_datasets": 905993,
+          "run_end_datasets": 1459372
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v2)",
+          "datasets": 86463
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 212129,
+      "note": "Mean of 12 H455 checkpoints (CV-7 columns only): distinct own counters across fleet_L_x1@w2aplus, fleet_L_x4@w2aplus, fleet_L_x1_h455_maxent_v2@v1, and fleet_M_x2_h455_maxent@v2 (fleet_L_x1 counted once)."
+    },
+    "h335.H335_AGG": {
+      "pos": 44,
+      "key": null,
+      "id": "h335.H335_AGG",
+      "name": "H335 aggregate",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "s_h449_unfair_icl": {
+      "pos": 45,
+      "key": "s_h449_unfair_icl",
+      "id": "h449.UNFAIR_ALL_D91_ICL_ONLY",
+      "name": "H449 ICL only, trained on all of dev91",
+      "kind": "ours_incorpus",
+      "f4_display": "992 (d91 ft)",
+      "own_checkpoint_datasets": 992,
+      "own_run_end_datasets": 992,
+      "own_runs": [
+        {
+          "run": "all_d91_L",
+          "datasets": 167
+        },
+        {
+          "run": "all_d91_M",
+          "datasets": 825
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 diagnostic checkpoints fine-tuned directly on dev91 SEARCH tables (167 + 825 = 992 episodes) from wc_L/wc_M."
+    },
+    "f_h449_fair_icl": {
+      "pos": 46,
+      "key": "f_h449_fair_icl",
+      "id": "h449.FAIR_ALL_NON_D91_ICL_ONLY",
+      "name": "H449 fair ICL only (trained on all non-dev91)",
+      "kind": "ours_fair",
+      "f4_display": "170.8k",
+      "own_checkpoint_datasets": 170847,
+      "own_run_end_datasets": 170847,
+      "own_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "all_non_d91_M (v1)",
+          "datasets": 91657
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        },
+        {
+          "run": "wc_M",
+          "datasets": 23615
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 46476,
+      "note": "H449 fair 0% dev91 checkpoints (all_non_d91_L + all_non_d91_M v1); shared init wc_L + wc_M counted once."
+    },
+    "s_r4_icl": {
+      "pos": 47,
+      "key": "s_r4_icl",
+      "id": "h450.ICL_BOOST_ONLY",
+      "name": "H450 r4 ICL only (mean of 34 epochs)",
+      "kind": "ours_incorpus",
+      "f4_display": "15.42M (g02..48)",
+      "own_checkpoint_datasets": 15420113,
+      "own_run_end_datasets": 15420113,
+      "own_runs": [
+        {
+          "run": "r4_L_A (epochs 2..48)",
+          "checkpoint_datasets": 7123603,
+          "run_end_datasets": 7123603
+        },
+        {
+          "run": "r4_L_B (epochs 2..48)",
+          "checkpoint_datasets": 8296510,
+          "run_end_datasets": 8296510
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 34 scored epochs (g02..g48) of r4_L_A + r4_L_B (cumulative 15,420,113 own datasets by g48; shared init all_non_d91_L counted once)."
+    },
+    "h335.OLD_MATCHED_CV3": {
+      "pos": 48,
+      "key": null,
+      "id": "h335.OLD_MATCHED_CV3",
+      "name": "H335 old matched (CV-3)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "s_pure_only": {
+      "pos": 49,
+      "key": "s_pure_only",
+      "id": "h454.PURE_104M_ONLY_CV7_POST_H454",
+      "name": "H454 ICL 104M alone (single column family) (mean of 6 scorings)",
+      "kind": "ours_incorpus",
+      "f4_display": "10.11M",
+      "own_checkpoint_datasets": 10113125,
+      "own_run_end_datasets": 13214025,
+      "own_runs": [
+        {
+          "run": "fleet_L_x1@w2aplus",
+          "checkpoint_datasets": 9264390,
+          "run_end_datasets": 11916945
+        },
+        {
+          "run": "fleet_L_x4@w2aplus",
+          "checkpoint_datasets": 848735,
+          "run_end_datasets": 1297080
+        }
+      ],
+      "shared_init_lineage_runs": [
+        {
+          "run": "all_non_d91_L",
+          "datasets": 79190
+        },
+        {
+          "run": "wc_L",
+          "datasets": 22861
+        }
+      ],
+      "shared_init_datasets_excl_base_apex": 102051,
+      "note": "Mean of 6 H454 Wave-2 cooled CV-7 hybrid scorings (fleet_L_x1 + fleet_L_x4 up to w2aplus = 10,113,125)."
+    },
+    "h335.Opus5p5_Extra": {
+      "pos": 50,
+      "key": null,
+      "id": "h335.Opus5p5_Extra",
+      "name": "Opus 5.5 Extra (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.OLD_MATCHED": {
+      "pos": 51,
+      "key": null,
+      "id": "h335.OLD_MATCHED",
+      "name": "H335 old matched",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "h335.H317_BASE": {
+      "pos": 52,
+      "key": null,
+      "id": "h335.H317_BASE",
+      "name": "H317 base",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "h335.Gemini4_argon_high": {
+      "pos": 53,
+      "key": null,
+      "id": "h335.Gemini4_argon_high",
+      "name": "Gemini 4 argon high (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.GPT6p1_Sol_Max": {
+      "pos": 54,
+      "key": null,
+      "id": "h335.GPT6p1_Sol_Max",
+      "name": "GPT-6.1 Sol Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "autogluon_300s.v1": {
+      "pos": 55,
+      "key": null,
+      "id": "autogluon_300s.v1",
+      "name": "AutoGluon Tabular (default, 300 s)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.H257_REPLICA": {
+      "pos": 56,
+      "key": null,
+      "id": "h335.H257_REPLICA",
+      "name": "H257 replica (anchor = 1500)",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "catboost.v1": {
+      "pos": 57,
+      "key": null,
+      "id": "catboost.v1",
+      "name": "CatBoost (1000 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.BANK_NN8_PORTFOLIO": {
+      "pos": 58,
+      "key": null,
+      "id": "h335.BANK_NN8_PORTFOLIO",
+      "name": "H335 bank NN-8 portfolio",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "h335.BANK_NN8_PICK": {
+      "pos": 59,
+      "key": null,
+      "id": "h335.BANK_NN8_PICK",
+      "name": "H335 bank NN-8 pick",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "h414.kimik3p1_max": {
+      "pos": 60,
+      "key": null,
+      "id": "h414.kimik3p1_max",
+      "name": "Kimi K3.1 max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "xgboost.v1": {
+      "pos": 61,
+      "key": null,
+      "id": "xgboost.v1",
+      "name": "XGBoost (500 x depth 6)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "random_forest.v1": {
+      "pos": 62,
+      "key": null,
+      "id": "random_forest.v1",
+      "name": "Random forest (300 trees)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.GPT6_Astra_Max": {
+      "pos": 63,
+      "key": null,
+      "id": "h335.GPT6_Astra_Max",
+      "name": "GPT-6 Astra Max (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "lightgbm.v1": {
+      "pos": 64,
+      "key": null,
+      "id": "lightgbm.v1",
+      "name": "LightGBM (500 x 31 leaves)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "ridge.v1": {
+      "pos": 65,
+      "key": null,
+      "id": "ridge.v1",
+      "name": "Ridge (RidgeCV)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    },
+    "h335.BANK_NN1": {
+      "pos": 66,
+      "key": null,
+      "id": "h335.BANK_NN1",
+      "name": "H335 bank NN-1",
+      "kind": "ours_earlier",
+      "f4_display": "0 (pre-ICL)",
+      "own_checkpoint_datasets": 0,
+      "own_run_end_datasets": 0,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": 0,
+      "note": "Pre-H447 classical GP / GBDT / bank-NN wave (uses 0 neural ICL checkpoints)."
+    },
+    "h412.grok4p7_xhigh": {
+      "pos": 67,
+      "key": null,
+      "id": "h412.grok4p7_xhigh",
+      "name": "Grok 4.7 xhigh (LLM regressor)",
+      "kind": "external",
+      "f4_display": "n/a",
+      "own_checkpoint_datasets": null,
+      "own_run_end_datasets": null,
+      "own_runs": [],
+      "shared_init_lineage_runs": [],
+      "shared_init_datasets_excl_base_apex": null,
+      "note": "External model (n/a per F4)."
+    }
+  }
+}

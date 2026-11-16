@@ -1,0 +1,100 @@
+{
+ "arm": "rand",
+ "by_family": {
+  "f2893c38": {
+   "u_best_mode": 0.7988066434326365,
+   "u_blend": 0.806802112337824,
+   "u_rg": 0.7330765180034924,
+   "u_rr": 0.729770478109048,
+   "u_yj": 0.796532980212165
+  }
+ },
+ "canonical_promotion_forbidden": true,
+ "ckpt": "/home/ubuntu/jope-data/h458-quarantine/runs/p1_f2893c38_rand/spec_e02000.pt",
+ "ckpt_key": "ema",
+ "ckpt_sha256": "b967d34ec52e0e9c4f7b8f6438fe9b3a4012d5d9eab1fced879d7e88d23b439f",
+ "elapsed_s": 6.6,
+ "in_corpus_dev91_disclosure": true,
+ "label": "p1_f2893c38_rand_spec_e02000",
+ "only_stratum": -1,
+ "per_context": {
+  "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920": {
+   "family": "f2893c38",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 336526987.3366972,
+   "sse_rg": 360562403.501644,
+   "sse_rr": 422014755.08924246,
+   "sse_yj": 364212922.932626,
+   "sy": 1345.403823851373,
+   "u_best_mode": 0.8634036687246889,
+   "u_blend": 0.8978970179278281,
+   "u_rg": 0.8634036687246889,
+   "u_rr": 0.784716051871212,
+   "u_yj": 0.858366866051835
+  },
+  "4ec0e23fdfb640c76a38f5a3d649ef24b871e5a6dad9338d77fa8582fc8cdc07": {
+   "family": "f2893c38",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 431390502.84481233,
+   "sse_rg": 502738817.22152954,
+   "sse_rr": 499566439.1732577,
+   "sse_yj": 455869237.906089,
+   "sy": 1352.0769225679494,
+   "u_best_mode": 0.7510808488307096,
+   "u_blend": 0.7786769940467636,
+   "u_rg": 0.7021484609442852,
+   "u_rr": 0.7053135532367285,
+   "u_yj": 0.7510808488307096
+  },
+  "76e4c4045ab34d9485790c28f4ec26fa07c10d21000beeba1a6f59f3066b43ca": {
+   "family": "f2893c38",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 443420555.1644889,
+   "sse_rg": 459153813.1361947,
+   "sse_rr": 511471504.9226589,
+   "sse_yj": 460203535.3230862,
+   "sy": 1363.2400781736865,
+   "u_best_mode": 0.7557136294753702,
+   "u_blend": 0.7731469317894093,
+   "u_rg": 0.7557136294753702,
+   "u_rr": 0.7017603213796468,
+   "u_yj": 0.7545718290157036
+  },
+  "dbaf4dda74e91180243f917dc31bf3ba8d864a144d23c486bf7f12e72f98193f": {
+   "family": "f2893c38",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 427702319.0230578,
+   "sse_rg": 683103680.6121001,
+   "sse_rr": 406268050.02897465,
+   "sse_yj": 410506839.2105597,
+   "sy": 1362.627988991541,
+   "u_best_mode": 0.816450580413826,
+   "u_blend": 0.7907434435141367,
+   "u_rg": 0.5566338372501973,
+   "u_rr": 0.816450580413826,
+   "u_yj": 0.811260867443989
+  },
+  "e08aa019a5ed29d85716048f297b069afb2d85999f764a617f95a6df621a4911": {
+   "family": "f2893c38",
+   "n_search": 1120,
+   "rows_scored": 1120,
+   "sse_blend": 393027314.9221921,
+   "sse_rg": 397822320.4796941,
+   "sse_rr": 533654003.05555016,
+   "sse_yj": 382298792.6049294,
+   "sy": 1309.890765737077,
+   "u_best_mode": 0.807384489718588,
+   "u_blend": 0.7935461744109814,
+   "u_rg": 0.7874829936229203,
+   "u_rr": 0.6406118836438274,
+   "u_yj": 0.807384489718588
+  }
+ },
+ "protocol": "search-only CV-7 repeat 0, evaluation fold pipeline, direct modes rr/yj/rg",
+ "reads_audit_labels": false,
+ "schema": "jope.h458.probe/v1"
+}

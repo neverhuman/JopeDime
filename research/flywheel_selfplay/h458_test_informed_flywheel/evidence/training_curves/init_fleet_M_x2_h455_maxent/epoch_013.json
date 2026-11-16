@@ -1,0 +1,161 @@
+{
+ "ckpt": "/home/ubuntu/jope-data/h452-flywheel/runs/fleet_M_x2_h455_maxent/ckpt_latest.pt",
+ "ckpt_sha256": "e90afbbfdb0b247ed88e9563803f5de3b298e22c2eff0ae7eab6f1d6db152351",
+ "epoch": 13,
+ "exposure": {
+  "dataset_sampling_mode": "s3_source_uniform",
+  "datasets_seen": 650057,
+  "dev91_share_of_real_episodes": 0.019130932217261778,
+  "distinct_source_tables_seen": 3525,
+  "dropped_real_columns_total": 7082981,
+  "duplicate_datasets_fed_to_model": 0,
+  "duplicate_real_datasets": 0,
+  "duplicate_synthetic_datasets": 0,
+  "duplicates_filtered_pre_forward": 0,
+  "feature_drop_share_p_ge_2": 0.436765655434664,
+  "injected_column_share": 0.6333455348389451,
+  "per_cohort": {
+   "APEX-DEV-FULL": {
+    "cell_tokens": 200523136,
+    "episodes": 24270,
+    "families": 115,
+    "families_seen": 115,
+    "rows_seen": 7789312,
+    "tables": 115,
+    "tables_seen": 115,
+    "test_rows_included": true
+   },
+   "APEX-FIT-ICL-FULL": {
+    "cell_tokens": 893611488,
+    "episodes": 109739,
+    "families": 440,
+    "families_seen": 440,
+    "rows_seen": 34255328,
+    "tables": 440,
+    "tables_seen": 440,
+    "test_rows_included": true
+   },
+   "APEX-FIT-SEL-FULL": {
+    "cell_tokens": 201486080,
+    "episodes": 24414,
+    "families": 106,
+    "families_seen": 106,
+    "rows_seen": 7809920,
+    "tables": 106,
+    "tables_seen": 106,
+    "test_rows_included": true
+   },
+   "D91-COMBINED-SHUFFLED": {
+    "cell_tokens": 88848096,
+    "episodes": 11103,
+    "families": 19,
+    "families_seen": 19,
+    "rows_seen": 3248736,
+    "tables": 91,
+    "tables_seen": 91,
+    "test_rows_included": true
+   },
+   "D91-S3-COUSIN": {
+    "cell_tokens": 126802720,
+    "episodes": 15906,
+    "families": 42,
+    "families_seen": 42,
+    "rows_seen": 4744480,
+    "tables": 42,
+    "tables_seen": 42,
+    "test_rows_included": true
+   },
+   "DL-TRAIN-FULL": {
+    "cell_tokens": 687889312,
+    "episodes": 85811,
+    "families": 205,
+    "families_seen": 205,
+    "rows_seen": 25827744,
+    "tables": 1219,
+    "tables_seen": 1219,
+    "test_rows_included": true
+   },
+   "S3-DEV-FULL": {
+    "cell_tokens": 641669216,
+    "episodes": 77872,
+    "families": 373,
+    "families_seen": 373,
+    "rows_seen": 25076192,
+    "tables": 383,
+    "tables_seen": 383,
+    "test_rows_included": true
+   },
+   "S3-FIT-ICL-FULL": {
+    "cell_tokens": 1214044800,
+    "episodes": 146586,
+    "families": 698,
+    "families_seen": 698,
+    "rows_seen": 47557888,
+    "tables": 720,
+    "tables_seen": 720,
+    "test_rows_included": true
+   },
+   "S3-FIT-SEL-FULL": {
+    "cell_tokens": 699371680,
+    "episodes": 84668,
+    "families": 391,
+    "families_seen": 391,
+    "rows_seen": 27051808,
+    "tables": 409,
+    "tables_seen": 409,
+    "test_rows_included": true
+   }
+  },
+  "real_cell_tokens": 4754246528,
+  "real_episodes": 580369,
+  "sealed_cohorts_in_bank": 0,
+  "source_tables_in_bank": 3525,
+  "synthetic_cell_tokens": 608334976,
+  "synthetic_datasets": 69688,
+  "table_episodes_cv": 0.8183,
+  "target_modes": {
+   "other_column": 93034,
+   "own": 234248,
+   "teacher": 253087
+  },
+  "target_spaces": {
+   "raw": 423411,
+   "ridge_residual": 72845,
+   "yeo_johnson": 84113
+  },
+  "unique_datasets_seen": 727002
+ },
+ "sampler_cfg": {
+  "canonical_promotion_forbidden": true,
+  "confirm_opens": 0,
+  "cycle0_hours": 2.0,
+  "cycle_hours": 2.0,
+  "dataset_mix": "s3_source_uniform",
+  "distractor_prob": 0.35,
+  "endless": true,
+  "exact_kd_prob": 0.28,
+  "exact_resid_prob": 0.16,
+  "feature_drop_range": [
+   0.0,
+   0.85
+  ],
+  "fmgap_bc_opens": 0,
+  "lr": 2e-05,
+  "lr_cycle_peak": 1e-05,
+  "lr_min": 3e-06,
+  "n_s3_families": 2389,
+  "n_tables": 3525,
+  "p_ctx_range": [
+   0.08,
+   0.95
+  ],
+  "protocol": "h455-maxent-s3uniform-binned-gp-flywheel",
+  "synth_inj_range": [
+   0.0,
+   0.6
+  ]
+ },
+ "schema": "jope.h455.epoch/v1",
+ "step": 20369,
+ "train_hours": 2.944837034013536
+}

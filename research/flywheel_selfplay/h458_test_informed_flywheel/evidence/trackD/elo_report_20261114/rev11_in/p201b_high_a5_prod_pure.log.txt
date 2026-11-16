@@ -1,0 +1,38 @@
+log /home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_high_a5_prod_pure.log block /home/ubuntu/jope-data/h459-s9/r2/p201b80_high_prod_pure
+start 2026-11-15T10:59:56Z host xbabe2 tier high anc pure mode prod tag high_a5_prod_pure
+affinity 0-15,64-79 threads OMP=1 OPENBLAS=1 MKL=1 NUMEXPR=1
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+4ddb1f3f6e3cfa6855cdc423733b3aad1d6c6d4861f56f27f9cc49cbdef10397  run_s9_a5_score.sh
+284e32b9fe5e4c06e359e2274bbada20333f27dacd06655b3f97da7a6570c283  /home/ubuntu/jope-data/h459-s9/r2/p201b80_high_prod_pure/SIDECAR.json
+8b6acd718604dff2db033662ad5af174c0375eb4e6ab35d84ae81fe31909d710  /home/ubuntu/jope_plan/evidence/H459/runs_r2/BUDGET_p201b80_high_prod_pure.json
+638cbfa4d1b580a374f60a044a1fc57f649ec339491a40cbb2ef204724c33542  /home/ubuntu/jope_plan/evidence/H459/runs_r2/HOSTS_p201b80_high_prod_pure.json
+columns a5_high_pure_shrunk,a5_high_pure_ratchet,a0_high_pure_s0,a0_high_pure_s1,a0_high_pure_2x,a5_high_pure_stg1,a5_high_pure_stg2,a5_high_pure_stg3,a5_high_pure_stg4,a5_high_pure_stg5,a5_high_pure_stg6,a5_high_pure_stg7,a6_high_pure_comm,a6b_high_pure_runbag
+controls a=a0_high_pure_s0 b=a0_high_pure_s1 x=a0_high_pure_2x; eligible a5_high_pure_shrunk a5_high_pure_ratchet; descriptive a5_high_pure_stg1,a5_high_pure_stg2,a5_high_pure_stg3,a5_high_pure_stg4,a5_high_pure_stg5,a5_high_pure_stg6,a5_high_pure_stg7,a6_high_pure_comm,a6b_high_pure_runbag
+wrote /home/ubuntu/jope-data/h458s-quarantine/s9_stack/S9_STACK_P201B_high_a5_prod_pure.json 4a875b056ea3d8916b815e97909f0c90e1102dfb2df6b7512f51e5ee8de33a2d
+a5_high_pure_shrunk {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013613102894614038, "holm_p": {"a5_high_pure_shrunk - a0_high_pure_s0": 1.0, "a5_high_pure_shrunk - a0_high_pure_s1": 1.0}, "selection_eligible": true, "control_dominates": true}
+a5_high_pure_ratchet {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013031247810860083, "holm_p": {"a5_high_pure_ratchet - a0_high_pure_s0": 1.0, "a5_high_pure_ratchet - a0_high_pure_s1": 1.0}, "selection_eligible": true, "control_dominates": true}
+a5_high_pure_stg1 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.03439882228803926, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg2 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.00037916058437862386, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg3 {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.008341604557719377, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg4 {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013467859283281005, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg5 {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013808648539947736, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg6 {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013425308468970946, "holm_p": {}, "selection_eligible": false}
+a5_high_pure_stg7 {"R1": false, "R2": true, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.013613095117482269, "holm_p": {}, "selection_eligible": false}
+a6_high_pure_comm {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": true, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.03799219114644845, "holm_p": {}, "selection_eligible": false}
+a6b_high_pure_runbag {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.05329785243297389, "holm_p": {}, "selection_eligible": false}
+Elo V0 1788.3 rank 2
+Elo a5_high_pure_shrunk 1798.7 rank 2
+Elo a5_high_pure_ratchet 1798.7 rank 2
+Elo a0_high_pure_s0 1799.5 rank 2
+Elo a0_high_pure_s1 1785.9 rank 2
+Elo a0_high_pure_2x 1797.9 rank 2
+Elo a5_high_pure_stg1 1794.3 rank 2
+Elo a5_high_pure_stg2 1796.5 rank 2
+Elo a5_high_pure_stg3 1798.7 rank 2
+Elo a5_high_pure_stg4 1798.7 rank 2
+Elo a5_high_pure_stg5 1798.7 rank 2
+Elo a5_high_pure_stg6 1798.7 rank 2
+Elo a5_high_pure_stg7 1798.7 rank 2
+Elo a6_high_pure_comm 1802.8 rank 2
+Elo a6b_high_pure_runbag 1794.3 rank 2
+exit 0 end 2026-11-15T11:28:20Z

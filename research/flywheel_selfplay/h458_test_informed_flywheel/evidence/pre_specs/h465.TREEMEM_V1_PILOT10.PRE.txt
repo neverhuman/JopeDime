@@ -1,0 +1,24 @@
+H465 A-11 (sheet fe2c5fde908f68bb), tree memory version 1, dev91 pilot: a separate labelled system. One "pre" line written by the ledger keeper (cl_mtc) at cl_h458's request, after cl_fwriter's clearance, before anything is fitted.
+
+Spec: ~/jope_plan/evidence/H465/wp3/SPEC_TREE_MEMORY_V1.txt sha256 057ce02497d05f96725bbf35571f0576908313f9ada663e72a518abe1ef8389c (cl_h458).
+Builder: /home/ubuntu/jope-data/h465-treemem/code/treemem_v1.py 87ecfdf426c9bc88... (its --fit refuses without this line).
+Clearance: ~/jope_plan/evidence/H462_review/REVIEW_SPEC_DOSSIERS_902ff884_TREEMEM_057ce024_cl_fwriter_20261116T020017Z.md (7b2e3a0b...): one look; notes M-1 and M-2.
+
+The look. ONE official look on the ten WP1a contexts (ctx_recall_pool_v1 c9dcb461...), no Elo, label "recall": every number reads "tree memory, fitted on the table's test labels". It is four runs of the unchanged scorer score_h458s.py 0a9adb2c702af628..., optset legacy, under this arm name:
+  T1   = legacy + treemem_t1          T2   = legacy + treemem_t2
+  S1T1 = legacy + s1 + treemem_t1     S1T2 = legacy + s1 + treemem_t2     (s1 = WP1a's neural dossier block)
+Blocks: /home/ubuntu/jope-data/h465-treemem/blocks/treemem_v1_t1_pilot10 and .../treemem_v1_t2_pilot10; s1 = /home/ubuntu/jope-data/h458-quarantine/blocks/wp1a_s1_recall_canon_e2000.
+Stored, not read again: B (base) and S1 (ledger line 23).
+Runs: --official --no-elo --optset legacy --arm-optset legacy --contexts <the ten>, one create-once output directory each; each appends its own "look" line, and the four lines together are this one look. The ten contexts are the WP1a ten (prefixes 016648dc, 05264057, 0a05f8f5, 0b07774c, 15e9e1e6, 1b770a1e, 23e1d8c0, 498fc9a0, 640522f1, b1a5c1a1), as scored at ledger line 23.
+Check, as D-1: each run re-scores the base on the same ten contexts. Its per-context u must reproduce line 23's base within 1e-9 x max(1, |u|), and the check is reported. If it does not reproduce, no rule is applied: I stop and post.
+
+Rules, for each dose d:
+  (i) tree memory at dose d WORKS AS MEMORY iff T_d beats B on at least 7 of 10 contexts and mean(T_d - B) >= 0.8 x mean(S1 - B) = 1.268 u.
+  (ii) it ADDS TO THE NEURAL DOSSIER iff S1T_d beats S1 on at least 7 of 10 and mean(S1T_d - S1) >= +0.05 u.
+The table (B, S1, T1, T2, S1T1, S1T2, and OOB against full-memory RMSE per context) goes to the owner, who picks the dose.
+M-1: the chosen dose's pilot number is labelled "dose chosen on the pilot".
+M-2: no further fit of these ten contexts under version 1. Any further fit is version 2.
+
+Not an F5 look: no formula column, no sweep.
+
+Prediction (cl_h458, after the synthetic self-test and before any dev91 fit): T2 works as memory (at least 9 of 10; mean gain +0.8 to +2.0 u); T1 falls short of the 1.268 bar (+0.3 to +1.2 u); S1T2 adds to S1; S1T1 does not.

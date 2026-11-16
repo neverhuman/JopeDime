@@ -1,0 +1,3 @@
+03:27:21Z look starts, out /home/ubuntu/jope-data/h458-quarantine/looks/all91_20261115T0327Z
+03:32:52Z look ended, exit 0
+{"arm": "h458d.RECALL_CANON_E2000_ALL91", "label": "recall", "n_ctx": 91, "elo_arm": 2343.7741142617015, "elo_base": 1858.9582384520702, "elo_arm_nr": 1858.9582384520702, "pair": {"wtl": [17, 1, 1], "signflip_p": 7.62939453125e-06, "lofo_min": 0.3614379557843977, "gain": 1.0348402201901479}, "receipt_sha256": "0bde5d23bdab8e749cd98c03d1318a43d1949f874e41008016910f38af441b01"}

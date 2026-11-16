@@ -1,0 +1,135 @@
+{
+  "bit_for_bit_verification": {
+    "H456.LH455V14_MH455V123_50_50.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7038478269201776,
+      "recomputed_family_mean_u": 1.7038478269201776
+    },
+    "H456.LH455V14_MH455V123_50_50.stack_no_ugp_post_h454": {
+      "abs_diff": 4.440892098500626e-16,
+      "matrix_family_mean_u": 1.7031168033808457,
+      "recomputed_family_mean_u": 1.7031168033808453
+    },
+    "H456.LH455V14_MH455V123_50_50.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 4.440892098500626e-16,
+      "matrix_family_mean_u": 1.7232304555112548,
+      "recomputed_family_mean_u": 1.7232304555112552
+    },
+    "H456.LH455V14_MH455V123_50_50.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7153595323685742,
+      "recomputed_family_mean_u": 1.7153595323685742
+    },
+    "H456.L_X1_V2_valley001_004_avg.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7053789127919445,
+      "recomputed_family_mean_u": 1.7053789127919445
+    },
+    "H456.L_X1_V2_valley001_004_avg.stack_no_ugp_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7045491720571,
+      "recomputed_family_mean_u": 1.7045491720571
+    },
+    "H456.L_X1_V2_valley001_004_avg.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 4.440892098500626e-16,
+      "matrix_family_mean_u": 1.7236418921654117,
+      "recomputed_family_mean_u": 1.7236418921654113
+    },
+    "H456.L_X1_V2_valley001_004_avg.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7166076706106892,
+      "recomputed_family_mean_u": 1.7166076706106892
+    },
+    "H456.L_X1_V2_valley004_soup50.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.70370378194537,
+      "recomputed_family_mean_u": 1.70370378194537
+    },
+    "H456.L_X1_V2_valley004_soup50.stack_no_ugp_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7044775422797045,
+      "recomputed_family_mean_u": 1.7044775422797045
+    },
+    "H456.L_X1_V2_valley004_soup50.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7235856770824147,
+      "recomputed_family_mean_u": 1.7235856770824147
+    },
+    "H456.L_X1_V2_valley004_soup50.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 4.440892098500626e-16,
+      "matrix_family_mean_u": 1.7163289984793337,
+      "recomputed_family_mean_u": 1.7163289984793342
+    },
+    "H456.M_X2_valley001_002_003_avg.neural_104m_all_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7011445493699007,
+      "recomputed_family_mean_u": 1.7011445493699007
+    },
+    "H456.M_X2_valley001_002_003_avg.stack_no_ugp_post_h454": {
+      "abs_diff": 6.661338147750939e-16,
+      "matrix_family_mean_u": 1.701840531323206,
+      "recomputed_family_mean_u": 1.7018405313232066
+    },
+    "H456.M_X2_valley001_002_003_avg.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7235167013960757,
+      "recomputed_family_mean_u": 1.7235167013960757
+    },
+    "H456.M_X2_valley001_002_003_avg.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 2.220446049250313e-16,
+      "matrix_family_mean_u": 1.7149745246962365,
+      "recomputed_family_mean_u": 1.7149745246962367
+    },
+    "H456.M_X2_valley003_soup50.neural_104m_all_post_h454": {
+      "abs_diff": 2.220446049250313e-16,
+      "matrix_family_mean_u": 1.7021809029888508,
+      "recomputed_family_mean_u": 1.7021809029888506
+    },
+    "H456.M_X2_valley003_soup50.stack_no_ugp_post_h454": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.7008889798500184,
+      "recomputed_family_mean_u": 1.7008889798500184
+    },
+    "H456.M_X2_valley003_soup50.stack_ugp_g1000_cons_joint_pre_post": {
+      "abs_diff": 2.220446049250313e-16,
+      "matrix_family_mean_u": 1.7243420387869937,
+      "recomputed_family_mean_u": 1.7243420387869939
+    },
+    "H456.M_X2_valley003_soup50.stack_ugp_g1000_cons_post_h454": {
+      "abs_diff": 2.220446049250313e-16,
+      "matrix_family_mean_u": 1.7158700003731342,
+      "recomputed_family_mean_u": 1.715870000373134
+    },
+    "H456.ctrl_h450_g16_legacy": {
+      "abs_diff": 0.0,
+      "matrix_family_mean_u": 1.6804478179581095,
+      "recomputed_family_mean_u": 1.6804478179581095
+    }
+  },
+  "input_dirs": {
+    "H456.LH455V14_MH455V123_50_50": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_lh455v14_mh455v123_50_50",
+    "H456.L_X1_V2_valley001_004_avg": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_l_x1_h455_v14_avg",
+    "H456.L_X1_V2_valley004_soup50": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_l_x1_h455_v4_soup50",
+    "H456.M_X2_valley001_002_003_avg": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_m_h455_v123_avg",
+    "H456.M_X2_valley003_soup50": "/home/ubuntu/jope-data/h452-flywheel/cols_e8_d91/cv7_hyb_m_h455_v3_soup50"
+  },
+  "jsonl_path": "/home/ubuntu/jope_plan/evidence/H456/H456_STAGE3_PER_CONTEXT_U.jsonl",
+  "jsonl_sha256": "1efc6de3b764777b69b09ba3035ac4c22c4c175af50bcf87b3fdee98fbc09388",
+  "matrix_jsons": {
+    "H456.LH455V14_MH455V123_50_50": "/home/ubuntu/jope_plan/evidence/H456/H456_LH455V14_MH455V123_50_50_MATRIX.json",
+    "H456.L_X1_V2_valley001_004_avg": "/home/ubuntu/jope_plan/evidence/H456/H456_L_X1_V2_VALLEY001_004_AVG_MATRIX.json",
+    "H456.L_X1_V2_valley004_soup50": "/home/ubuntu/jope_plan/evidence/H456/H456_L_X1_V2_VALLEY004_SOUP50_MATRIX.json",
+    "H456.M_X2_valley001_002_003_avg": "/home/ubuntu/jope_plan/evidence/H456/H456_M_X2_VALLEY001_002_003_AVG_MATRIX.json",
+    "H456.M_X2_valley003_soup50": "/home/ubuntu/jope_plan/evidence/H456/H456_M_X2_VALLEY003_SOUP50_MATRIX.json"
+  },
+  "max_abs_diff": 6.661338147750939e-16,
+  "schema": "jope.h456.stage3_per_context_u_manifest/v1",
+  "scorer_code": "/home/ubuntu/h452-stage/code/score_h454_paired_flywheel_matrix.py",
+  "scorer_sha256": "99511dccf6aa82c42a4187790f4ee8e731363c7aaeb795d4162394a12952f5d9",
+  "stack_guard_code": "/home/ubuntu/h452-stage/code/stack_guard_cv7_h452.py",
+  "stack_guard_sha256": "8de51475484d6fb41af20ae7257cfb8b0609ef59e8ff4af75e70033eecca1a80",
+  "summary_alias_path": "/home/ubuntu/jope_plan/evidence/H456/H456_STAGE3_MULTI_VALLEY_SUMMARY.json",
+  "summary_path": "/home/ubuntu/jope_plan/evidence/H456/H456_STAGE3_VALLEY_PROGRESSION_SUMMARY.json",
+  "summary_sha256": "0c5a6163149440298c95637e264534d90028e098059950943dde208bd2d38f56",
+  "wall_s": 818.09
+}

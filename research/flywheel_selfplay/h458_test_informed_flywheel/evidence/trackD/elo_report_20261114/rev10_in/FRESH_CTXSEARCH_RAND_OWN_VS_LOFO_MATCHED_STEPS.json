@@ -1,0 +1,453 @@
+{
+ "arm": "h458d.FRESH_CTXSEARCH_RAND_OWN_VS_LOFO_MATCHED_STEPS",
+ "baseline": "lofm_mean3",
+ "block_dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/cmp_ctx_adapt_matched",
+ "block_files_sha256": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": "a51e47c14494141e93127b43489972d95d3ded2f2db2baf3ccf9ac32302cb72b",
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": "d056a35d72d93bd8da2fc24616c3f0256e0d1fd698a1ad3bd79ba669f930612f",
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": "bf259e72e8f14827c9fc60ba6671a9215052574f478b79537238a9b4e4a4c055",
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": "f2ca4e36484642553ae1a0d31a824a5d35d865c726f94e870e61a27982b55b67",
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": "bf277af8601518356ae5f3ca752dd004b8c98612d6e85a7219c0cc059a20e1df",
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": "30e03070be1c08be5286813a6eccf4dd5bb7a4eec11488f1f484127c801f1e05",
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": "fd54d37677a9228629857ab89a35be4aa2387718ec02f8c1833684ee9f271e1b",
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": "edcf436a207acafea8021075ceca9d83b3680118f0f192ffe725b395008b90ba",
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": "082424e527628031cdc4906b9a5b58bfa97e75802fdf1eacc84344e1701f9526",
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": "fc426a58c5107b575448f72b5441ffae3b1ee4a7cc753c020a0bdc398c46a8a7"
+ },
+ "board": "dev91-freshprobe-v1",
+ "columns": [
+  "ctxr_mean3",
+  "lofm_mean3",
+  "init_mean3"
+ ],
+ "families": [
+  "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+  "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+  "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+  "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+  "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+  "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+  "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+  "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+  "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+  "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+ ],
+ "family_mean_u": {
+  "ctxr_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.4111558110857345,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 2.011404672126781,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.4253099362155712,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.4275831664701006,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.014739568349365566,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 2.831763255173224,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8788818972728732,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6656745714421721,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.05474068074262122,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 1.2504849125394157
+  },
+  "init_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.0104309275033345,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.576905284084281,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.147964785736969,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.10781251730635476,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.12534034809456454,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.839908690007887,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8699766921254792,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6169788397764655,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.08571177973266617,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.13766679135668228
+  },
+  "lofm_mean3": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.1512417395046826,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.4969764712657283,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.272322251525624,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.1447177021681527,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.8023998494830584,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.9997841192994665,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.7761664362301979,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6002064041908078,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.1008224200875586,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.8542788651887034
+  }
+ },
+ "inputs": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "board_sums": {
+   "PROBE_BOARD.json": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+   "PROBE_YA.npz": "faeff3583372a6b5ea7f002f3b2c08c7427915924a051106449e2824ea35f1a5",
+   "bank_d91probe_f64.npz": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632"
+  }
+ },
+ "label": "fresh-probe: scoring only",
+ "missing_contexts": [],
+ "n_scored": 10,
+ "paired": {
+  "ctxr_mean3 - lofm_mean3": {
+   "contexts_wtl": [
+    9,
+    0,
+    1
+   ],
+   "families_wtl": [
+    9,
+    0,
+    1
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 0.25991407158105195,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.5144282008610528,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 0.1529876846899474,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.2828654643019479,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.7876602811336929,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 1.8319791358737574,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.10271546104267537,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.06546816725136428,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.046081739344937374,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.3962060473507123
+   },
+   "mean_context_du": 0.4348142774741265,
+   "mean_family_du": 0.4348142774741265,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.00390625
+  },
+  "init_mean3 - lofm_mean3": {
+   "contexts_wtl": [
+    4,
+    0,
+    6
+   ],
+   "families_wtl": [
+    4,
+    0,
+    6
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": -0.14081081200134804,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.07992881281855269,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.12435746578865503,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.03690518486179793,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.9277401975776229,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.1598754292915795,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.09381025589528136,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.016772435585657663,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.01511064035489243,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.7166120738320212
+   },
+   "mean_context_du": -0.0075419904253179485,
+   "mean_family_du": -0.007541990425317946,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.923828125
+  }
+ },
+ "per_context": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 0.7815763294009465,
+     "u": 2.4111558110857345
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.1668203737422311,
+     "u": 2.0104309275033345
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 1.013562759038471,
+     "u": 2.1512417395046826
+    }
+   },
+   "family": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+   "n_probe": 2000
+  },
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 3.3722168773287122,
+     "u": 0.6656745714421721
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 3.54049336775534,
+     "u": 0.6169788397764655
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 3.600376856854198,
+     "u": 0.6002064041908078
+    }
+   },
+   "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+   "n_probe": 1999
+  },
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 101.27277535140087,
+     "u": 2.011404672126781
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 156.38438930094298,
+     "u": 1.576905284084281
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 169.3971271826984,
+     "u": 1.4969764712657283
+    }
+   },
+   "family": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+   "n_probe": 2000
+  },
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 1551.5463514574863,
+     "u": 0.05474068074262122
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1504.2297613643598,
+     "u": 0.08571177973266617
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 1481.6707561788853,
+     "u": 0.1008224200875586
+    }
+   },
+   "family": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+   "n_probe": 1999
+  },
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 1.5627919130441381,
+     "u": -0.014739568349365566
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.3585174475978516,
+     "u": 0.12534034809456454
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 3.4354028288472067,
+     "u": -0.8023998494830584
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 0.3400196096749142,
+     "u": 2.831763255173224
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 2.492042306344067,
+     "u": 0.839908690007887
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 2.1238429253318456,
+     "u": 0.9997841192994665
+    }
+   },
+   "family": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+   "n_probe": 1999
+  },
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 1.4259644691874949,
+     "u": 0.4275831664701006
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.963284928794346,
+     "u": 0.10781251730635476
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 1.8921502287501533,
+     "u": 0.1447177021681527
+    }
+   },
+   "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+   "n_probe": 2000
+  },
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 15363.704174542436,
+     "u": 1.2504849125394157
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 46750.547973547684,
+     "u": 0.13766679135668228
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 22833.160864529866,
+     "u": 0.8542788651887034
+    }
+   },
+   "family": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+   "n_probe": 2000
+  },
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 1.1369129878081006,
+     "u": 2.4253099362155712
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 1.500295118533593,
+     "u": 2.147964785736969
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 1.3248567874546182,
+     "u": 2.272322251525624
+    }
+   },
+   "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+   "n_probe": 1997
+  },
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+   "cols": {
+    "ctxr_mean3": {
+     "finite": true,
+     "rmse": 9781.01123177574,
+     "u": 0.8788818972728732
+    },
+    "init_mean3": {
+     "finite": true,
+     "rmse": 9868.502127342676,
+     "u": 0.8699766921254792
+    },
+    "lofm_mean3": {
+     "finite": true,
+     "rmse": 10839.082342490476,
+     "u": 0.7761664362301979
+    }
+   },
+   "family": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+   "n_probe": 2000
+  }
+ },
+ "pre": {
+  "arm": "h458d.FRESH_CTXSEARCH_RAND_OWN_VS_LOFO_MATCHED_STEPS",
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "baseline": "lofm_mean3",
+  "board": "dev91-freshprobe-v1",
+  "by": "cl_h458",
+  "columns": [
+   "ctxr_mean3",
+   "lofm_mean3",
+   "init_mean3"
+  ],
+  "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+  "spec": "Track D, matched-step read of ledger line 31, asked by cl_fwriter at 05:19Z while the runs were in flight: the leave-own-family-out generalist stops when its slowest table reaches 222 exposures per row and therefore runs more optimiser steps than the own-table fine-tune it is compared with (about 15 to 20% by the first run's pace), which would favour outcome B. Column lofm = the same generalist run at an earlier saved checkpoint: for each context, among the checkpoints saved when the slowest table reached 175, 190, 205 and 222 exposures per row, the one whose optimiser step count is closest to the final step count of that context's own-table run (c1r_<family>_rand). The first generalist run (538e6406) was started with the 222 checkpoint only; a second run of the same configuration with the four checkpoints (g1m_lofo_538e6406_rand) supplies its lofm. Columns ctxr, lofm, init; baseline lofm_mean3; same ten contexts, same four views, role foreign for lofm. Registered before any generalist run finished and before any block of lines 29 to 31 exists. Reading rule, fixed now: apply line 31's rules A and B with lofm in place of lofo. If the outcome (A only, B only, both, neither) is the same as with lofo, say so. If it differs, line 31's outcome is reported as budget-sensitive and B is not read as alignment. Descriptive: ten contexts, one seed, in-corpus init.",
+  "time_utc": "2026-11-15T05:21:30Z",
+  "type": "pre",
+  "use": "ref"
+ },
+ "schema": "jope.h458s.s7_probe_score/v1",
+ "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+ "sidecar": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "canonical_promotion_forbidden": true,
+  "closure": "fresh-probe",
+  "contexts": [
+   "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+   "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+   "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755",
+   "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+   "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689",
+   "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631",
+   "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38",
+   "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042",
+   "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8"
+  ],
+  "in_corpus_dev91_disclosure": true,
+  "merged_from": {
+   "ctxr": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctxr_e2000",
+    "probe_role": "specialist",
+    "sidecar_sha256": "c9b06bf9cf0b08c31c0cfcef4f7c63207267e7e5b396d61271baca4271c0659a",
+    "weights_sha256": "2922627ab1801cae4487a41e5ca291f6c1c5f36e5116fcda7fd355714c353261"
+   },
+   "init": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/init_rand",
+    "probe_role": "init",
+    "sidecar_sha256": "8c07da14666fa8c6e4b9ec10fbcd9e20699a12c492b32441af928ac48cda8deb",
+    "weights_sha256": "30c93f80451c14a9ea2947b428a38053dbb3bfeff2e376fdb3f9e7b07b0e51c4"
+   },
+   "lofm": {
+    "arm": "rand",
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/lofm_matched",
+    "probe_role": "foreign",
+    "sidecar_sha256": "3a70c355aadc4534ce96dd317940586ba90fd7f9730273f2dd90b8bf0de3ca8a",
+    "weights_sha256": "a95c6aeb014de827c065c4ab818f5269a76757fa52b766f305f74689ea9ea6f5"
+   }
+  },
+  "names": [
+   "init_rr",
+   "init_yj",
+   "init_rg",
+   "init_mean3",
+   "ctxr_rr",
+   "ctxr_yj",
+   "ctxr_rg",
+   "ctxr_mean3",
+   "lofm_rr",
+   "lofm_yj",
+   "lofm_rg",
+   "lofm_mean3"
+  ],
+  "notes": "H458 Track D fresh-row probe comparison block: <tag>_mean3 is the equal-weight mean of a source's three direct columns; not a board block",
+  "probe_bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "probe_board_sha256": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+  "producer": "cl_h458 cols_h458.py @ 425e0700e7106c8f6368f3efec337f40eea8db1e",
+  "reads_audit_labels": false
+ },
+ "sidecar_sha256": "82bdc6728f1305582e3e29d0fa70d347113f7630d692c21b521850007aceed50",
+ "summary": {
+  "ctxr_mean3": {
+   "context_mean_u": 1.2942259334719126,
+   "family_mean_u": 1.2942259334719128
+  },
+  "init_mean3": {
+   "context_mean_u": 0.8518696655724683,
+   "family_mean_u": 0.8518696655724683
+  },
+  "lofm_mean3": {
+   "context_mean_u": 0.8594116559977865,
+   "family_mean_u": 0.8594116559977862
+  }
+ },
+ "time_utc": "2026-11-15T07:58:36Z",
+ "use": "ref",
+ "wall_s": 0.01
+}

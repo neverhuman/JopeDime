@@ -1,0 +1,73 @@
+log /home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_high_main.log block /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/high/block
+start 2026-11-15T15:09:07Z host xbabe2 tier high tag main
+affinity 0-15,64-79 threads OMP=1 OPENBLAS=1 MKL=1 NUMEXPR=1
+b739b4d1b5c086a99e7840d7511580e8ecc4c85af4e73c2acdfb45bb098b5d33  s9_ensemble_controls.py
+425a5e587dee430a11df01e6cfad89e2583448ce7f70612da907a4d9dc8a246b  s9_budget_table.sh
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+d5acd881f261f94e0523e7eeb627e3b613e5e021fbaa7985175f0dcc77e166c8  run_s9_p201b_score.sh
+b739b4d1b5c086a99e7840d7511580e8ecc4c85af4e73c2acdfb45bb098b5d33  s9_ensemble_controls.py
+425a5e587dee430a11df01e6cfad89e2583448ce7f70612da907a4d9dc8a246b  s9_budget_table.sh
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+d5acd881f261f94e0523e7eeb627e3b613e5e021fbaa7985175f0dcc77e166c8  run_s9_p201b_score.sh
+677c908c452a9271cc1372d7add04353bd4ffa6aa86564ba20ed88d5c478bbab  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/high/block/SIDECAR.json
+133259d8a69b0ccb35d22b54142e627738ea21a99b48b74433f5718e73cf689a  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/high/HOSTS.json
+{"wrote": "/home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_high_main_a6b_block", "names": ["a6b"], "contexts": 80, "closure": "fair-gp-search-only", "bank_sha256": "da29e8ec64f623e0fa2ab29b31bbd40b91bef36adf8ddc8e2e773f51c96d01af", "sidecar_sha256": "73f70c69c1ec64fa2d69d8cdb491fbbf44f129a2bf3d7692d9fbf32b72082aed"}
+host xbabe2 a0a: contexts 80, candidates 558.25, timeouts 23.375, time-out share 0.04018912529550828
+host xbabe2 a0b: contexts 80, candidates 557.3, timeouts 24.1, time-out share 0.04145166838665291
+host xbabe2 a0s: contexts 80, candidates 513.65, timeouts 33.9, time-out share 0.061912154141174326
+host xbabe2 a0x: contexts 80, candidates 1079.675, timeouts 43.1125, time-out share 0.038397737773176135
+host xbabe2 a1: contexts 80, candidates 548.2625, timeouts 19.8625, time-out share 0.03496149614961496
+host xbabe2 a1l: contexts 80, candidates 564.7875, timeouts 19.85, time-out share 0.033952662974920354
+host xbabe2 a2: contexts 80, candidates 548.1625, timeouts 19.8875, time-out share 0.03501012234838482
+host xbabe2 a3: contexts 80, candidates 531.0375, timeouts 37.475, time-out share 0.06591763593588532
+host xbabe2 a4: contexts 80, candidates 547.1375, timeouts 38.95, time-out share 0.06645765350736878
+host xbabe2 a6a: contexts 80, candidates 558.25, timeouts 23.375, time-out share 0.04018912529550828
+b6417dfd2b7e709e63715a49bb68e4c4c8f941356a824d62b52bd0cf1853af09  /home/ubuntu/jope-data/h458-quarantine/gp_chain/p201b_v1/high/FREEZES.xbabe2.jsonl
+freeze xbabe2 a0a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 23.375 elsewhere
+freeze xbabe2 a0b: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 24.1 elsewhere
+freeze xbabe2 a0s: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 33.9 elsewhere
+freeze xbabe2 a0x: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 43.1125 elsewhere
+freeze xbabe2 a1: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 19.8625 elsewhere
+freeze xbabe2 a1l: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 19.85 elsewhere
+freeze xbabe2 a2: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 19.8875 elsewhere
+freeze xbabe2 a3: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 37.475 elsewhere
+freeze xbabe2 a4: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 38.95 elsewhere
+freeze xbabe2 a6a: 0 contexts overlap a freeze (+10 s), time-outs mean null there vs 23.375 elsewhere
+wrote /home/ubuntu/jope-data/h458s-quarantine/s9_stack/S9_STACK_P201B_high_main.json a4f2c78055ee30701dec935b42ef448bfb76cbc6e00606e62cebb34e602c1320
+a0s {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.06122681489439578, "holm_p": {}, "selection_eligible": false}
+a2 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.04285748507836373, "holm_p": {"a2 - a0a": 1.0, "a2 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a4 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.03297085211585325, "holm_p": {"a4 - a0a": 1.0, "a4 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a6a {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.00355054086301797, "holm_p": {"a6a - a0a": 1.0, "a6a - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a6b {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.030725516148893184, "holm_p": {}, "selection_eligible": false}
+a1 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.05276507510554261, "holm_p": {"a1 - a0a": 1.0, "a1 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a3 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.05750575165522757, "holm_p": {"a3 - a0a": 1.0, "a3 - a0b": 1.0}, "selection_eligible": true, "control_dominates": true}
+a1l_s1 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.11647786451317658, "holm_p": {}, "selection_eligible": false}
+a1l_s2 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.08973864338296815, "holm_p": {}, "selection_eligible": false}
+a1l_s3 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.08925664065635283, "holm_p": {}, "selection_eligible": false}
+a1l_s4 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.09332811124571208, "holm_p": {}, "selection_eligible": false}
+a1l_s5 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.10142692382331084, "holm_p": {}, "selection_eligible": false}
+a1l_s6 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.10521101705875817, "holm_p": {}, "selection_eligible": false}
+a1l_s7 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.10692782347602021, "holm_p": {}, "selection_eligible": false}
+a1l_s8 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.10799089182096792, "holm_p": {}, "selection_eligible": false}
+a1l {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.10799089182096792, "holm_p": {}, "selection_eligible": false}
+Elo V0 1788.3 rank 2
+Elo a0a 1788.3 rank 2
+Elo a0b 1792.5 rank 2
+Elo a0x 1792.7 rank 2
+Elo a0s 1788.9 rank 2
+Elo a2 1789.0 rank 2
+Elo a4 1791.9 rank 2
+Elo a6a 1787.7 rank 2
+Elo a6b 1793.3 rank 2
+Elo a1 1792.7 rank 2
+Elo a3 1785.7 rank 2
+Elo a1l_s1 1789.4 rank 2
+Elo a1l_s2 1791.5 rank 2
+Elo a1l_s3 1793.7 rank 2
+Elo a1l_s4 1795.8 rank 2
+Elo a1l_s5 1796.8 rank 2
+Elo a1l_s6 1794.6 rank 2
+Elo a1l_s7 1793.0 rank 2
+Elo a1l_s8 1793.5 rank 2
+Elo a1l 1793.5 rank 2
+exit 0 end 2026-11-15T16:03:50Z

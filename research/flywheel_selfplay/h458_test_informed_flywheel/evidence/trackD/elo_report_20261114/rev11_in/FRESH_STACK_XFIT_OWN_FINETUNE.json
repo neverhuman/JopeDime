@@ -1,0 +1,819 @@
+{
+ "arm": "h458d.FRESH_STACK_XFIT_OWN_FINETUNE",
+ "baseline": "stk_base",
+ "block_dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/stk_xfit",
+ "block_files_sha256": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": "07728ad5935bdc8a0a9ea00cf555825c5d4692370c466cdffb17ad56b442b720",
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": "567775f3e0f87598412d1e49fb7839fca299c952e41679d63150948a8dca2ea9",
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": "ec6bc224a963797f4920228225875dbf5fe41605c726e6361cfd000f7d6e943b",
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": "395b91240926cc761da49d8cb89b4a07885c283c2657bf4fc0cd88a2cbde56bc",
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": "0ee86ba13b4fc27479b072d6d0e0063608a4779cf2f5d6d4244f591436c63273",
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": "05e0b044563a8efa1ac7488f2a1915d4e82b7d0801429f45bef2359c900cdf0e",
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": "944e7342ac0a2a6fd4152c36f793d436bd3e31444c05aaa7dc6624dc521eee75",
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": "3555719eeedf3a52d8f7b6b9999bc1fa34d660dee8b41210a779e1df65b9e01b",
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": "abe8b227dd3988d8dbb2d10103a41a503b0639a35db2e45749c352109f04a22c",
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": "6e58fbb722274073d2defbbeef61d770acf60443494145325144f7edbf9a60d9"
+ },
+ "board": "dev91-freshprobe-v1",
+ "columns": [
+  "stk_base",
+  "stk_ft",
+  "stk_ftnaive"
+ ],
+ "families": [
+  "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+  "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+  "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+  "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+  "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+  "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+  "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+  "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+  "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+  "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+ ],
+ "family_mean_u": {
+  "stk_base": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.4668258658778657,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 1.5029201537476504,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.985770605983834,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.550844849466297,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.2980355602891767,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 4.412934567513338,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 1.6452415371573963,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6806715357225418,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.22334429866706507,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.8881904567313966
+  },
+  "stk_ft": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 3.3186118717699604,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 2.0136007239843914,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.82974375895926,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.5351511022882915,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.28981875269720314,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 4.415409671754806,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 1.6172303893055633,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6753608749867867,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.19205891769328828,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": -0.6907562657956088
+  },
+  "stk_ftnaive": {
+   "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 3.7393702389969286,
+   "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 2.018296758545494,
+   "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": 2.346291451941584,
+   "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": 0.4123017580723562,
+   "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": 0.12378263288713226,
+   "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 3.4807903963736537,
+   "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": 0.8172039311535063,
+   "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": 0.6478942633947805,
+   "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": 0.02015023790536562,
+   "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 1.0590836919868218
+  }
+ },
+ "inputs": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "board_sums": {
+   "PROBE_BOARD.json": "593a1eb98868826bf3dad8752c143225e35a1b2ef77483e7bf3419e045ca48d3",
+   "PROBE_YA.npz": "faeff3583372a6b5ea7f002f3b2c08c7427915924a051106449e2824ea35f1a5",
+   "bank_d91probe_f64.npz": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632"
+  }
+ },
+ "label": "fresh-probe: scoring only",
+ "missing_contexts": [],
+ "n_scored": 10,
+ "paired": {
+  "stk_ft - stk_base": {
+   "contexts_wtl": [
+    4,
+    0,
+    6
+   ],
+   "families_wtl": [
+    4,
+    0,
+    6
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 1.8517860058920947,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.510680570236741,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.1560268470245738,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.015693747178005424,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.008216807591973574,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": 0.002475104241468351,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": -0.028011147851833007,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": -0.005310660735755146,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.03128538097377678,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 0.19743419093578785
+   },
+   "mean_context_du": 0.2317831279950174,
+   "mean_family_du": 0.2317831279950174,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.314453125
+  },
+  "stk_ftnaive - stk_base": {
+   "contexts_wtl": [
+    3,
+    0,
+    7
+   ],
+   "families_wtl": [
+    3,
+    0,
+    7
+   ],
+   "family_du": {
+    "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119": 2.2725443731190627,
+    "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279": 0.5153766047978434,
+    "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426": -0.6394791540422498,
+    "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564": -0.13854309139394078,
+    "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99": -0.17425292740204446,
+    "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c": -0.9321441711396838,
+    "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7": -0.82803760600389,
+    "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d": -0.032777272327761287,
+    "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9": -0.20319406076169944,
+    "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f": 1.9472741487182184
+   },
+   "mean_context_du": 0.17867668435638548,
+   "mean_family_du": 0.17867668435638548,
+   "n_contexts": 10,
+   "n_families": 10,
+   "signflip_p_two_sided": 0.60546875
+  }
+ },
+ "per_context": {
+  "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 2.0095031082756907,
+     "u": 1.4668258658778657
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 0.31540475634911574,
+     "u": 3.3186118717699604
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 0.20707859093429445,
+     "u": 3.7393702389969286
+    }
+   },
+   "family": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+   "n_probe": 2000
+  },
+  "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 3.3220211934971133,
+     "u": 0.6806715357225418
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 3.339710249727093,
+     "u": 0.6753608749867867
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 3.4327121507725242,
+     "u": 0.6478942633947805
+    }
+   },
+   "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+   "n_probe": 1999
+  },
+  "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 168.39327070276008,
+     "u": 1.5029201537476504
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 101.05061910756274,
+     "u": 2.0136007239843914
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 100.57719438726288,
+     "u": 2.018296758545494
+    }
+   },
+   "family": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+   "n_probe": 2000
+  },
+  "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 1310.8141881073761,
+     "u": 0.22334429866706507
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 1352.4717479570113,
+     "u": 0.19205891769328828
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 1606.1540340722174,
+     "u": 0.02015023790536562
+    }
+   },
+   "family": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+   "n_probe": 1999
+  },
+  "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 1.1430484597420627,
+     "u": 0.2980355602891767
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 1.152479361896996,
+     "u": 0.28981875269720314
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 1.3606352799471264,
+     "u": 0.12378263288713226
+    }
+   },
+   "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+   "n_probe": 1999
+  },
+  "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 0.0699535869887577,
+     "u": 4.412934567513338
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 0.06978065866499167,
+     "u": 4.415409671754806
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 0.17767857335524195,
+     "u": 3.4807903963736537
+    }
+   },
+   "family": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+   "n_probe": 1999
+  },
+  "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 1.2605986438098218,
+     "u": 0.550844849466297
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 1.2805382142599144,
+     "u": 0.5351511022882915
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 1.4479225625928287,
+     "u": 0.4123017580723562
+    }
+   },
+   "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+   "n_probe": 2000
+  },
+  "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 130409.98584328826,
+     "u": -0.8881904567313966
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 107044.97081727999,
+     "u": -0.6907562657956088
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 18604.6039892841,
+     "u": 1.0590836919868218
+    }
+   },
+   "family": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+   "n_probe": 2000
+  },
+  "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 0.6491159064820349,
+     "u": 2.985770605983834
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 0.758724049548411,
+     "u": 2.82974375895926
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 1.2303948919699046,
+     "u": 2.346291451941584
+    }
+   },
+   "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+   "n_probe": 1997
+  },
+  "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+   "cols": {
+    "stk_base": {
+     "finite": true,
+     "rmse": 4545.252295951074,
+     "u": 1.6452415371573963
+    },
+    "stk_ft": {
+     "finite": true,
+     "rmse": 4674.369954655874,
+     "u": 1.6172303893055633
+    },
+    "stk_ftnaive": {
+     "finite": true,
+     "rmse": 10403.276896842865,
+     "u": 0.8172039311535063
+    }
+   },
+   "family": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+   "n_probe": 2000
+  }
+ },
+ "pre": {
+  "arm": "h458d.FRESH_STACK_XFIT_OWN_FINETUNE",
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "baseline": "stk_base",
+  "board": "dev91-freshprobe-v1",
+  "by": "cl_h458",
+  "columns": [
+   "stk_base",
+   "stk_ft",
+   "stk_ftnaive"
+  ],
+  "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+  "spec": "Track D, the absorption test of the per-table fine-tune (arm B4 of S4 in its random-slot form): does a fine-tune of our 23.7M ICL model on a context's own SEARCH rows still add anything once it sits in a stack beside tree, ridge, neighbour, GP and frozen-ICL columns? Same ten contexts as ledger lines 25 to 37, fresh rows, scored once. Registered before any cross-fitted checkpoint exists. I asked cl_mtc and cl_fwriter to rule on this at 07:58Z and again via the watcher; neither has posted since 05:26Z, so I register it myself and say so in the shared chat. BASE COLUMNS (seven): the frozen init's three direct columns (block probe_blocks/init_rand; SEARCH values out of fold in context), the ridge, 16-nearest-neighbour and boosted-tree hints as predictors (blocks ctx_tts/probe_blocks/hridge, hknn, hgbm; SEARCH values out of fold on the bank's five folds) and the out-of-fold single GP run of the S9 pilot at 160 generations (gp_chain/pilot_high_v1/block column oofsingle). CANDIDATE: three columns ctxx (ridge-residual, Yeo-Johnson, rank-Gauss) of the own-table fine-tune, CROSS-FITTED: for each bank fold k a fine-tune of the same init with the recipe of line 29 (random slots, 2,000 exposures per row) on pool ctx_pool_xfold<k>_v1, which holds the context's SEARCH rows outside fold k minus every row whose feature vector occurs in fold k; a SEARCH row's value comes from the fold model that never saw it (and, inside the builder, from a context without that row); the fresh-row value is the full-data model of line 29 (block ctxr_e2000, column ref), the model that would be fielded. STACK RULE, fixed: non-negative least squares on the SEARCH-row column values, weights normalised to sum one, applied to the fresh-row values (gp_chain_h458.blend_weights). stk_base = the seven base columns; stk_ft = base plus the three cross-fitted columns; stk_ftnaive = base plus the three columns of ctxr_e2000 with their own SEARCH values, which the fine-tune has trained on (descriptive: what skipping the cross-fit does). Baseline stk_base, use ref. READING RULE, over the ten contexts: (S) the fine-tune SURVIVES the stack if stk_ft beats stk_base on at least 7 of 10 with a positive mean difference; then B4 goes to the P201B design board as S4's arm. Fewer than 7 or a mean at or below zero: absorbed on these tables; per-table fine-tuning is not built further on this evidence. Descriptive, no rule: the mean weight on the three fine-tune columns, and stk_ftnaive minus stk_ft. MY PREDICTION: S fails. stk_ft beats stk_base on 4 to 6 of 10, mean between +0.03 and +0.15 u, with the gain on 769243ee, ce33f2a8, 469b72b7 and 4286560c; stk_ftnaive is not above stk_ft in the mean. Limits: ten contexts, a direction call; in-corpus lineage (init fleet_M_x2 valley_002; the GP column's prior saw dev91 random-split winners); the stack is a seven-column stand-in for the production stack, not the production stack.",
+  "time_utc": "2026-11-15T09:16:15Z",
+  "type": "pre",
+  "use": "ref"
+ },
+ "schema": "jope.h458s.s7_probe_score/v1",
+ "scorer_sha256": "f088567205683cb3bdd9aec05d625dc2e4d8d54466811e340af52cac639ef2ce",
+ "sidecar": {
+  "bank_sha256": "ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632",
+  "canonical_promotion_forbidden": true,
+  "closure": "fresh-probe",
+  "columns_base": [
+   "init:icl_e8_cw12_robridge_cv7",
+   "init:icl_e8_cw12_yj_cv7",
+   "init:icl_e8_rankgauss_duan_cv7",
+   "hridge:icl_e8_cw12_robridge_cv7",
+   "hknn:icl_e8_cw12_robridge_cv7",
+   "hgbm:icl_e8_cw12_robridge_cv7",
+   "gp:oofsingle"
+  ],
+  "columns_candidate": [
+   "icl_e8_cw12_robridge_cv7",
+   "icl_e8_cw12_yj_cv7",
+   "icl_e8_rankgauss_duan_cv7"
+  ],
+  "contexts": [
+   "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+   "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755",
+   "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042",
+   "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631",
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+   "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689",
+   "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8",
+   "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da",
+   "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd",
+   "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38"
+  ],
+  "fine_tune_weight_mean": {
+   "stk_ft": 0.49875232336352743,
+   "stk_ftnaive": 0.924755163428984
+  },
+  "in_corpus_dev91_disclosure": true,
+  "names": [
+   "stk_base",
+   "stk_ft",
+   "stk_ftnaive"
+  ],
+  "producer": "cl_h458 build_xfit_block.py sha256 d0ce5f270fb58429",
+  "reads_audit_labels": false,
+  "rule": "non-negative least squares on SEARCH-row column values, weights normalised to sum one, applied to the fresh-row values",
+  "stacked_from": {
+   "ft": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctxx_e2000",
+    "sidecar_sha256": "9d5d2fd9021e842b600abca0a846bf5f342067672bc62d104b02f7bdf0280891"
+   },
+   "ftnaive": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/ctxr_e2000",
+    "sidecar_sha256": "c9b06bf9cf0b08c31c0cfcef4f7c63207267e7e5b396d61271baca4271c0659a"
+   },
+   "gp": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/gp_chain/pilot_high_v1/block",
+    "sidecar_sha256": "6f5f98b6abbb252ac5e5fcad2855a812110616511d2231a29d6b35120b51bec9"
+   },
+   "hgbm": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hgbm",
+    "sidecar_sha256": "56c6a732fd3056de3a0437b90a7c5a11c9c080f3d5faec40ffafb9d14ff94e0c"
+   },
+   "hknn": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hknn",
+    "sidecar_sha256": "78f6d8b9fe77e33fb77b765865fc3e88bb793911f3347b0676d12765524e783c"
+   },
+   "hridge": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/ctx_tts/probe_blocks/hridge",
+    "sidecar_sha256": "dfeb6a58b31160e16e78ac0c9f1d7a57fdb6f3b858fe7d6f0537454783751ae1"
+   },
+   "init": {
+    "dir": "/home/ubuntu/jope-data/h458-quarantine/probe_blocks/init_rand",
+    "sidecar_sha256": "8c07da14666fa8c6e4b9ec10fbcd9e20699a12c492b32441af928ac48cda8deb"
+   }
+  },
+  "weights_by_cid": {
+   "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+    "stk_base": [
+     0.0,
+     0.0,
+     1.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.2570292938491724,
+     0.7429707061508276
+    ]
+   },
+   "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+    "stk_base": [
+     0.2174415775064785,
+     0.1041236164968022,
+     0.27205983684825935,
+     0.0,
+     0.0,
+     0.23160884019799455,
+     0.1747661289504654
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.16460869436999961,
+     0.0,
+     0.0,
+     0.0,
+     0.01619969396697301,
+     0.30550180393220283,
+     0.11152462395227024,
+     0.40216518377855426
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.22182120865541446,
+     0.7781787913445855
+    ]
+   },
+   "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+    "stk_base": [
+     0.21781409001777183,
+     0.6463405697616045,
+     0.06513412871266057,
+     0.0,
+     0.0,
+     0.0,
+     0.07071121150796318
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.18059232726621036,
+     0.3273818939840039,
+     0.4920257787497857
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.08267713461743748,
+     0.7016434685633357,
+     0.21567939681922677
+    ]
+   },
+   "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+    "stk_base": [
+     0.47692107698007175,
+     0.0,
+     0.06675350767758166,
+     0.0,
+     0.0,
+     0.0760274304682841,
+     0.3802979848740626
+    ],
+    "stk_ft": [
+     0.04257507815238892,
+     0.09072459761185601,
+     0.0,
+     0.0,
+     0.0,
+     0.025898486885290735,
+     0.27489691699512386,
+     0.29289950655558594,
+     0.19975429607430248,
+     0.07325111772545206
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.606010174630682,
+     0.3939898253693181
+    ]
+   },
+   "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+    "stk_base": [
+     0.11294084398358865,
+     0.2629334938888888,
+     0.0,
+     0.051031898549014264,
+     0.0,
+     0.2820575496658277,
+     0.2910362139126806
+    ],
+    "stk_ft": [
+     0.09839380799326941,
+     0.25832897954163364,
+     0.0,
+     0.05597294702442926,
+     0.0,
+     0.2785088439954556,
+     0.28571693849089447,
+     0.023078482954317473,
+     0.0,
+     0.0
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.345404955756689,
+     0.6545950442433109
+    ]
+   },
+   "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+    "stk_base": [
+     0.003955336658321619,
+     0.0,
+     0.0,
+     0.4607784387735168,
+     0.0,
+     0.0007718670117531197,
+     0.5344943575564084
+    ],
+    "stk_ft": [
+     0.0012087839626923422,
+     0.0,
+     0.0,
+     0.4703269876861771,
+     0.0,
+     0.0006415074171526435,
+     0.5187631410256717,
+     0.005515170918306328,
+     0.0,
+     0.0035444089899999516
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.34847717957809987,
+     0.0,
+     0.0,
+     0.29782096095787014,
+     0.003165786560460047,
+     0.25158937099462764,
+     0.09894670190894227
+    ]
+   },
+   "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+    "stk_base": [
+     0.3860249567886398,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.13748589170544617,
+     0.476489151505914
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.012266155550294887,
+     0.3067642813438928,
+     0.41474596230962724,
+     0.04314145592730932,
+     0.22308214486887573
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.31830724297146545,
+     0.6816927570285345
+    ]
+   },
+   "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+    "stk_base": [
+     0.0,
+     0.29935342620682964,
+     0.0,
+     0.44757846657874134,
+     0.19978360688745359,
+     0.0,
+     0.053284500326975306
+    ],
+    "stk_ft": [
+     0.0,
+     0.044393398998447894,
+     0.0,
+     0.37036754072728606,
+     0.17009371194762188,
+     0.0,
+     0.0,
+     0.12435165817640897,
+     0.0,
+     0.2907936901502352
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.038610423437631824,
+     0.06753980173655845,
+     0.0,
+     0.0,
+     0.5652957380304287,
+     0.31419006717964587,
+     0.014363969615735167
+    ]
+   },
+   "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+    "stk_base": [
+     0.19681843406956934,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.18830075812539543,
+     0.6148808078050353
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.13491652893617556,
+     0.4473669577466558,
+     0.197225535068579,
+     0.22049097824858974,
+     0.0
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.16843243219544693,
+     0.8315675678045532
+    ]
+   },
+   "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+    "stk_base": [
+     0.0,
+     0.0650785878449343,
+     0.07687264394755512,
+     0.6046940710675135,
+     0.0,
+     0.0,
+     0.25335469713999714
+    ],
+    "stk_ft": [
+     0.0,
+     0.0,
+     0.117949180120403,
+     0.6205788188704797,
+     0.0,
+     0.0,
+     0.20501478700445913,
+     0.0,
+     0.0,
+     0.056457214004658265
+    ],
+    "stk_ftnaive": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.9217169024113699,
+     0.07828309758863011
+    ]
+   }
+  }
+ },
+ "sidecar_sha256": "e497f230eb31ebdbfbff8cbf14c51e3b36fe7a020f8bf0bd57f5f7bc6a08379e",
+ "summary": {
+  "stk_base": {
+   "context_mean_u": 1.2878398517693768,
+   "family_mean_u": 1.2878398517693765
+  },
+  "stk_ft": {
+   "context_mean_u": 1.5196229797643943,
+   "family_mean_u": 1.5196229797643943
+  },
+  "stk_ftnaive": {
+   "context_mean_u": 1.4665165361257622,
+   "family_mean_u": 1.4665165361257622
+  }
+ },
+ "time_utc": "2026-11-15T12:38:12Z",
+ "use": "ref",
+ "wall_s": 0.04
+}

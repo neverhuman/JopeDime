@@ -1,0 +1,34 @@
+log /home/ubuntu/jope-data/h458s-quarantine/s9_stack/p201b_medium_a5_prod_hyb.log block /home/ubuntu/jope-data/h459-s9/r2/p201b80_medium_prod_hyb
+start 2026-11-15T04:19:19Z host xbabe2 tier medium anc hyb mode prod tag medium_a5_prod_hyb
+affinity 0-15,64-79 threads OMP=1 OPENBLAS=1 MKL=1 NUMEXPR=1
+7b90ae79f83b7f3540bbfaaebd90c0812c2c7a602f7da37eabad445863b8bc47  s9_p201b_stack.py
+4ddb1f3f6e3cfa6855cdc423733b3aad1d6c6d4861f56f27f9cc49cbdef10397  run_s9_a5_score.sh
+4680e67b391b46ec751ead274dec040260b72b83382936c91829002b37641f53  /home/ubuntu/jope-data/h459-s9/r2/p201b80_medium_prod_hyb/SIDECAR.json
+effef3cc49fb11f35a74f540cce19785c8ae144cfdc2ccddb8f5ba1cec1cdaa7  /home/ubuntu/jope_plan/evidence/H459/runs_r2/BUDGET_p201b80_medium_prod_hyb.json
+2dc48db0da76cbbc5842610d23a7bf993b42e51b96669c625686f54448440298  /home/ubuntu/jope_plan/evidence/H459/runs_r2/HOSTS_p201b80_medium_prod_hyb.json
+columns a5_medium_hyb_shrunk,a5_medium_hyb_ratchet,a0_medium_hyb_s0,a0_medium_hyb_s1,a0_medium_hyb_2x,a5_medium_hyb_stg1,a5_medium_hyb_stg2,a5_medium_hyb_stg3,a5_medium_hyb_stg4,a5_medium_hyb_stg5,a6_medium_hyb_comm,a6b_medium_hyb_runbag
+controls a=a0_medium_hyb_s0 b=a0_medium_hyb_s1 x=a0_medium_hyb_2x; eligible a5_medium_hyb_shrunk a5_medium_hyb_ratchet; descriptive a5_medium_hyb_stg1,a5_medium_hyb_stg2,a5_medium_hyb_stg3,a5_medium_hyb_stg4,a5_medium_hyb_stg5,a6_medium_hyb_comm,a6b_medium_hyb_runbag
+wrote /home/ubuntu/jope-data/h458s-quarantine/s9_stack/S9_STACK_P201B_medium_a5_prod_hyb.json 19052a3139c5408042d7a14ac630bf3f94192c23373dd3e7c41ab0f22685cc47
+a5_medium_hyb_shrunk {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.01158296159658683, "holm_p": {"a5_medium_hyb_shrunk - a0_medium_hyb_s0": 0.3193035125732422, "a5_medium_hyb_shrunk - a0_medium_hyb_s1": 0.3193035125732422}, "selection_eligible": true, "control_dominates": true}
+a5_medium_hyb_ratchet {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.018242616099068975, "holm_p": {"a5_medium_hyb_ratchet - a0_medium_hyb_s0": 0.108856201171875, "a5_medium_hyb_ratchet - a0_medium_hyb_s1": 0.20486927032470703}, "selection_eligible": true, "control_dominates": true}
+a5_medium_hyb_stg1 {"R1": true, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.017852215249090135, "holm_p": {}, "selection_eligible": false}
+a5_medium_hyb_stg2 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.017603219786584155, "holm_p": {}, "selection_eligible": false}
+a5_medium_hyb_stg3 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": true, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.01814922313342117, "holm_p": {}, "selection_eligible": false}
+a5_medium_hyb_stg4 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.014502666830405003, "holm_p": {}, "selection_eligible": false}
+a5_medium_hyb_stg5 {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.011582957729568613, "holm_p": {}, "selection_eligible": false}
+a6_medium_hyb_comm {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": -0.003968661298979342, "holm_p": {}, "selection_eligible": false}
+a6b_medium_hyb_runbag {"R1": false, "R2": false, "FITSEL_confirm_AMENDMENT_2": false, "FITSEL_gp_alone_only": false, "blocked_by_noise": {"R1": false, "R2": false}, "T_over_ctrl_a": 0.005423685638286937, "holm_p": {}, "selection_eligible": false}
+Elo V0 1788.3 rank 2
+Elo a5_medium_hyb_shrunk 1788.8 rank 2
+Elo a5_medium_hyb_ratchet 1788.8 rank 2
+Elo a0_medium_hyb_s0 1786.8 rank 2
+Elo a0_medium_hyb_s1 1793.1 rank 2
+Elo a0_medium_hyb_2x 1789.4 rank 2
+Elo a5_medium_hyb_stg1 1792.0 rank 2
+Elo a5_medium_hyb_stg2 1788.8 rank 2
+Elo a5_medium_hyb_stg3 1788.8 rank 2
+Elo a5_medium_hyb_stg4 1788.8 rank 2
+Elo a5_medium_hyb_stg5 1788.8 rank 2
+Elo a6_medium_hyb_comm 1784.2 rank 2
+Elo a6b_medium_hyb_runbag 1789.9 rank 2
+exit 0 end 2026-11-15T05:21:13Z
