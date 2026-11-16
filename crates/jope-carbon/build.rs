@@ -11,7 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.2.0";
-const CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG: &str = "carbon-cli-v1.1.0";
+const CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG: &str = "carbon-cli-v1.2.0";
 const CANONICAL_CARBON_SEMVER: &str = "1.2.0";
 
 fn is_valid_hex_sha(candidate: &str) -> bool {

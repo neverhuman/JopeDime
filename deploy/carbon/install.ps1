@@ -12,7 +12,7 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$Version = "carbon-cli-v1.1.0",
+  [string]$Version = "carbon-cli-v1.2.0",
   [string]$BinDir = "",
   [string]$ConfigDir = "",
   [string]$BaseUrl = "",

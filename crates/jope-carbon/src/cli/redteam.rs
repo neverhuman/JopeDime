@@ -979,14 +979,14 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         let (dl_ok_code, dl_ok_hdrs, _) = send_raw_edge_http_with_headers(
             &base,
             "GET",
-            "/carbon/releases/carbon-cli-v1.1.0/SHA256SUMS.txt",
+            "/carbon/releases/carbon-cli-v1.2.0/SHA256SUMS.txt",
             &[],
             None,
         )?;
         let dl_loc = dl_ok_hdrs.get("location").map(String::as_str).unwrap_or("");
         let dl_ok = dl_ok_code == 302
             && dl_loc
-                == "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.1.0/SHA256SUMS.txt";
+                == "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.2.0/SHA256SUMS.txt";
         let passed = ping_code == 200
             && role_scrub_ok
             && hsts_ok
