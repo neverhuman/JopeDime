@@ -1,0 +1,1889 @@
+{
+ "schema": "jope.h465.a13.public_field_definition/v1",
+ "status": "FOR PINNING by a LOOK_LEDGER pre line before any entrant of ours is scored on a public task (cl_fwriter 06:00:17Z, condition 1). Any later change is an amendment with both results shown.",
+ "built_utc": "2026-11-16T06:38:20Z",
+ "assigned_by": "agy_apex_w10 (LEAD), 2026-11-16T06:35:56Z",
+ "author": "cl_h458",
+ "inputs": {
+  "field_definition_draft": {
+   "path": "FIELD_DEFINITION_DRAFT_cl_h458_20261116.json",
+   "sha256": "45915d521879ebf6ee0900beefe71ffd51675dc2e49702593d23a7d4c825b616"
+  },
+  "tasks_44": {
+   "path": "/home/ubuntu/jope-data/h458s-quarantine/harness_parity/tasks_20261116T060506Z/TASKS_44.tsv",
+   "sha256": "b70bea88f01486fc11f316b593329003eb8833531dd71088ca0e73fc5cd9664c"
+  },
+  "elo_code": "bencheval/elo_utils.py sha256 12a8a1ee..."
+ },
+ "scope": {
+  "wave": "A",
+  "tasks": "the 44 PUBLIC regression tasks of TASKS_44 (8 TabArena v0.1, 36 BeyondArena core)",
+  "split": "official fold 0, repeat 0, as in TASKS_44",
+  "metric": "rmse per task, as published (metric_error, lower is better)",
+  "not_in_v1": "classification (38 TabArena, 98 BeyondArena tasks): Wave B gets its own pinned definition; its in-bank flags are not joined yet",
+  "dataset_names": "the published results name BeyondArena datasets with a hash suffix; the scorer maps them to TASKS_44 by source key and stops on any unmapped task"
+ },
+ "sealed": {
+  "rule": "the 13 SEALED benchmark members (5 TabArena regression, 8 BeyondArena) are excluded from this read and from T9; they are read only in the last read under its lock",
+  "check": "sealed_overlap is 0 and admission_class is PUBLIC on all 44 tasks (asserted when this file was built)"
+ },
+ "tasks": [
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "Another-Dataset-on-used-Fiat-500",
+   "openml_task_id": "363615",
+   "rows": "1538",
+   "split": "train 1025 / test 513 (fold 0 repeat 0)",
+   "in_r5": "whole",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/Another-Dataset-on-used-Fiat-500.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "Food_Delivery_Time",
+   "openml_task_id": "363672",
+   "rows": "45451",
+   "split": "train 30300 / test 15151 (fold 0 repeat 0)",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/Food_Delivery_Time.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "QSAR-TID-11",
+   "openml_task_id": "363697",
+   "rows": "5742",
+   "split": "train 3828 / test 1914 (fold 0 repeat 0)",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/QSAR-TID-11.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "airfoil_self_noise",
+   "openml_task_id": "363612",
+   "rows": "1503",
+   "split": "train 1002 / test 501 (fold 0 repeat 0)",
+   "in_r5": "whole",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/airfoil_self_noise.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "miami_housing",
+   "openml_task_id": "363686",
+   "rows": "13776",
+   "split": "train 9184 / test 4592 (fold 0 repeat 0)",
+   "in_r5": "partial",
+   "in_bank_matches": "2",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/miami_housing.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "physiochemical_protein",
+   "openml_task_id": "363693",
+   "rows": "45730",
+   "split": "train 30486 / test 15244 (fold 0 repeat 0)",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/physiochemical_protein.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "superconductivity",
+   "openml_task_id": "363705",
+   "rows": "21263",
+   "split": "train 14175 / test 7088 (fold 0 repeat 0)",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/superconductivity.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "TabArena-v0.1",
+   "name": "wine_quality",
+   "openml_task_id": "363708",
+   "rows": "6497",
+   "split": "train 4331 / test 2166 (fold 0 repeat 0)",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/TabArena/tabarena-v0.1/sources/wine_quality.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "5g_energy_consumption",
+   "openml_task_id": "-",
+   "rows": "92629",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/5g_energy_consumption.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "airfoil_self_noise",
+   "openml_task_id": "-",
+   "rows": "1503",
+   "split": "30 official folds",
+   "in_r5": "whole",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/airfoil_self_noise.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "blood_tests_drink_prediction",
+   "openml_task_id": "-",
+   "rows": "345",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/blood_tests_drink_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "body_density_prediction",
+   "openml_task_id": "-",
+   "rows": "252",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/body_density_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "cirrhosis_patient_survival_prediction",
+   "openml_task_id": "-",
+   "rows": "161",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/cirrhosis_patient_survival_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "climate_model_weather_forecasting",
+   "openml_task_id": "-",
+   "rows": "1250000",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/climate_model_weather_forecasting.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "coffee_rating_prediction",
+   "openml_task_id": "-",
+   "rows": "2369",
+   "split": "5 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/coffee_rating_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "cooking_time",
+   "openml_task_id": "-",
+   "rows": "1250000",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/cooking_time.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "delivery_eta",
+   "openml_task_id": "-",
+   "rows": "1250000",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/delivery_eta.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "early_learning_predictors",
+   "openml_task_id": "-",
+   "rows": "18874",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/early_learning_predictors.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "electric_motor_temperature_prediction",
+   "openml_task_id": "-",
+   "rows": "1296316",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/electric_motor_temperature_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "fiat_500",
+   "openml_task_id": "-",
+   "rows": "1538",
+   "split": "30 official folds",
+   "in_r5": "whole",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/fiat_500.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "food_delivery_time",
+   "openml_task_id": "-",
+   "rows": "45451",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/food_delivery_time.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "forest_fires",
+   "openml_task_id": "-",
+   "rows": "517",
+   "split": "60 official folds",
+   "in_r5": "whole",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/forest_fires.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "garments_worker_productivity",
+   "openml_task_id": "-",
+   "rows": "1197",
+   "split": "30 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/garments_worker_productivity.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "immoscout_german_house_prices",
+   "openml_task_id": "-",
+   "rows": "10317",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/immoscout_german_house_prices.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "maps_router_eta",
+   "openml_task_id": "-",
+   "rows": "1250000",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/maps_router_eta.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "mercari_price_suggestion",
+   "openml_task_id": "-",
+   "rows": "1250000",
+   "split": "1 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/mercari_price_suggestion.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "mercedes_benz_greener_manufacturing",
+   "openml_task_id": "-",
+   "rows": "4204",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/mercedes_benz_greener_manufacturing.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "miami_housing",
+   "openml_task_id": "-",
+   "rows": "13776",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "2",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/miami_housing.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "mutual_funds_india",
+   "openml_task_id": "-",
+   "rows": "793",
+   "split": "30 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/mutual_funds_india.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "obesity_estimation",
+   "openml_task_id": "-",
+   "rows": "498",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/obesity_estimation.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "physiochemical_protein",
+   "openml_task_id": "-",
+   "rows": "45730",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/physiochemical_protein.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "qsar_tid_11",
+   "openml_task_id": "-",
+   "rows": "5741",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/qsar_tid_11.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "rossmann_store_sales",
+   "openml_task_id": "-",
+   "rows": "844392",
+   "split": "3 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/rossmann_store_sales.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "santander_transaction_value",
+   "openml_task_id": "-",
+   "rows": "4447",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/santander_transaction_value.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "sat11_hand_algo_runtime",
+   "openml_task_id": "-",
+   "rows": "2960",
+   "split": "30 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/sat11_hand_algo_runtime.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "sberbank_housing_market_forecasting",
+   "openml_task_id": "-",
+   "rows": "27195",
+   "split": "5 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/sberbank_housing_market_forecasting.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "sf_permit_time",
+   "openml_task_id": "-",
+   "rows": "116954",
+   "split": "6 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/sf_permit_time.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "student_portuguese_performance",
+   "openml_task_id": "-",
+   "rows": "649",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/student_portuguese_performance.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "superconductivity",
+   "openml_task_id": "-",
+   "rows": "21263",
+   "split": "9 official folds",
+   "in_r5": "partial",
+   "in_bank_matches": "1",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/superconductivity.json",
+   "regime_of_our_pre_absorption_read": "in-corpus"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "telemonitoring_parkinsons_biomedical_voice_measurements",
+   "openml_task_id": "-",
+   "rows": "502",
+   "split": "60 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/telemonitoring_parkinsons_biomedical_voice_measurements.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "video_game_fps_prediction",
+   "openml_task_id": "-",
+   "rows": "12288",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/video_game_fps_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "video_transcoding_time_prediction",
+   "openml_task_id": "-",
+   "rows": "68784",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/video_transcoding_time_prediction.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "wine_quality",
+   "openml_task_id": "-",
+   "rows": "6497",
+   "split": "9 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/wine_quality.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  },
+  {
+   "benchmark": "BeyondArena-2ecfe882",
+   "name": "wine_world_cost",
+   "openml_task_id": "-",
+   "rows": "1279",
+   "split": "30 official folds",
+   "in_r5": "none",
+   "in_bank_matches": "0",
+   "sealed_overlap": "0",
+   "admission_class": "PUBLIC",
+   "source_key": "benchmarks/BeyondArena/2ecfe882ccfb814fc27c4de10a64ceefd5d7655c/sources/wine_world_cost.json",
+   "regime_of_our_pre_absorption_read": "unseen"
+  }
+ ],
+ "regime_counts": {
+  "TabArena": {
+   "unseen": 1,
+   "in-corpus": 7
+  },
+  "BeyondArena": {
+   "unseen": 27,
+   "in-corpus": 9
+  }
+ },
+ "regimes": {
+  "unseen": "pre-absorption read on tasks with in_bank_matches 0",
+  "in-corpus": "pre-absorption read on tasks present in a training bank",
+  "absorbed": "after per-table fitting on all rows under random splits (T9); label recall; never the official split, every official fold and repeat blocked",
+  "always_together": "every public cell reports all three; the externals saw no test row in any regime, and the caption says so",
+  "headline": "the rank on unseen tasks. TabArena regression has 1 unseen task: its unseen cell is 'not available (1 task)' and is never filled from in-corpus tasks. BeyondArena regression has 27."
+ },
+ "decisions": {
+  "D1_suite_per_name": {
+   "choice": "the newest suite in which the method has fold 0 on the most datasets",
+   "principle": "newest published result",
+   "sensitivity": "none needed below 20 Elo at the top 5; XT (default) moves 52.8 and is reported if it is in the top 5"
+  },
+  "D2_entries_per_family": {
+   "choice": "every published display name is its own entry; none is merged",
+   "principle": "the field as published",
+   "sensitivity": "REALMLP and TABM variants differ by up to 180 Elo; listed, not merged"
+  },
+  "D3_fold_rule": {
+   "choice": "fold 0 only, for every method and for us",
+   "principle": "the one split common to every method and to our read",
+   "label": "field Elo computed by us on fold 0; never 'published rank'",
+   "sensitivity": "TabArena: the same field under the per-dataset mean over all folds (differs by up to 359 Elo, median 93)",
+   "parity_of_recipe": "July table: per-dataset mean max |diff| 14.75, Spearman 0.9994; fold 0 only max 124.9"
+  },
+  "D4_imputed_cells": {
+   "choice": "a method with an imputed fold-0 cell on a scored task is excluded; a method whose file has no imputed flag is kept and marked 'imputation unknown'",
+   "principle": "no imputed cells"
+  },
+  "D5_headline_set": {
+   "choice": "per benchmark, the scored tasks x the methods with fold 0 on every regression dataset; methods with partial coverage appear in a sensitivity row on the common subset",
+   "principle": "common task set, no task filtering",
+   "note": "TabFM and LimiX-2 on BeyondArena have partial coverage in the published field; TabFM is run by us on every task, so it is in the headline as our run"
+  },
+  "D6_unverified_upstream": {
+   "choice": "kept and marked; a sensitivity row without them",
+   "principle": "the field as published"
+  },
+  "ruled_by": "proposed by cl_h458 on stated principles under agy's assignment; agy confirms or changes each before the pre line. No entrant result of ours existed when these were written."
+ },
+ "externals_run_by_us": {
+  "models": [
+   "TabPFN 3.5",
+   "TabFM 1.0 (single model, per Jepson's ruling relayed 02:28Z)",
+   "Kumo Tabular Large (seeded)",
+   "Kumo Tabular Small"
+  ],
+  "rule": "local weights and settings identical to the dev91 board rows, no per-task tuning, offline; their shas are bound in the A-13 bundle manifest before the read (cl_fwriter 06:10:30Z, condition 4)",
+  "why": "Kumo is in no published field; TabFM is not in TabArena's and covers 120 of 142 BeyondArena datasets",
+  "both_shown": "where a model is also in the published field (TabPFN 3.5; TabFM on BeyondArena), our run and the published row are both shown, and the difference is reported as a harness check"
+ },
+ "elo_recipe": {
+  "code": "bencheval.elo_utils.EloHelper(method_col='method', task_col='dataset', error_col='metric_error', split_col=None); battles = convert_results_to_battles(results); compute_mle_elo(battles, calibration_framework='RF (default)', calibration_elo=1000)",
+  "battles": "one per (task, method pair) at fold 0; ties count as ties",
+  "anchor": "RF (default) = 1000",
+  "intervals": "bootstrap over tasks, fixed seed, at read time",
+  "our_entrants": "enter the same fit under the same recipe on the same tasks"
+ },
+ "published_field": {
+  "TabArena": {
+   "regression_datasets_in_benchmark": 13,
+   "headline_field_methods": [
+    {
+     "display_name": "AutoGluon 1.4 (4h)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "3dce582cc82a25d1bf44de25daf3cf020e5fd05d448d36c9d4144e247703db54",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (best, 1h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "cd8048e136ea1d2ac9a603374927df05cea70f17528887827a85e417f45c9447",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (best, 4h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "1501763e24905ad65b4fba8a9abd335df573561519d997719a2121f0c303265c",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (best, 5m)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "e95c84d0c11e8591c00c5eab1649a7f50b8da64b3c1db741796646b300c23c8c",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (extreme, 1h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "dd3385ecf1d268d0230cf2228fda3bfd8456ec21b5273fe470683f4a7e4a005a",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (extreme, 4h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "b5c40fc778045e9682131b5d1684c4bdbfe1e5ca9d55cfbd2b374eece0d34883",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (extreme, 5m)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "9618f081ffb77b5c7fea76a39b1e6045149bb46483c4961257ca8e4e9db7a29c",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (fast, 4h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "821dae11a3b301884525f2a320b55d97bdaddc69c099d85b753073224b35aa44",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (fast, 5m)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "674f2e9ef28ae4cfa8b622d0b6a76e8251d2217dd07afa461edfdd21d5006578",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (high, 4h)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "bbc32010e1103d319ae3ad0a1bb3517d8192db005a10696c80e3d3ff98587ab5",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.4 (high, 5m)",
+     "suite": "tabarena-2025-11-01",
+     "source_sha256": "a12c80870b2ca4e71a3121a1c56279e4b5f2582305a6d8a76e11c0dc002c4497",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon 1.5 (extreme, 4h)",
+     "suite": "tabarena-2025-12-18",
+     "source_sha256": "fb6916ffa4e446b387cb1136526868c9f52fcab9ec74c4b866c373bfb47e4eff",
+     "verified_upstream": true,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "AutoGluon_v130_bq_4h8c",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "d0be4cb809205df634f1f7cf186a52ccc6617db386d94d5cfd7d17541b287dbb",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "CAT (default)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "5e381e40560d8524ebaaf24df925320159cb6b448498a4319afbfc0d5c6aa8a7",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "CAT (tuned + ensemble)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "5e381e40560d8524ebaaf24df925320159cb6b448498a4319afbfc0d5c6aa8a7",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "CAT (tuned)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "5e381e40560d8524ebaaf24df925320159cb6b448498a4319afbfc0d5c6aa8a7",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ff1dcadc450a21fc6a8a730fdec9860273c809b7e8240b504566a65dd5dea9d4",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ff1dcadc450a21fc6a8a730fdec9860273c809b7e8240b504566a65dd5dea9d4",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ff1dcadc450a21fc6a8a730fdec9860273c809b7e8240b504566a65dd5dea9d4",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM_aio_0808 (default)",
+     "suite": "LightGBM_aio_0808",
+     "source_sha256": "aa0a7449719a2388e4cd941b95ad297653f9e60ced7afe154f3f6e84a3b5248c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM_aio_0808 (tuned + ensemble)",
+     "suite": "LightGBM_aio_0808",
+     "source_sha256": "aa0a7449719a2388e4cd941b95ad297653f9e60ced7afe154f3f6e84a3b5248c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "GBM_aio_0808 (tuned)",
+     "suite": "LightGBM_aio_0808",
+     "source_sha256": "aa0a7449719a2388e4cd941b95ad297653f9e60ced7afe154f3f6e84a3b5248c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "LR (default)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "1a647b07b416e51876605c08a35fd6f1246ef0543b9130401ed003e3d43a28e8",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "LR (tuned + ensemble)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "1a647b07b416e51876605c08a35fd6f1246ef0543b9130401ed003e3d43a28e8",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "LR (tuned)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "1a647b07b416e51876605c08a35fd6f1246ef0543b9130401ed003e3d43a28e8",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_GBM (default)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "5e83714041245991c363929aa0483f2d9cf92b044905b2b00f704c412193ded6",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_GBM (tuned + ensemble)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "5e83714041245991c363929aa0483f2d9cf92b044905b2b00f704c412193ded6",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_GBM (tuned)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "5e83714041245991c363929aa0483f2d9cf92b044905b2b00f704c412193ded6",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_LR (default)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "aa41ed9361ad325f1aa2a70d79370fc852fd5fdd719f5daa0ea80eade9102fa8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_LR (tuned + ensemble)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "aa41ed9361ad325f1aa2a70d79370fc852fd5fdd719f5daa0ea80eade9102fa8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "PREP_LR (tuned)",
+     "suite": "tabarena-2026-01-23",
+     "source_sha256": "aa41ed9361ad325f1aa2a70d79370fc852fd5fdd719f5daa0ea80eade9102fa8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "Portfolio-N200 (ensemble) (4h)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "8cd51009b35f449e1f921c99858cac9814ec407726202d08dde1b3db52c00afc",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "0760a1b3545804a9067b6f39980f09a3115ee54746329ef91cb48ee741d7c9d9",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "0760a1b3545804a9067b6f39980f09a3115ee54746329ef91cb48ee741d7c9d9",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "0760a1b3545804a9067b6f39980f09a3115ee54746329ef91cb48ee741d7c9d9",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP_GPU (default)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "c84ea460df4c05430d2194b9b5029bc8625cb7b59419c7f878416041906ffd1a",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP_GPU (tuned + ensemble)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "c84ea460df4c05430d2194b9b5029bc8625cb7b59419c7f878416041906ffd1a",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALMLP_GPU (tuned)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "c84ea460df4c05430d2194b9b5029bc8625cb7b59419c7f878416041906ffd1a",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALTABPFN-V2.5 (default)",
+     "suite": "tabarena-2025-11-12",
+     "source_sha256": "495275a67af7cbfa2158510493f26a08882a45a7659beebd2600cffe6f5a9bb1",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALTABPFN-V2.5 (tuned + ensemble)",
+     "suite": "tabarena-2025-11-12",
+     "source_sha256": "495275a67af7cbfa2158510493f26a08882a45a7659beebd2600cffe6f5a9bb1",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "REALTABPFN-V2.5 (tuned)",
+     "suite": "tabarena-2025-11-12",
+     "source_sha256": "495275a67af7cbfa2158510493f26a08882a45a7659beebd2600cffe6f5a9bb1",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "RF (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ba21e8769f8b4a364cfe995bf14364737cee7564f37a25ada7bc1205d8bb65a3",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "RF (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ba21e8769f8b4a364cfe995bf14364737cee7564f37a25ada7bc1205d8bb65a3",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "RF (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "ba21e8769f8b4a364cfe995bf14364737cee7564f37a25ada7bc1205d8bb65a3",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-LIMIX-2 (default)",
+     "suite": "tabarena-2026-09-17",
+     "source_sha256": "a0374321b54e4faa5fd8ff307dc66b9f55be492b93cdb4bfd29c5d8197a184a0",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABM (default)",
+     "suite": "tabarena-2026-06-26",
+     "source_sha256": "c34d2a6c47b0d145090c46e9506dd44047b742e401aedd1b5c158636e52218d0",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABM (tuned + ensemble)",
+     "suite": "tabarena-2026-06-26",
+     "source_sha256": "c34d2a6c47b0d145090c46e9506dd44047b742e401aedd1b5c158636e52218d0",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABM (tuned)",
+     "suite": "tabarena-2026-06-26",
+     "source_sha256": "c34d2a6c47b0d145090c46e9506dd44047b742e401aedd1b5c158636e52218d0",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABPFN-3 (default)",
+     "suite": "tabarena-2026-09-16",
+     "source_sha256": "d2ae412b9165ba245c650c2313eea0faa63623bf2242a104a69cdf7b05ab8366",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABPFN-3.5 (default)",
+     "suite": "tabarena-2026-09-17-fix",
+     "source_sha256": "9d524689bf51e7b97855eb7316b05c8a9ec306dbc5106e37a33ffc9a725b0249",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TA-TABPFN-3.5-FAST (default)",
+     "suite": "tabarena-2026-09-17-fix",
+     "source_sha256": "56ee2085469618fc29586119826949d9125f2b8c2bca2c2b1ce664d1fd4a7a0c",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABDPT-1.3 (default)",
+     "suite": "tabarena-2026-09-21",
+     "source_sha256": "1f4364c59ef94f12b9503b9a8ab8f0071ae20a59d0d26ce2f51b466262e69a47",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABDPT_GPU (default)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "b667498d00265afb0150181e123a22d5b14cf1ac0c63c8826d4fb4cde0a7f247",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABDPT_GPU (tuned + ensemble)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "b667498d00265afb0150181e123a22d5b14cf1ac0c63c8826d4fb4cde0a7f247",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABDPT_GPU (tuned)",
+     "suite": "tabarena-2025-10-20",
+     "source_sha256": "b667498d00265afb0150181e123a22d5b14cf1ac0c63c8826d4fb4cde0a7f247",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABDPT_TURBO (default)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "80c2957ab098f5bea0e4bc53c36965360793781848d4604369203881b53500bc",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABICLV2 (default)",
+     "suite": "tabarena-2026-09-16",
+     "source_sha256": "ffb08899adf365831a4f0f54e2a6e9d7c48fe33b084dc121e7ed3a732a032f21",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABM (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "f5b887d9d10fbbfb421353867c56b6d0c9ee6db6ea95ef2a4ab0ed9b76226d73",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABM (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "f5b887d9d10fbbfb421353867c56b6d0c9ee6db6ea95ef2a4ab0ed9b76226d73",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABM_GPU (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "91692229ad1c4823a902960fd0d73996d90792a0ade0a05a198ac063ae85640c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABM_GPU (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "91692229ad1c4823a902960fd0d73996d90792a0ade0a05a198ac063ae85640c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABM_GPU (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "91692229ad1c4823a902960fd0d73996d90792a0ade0a05a198ac063ae85640c",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "TABPFN-V2.6 (default)",
+     "suite": "tabarena-2026-03-18",
+     "source_sha256": "1bed53f3dd726e3ce6eecf036c0ef2db9dcf8852d55cbafa07977e9b77b151f6",
+     "verified_upstream": true,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XGB (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "fb37a4ac13ee540ffc2b599b91500b81c8e2d60e68e87d5800d87063a48fdd25",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XGB (tuned + ensemble)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "fb37a4ac13ee540ffc2b599b91500b81c8e2d60e68e87d5800d87063a48fdd25",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XGB (tuned)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "fb37a4ac13ee540ffc2b599b91500b81c8e2d60e68e87d5800d87063a48fdd25",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XT (default)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "fc5e91ed67936cd10471ec92729c36198f528e92e3291eeb4816e75a42c1f8f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XT (tuned + ensemble)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "fc5e91ed67936cd10471ec92729c36198f528e92e3291eeb4816e75a42c1f8f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    },
+    {
+     "display_name": "XT (tuned)",
+     "suite": "tabarena-2026-07-13",
+     "source_sha256": "fc5e91ed67936cd10471ec92729c36198f528e92e3291eeb4816e75a42c1f8f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 13
+    }
+   ],
+   "partial_coverage_methods": [],
+   "excluded_methods": [
+    {
+     "display_name": "BETA_GPU (default)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "b164054312392c335674a193a063dbc927a41107ecf2f0fa6964df12c08f3f82",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 0,
+     "why": "no regression task"
+    },
+    {
+     "display_name": "TABFLEX_GPU (default)",
+     "suite": "tabarena-2025-09-03",
+     "source_sha256": "ab86134ede8c88b29c18ab6deaf2a90ca8698aa8721e5a1fa3151d2f504c7c75",
+     "verified_upstream": null,
+     "imputed_flag_present": false,
+     "imputed_fold0_cells": null,
+     "regression_datasets": 0,
+     "why": "no regression task"
+    },
+    {
+     "display_name": "TABICL_GPU (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "7f79aca61a3a12fd1899c6239b9c9388434bd5eeb87e1360d12aa4beb0b73666",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 15,
+     "regression_datasets": 13,
+     "why": "D4: imputed fold-0 cells; dropped unless the scorer shows none falls on a scored task"
+    },
+    {
+     "display_name": "TABM (default)",
+     "suite": "tabarena-2025-06-12",
+     "source_sha256": "f5b887d9d10fbbfb421353867c56b6d0c9ee6db6ea95ef2a4ab0ed9b76226d73",
+     "verified_upstream": null,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 1,
+     "regression_datasets": 13,
+     "why": "D4: imputed fold-0 cells; dropped unless the scorer shows none falls on a scored task"
+    }
+   ]
+  },
+  "BeyondArena": {
+   "regression_datasets_in_benchmark": 44,
+   "headline_field_methods": [
+    {
+     "display_name": "CAT (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "998b26e1416fd3b783784100a9b3c0556e4d6b048518c7355ac6f12b1fcadbcb",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "CAT (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "998b26e1416fd3b783784100a9b3c0556e4d6b048518c7355ac6f12b1fcadbcb",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "CAT (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "998b26e1416fd3b783784100a9b3c0556e4d6b048518c7355ac6f12b1fcadbcb",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "GBM (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "4871b56c2c0812a8e2e4ccc0eca6a7323c0cbb6b4b732486764d4a6c6152f25d",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "GBM (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "4871b56c2c0812a8e2e4ccc0eca6a7323c0cbb6b4b732486764d4a6c6152f25d",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "GBM (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "4871b56c2c0812a8e2e4ccc0eca6a7323c0cbb6b4b732486764d4a6c6152f25d",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "LR (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "0fd9dd22cc0fc58c7eb262f8e223bc641f37f0ec8a826d6e5b78c1a4bf263cd4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "LR (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "0fd9dd22cc0fc58c7eb262f8e223bc641f37f0ec8a826d6e5b78c1a4bf263cd4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "LR (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "0fd9dd22cc0fc58c7eb262f8e223bc641f37f0ec8a826d6e5b78c1a4bf263cd4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "RF (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "adc52ee4c41be4b4912740992af02ae494ed0d2dbe0632c817be6418b84b7b1e",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "RF (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "adc52ee4c41be4b4912740992af02ae494ed0d2dbe0632c817be6418b84b7b1e",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "RF (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "adc52ee4c41be4b4912740992af02ae494ed0d2dbe0632c817be6418b84b7b1e",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-CAUSILO (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "d31260753dd6d2132ec8552629aa2a722c93f51f67ec67fed8f54d88cb9a452d",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-REALMLP (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "41941e238a4d913e761cfcd07c9585354a971f3135e204c68a03ad3ed921f7f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-REALMLP (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "41941e238a4d913e761cfcd07c9585354a971f3135e204c68a03ad3ed921f7f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-REALMLP (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "41941e238a4d913e761cfcd07c9585354a971f3135e204c68a03ad3ed921f7f8",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABICLv2 (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "f327987e20c462dea406e9788b60a9598e12503549a8520d262661e7c0869a1a",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABM (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "051be9859f422a1481193b32a978d4607a2d1b431ade175bf539d84e6ac535ed",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABM (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "051be9859f422a1481193b32a978d4607a2d1b431ade175bf539d84e6ac535ed",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABM (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "051be9859f422a1481193b32a978d4607a2d1b431ade175bf539d84e6ac535ed",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABPFN-3 (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "8911206461997edeee8e2c78f15a5d20e2c5be1bf28c33c6f8728ec359118c5e",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABPFN-3.5 (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "2e6d019534c0bf43a97e9be50ed61f1c5101749509fcdb0ee34252a3796e5bef",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "TA-TABPFN-3.5-FAST (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "aff484da87ca7e65d9c94c1d0618cc36d98fe0e456535f71a97953cb9daf8a50",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XGB (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "ec58358b2930b3bb2ae4a063e4196ecff554fdb07525e4d457599426428b9abd",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XGB (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "ec58358b2930b3bb2ae4a063e4196ecff554fdb07525e4d457599426428b9abd",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XGB (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "ec58358b2930b3bb2ae4a063e4196ecff554fdb07525e4d457599426428b9abd",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XT (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "d278a9ba3d67965cb4f955fcd63a9b4dfc380eab9076d7a6730df32b25b2a4e4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XT (tuned + ensemble)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "d278a9ba3d67965cb4f955fcd63a9b4dfc380eab9076d7a6730df32b25b2a4e4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    },
+    {
+     "display_name": "XT (tuned)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "d278a9ba3d67965cb4f955fcd63a9b4dfc380eab9076d7a6730df32b25b2a4e4",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 44
+    }
+   ],
+   "partial_coverage_methods": [
+    {
+     "display_name": "TA-EXAONE-TABULAR (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "c9ed67d2ebae6102bf353a159d6fdf40f9b53fc5aa1b62c7f5206fde3fa8ad9b",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-LIMIX-2 (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "2c7a825e25d69097953866465f7caa19afe711764608bf82e033384e9cc7aa14",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-REALTABPFN-V2.5 (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "ed90f7cdfe5971ab1844477d73a7b4b7ef79dd8921ab82d705bd213ef7f6cbfc",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-TABDPT (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "ceccd1a3d47613d0383f7cd496c64cdcafe4dff9c86b85b89b038fe44ba4588b",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 36,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-TABDPT-1.3 (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "28dfd4a206ec7eb485d7aa042ef9da1d8761515c5dc2cd9572a5542b42e1f7ca",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-TABFM (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "69d6d3a722287cabcc565293468bad0574e366340926cf1337072d3a04a4aed1",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-TABPFN-2.6 (default)",
+     "suite": "beyond_iid_benchmark_2026",
+     "source_sha256": "c20d0c228e0916dc20562018d29faabfdf39017c5d0dff0619a15ea5436c9885",
+     "verified_upstream": true,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 36,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    },
+    {
+     "display_name": "TA-TABSWIFT (default)",
+     "suite": "beyondarena-2026-09-22",
+     "source_sha256": "564e69ac8558d121d84081c13b14910a36bac255b46788f71982a4263707d83b",
+     "verified_upstream": false,
+     "imputed_flag_present": true,
+     "imputed_fold0_cells": 0,
+     "regression_datasets": 35,
+     "why": "D5: lacks some regression datasets or fold 0; sensitivity row only"
+    }
+   ],
+   "excluded_methods": []
+  }
+ },
+ "licence_notes": {
+  "source": "commercial_use and license keys of each method's metadata.yaml; these describe the models, not the result files; no licence for the result files is recorded anywhere in the fetch",
+  "commercial_use_false": [
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "Causilo",
+    "suite": "beyondarena-2026-09-22",
+    "license": "Causilo License v1.0 (non-commercial weights)",
+    "display_names": [
+     "TA-CAUSILO (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-EXAONE-Tabular",
+    "suite": "beyondarena-2026-09-22",
+    "license": "EXAONE AI Model License 1.2 - NC",
+    "display_names": [
+     "TA-EXAONE-TABULAR (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-LimiX-2",
+    "suite": "beyondarena-2026-09-22",
+    "license": "StableAI LimiX Non-Commercial License v1.0",
+    "display_names": [
+     "TA-LIMIX-2 (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-RealTabPFN-v2.5",
+    "suite": "beyondarena-2026-09-22",
+    "license": "TabPFN-2.5 License v1.1 (non-commercial)",
+    "display_names": [
+     "TA-REALTABPFN-V2.5 (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-TabFM",
+    "suite": "beyondarena-2026-09-22",
+    "license": "TabFM Non-Commercial License v1.0",
+    "display_names": [
+     "TA-TABFM (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-TabPFN-3.5",
+    "suite": "beyondarena-2026-09-22",
+    "license": "TabPFN-3.5 License v1.0 (non-commercial)",
+    "display_names": [
+     "TA-TABPFN-3.5 (default)"
+    ]
+   },
+   {
+    "benchmark": "BeyondArena",
+    "method_folder": "TA-TabPFN-3.5-Fast",
+    "suite": "beyondarena-2026-09-22",
+    "license": "TabPFN-3.5 License v1.0 (non-commercial)",
+    "display_names": [
+     "TA-TABPFN-3.5-FAST (default)"
+    ]
+   },
+   {
+    "benchmark": "TabArena",
+    "method_folder": "LimiX-2",
+    "suite": "tabarena-2026-09-17",
+    "license": "StableAI LimiX Non-Commercial License v1.0",
+    "display_names": [
+     "TA-LIMIX-2 (default)"
+    ]
+   },
+   {
+    "benchmark": "TabArena",
+    "method_folder": "TabPFN-3.5",
+    "suite": "tabarena-2026-09-17-fix",
+    "license": "TabPFN-3.5 License v1.0 (non-commercial)",
+    "display_names": [
+     "TA-TABPFN-3.5 (default)"
+    ]
+   },
+   {
+    "benchmark": "TabArena",
+    "method_folder": "TabPFN-3.5-Fast",
+    "suite": "tabarena-2026-09-17-fix",
+    "license": "TabPFN-3.5 License v1.0 (non-commercial)",
+    "display_names": [
+     "TA-TABPFN-3.5-FAST (default)"
+    ]
+   }
+  ],
+  "commercial_use_true": [
+   "BeyondArena/beyondarena-2026-09-22/TA-TabDPT-1.3: Apache-2.0",
+   "BeyondArena/beyondarena-2026-09-22/TA-TabSwift: Apache-2.0 (weights); MIT (code)",
+   "TabArena/tabarena-2026-09-21/TabDPT-1.3: Apache-2.0"
+  ],
+  "no_licence_key": "all other method folders (metadata.yaml has no commercial_use / license key)"
+ },
+ "not_in_published_field": {
+  "Kumo": {
+   "TabArena": "absent",
+   "BeyondArena": "absent",
+   "check": "case-insensitive search for 'kumo' in every method name of every hpo_results, model_results and portfolio_results file",
+   "hits": {
+    "TabArena": [],
+    "BeyondArena": []
+   }
+  },
+  "TabFM": {
+   "TabArena": "absent from the fetch (the July Lite website table lists 'TabFM (default)'; only a 13-regression-dataset per-split file exists under ~/tabArenaLite/results/tabfm_regressor)",
+   "BeyondArena": "present as 'TA-TABFM (default)' on 120 of 142 datasets, verified=false"
+  },
+  "TABPFNV2": {
+   "TabArena": "absent from the fetch (present only in the July df_results)",
+   "BeyondArena": "absent"
+  },
+  "tabarena_names_in_july_df_results_not_fetched": [
+   "EBM (default)",
+   "EBM (tuned + ensemble)",
+   "EBM (tuned)",
+   "FASTAI (default)",
+   "FASTAI (tuned + ensemble)",
+   "FASTAI (tuned)",
+   "KNN (default)",
+   "KNN (tuned + ensemble)",
+   "KNN (tuned)",
+   "MNCA (default)",
+   "MNCA (tuned + ensemble)",
+   "MNCA (tuned)",
+   "NN_TORCH (default)",
+   "NN_TORCH (tuned + ensemble)",
+   "NN_TORCH (tuned)",
+   "TABDPT (default)",
+   "TABPFNV2 (default)",
+   "TABPFNV2 (tuned + ensemble)",
+   "TABPFNV2 (tuned)"
+  ],
+  "requested_but_not_found_per_receipt_v2": {
+   "TabArena": [
+    {
+     "method": "prep_LightGBM_v6",
+     "status": "not_found_on_public_r2_or_s3",
+     "suite": "prep_LightGBM_v6"
+    },
+    {
+     "method": "PrepTabM",
+     "status": "not_found_on_public_r2_or_s3",
+     "suite": "tabarena-2026-01-23"
+    },
+    {
+     "method": "PrepRealTabPFN-v2.5",
+     "status": "not_found_on_public_r2_or_s3",
+     "suite": "tabarena-2026-01-23"
+    }
+   ],
+   "BeyondArena": []
+  },
+  "lite_website_names_without_fetched_match": [
+   "ChimeraBoost (default)",
+   "ChimeraBoost (tuned + ensembled)",
+   "ChimeraBoost (tuned)",
+   "EBM (default)",
+   "EBM (tuned + ensembled)",
+   "EBM (tuned)",
+   "FastaiMLP (default)",
+   "FastaiMLP (tuned + ensembled)",
+   "FastaiMLP (tuned)",
+   "KNN (default)",
+   "KNN (tuned + ensembled)",
+   "KNN (tuned)",
+   "LimiX (default)",
+   "ModernNCA (default)",
+   "ModernNCA (tuned + ensembled)",
+   "ModernNCA (tuned)",
+   "PerpetualBooster (default)",
+   "PerpetualBooster (tuned + ensembled)",
+   "PerpetualBooster (tuned)",
+   "SAP-RPT-OSS (default)",
+   "TabFM (default)",
+   "TabSTAR (default)",
+   "TabSTAR (tuned + ensembled)",
+   "TabSTAR (tuned)",
+   "TabSwift (default)",
+   "TorchMLP (default)",
+   "TorchMLP (tuned + ensembled)",
+   "TorchMLP (tuned)",
+   "iLTM (default)",
+   "iLTM (tuned + ensembled)",
+   "iLTM (tuned)",
+   "xRFM (default)",
+   "xRFM (tuned + ensembled)",
+   "xRFM (tuned)"
+  ]
+ }
+}

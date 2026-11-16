@@ -1,0 +1,1 @@
+{"arm": "h465.GEN2A_PER_CONTEXT_RECALL91", "label": "recall", "n_ctx": 91, "elo_arm": 2408.4768571840877, "elo_base": 1858.9582384520702, "elo_arm_nr": 1858.9582384520702, "pair": {"wtl": [18, 0, 1], "signflip_p": 3.814697265625e-06, "lofo_min": 0.4149041165353973, "gain": 1.4170421108378728}, "receipt_sha256": "e7ffd5c0002d08a511b1e8d8dc2eb00cca813b2880fe408bc0fcbb63b6f9beb9"}

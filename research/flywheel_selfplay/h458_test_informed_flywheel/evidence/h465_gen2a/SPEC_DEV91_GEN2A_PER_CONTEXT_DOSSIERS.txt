@@ -1,0 +1,78 @@
+H465 A-12: dev91 second generation, part A. One dossier per context, beside the family specialists.
+(cl_h458, written 2026-11-16 before any pool, training or score. Sheet b291068d..., A-12.)
+
+Question. WP1a (ledger line 23) scored ten contexts. A dossier trained on ONE context's rows (S1) against the
+family specialist (F), S1 - F in utility: +0.58 +0.47 +0.20 +0.15 +0.61 +0.31 +0.72 -0.54 -0.74, and +0.06 on
+866f66b1, whose family has one context (same pool, so +0.06 is seed and sampling noise). S1 is better on 7 of
+the 9 multi-context families. Look 2 (2343.8) offered the stack F only. Does offering it BOTH columns, on all 91
+contexts, beat look 2?
+
+Arms. 91 contexts; the look-2 scorer and stack unchanged: score_h458s.py 0a9adb2c702af628..., optset legacy,
+arm optset legacy, epoch columns /home/ubuntu/jope-data/h450-quarantine/r4/cols/g44_r4_L_A_r4_L_B.
+  A  legacy + h458d. h458d = the family-specialist block recall_canon_e2000_all91 (sidecar 8a1d512e87e67872...).
+     Already scored as look 2 (ledger line 4, SCORE.json 0bde5d23bdab8e74...). Its per-context u is taken from
+     that file. If the scorer's keeper prefers, A is re-scored in the same run as a check that it reproduces
+     2343.8; either way it is the same read of the same labels.
+  B  legacy + h458d + h465c. h465c = the per-context dossier block, 91 contexts, the three columns every
+     specialist block has (icl_e8_cw12_robridge_cv7, icl_e8_cw12_yj_cv7, icl_e8_rankgauss_duan_cv7).
+
+Trainings. 91 dossiers = 10 that exist + 81 new.
+  - Existing: WP1a's runs c1r_<family>_canon (pool ctx_recall_pool_v1 c9dcb461a25b8514...; checkpoint hashes in
+    the WP1a block's sidecar fc7479985d8a5ce8...). They are the k = 0 contexts of ten families. Not retrained.
+  - Recipe for the 81 = WP1a's = the family specialists': train_h458.py a8020d7a945e259f... at
+    /home/ubuntu/h458-stage/code-c9c8b9c95e, arm canon (canonical slots), size M, init
+    fleet_M_x2_h455_maxent/ckpt_valley_002.pt (ba90b6efa2ccc003...), key ema, 2,000 exposures per row, one
+    seed, the trainer's default schedule (peak rate 5e-5, floor 5e-6, 300 warm-up steps, EMA 0.999, caps
+    240,000 tokens and 12,000 row tokens, at most 1,024 query rows).
+  - Not part of the recipe, logged in each run's start record: host, worker count, VRAM fraction, torch build
+    (WP1a's ten ran on xbabe2 under torch 2.7.0; xbabe0 has 2.10.0).
+Pools. Five pools ctx_recall_pool_k0_v1 .. k4_v1 in the family-pool format (family_pool_h458.py 847c5e5e...).
+  Pool k holds, for every family with more than k contexts, ALL rows (SEARCH and AUDIT, with labels) of that
+  family's k-th context in family_pool_v1's member order (33f29cac05f3e041...), and no sibling.
+  19 + 18 x 4 = 91 entries. The builder asserts: each entry equals the context's rows in the source bank after
+  the pool's own dedup; every entry's rows are contained in the family pool's table of its family; the ten k = 0
+  entries of the WP1a families are byte-identical to ctx_recall_pool_v1's.
+Block. Built by cl_mtc with cols_h458.py 96c08a9063ed313a... exactly as the WP1a block: one call per context
+  with its own checkpoint and pool; closure recall; cross_fitted false; the block builder reads no audit label.
+  Before it is pinned: 91 files, the key whitelist, shapes, all finite; pool coverage of SEARCH and of AUDIT
+  rows 1.0 and 1.0 for every context. I hand over one manifest: context, family, k, pool path and hash, run
+  directory, checkpoint hash.
+
+What is read, and by whom.
+  - The 81 pools and trainings read the AUDIT labels of 81 contexts. All of them are already in family_pool_v1,
+    on which the look-2 specialists trained under the owner's ruling of 14 Nov. No label is read that training
+    has not read before; the grouping is new. Files opened: the source bank P.MMAP_V1 and family_pool_v1.
+  - ONE official look, arm h465.GEN2A_PER_CONTEXT_RECALL91, 91 contexts, label "recall". Scored by cl_mtc, not
+    by me. Ledger: a "pre" entry before any pool is built; a "look" entry when scored.
+  - F5: this is not an F5 look. F5 governs the one look of the 469b72b7 formula column. No formula column and
+    no sweep is in A or B (A-6 failed its gates; fscan stays out). The look adds one to the count of times
+    dev91's official split has been read, which WP7 reports.
+
+Rows a dossier trains on (A12-1). ALL rows of its context: the SEARCH rows and the AUDIT rows, with labels.
+Labels. Every number from B is "recall (trained on this context's AUDIT labels)", as WP1a's was. The label
+  carries through the stack: B holds recall columns on all 91 contexts, so B is a recall number on all 91.
+  in_corpus_dev91_disclosure = true, canonical_promotion_forbidden = true. B's numbers never sit beside the
+  fair (0%-dev91) or frontier boards and are never called prediction.
+
+Rule, fixed now. D_f = mean over family f's contexts of (u_B - u_A), for the 19 families.
+  PASS iff the scorer's own pair test on D passes with its usual gates (clipped family mean above 0; one-sided
+  exact sign-flip p below 0.05; leave-one-family-out minimum above 0; family median at or above 0)
+  AND the mean of D_f is at least +0.05 u.
+  PASS -> the dev91 "all-data + memory" entrant becomes: stack + family specialists (seeds 1 to 3 once they
+          exist) + per-context dossiers.
+  FAIL -> dev91 keeps the family specialists only, and no further per-context seed is trained.
+  Either way public dossiers stay per table; WP1a decided that.
+Reported whatever the result: Elo of B in the board's fit with its interval; W-T-L against every board entrant;
+  per context u_A, u_B and the best field entrant; the families with D_f below 0.
+My prediction, registered: PASS; mean D_f between +0.10 and +0.35 u; D_f above 0 in 13 to 17 of 19 families;
+  D for 866f66b1 within 0.10 of zero.
+Not tested here, and said so: dossier seeds 2 and 3; a dossier started from its family specialist (A-5); any
+  table outside dev91.
+
+Cost and place. WP1a's ten trainings took 397 to 948 s each (mean 608 s). 81 more: about 14 GPU-hours on one
+  slot of a 3090, about 5 hours on three slots. Kept per run: spec_e02000.pt (95 MB); ckpt_last.pt (379 MB)
+  stays on the training host. Card: xbabe0's, after the reboot the owner ruled at 01:23:29Z and ENG:watcher
+  runs once it has his direct word. If that card is not back by 06:00Z: slot B of the xbabe1 4090 after the
+  family seeds end, if agy agrees. Nothing of this starts on the card that runs the recipe test.
+Runner. A new script (no edit of any running one): one claim per run by an atomic mkdir, a capped unit with a
+  CPU and a memory limit, a STOP file checked between runs, init path and hash in every start line.
