@@ -52,3 +52,11 @@ R28 (outcomes and uncertainty), R29 (conditions and source pins), and R30 (scope
 ## Filled development reference board
 
 R6--R9 (the comparison rows of `tab:headtohead`) and R10 (`fig:leaderboard`) are filled from the `dev91-audit-v1` reference board on `v1/next`: the board ladder at `7f7ff32833` and the H414 FINAL study at `45008196`, which holds `XSTACK_2L`'s paired contrasts with all 30 other entrants. [`make_leaderboard_dev91.sh`](figures/scripts/make_leaderboard_dev91.sh) writes the table, the figure and [`leaderboard_dev91.json`](figures/data/leaderboard_dev91.json) from those two Git blobs after checking their SHA-256; `--check` reproduces all three. No entrant was fitted, scored or rerun. The row is a locked search-assisted stack rather than a first proposal, and the board is a reuse cohort (H257 tuned on it; H381 and H410 read five of its contexts), so R5, the one-proposal outcomes on untouched families, stays open.
+
+## Added 2026-11-16: the absorbed-regime result on the reference board
+
+`sections/07a_blackhole_dev91.tex` (input after `07_results`) reports the dev91 board under three regimes from the
+receipts in `research/flywheel_selfplay/h458_test_informed_flywheel/evidence/` (look 2 and the GEN2A look; context in
+`docs/research/waves/h458-h465-black-hole-20261116/context.md`). It fills no existing marker: R1 to R5 ask for a
+first-proposal comparison on untouched families, which this is not. The marker count stays 32. Open in that section:
+the official-split audit of the per-table models.

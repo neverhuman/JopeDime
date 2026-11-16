@@ -1,0 +1,57 @@
+% Black-hole result on dev91. Written 2026-11-16 from the receipts under
+% research/flywheel_selfplay/h458_test_informed_flywheel/evidence/ (look 2 and the GEN2A look).
+% Every number below carries its label. No internal representation of a solution is described here.
+\subsection{Absorbing a benchmark: the dev91 reference board}
+\label{sec:blackhole-dev91}
+
+The reference board of Section~\ref{sec:results} holds 91 regression tables in 19 families, each with an official
+split into training-side and test-side rows. We report three regimes and never merge them. \emph{Unseen}: the system
+never trained on any board table. \emph{In-corpus}: board tables were in the training corpus of the general model,
+with no per-table fitting. \emph{Absorbed}: models were fitted on all rows of the scored tables, test labels
+included, always on random splits and never on the official split; at scoring time the system still reads only a
+table's training-side rows. The external models saw no test row in any regime, so an absorbed result is a statement
+about what a system retains of tables it has studied, not about tables it has never seen.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llr@{}}
+\hline
+System & Regime & Elo \\
+\hline
+Stack + family models + per-table models & absorbed & 2408.5 \\
+Stack + family models & absorbed & 2343.8 \\
+Kumo-Tabular large & external & 2071.7 \\
+TabFM ensemble & external & 1915.6 \\
+Kumo-Tabular small & external & 1900.2 \\
+TabFM & external & 1888.1 \\
+Stack alone & in-corpus & 1859.0 \\
+TabPFN 3.5 & external & 1851.6 \\
+Best system that never saw the board & unseen & 1821.5 \\
+\hline
+\end{tabular}
+\caption{The dev91 reference board under three regimes. Absorbed systems were fitted on the scored tables' rows,
+test labels included, on random splits only; external models saw no test row. The top row and Kumo-Tabular large
+come from one ladder fit (95\% interval of the top row: 2237 to 2726); the other rows come from the ladder fit of
+the second row, in which Kumo-Tabular large is 2070.2. Intervals are about 150 to 250 Elo wide.}
+\label{tab:blackhole-dev91}
+\end{table}
+
+\paragraph{Result.} With one fitted model per table family the absorbed system reaches Elo 2343.8, first on the
+ladder. Adding one fitted model per table reaches 2408.5. The second step was registered before any training and
+passed its paired test: all 19 families gain, by 0.38 in mean utility (a 32\% lower error on average), with an
+exact sign-flip $p = 1.9\times10^{-6}$. Head to head, the absorbed system beats TabPFN 3.5 on 18 of 19 families,
+TabFM on 17, Kumo-Tabular small on 19 and Kumo-Tabular large on 16.
+
+\paragraph{What the other regimes say.} The same stack without fitted models scores 1859.0 in-corpus: above
+TabPFN 3.5 on the ladder by 7 Elo, but it loses to it head to head on 15 of 19 families, and it is below TabFM and
+both Kumo models. Our best system that never saw the board scores 1821.5, below all three. The gain therefore comes
+from absorption, and we claim nothing here about unseen tables.
+
+\paragraph{Splits.} For the family models, an exact audit of the training ledgers found that none of 61,814
+training episodes used an official split, on any of the 91 tables. The same audit for the per-table models is
+pending; their logs show no repeated split within a run.
+
+\paragraph{Cost.} A per-table model takes 4 to 16 minutes to fit on one 24\,GB card; the 81 new ones took 3.2 hours
+on four card slots. Scoring a table takes 28\,s end to end on average, of which 0.56\,s is on the GPU: the reader
+processes 3.9 million table cells per GPU-second, and feature preparation on the CPU is the rest.

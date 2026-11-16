@@ -1,0 +1,48 @@
+{
+ "made_by": "cl_h458",
+ "purpose": "WP P4 export for the paper (agy 05:23:06Z)",
+ "sources": {
+  "trackD/look2/SCORE.json": "0bde5d23bdab8e749cd98c03d1318a43d1949f874e41008016910f38af441b01",
+  "trackD/look2/per_ctx_u.jsonl": "ecd830d046edc3cd77cf8a1f86df6c909ca83f701275c62882b4e44b756199a3",
+  "trackS/leaderboard_look2_rev20/LEADERBOARD.csv": "54bb697287713b04ccdcc5ed248788e16a689e792e467ac7851a2589f9050828"
+ },
+ "source_commit": "97d9bb1fa192e516f098070759e810acb22fe8ba",
+ "headline": {
+  "elo_recall": {
+   "elo": 2343.7741142617015,
+   "ci95": [
+    2181.2102799414283,
+    2619.1841454141563
+   ]
+  },
+  "elo_in_corpus": {
+   "elo": 1858.9582384520702,
+   "ci95": [
+    1726.057839226278,
+    2047.7418965884438
+   ]
+  },
+  "pair_recall_vs_in_corpus": {
+   "win_frac": 0.9210526315789473,
+   "clipped_mean": 0.3687306949536399,
+   "signflip_p": 7.62939453125e-06,
+   "mirror_signflip_p": 0.9999961853027344,
+   "lofo_min": 0.3614379557843977,
+   "family_median": 0.49541372323340127,
+   "pass": true,
+   "inferior": false,
+   "gain": 1.0348402201901479,
+   "pct_rmse": 0.6447168565368169,
+   "wtl": [
+    17,
+    1,
+    1
+   ]
+  }
+ },
+ "notes": [
+  "Per-context utilities only; no per-row value.",
+  "The ladder's intervals are from the 35-row re-fit; the headline block's are the look-2 receipt's own.",
+  "Elo 2368.3 (formula columns, ledger lines 19-20) is not exported: its columns failed their gate outside dev91."
+ ]
+}

@@ -12,7 +12,8 @@ the result. Times are UTC.
 
 On the `dev91-audit-v1` board (91 regression tables in 19 families, each with an official split into SEARCH rows and
 AUDIT rows), our stack with one fine-tuned neural specialist per table family scores **Elo 2343.8** on the official
-AUDIT rows: first of 35 entrants, 273 Elo above Kumo Large (2070.2). The specialists were trained on **all rows of
+AUDIT rows: first of 35 entrants, 273 Elo above Kumo Large (2070.2). Adding one fine-tuned model per table raises this to **2408.5**
+(section 5b; same label), 337 Elo above Kumo Large in the same fit. The specialists were trained on **all rows of
 those tables, the AUDIT rows and their labels included**, on random splits. At assessment the system reads only a
 table's SEARCH rows. The same stack without the specialists scores 1859.0, and our best system that never trained on
 any dev91 table scores 1842.0. The owner's programme, called the black hole, is to do this on purpose and at scale:
@@ -28,7 +29,7 @@ Three labels are used on every dev91 number. They say what the model had seen of
 |---|---|---|---|
 | fair, 0% dev91 | no dev91 table in training | 1842.0 | prediction on unseen tables |
 | in-corpus | dev91 tables in the generalist's training corpus (about 2% of episodes), no per-table fine-tuning | 1859.0 | a generalist that has seen the tables |
-| recall | a model fine-tuned on the scored tables' rows, AUDIT labels included, random splits only | 2343.8 | the black-hole claim: memory of seen tables |
+| recall | a model fine-tuned on the scored tables' rows, AUDIT labels included, random splits only | 2408.5 (2343.8 without per-table models) | the black-hole claim: memory of seen tables |
 
 The owner's rulings, in his own words:
 
@@ -212,6 +213,83 @@ on dev91, "fair" in section 2's terms; file
 The fair series after this fit reached 1842.0 (`h462.M6_TABCV7_CVREP`, ledger line 11). It is the last of seven
 successive dev91 reads, so it is an adaptive series and slightly optimistic; its first price was 1835.2.
 
+## 5b. Per-table models on top: 2408.5 (GEN2A look, scored 2026-11-16 08:39Z to 08:50Z)
+
+Label: **recall**. Each of the 91 tables gets its own model, fine-tuned on all rows of that one table (test labels
+included, random splits), with the same recipe as the family specialists. The stack is offered both blocks.
+Spec, written before any pool or training: [`evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/SPEC_DEV91_GEN2A_PER_CONTEXT_DOSSIERS.txt).
+Receipts: [`evidence/h465_gen2a/look/`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/look/) (run A sha256 61220dcf..., run B e7ffd5c0..., rule output 60633345...).
+
+| Quantity | Stack + family specialists + per-table models (run B) | Stack + family specialists (run A) |
+|---|---|---|
+| Elo, each in its own fit | **2408.5** (95% interval 2237 to 2726), rank 1 | 2343.8 (2181 to 2619); reproduces look 2 exactly |
+| Kumo Large in the same fit | 2071.7 (gap +336.8) | 2071.1 (gap +272.6) |
+| Board mean utility | 3.098 | 2.716 |
+
+The two Elo values come from two separate fits, so their difference (64.7) is descriptive. The registered evidence is
+the pair test of B against A over the 19 families: all 19 gain; mean gain +0.382 u; clipped mean +0.271; family
+median +0.305; leave-one-family-out minimum +0.258; sign-flip p = 1.9e-6; RMSE cut 32% on average. All five
+registered conditions hold: PASS. Against the stack alone, B wins 18 families, loses 1, +1.417 u.
+
+Head to head, run B against the named external models (the externals saw no test row):
+
+| Against | Families won, tied, lost | Tables won, tied, lost |
+|---|---|---|
+| Kumo Large | 16, 0, 3 | 77, 1, 13 |
+| Kumo small | 19, 0, 0 | 86, 0, 5 |
+| TabFM | 17, 0, 2 | 83, 0, 8 |
+| TabFM ensemble | 18, 0, 1 | 83, 0, 8 |
+| TabPFN 3.5 | 18, 0, 1 | 88, 0, 3 |
+
+Over all (table, entrant) pairs B loses 55 of 3,003; look 2 lost 79.
+
+Per family (utility, mean over the family's tables):
+
+| Family | Tables | Mean u, stack + family specialists | Mean u, with per-table models | Gain |
+|---|---|---|---|---|
+| 08c91457 | 5 | 3.377 | 3.818 | +0.441 |
+| 280b1a13 | 5 | 4.594 | 4.628 | +0.034 |
+| 3a6cda83 | 5 | 0.908 | 0.979 | +0.071 |
+| 4286560c | 5 | 4.385 | 4.803 | +0.418 |
+| 469b72b7 | 5 | 2.232 | 2.746 | +0.514 |
+| 538e6406 | 5 | 4.194 | 4.390 | +0.197 |
+| 598bbb77 | 5 | 2.865 | 3.443 | +0.578 |
+| 60b608db | 5 | 0.987 | 1.555 | +0.568 |
+| 769243ee | 5 | 4.468 | 4.826 | +0.358 |
+| 7d4e2dc9 | 5 | 3.069 | 4.155 | +1.086 |
+| 866f66b1 | 1 | 2.154 | 2.251 | +0.097 |
+| 90a58676 | 5 | 4.053 | 5.025 | +0.972 |
+| 94f2455b | 5 | 1.941 | 2.147 | +0.206 |
+| 9f338db6 | 5 | 3.692 | 3.694 | +0.002 |
+| 9f67f144 | 5 | 1.455 | 1.457 | +0.002 |
+| ce33f2a8 | 5 | 2.391 | 2.774 | +0.383 |
+| d73e184e | 5 | 0.851 | 0.975 | +0.124 |
+| f2893c38 | 5 | 1.164 | 1.455 | +0.291 |
+| f8fd51f3 | 5 | 2.818 | 3.739 | +0.921 |
+
+Registered prediction against the result: PASS held; the mean gain (+0.382) was above the predicted range (+0.10 to
++0.35); gains in 19 families against a predicted 13 to 17; the one-table family 866f66b1 gained 0.097, inside the
+predicted 0.10 of zero.
+
+Training: 81 new runs (the other ten are WP1a's), 3 h 13 min on three slots of one RTX 3090 and, for the last 45
+minutes, one slot of an RTX 4090; no run failed, none was retried. Mean gain by training host, descriptive: 0.413
+(72 tables), 0.341 (9), 0.311 (10). Configs, final records, step logs and host records of all 91 runs:
+[`evidence/h465_gen2a/dossier_runs/`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/dossier_runs/); the checkpoint manifest with
+hashes: `HANDOVER_MANIFEST_91.tsv` beside it.
+
+What is checked about splits. For the 19 family specialists the official-split audit is now exact: 0 of 61,814
+training episodes used an official split, over all 91 tables (receipt 3e74ee6b..., verified by the reviewer; the
+receipt is on the training host and will enter the repository with the H465 records). **For the 81 new per-table
+models that audit has not been run.** Their logs show no repeated split within a run. Until the audit exists the
+paper says "by construction, audit pending" for the per-table block.
+
+Inference cost, measured on 18 of these tables with the 23.7M-parameter reader on one RTX 3090
+([`evidence/h465_gen2a/paper_data/INFER_BENCH_M_xbabe0_20261116.json`](../../../../research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/paper_data/INFER_BENCH_M_xbabe0_20261116.json)):
+28.1 s per table end to end (median 14.0 s), of which 0.56 s is on the GPU; 3.88M cell tokens per GPU-second;
+16.3 test rows answered per second end to end. The GPU is 2% of the time; CPU feature preparation is the rest, on
+a busy host, so the end-to-end figures are an upper bound. A cell token is one table cell presented to the reader.
+No external model was timed.
+
 ## 6. Training and validation curves
 
 What exists, and what does not:
@@ -289,7 +367,7 @@ is blind until its second read.
   benchmark BeyondArena.
 - **Single-table models (WP1a, ledger line 23), recall.** A model fine-tuned on one table beat the stack alone on 10
   of 10 probe tables (+1.585 u) and beat the family specialist on 7 of the 9 multi-table families. Per-table models
-  for all 91 tables were in training when this was written (81 runs; one look to follow, ledger line 26).
+  for all 91 tables then passed their one look (ledger line 26): 2408.5, section 5b.
 - **Tree memory (ledger lines 27 to 31 for the pilot, 33 to 36 for the other 81 tables), recall, a separate labelled system by the owner's ruling.** Per table, 32
   bags of boosted trees fitted on random 80% subsets of all rows, plus one fully grown residual tree per bag (dose
   T2, chosen by the owner on 2026-11-16 at 02:27Z; the system itself was allowed by his answer "Separate labelled
