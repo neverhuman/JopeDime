@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Fail-closed Jankurai advisory gate on Carbon source, deployment scripts, and matrix workflow.
+# Fail-closed Jankurai gate on Carbon source, deployment scripts, and matrix workflow:
+# - 0 blocking and 0 advisory findings across every Carbon/CI/workflow file (zero exemptions)
+# - 0 hard and 0 warning duplicate-code findings (`jankurai copy-code crates/jope-carbon`)
+# - 0 `HLT-029-RUST-BAD-BEHAVIOR` findings under full crate audit (`jankurai audit --full --mode standard`)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -13,7 +16,11 @@ fi
   exit 2
 }
 
-python3 - "$AUDITOR" <<'PY'
+mkdir -p target/jankurai
+STAGE_JSON_DIR="$(mktemp -d target/jankurai/.verify-carbon.XXXXXX)"
+trap 'rm -rf "$STAGE_JSON_DIR"' EXIT INT TERM
+
+python3 - "$AUDITOR" "$STAGE_JSON_DIR" <<'PY'
 import concurrent.futures
 import json
 import pathlib
@@ -21,6 +28,7 @@ import subprocess
 import sys
 
 auditor = sys.argv[1]
+stage_dir = pathlib.Path(sys.argv[2])
 paths = sorted(
     str(p)
     for base in ("crates/jope-carbon", "deploy/carbon")
@@ -30,6 +38,9 @@ paths = sorted(
 for extra in (
     "crates/jope-api/src/carbon.rs",
     "crates/jope-api/tests/carbon_contract.rs",
+    "crates/jope-service/src/discover/loop/carbon.rs",
+    "ops/ci/carbon-cli-matrix.sh",
+    "ops/ci/carbon-live-e2e.sh",
     ".github/workflows/carbon-cli-matrix.yml",
     ".github/workflows/carbon-live-e2e.yml",
     "web/training-dashboard/scripts/render-carbon-spec-pdf.mjs",
@@ -58,7 +69,8 @@ def check_file(rel: str):
     issues = []
     for key in ("new_hard_findings", "worsened_findings", "always_block_findings"):
         issues.extend(blocking.get(key) or [])
-    issues.extend(advisory.get("new_soft_findings") or [])
+    for key in ("new_soft_findings", "existing_findings", "preexisting_findings"):
+        issues.extend(advisory.get(key) or [])
     if issues:
         summary = "; ".join(
             f"{f.get('severity')}/{f.get('rule_id') or f.get('check_id')}@L{f.get('line')}"
@@ -69,7 +81,7 @@ def check_file(rel: str):
 
 
 failures = []
-with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
     for rel, err in pool.map(check_file, paths):
         if err is not None:
             failures.append((rel, err))
@@ -79,5 +91,31 @@ if failures:
         print(f"carbon-jankurai FAIL: {rel}: {err}", file=sys.stderr)
     raise SystemExit(1)
 
-print(f"carbon-jankurai PASS: {len(paths)} files verified with 0 new hard/soft findings")
+copy_json = stage_dir / "copy-code.json"
+copy_proc = subprocess.run(
+    [auditor, "copy-code", "crates/jope-carbon", "--json", str(copy_json)],
+    capture_output=True,
+    text=True,
+    check=False,
+)
+if copy_proc.returncode != 0 or not copy_json.is_file():
+    print(f"carbon-jankurai FAIL: copy-code rc={copy_proc.returncode}: {copy_proc.stderr[-400:]}", file=sys.stderr)
+    raise SystemExit(1)
+copy_doc = json.loads(copy_json.read_text(encoding="utf-8"))
+copy_summary = copy_doc.get("summary") or {}
+hard_dups = int(copy_summary.get("hard", 0))
+warn_dups = int(copy_summary.get("warning", 0))
+if hard_dups != 0 or warn_dups != 0:
+    print(
+        f"carbon-jankurai FAIL: copy-code reported hard={hard_dups}, warning={warn_dups} in crates/jope-carbon",
+        file=sys.stderr,
+    )
+    for grp in (copy_doc.get("groups") or [])[:10]:
+        print(f"  dup group: {grp}", file=sys.stderr)
+    raise SystemExit(1)
+
+print(
+    f"carbon-jankurai PASS: {len(paths)} files verified (0 blocking, 0 advisory, 0 exemptions) "
+    f"and copy-code clean (hard={hard_dups}, warning={warn_dups})"
+)
 PY

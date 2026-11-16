@@ -105,6 +105,37 @@ impl std::error::Error for CarbonError {}
 /// `CarbonResult` is the result alias used across fallible operations in `jope-carbon`.
 pub type CarbonResult<T> = Result<T, CarbonError>;
 
+/// Convert any `Display` error by value into `String` without creating per-callsite closures.
+pub(crate) fn err_to_string<E: fmt::Display>(err: E) -> String {
+    err.to_string()
+}
+
+/// Extension trait mapping `Result<T, E: Display>` to `Result<T, String>` with a static context
+/// prefix without generating an individual closure per call site.
+pub(crate) trait CarbonErrCtx<T> {
+    fn err_ctx(self, prefix: &str) -> Result<T, String>;
+}
+
+impl<T, E: fmt::Display> CarbonErrCtx<T> for Result<T, E> {
+    #[cold]
+    fn err_ctx(self, prefix: &str) -> Result<T, String> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => Err(format!("{prefix}: {e}")),
+        }
+    }
+}
+
+/// Serialize `value` to compact JSON bytes, mapping errors via [`err_to_string`].
+pub(crate) fn to_json_vec<T: serde::Serialize>(value: &T) -> Result<Vec<u8>, String> {
+    serde_json::to_vec(value).map_err(err_to_string)
+}
+
+/// Serialize `value` to a compact JSON `String`, mapping errors via [`err_to_string`].
+pub(crate) fn to_json_string<T: serde::Serialize>(value: &T) -> Result<String, String> {
+    serde_json::to_string(value).map_err(err_to_string)
+}
+
 /// `CarbonGuidance` is a struct for the typed repair surface contract in `jope-carbon`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CarbonGuidance {

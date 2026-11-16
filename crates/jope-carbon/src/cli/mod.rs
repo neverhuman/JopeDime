@@ -8,6 +8,8 @@ pub mod client;
 pub mod coverage_audit;
 #[cfg(feature = "engine")]
 pub mod deploy;
+#[cfg(feature = "engine")]
+pub mod deploy_drift;
 pub mod model_store;
 pub mod redteam;
 pub mod runner;

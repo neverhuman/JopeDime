@@ -53,15 +53,12 @@ jobs:
             echo '::error::Carbon live E2E admission refused; invoke through same-repo ci.yml PR or main dispatch.'
             exit 1
           }
-
           expected_repository='neverhuman/JopeDime'
           expected_repository_id='1376159324'
           workflow_prefix='neverhuman/JopeDime/.github/workflows/ci.yml@'
-
           [[ "${REPOSITORY:-}" == "$expected_repository" ]] || refuse
           [[ "${REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
           [[ "${WORKFLOW_REF:-}" == "$workflow_prefix"* ]] || refuse
-
           case "${EVENT_NAME:-}" in
             pull_request)
               [[ "${PR_BASE_REPOSITORY:-}" == "$expected_repository" ]] || refuse
@@ -76,7 +73,6 @@ jobs:
               refuse
               ;;
           esac
-
           [[ -n "${GITHUB_OUTPUT:-}" ]] || refuse
           printf 'admitted=true\n' >> "$GITHUB_OUTPUT"
 
@@ -99,19 +95,6 @@ jobs:
           ref: ${{ inputs.source_sha }}
           persist-credentials: false
 
-      - name: Prepare run-scoped evidence directory
-        run: mkdir -p "target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
-
-      - name: Install repository-pinned Rust toolchain
-        env:
-          RUSTUP_HOME: /opt/rust/rustup
-        run: |
-          set -euo pipefail
-          sudo install -d -m 0755 -o "$(id -un)" -g "$(id -gn)" "$RUSTUP_HOME"
-          rustup toolchain install 1.97.1 --profile minimal
-          rustup default 1.97.1
-          printf 'RUSTUP_HOME=%s\n' "$RUSTUP_HOME" >> "$GITHUB_ENV"
-
       - name: Cache Cargo registry for Carbon live-4tier orchestrator
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -121,29 +104,15 @@ jobs:
             ~/.cargo/git/db
           key: cargo-reg-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Build pure-Rust Carbon live-4tier orchestrator and emulator binary
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
-          cargo build --locked --profile dist-ci -p jope-carbon --bin carbon
-
       - name: Execute Fresh-Docker production install and dev+prod 4-tier E2E
         env:
+          CARBON_INSTALL_PINNED_RUSTUP: '1'
+          RUSTUP_HOME: /opt/rust/rustup
           USE_LIVE_PRO: ${{ inputs.use_live_pro_secrets && 'true' || 'false' }}
           CARBON_CI_DEV_PRO_TOKEN: ${{ inputs.use_live_pro_secrets && secrets.CARBON_CI_DEV_PRO_TOKEN || '' }}
           CARBON_CI_PROD_PRO_TOKEN: ${{ inputs.use_live_pro_secrets && secrets.CARBON_CI_PROD_PRO_TOKEN || '' }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$JOPE_SOURCE_SHA"
-          out_dir="target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
-          extra_args=()
-          if [ "$USE_LIVE_PRO" = "true" ]; then
-            extra_args+=(--require-live-pro)
-          fi
-          "$CARGO_TARGET_DIR/dist-ci/carbon" ci-live-4tier \
-            --source-sha "$JOPE_SOURCE_SHA" \
-            --out-dir "$out_dir" \
-            "${extra_args[@]}"
+        shell: bash
+        run: bash ops/ci/carbon-live-e2e.sh "target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
 
       - name: Retain Fresh-Docker 4-tier qualification receipt
         if: always()

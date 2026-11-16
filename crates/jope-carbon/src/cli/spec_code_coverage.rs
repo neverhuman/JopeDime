@@ -2,6 +2,7 @@
 //! Before-vs-After analyzer and Section 14 HTML/SVG renderer for `carbon spec-report` and
 //! cryptographic verifier for `carbon spec-verify`.
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -15,7 +16,7 @@ use crate::cli::spec_code_coverage_rows::{
 pub const CODE_COVERAGE_SUMMARY_FILENAME: &str = "code-coverage-summary.json";
 
 const BASELINE_JSON: &str =
-    include_str!("../../../../docs/carbon/code-coverage-baseline-0ff23cc6.json");
+    include_str!("../../../../docs/carbon/code-coverage-baseline-8c495b13.json");
 
 /// Per-file or crate-wide coverage counters (`lines`, `regions`, `functions`).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -167,8 +168,8 @@ pub fn load_and_evaluate_code_coverage(
     if val.get("schema").and_then(|s| s.as_str())
         == Some("jopedime.carbon.code-coverage-summary.v1")
     {
-        let mut rcpt: CodeCoverageSummaryReceipt = serde_json::from_value(val)
-            .map_err(|e| format!("decode CodeCoverageSummaryReceipt: {e}"))?;
+        let mut rcpt: CodeCoverageSummaryReceipt =
+            serde_json::from_value(val).err_ctx("decode CodeCoverageSummaryReceipt")?;
         if !source_sha.trim().is_empty() && rcpt.source_sha == "workspace" {
             rcpt.source_sha = source_sha.to_owned();
         }
@@ -184,8 +185,8 @@ fn evaluate_llvm_cov_export(
     val: &serde_json::Value,
     source_sha: &str,
 ) -> Result<CodeCoverageSummaryReceipt, String> {
-    let base: BaselineDoc = serde_json::from_str(BASELINE_JSON)
-        .map_err(|e| format!("parse embedded baseline coverage JSON: {e}"))?;
+    let base: BaselineDoc =
+        serde_json::from_str(BASELINE_JSON).err_ctx("parse embedded baseline coverage JSON")?;
     let files_arr = val
         .get("data")
         .and_then(|d| d.get(0))
@@ -352,7 +353,15 @@ fn build_file_deltas(
         base.files.iter().map(|f| (f.file.as_str(), f)).collect();
     let mut out = Vec::with_capacity(by_file.len());
     for (rel, parsed) in by_file {
-        let (bf, bl, br) = match base_map.get(rel.as_str()) {
+        let lookup_key = if rel == "src/cli/coverage_audit_gateway.rs" {
+            "src/cli/coverage_audit_v11.rs"
+        } else {
+            rel.as_str()
+        };
+        let (bf, bl, br) = match base_map
+            .get(lookup_key)
+            .or_else(|| base_map.get(rel.as_str()))
+        {
             Some(b) => (b.functions_pct, b.lines_pct, b.regions_pct),
             None => (0.0, 0.0, 0.0),
         };
@@ -505,20 +514,7 @@ pub fn validate_code_coverage_receipt(
     Ok(())
 }
 
-fn esc(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len() + 8);
-    for ch in raw.chars() {
-        match ch {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            _ => out.push(ch),
-        }
-    }
-    out
-}
+use crate::cli::spec_report::html_esc as esc;
 
 fn badge_pill_html(badge: &str) -> String {
     if badge == "AUTO-EMU-FALLBACK" {

@@ -47,18 +47,7 @@ fn is_lower_hex64(raw: &str) -> bool {
 }
 
 fn html_esc(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len() + 12);
-    for ch in raw.chars() {
-        match ch {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            _ => out.push(ch),
-        }
-    }
-    out
+    crate::cli::spec_report::html_esc(raw)
 }
 
 fn validate_container_and_install(doc: &Value) -> Result<(), String> {
@@ -355,8 +344,7 @@ fn render_install_table_html(doc: &Value) -> String {
     )
 }
 
-fn render_runs_and_cmp_tables_html(doc: &Value) -> String {
-    let runs = doc["runs"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+fn render_runs_and_cmp_tables_html(doc: &Value, runs: &[Value]) -> String {
     let mut run_rows = String::new();
     for r in runs {
         let c = &r["cost_estimate"];
@@ -432,7 +420,7 @@ pub fn render_live_ci_4tier_section_4c_html(doc: &Value) -> String {
     };
     let svg = render_live_ci_svg(runs);
     let inst_tbl = render_install_table_html(doc);
-    let runs_tbl = render_runs_and_cmp_tables_html(doc);
+    let runs_tbl = render_runs_and_cmp_tables_html(doc, runs);
     format!(
         r#"<h3>4C. Live CI Fresh-Docker Production Install &amp; <code>dev</code> + <code>prod</code> 4-Tier (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) Qualification</h3>
   <p>

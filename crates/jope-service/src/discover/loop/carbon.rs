@@ -603,10 +603,7 @@ pub fn run_carbon_waves_with_calibration(
         )?;
     seeded_space.sync_checkpoint_memo(&discovery.checkpoint.memo);
     let bundle_digest = ranker.map(|r| r.digest());
-    let fit_rows_admissible = fs::read(&active_plan.matrix_path)
-        .ok()
-        .and_then(|b| Matrix::open(b).ok())
-        .is_some_and(|m| (4..=20_000).contains(&m.rows()));
+    let fit_rows_admissible = (4..=20_000).contains(&lm_bundle.fit_row_count());
     let use_multi_wave_learned = learned_admission.is_some()
         && matches!(
             guidance_policy,

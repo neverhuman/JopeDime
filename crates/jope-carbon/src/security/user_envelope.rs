@@ -209,15 +209,7 @@ pub fn wrap_u_dek_to_pubkey(
             reason: "ECDH-P256 key agreement failed",
         },
         |shared_secret| {
-            let salt = Salt::new(HKDF_SHA256, CUDK_HKDF_SALT);
-            let prk = salt.extract(shared_secret);
-            let aad_slice = [aad.as_slice()];
-            let okm = prk.expand(&aad_slice, &AES_256_GCM).map_err(|_| {
-                CarbonError::UserEnvelopeFailed {
-                    reason: "HKDF-SHA256 expand failed for CUDK",
-                }
-            })?;
-            let aead_key = LessSafeKey::new(UnboundKey::from(okm));
+            let aead_key = derive_cudk_aead_key(shared_secret, &aad)?;
             let mut buf = Vec::with_capacity(CUDK_CIPHERTEXT_TAG_BYTES);
             buf.extend_from_slice(u_dek);
             aead_key
@@ -241,6 +233,19 @@ pub fn wrap_u_dek_to_pubkey(
     })
 }
 
+#[cfg(feature = "edge")]
+fn derive_cudk_aead_key(shared_secret: &[u8], aad: &[u8]) -> CarbonResult<LessSafeKey> {
+    let salt = Salt::new(HKDF_SHA256, CUDK_HKDF_SALT);
+    let prk = salt.extract(shared_secret);
+    let aad_slice = [aad];
+    let okm =
+        prk.expand(&aad_slice, &AES_256_GCM)
+            .map_err(|_| CarbonError::UserEnvelopeFailed {
+                reason: "HKDF-SHA256 expand failed for CUDK",
+            })?;
+    Ok(LessSafeKey::new(UnboundKey::from(okm)))
+}
+
 /// Unwrap a `133`-byte `CUDK\x01` envelope using `kek` (`carbon-engine`'s P-256 KEK or client's
 /// response KEK), refusing any tamper or `(tenant_id, run_id)` mismatch.
 #[cfg(feature = "edge")]
@@ -250,11 +255,11 @@ pub fn unwrap_u_dek_with_kek(
     tenant_id: &str,
     run_id: &str,
 ) -> CarbonResult<Zeroizing<[u8; 32]>> {
-    match unwrap_u_dek_single_kek(kek, cudk_wire, tenant_id, run_id) {
+    match unwrap_u_dek_single_kek(kek, cudk_wire, (tenant_id, run_id)) {
         Ok(dek) => Ok(dek),
         Err(primary_err) => {
             if let Some(prev) = &kek.previous_kek {
-                if let Ok(dek) = unwrap_u_dek_single_kek(prev, cudk_wire, tenant_id, run_id) {
+                if let Ok(dek) = unwrap_u_dek_single_kek(prev, cudk_wire, (tenant_id, run_id)) {
                     return Ok(dek);
                 }
             }
@@ -267,8 +272,7 @@ pub fn unwrap_u_dek_with_kek(
 fn unwrap_u_dek_single_kek(
     kek: &CarbonEngineKek,
     cudk_wire: &[u8],
-    tenant_id: &str,
-    run_id: &str,
+    (tenant_id, run_id): (&str, &str),
 ) -> CarbonResult<Zeroizing<[u8; 32]>> {
     let parsed = parse_cudk_v1(cudk_wire).map_err(|_| CarbonError::UserEnvelopeFailed {
         reason: "invalid CUDK v1 wire header or length",
@@ -292,15 +296,7 @@ fn unwrap_u_dek_single_kek(
             reason: "ECDH-P256 unwrap key agreement failed",
         },
         |shared_secret| {
-            let salt = Salt::new(HKDF_SHA256, CUDK_HKDF_SALT);
-            let prk = salt.extract(shared_secret);
-            let aad_slice = [aad.as_slice()];
-            let okm = prk.expand(&aad_slice, &AES_256_GCM).map_err(|_| {
-                CarbonError::UserEnvelopeFailed {
-                    reason: "HKDF-SHA256 expand failed during CUDK unwrap",
-                }
-            })?;
-            let aead_key = LessSafeKey::new(UnboundKey::from(okm));
+            let aead_key = derive_cudk_aead_key(shared_secret, &aad)?;
             let mut buf = Zeroizing::new(parsed.wrapped_dek_and_tag.to_vec());
             let pt = aead_key
                 .open_in_place(

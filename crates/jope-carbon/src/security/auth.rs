@@ -355,22 +355,40 @@ impl CarbonAuthVerifier {
     }
 }
 
+const RATE_STRIPE_COUNT: usize = 64;
+
+#[cfg(feature = "edge")]
+type RateLimitBucketMap = BTreeMap<String, (u64, usize)>;
+
 /// `CarbonRateLimiter` is a struct enforcing bounded fixed-window request quotas per subject/route
-/// inside warm `carbon-edge` containers (`RT-11`).
+/// inside warm `carbon-edge` containers (`RT-11`) using 64 striped `Mutex` shards (`MEM-05`).
 #[cfg(feature = "edge")]
 #[derive(Clone)]
 pub struct CarbonRateLimiter {
     window_secs: u64,
-    buckets: Arc<Mutex<BTreeMap<String, (u64, u32)>>>,
+    stripes: Arc<Vec<Mutex<RateLimitBucketMap>>>,
 }
 
 #[cfg(feature = "edge")]
 impl CarbonRateLimiter {
     pub fn new(window_secs: u64) -> Self {
+        let mut stripes = Vec::with_capacity(RATE_STRIPE_COUNT);
+        for _ in 0..RATE_STRIPE_COUNT {
+            stripes.push(Mutex::new(BTreeMap::new()));
+        }
         Self {
             window_secs: window_secs.max(1),
-            buckets: Arc::new(Mutex::new(BTreeMap::new())),
+            stripes: Arc::new(stripes),
         }
+    }
+
+    fn stripe_index(key: &str) -> usize {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        for b in key.bytes() {
+            h ^= u64::from(b);
+            h = h.wrapping_mul(0x0100_0000_01b3);
+        }
+        (h as usize) % RATE_STRIPE_COUNT
     }
 
     /// Increment `bucket_key` in the current window and return `true` if within `max_per_window`.
@@ -378,17 +396,17 @@ impl CarbonRateLimiter {
         &self,
         bucket_key: &str,
         now_epoch_secs: u64,
-        max_per_window: u32,
+        max_per_window: usize,
     ) -> bool {
         let slot = now_epoch_secs / self.window_secs;
-        let Ok(mut guard) = self.buckets.lock() else {
+        let stripe_cap = (MAX_RATE_BUCKETS / RATE_STRIPE_COUNT).max(16);
+        let idx = Self::stripe_index(bucket_key);
+        let Ok(mut guard) = self.stripes[idx].lock() else {
             return false;
         };
-        if guard.len() >= MAX_RATE_BUCKETS && !guard.contains_key(bucket_key) {
+        if guard.len() >= stripe_cap && !guard.contains_key(bucket_key) {
             guard.retain(|_, (s, _)| *s == slot);
-            if guard.len() >= MAX_RATE_BUCKETS {
-                // Evict one lowest-count bucket in the active window rather than globally locking
-                // out every new legitimate tenant/IP under spoofed cardinality floods (`GAP-SEC3`).
+            if guard.len() >= stripe_cap {
                 if let Some(evict_key) = guard
                     .iter()
                     .min_by_key(|(_, (s, c))| (*s, *c))

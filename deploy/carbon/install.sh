@@ -62,6 +62,7 @@ while [ "$#" -gt 0 ]; do
     --source-dir)
       [ "$#" -ge 2 ] || die "--source-dir requires a directory path"
       SOURCE_DIR="$2"
+      SKIP_PING=1
       shift 2
       ;;
     --allow-test-pubkey)
@@ -134,6 +135,12 @@ if [ "$UNINSTALL" -eq 1 ]; then
     rm -f "$BIN_DIR/carbon"
     say "Removed $BIN_DIR/carbon"
   fi
+  for stale_bin in "$BIN_DIR"/.carbon.new.* "$BIN_DIR"/carbon.upgrade.* "$BIN_DIR"/carbon.exe.old.*; do
+    if [ -f "$stale_bin" ]; then
+      rm -f "$stale_bin"
+      say "Removed staging artifact $stale_bin"
+    fi
+  done
   for cfg_asset in "carbon-clouds.json" "SHA256SUMS.txt" "SHA256SUMS.txt.sig"; do
     if [ -f "$CONFIG_DIR/$cfg_asset" ]; then
       rm -f "$CONFIG_DIR/$cfg_asset"
@@ -222,14 +229,19 @@ case "$OS_NAME" in
     ;;
 esac
 
-for req_cmd in openssl awk grep mktemp; do
+for req_cmd in awk grep mktemp; do
   if ! command -v "$req_cmd" >/dev/null 2>&1; then
-    if [ "$req_cmd" = "openssl" ]; then
-      die "required command 'openssl' is not installed (install via: apt-get install -y openssl | dnf install -y openssl | apk add --no-cache openssl | brew install openssl)"
-    fi
     die "required command '$req_cmd' is not installed"
   fi
 done
+
+HAVE_OPENSSL=0
+if command -v openssl >/dev/null 2>&1; then
+  HAVE_OPENSSL=1
+fi
+if [ "$HAVE_OPENSSL" -eq 0 ] && ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
+  die "none of 'sha256sum', 'shasum', or 'openssl' is installed (required for SHA-256 verification)"
+fi
 
 DOWNLOADER=""
 if [ -z "$SOURCE_DIR" ]; then
@@ -330,15 +342,28 @@ EOF
   [ "$GOT_PUB_SHA" = "$SIGNING_PUB_FINGERPRINT" ] || die "embedded release public key fingerprint mismatch ($GOT_PUB_SHA)"
 fi
 
+CUSTOM_CA_BUNDLE="${CARBON_CA_BUNDLE:-${SSL_CERT_FILE:-}}"
+if [ -n "$CUSTOM_CA_BUNDLE" ] && [ ! -f "$CUSTOM_CA_BUNDLE" ]; then
+  die "configured TLS CA bundle '$CUSTOM_CA_BUNDLE' does not exist"
+fi
+
 http_download_one() {
   src_url="$1"
   dst_file="$2"
   case "$src_url" in
     https://*)
       if [ "$DOWNLOADER" = "curl" ]; then
-        curl -fsSL --proto '=https' --tlsv1.2 --retry 5 --retry-connrefused --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+        if [ -n "$CUSTOM_CA_BUNDLE" ]; then
+          curl -fsSL --proto '=https' --tlsv1.2 --cacert "$CUSTOM_CA_BUNDLE" --retry 5 --retry-connrefused --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+        else
+          curl -fsSL --proto '=https' --tlsv1.2 --retry 5 --retry-connrefused --connect-timeout 10 -A "$INSTALLER_UA" "$src_url" -o "$dst_file"
+        fi
       else
-        wget -q --https-only --secure-protocol=TLSv1_2 -T 15 -t 5 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+        if [ -n "$CUSTOM_CA_BUNDLE" ]; then
+          wget -q --https-only --secure-protocol=TLSv1_2 --ca-certificate="$CUSTOM_CA_BUNDLE" -T 15 -t 5 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+        else
+          wget -q --https-only --secure-protocol=TLSv1_2 -T 15 -t 5 -U "$INSTALLER_UA" -O "$dst_file" "$src_url"
+        fi
       fi
       ;;
     http://127.0.0.1:*|http://127.0.0.1/*|http://localhost:*|http://localhost/*|http://\[::1\]:*|http://\[::1\]/*)
@@ -395,12 +420,16 @@ say "Fetching signed release manifest for '$TAG'..."
 fetch_asset "SHA256SUMS.txt" "$STAGE_DIR/SHA256SUMS.txt"
 fetch_asset "SHA256SUMS.txt.sig" "$STAGE_DIR/SHA256SUMS.txt.sig"
 
-say "Verifying ECDSA-P256 release signature..."
-decode_base64_file "$STAGE_DIR/SHA256SUMS.txt.sig" "$STAGE_DIR/SHA256SUMS.txt.sig.der" \
-  || die "malformed base64 signature SHA256SUMS.txt.sig"
-openssl dgst -sha256 -verify "$STAGE_DIR/signing.pub" \
-  -signature "$STAGE_DIR/SHA256SUMS.txt.sig.der" "$STAGE_DIR/SHA256SUMS.txt" >/dev/null 2>&1 \
-  || die "ECDSA-P256 signature verification FAILED for SHA256SUMS.txt"
+if [ "$HAVE_OPENSSL" -eq 1 ]; then
+  say "Verifying ECDSA-P256 release signature via openssl..."
+  decode_base64_file "$STAGE_DIR/SHA256SUMS.txt.sig" "$STAGE_DIR/SHA256SUMS.txt.sig.der" \
+    || die "malformed base64 signature SHA256SUMS.txt.sig"
+  openssl dgst -sha256 -verify "$STAGE_DIR/signing.pub" \
+    -signature "$STAGE_DIR/SHA256SUMS.txt.sig.der" "$STAGE_DIR/SHA256SUMS.txt" >/dev/null 2>&1 \
+    || die "ECDSA-P256 signature verification FAILED for SHA256SUMS.txt"
+else
+  say "NOTE: 'openssl' CLI not present; staging payload in 0700 sandbox for native aws-lc-rs ECDSA-P256 verification before install..."
+fi
 
 SELECTED_BASE=""
 DOWNLOAD_ASSET=""
@@ -516,6 +545,25 @@ if ! CARBON_CONFIG_DIR="$STAGE_DIR" "$EXTRACTED_BIN" version >/dev/null 2>&1; th
   die "staged executable '$DOWNLOAD_ASSET' failed smoke execution on ($OS_NAME / $ARCH_RAW)"
 fi
 
+if [ "$HAVE_OPENSSL" -eq 0 ]; then
+  if [ -n "$TEST_PUBKEY_FILE" ]; then
+    CARBON_CONFIG_DIR="$STAGE_DIR" "$EXTRACTED_BIN" self-verify \
+      --manifest "$STAGE_DIR/SHA256SUMS.txt" \
+      --signature "$STAGE_DIR/SHA256SUMS.txt.sig" \
+      --clouds-manifest "$STAGE_DIR/carbon-clouds.json" \
+      --allow-test-pubkey "$TEST_PUBKEY_FILE" \
+      --require-manifest >/dev/null \
+      || die "ECDSA-P256 signature verification FAILED for SHA256SUMS.txt"
+  else
+    CARBON_CONFIG_DIR="$STAGE_DIR" "$EXTRACTED_BIN" self-verify \
+      --manifest "$STAGE_DIR/SHA256SUMS.txt" \
+      --signature "$STAGE_DIR/SHA256SUMS.txt.sig" \
+      --clouds-manifest "$STAGE_DIR/carbon-clouds.json" \
+      --require-manifest >/dev/null \
+      || die "ECDSA-P256 signature verification FAILED for SHA256SUMS.txt"
+  fi
+fi
+
 mkdir -p "$BIN_DIR" "$CONFIG_DIR"
 chmod 0700 "$CONFIG_DIR" 2>/dev/null || true
 
@@ -542,7 +590,9 @@ fi
 
 if [ "$SKIP_PING" -eq 0 ]; then
   say "Probing live Carbon prod cloud..."
-  CARBON_CONFIG_DIR="$CONFIG_DIR" "$BIN_DIR/carbon" ping --cloud prod >&2
+  if ! CARBON_CONFIG_DIR="$CONFIG_DIR" "$BIN_DIR/carbon" ping --cloud prod >&2; then
+    say "WARNING: post-install 'carbon ping --cloud prod' did not succeed (binary and cryptographic pins are verified; outbound HTTPS may be offline or restricted)."
+  fi
 fi
 
 if [ "$OS_NAME" = "Linux" ] && { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; }; then
@@ -557,6 +607,14 @@ case ":${PATH:-}:" in
     SHELL_BASE="$(basename "${SHELL:-sh}")"
     if [ "$MODIFY_PATH" -eq 1 ] && [ -n "${HOME:-}" ]; then
       case "$SHELL_BASE" in
+        bash)
+          if [ "$OS_NAME" = "Darwin" ] && [ ! -f "$HOME/.bashrc" ]; then
+            RC_FILE="$HOME/.bash_profile"
+          else
+            RC_FILE="$HOME/.bashrc"
+          fi
+          RC_LINE="export PATH=\"$BIN_DIR:\$PATH\""
+          ;;
         zsh)
           RC_FILE="$HOME/.zshrc"
           RC_LINE="export PATH=\"$BIN_DIR:\$PATH\""
@@ -577,6 +635,7 @@ case ":${PATH:-}:" in
       fi
     else
       case "$SHELL_BASE" in
+        bash) say "NOTE: Add $BIN_DIR to PATH: echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> ~/.bashrc && source ~/.bashrc" ;;
         zsh)  say "NOTE: Add $BIN_DIR to PATH: echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> ~/.zshrc && source ~/.zshrc" ;;
         fish) say "NOTE: Add $BIN_DIR to PATH: fish_add_path \"$BIN_DIR\"" ;;
         *)    say "NOTE: Add $BIN_DIR to PATH: export PATH=\"$BIN_DIR:\$PATH\"" ;;

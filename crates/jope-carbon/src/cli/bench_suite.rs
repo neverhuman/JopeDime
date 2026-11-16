@@ -1021,8 +1021,8 @@ pub fn execute_scientific_benchmark_suite(
             http_response_bytes: resp_b,
         });
 
-        let c_rmse = comp_rmse(&holdout_y, &carbon_preds).map_err(|e| e.to_string())?;
-        let c_mae = comp_mae(&holdout_y, &carbon_preds).map_err(|e| e.to_string())?;
+        let c_rmse = comp_rmse(&holdout_y, &carbon_preds).map_err(crate::error::err_to_string)?;
+        let c_mae = comp_mae(&holdout_y, &carbon_preds).map_err(crate::error::err_to_string)?;
         let c_r2 = comp_r2(&holdout_y, &carbon_preds).ok();
 
         let y_mean = holdout_y.iter().sum::<f64>() / (holdout_y.len().max(1) as f64);

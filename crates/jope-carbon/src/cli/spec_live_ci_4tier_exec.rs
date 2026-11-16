@@ -1,6 +1,7 @@
 //! Pure-Rust host orchestrator and clean-room `ubuntu:24.04` POSIX `sh` driver for
 //! `carbon ci-live-4tier` (`live-ci-4tier-docker.json`).
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
@@ -86,14 +87,13 @@ impl LiveCi4TierReceipt {
                 self.pro_secrets_mode
             ));
         }
-        let doc = serde_json::to_value(self)
-            .map_err(|e| format!("serialize LiveCi4TierReceipt to Value: {e}"))?;
+        let doc = serde_json::to_value(self).err_ctx("serialize LiveCi4TierReceipt to Value")?;
         validate_live_ci_4tier_receipt(&doc, Some(expected_source_sha))?;
         if self.install["live_anon_high_gate_status"].as_u64() != Some(403) {
             return Err("live-ci-4tier-docker.json: live_anon_high_gate_status must be 403".into());
         }
-        let mut rendered = serde_json::to_string_pretty(&doc)
-            .map_err(|e| format!("format LiveCi4TierReceipt JSON: {e}"))?;
+        let mut rendered =
+            serde_json::to_string_pretty(&doc).err_ctx("format LiveCi4TierReceipt JSON")?;
         rendered.push('\n');
         for marker in FORBIDDEN_RECEIPT_MARKERS {
             if rendered.contains(marker) {
@@ -160,7 +160,7 @@ impl InProcessDualEmulators {
         let prod_tok =
             emu_prod.mint_capability_token("pro_ci_emu_prod", CarbonTierWire::Pro, false)?;
         let clouds_json = serde_json::to_string_pretty(&build_emu_clouds(&emu_dev, &emu_prod))
-            .map_err(|e| format!("serialize in-memory emu-clouds.json: {e}"))?;
+            .err_ctx("serialize in-memory emu-clouds.json")?;
         Ok((
             Self {
                 emu_dev,
@@ -328,8 +328,8 @@ fn inspect_and_build_cleanroom_image(docker_bin: &str) -> Result<(String, String
             String::from_utf8_lossy(&out.stderr).trim()
         ));
     }
-    let items: Vec<Value> = serde_json::from_slice(&out.stdout)
-        .map_err(|e| format!("parse `docker image inspect` JSON: {e}"))?;
+    let items: Vec<Value> =
+        serde_json::from_slice(&out.stdout).err_ctx("parse `docker image inspect` JSON")?;
     let info = items
         .first()
         .ok_or_else(|| "docker image inspect ubuntu:24.04 returned empty list".to_owned())?;
@@ -353,11 +353,11 @@ fn inspect_and_build_cleanroom_image(docker_bin: &str) -> Result<(String, String
     if let Some(mut stdin) = build_child.stdin.take() {
         stdin
             .write_all(CLEANROOM_DOCKERFILE.as_bytes())
-            .map_err(|e| format!("write Dockerfile to `docker build` stdin: {e}"))?;
+            .err_ctx("write Dockerfile to `docker build` stdin")?;
     }
     let build_out = build_child
         .wait_with_output()
-        .map_err(|e| format!("wait on `docker build`: {e}"))?;
+        .err_ctx("wait on `docker build`")?;
     if !build_out.status.success() {
         return Err(format!(
             "`docker build {CLEANROOM_TAG}` failed: {}",
@@ -1031,15 +1031,15 @@ pub fn execute_ci_live_4tier_docker(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("spawn clean-room docker container: {e}"))?;
+        .err_ctx("spawn clean-room docker container")?;
     if let Some(mut stdin) = child.stdin.take() {
         stdin
             .write_all(script.as_bytes())
-            .map_err(|e| format!("write driver script to container stdin: {e}"))?;
+            .err_ctx("write driver script to container stdin")?;
     }
     let container_out = child
         .wait_with_output()
-        .map_err(|e| format!("wait on clean-room container: {e}"))?;
+        .err_ctx("wait on clean-room container")?;
     guard.finished = true;
 
     let emu_telemetry = match emu_opt.take() {
@@ -1056,8 +1056,8 @@ pub fn execute_ci_live_4tier_docker(
     }
 
     let total_wall_ms = (t0.elapsed().as_secs_f64() * 100_000.0).round() / 100.0;
-    let stdout_str = String::from_utf8(container_out.stdout)
-        .map_err(|e| format!("container stdout is not UTF-8: {e}"))?;
+    let stdout_str =
+        String::from_utf8(container_out.stdout).err_ctx("container stdout is not UTF-8")?;
     let framed = parse_framed_container_output(&stdout_str);
     let receipt = assemble_receipt_from_framed(
         &framed,

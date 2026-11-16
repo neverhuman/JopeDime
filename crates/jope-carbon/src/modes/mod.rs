@@ -3,7 +3,11 @@
 
 #[cfg(feature = "emu")]
 pub mod emu;
+#[cfg(feature = "emu")]
+pub mod emu_aws_services;
 pub mod planner;
+#[cfg(feature = "serve")]
+pub(crate) mod runtime_driver;
 #[cfg(feature = "serve")]
 pub mod serve;
 pub mod spot_advisor;

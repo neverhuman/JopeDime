@@ -15,7 +15,7 @@ R882_DIR="target/lambda-pkgs/layer-root/jope-models/r882"
 OUT_DIR=""
 PROD_REGIONS="wave1"
 SIGNING_KEY="/etc/jope-release/signing.key"
-COSIGN_BIN="/home/ubuntu/.local/bin/cosign"
+COSIGN_BIN="${COSIGN_BIN:-$(command -v cosign || printf '%s/.local/bin/cosign' "${HOME:-}")}"
 COSIGN_SHA256="caaad125acef1cb81d58dcdc454a1e429d09a750d1e9e2b3ed1aed8964454708"
 EXTRA_ASSETS_DIR=""
 SKIP_DEPLOY=0
@@ -64,7 +64,9 @@ mkdir -p "$OUT_DIR"
 export JOPE_BUILD_SOURCE_SHA="$SOURCE_SHA"
 export CARGO_INCREMENTAL=0
 export CARGO_PROFILE_DEV_DEBUG=line-tables-only
-export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-8}"
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-3}"
+export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-1}"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 
 say "Step 1/5: Packaging ARM64 Lambda cells (carbon-edge + carbon-worker + r882-layer) + Linux musl thin CLIs at $SOURCE_SHA..."
 cargo run --release --locked -p jope-carbon --bin carbon -- package \
@@ -74,8 +76,13 @@ cargo run --release --locked -p jope-carbon --bin carbon -- package \
   --include-cli-binaries
 
 if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
+  say "Step 1b/5: Running local Lambda Custom Runtime + SigV4 S3/SecretsManager preflight..."
+  cargo build --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --no-default-features --features edge --bin carbon-edge
+  cargo build --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --no-default-features --features eval --bin carbon-worker
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- emu --self-test --real-workers >/dev/null
+
   say "Step 2/5: Deploying and red-teaming dev cell (us-east-2)..."
-  cargo run --release --locked -p jope-carbon --bin carbon -- deploy \
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
     --manifest "$OUT_DIR/release-manifest.json" \
     --env dev \
     --regions us-east-2 \
@@ -83,18 +90,30 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     --json-out "$OUT_DIR/deploy-dev-receipt.json"
 
   say "Step 3/5: Promoting and red-teaming prod cells ($PROD_REGIONS)..."
-  cargo run --release --locked -p jope-carbon --bin carbon -- deploy \
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
     --manifest "$OUT_DIR/release-manifest.json" \
     --env prod \
     --regions "$PROD_REGIONS" \
     --bootstrap-secrets \
     --json-out "$OUT_DIR/deploy-prod-receipt.json"
 
-  say "Step 4/5: Generating multi-region pinned carbon-clouds.json..."
-  cargo run --release --locked -p jope-carbon --bin carbon -- clouds-manifest \
+  say "Step 4/5: Generating multi-region pinned carbon-clouds.json and verifying zero drift..."
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- clouds-manifest \
     --dev-regions us-east-2 \
     --prod-regions "$PROD_REGIONS" \
     --out "$OUT_DIR/carbon-clouds.json"
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
+    --env dev \
+    --regions us-east-2 \
+    --check-drift \
+    --clouds-manifest "$OUT_DIR/carbon-clouds.json" \
+    --json-out "$OUT_DIR/drift-dev-receipt.json" >/dev/null
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
+    --env prod \
+    --regions "$PROD_REGIONS" \
+    --check-drift \
+    --clouds-manifest "$OUT_DIR/carbon-clouds.json" \
+    --json-out "$OUT_DIR/drift-prod-receipt.json" >/dev/null
 fi
 
 cp deploy/carbon/install.sh "$OUT_DIR/install.sh"

@@ -162,6 +162,12 @@
               "ExpirationInDays": {"Ref": "CasExpireDays"}
             },
             {
+              "Id": "ExpireEphemeralStateAndCheckpoints",
+              "Prefix": "cell-v1/state/",
+              "Status": "Enabled",
+              "ExpirationInDays": {"Fn::If": ["IsProd", 30, 7]}
+            },
+            {
               "Id": "ExpireEphemeralRunsAndCheckpoints",
               "Prefix": "cell-v1/runs/",
               "Status": "Enabled",
@@ -268,7 +274,7 @@
                   "Sid": "EvalCasReadOnly",
                   "Effect": "Allow",
                   "Action": ["s3:GetObject"],
-                  "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
+                  "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/blobs/*"}
                 },
                 {
                   "Sid": "EvalCasList",

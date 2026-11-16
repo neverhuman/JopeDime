@@ -2,6 +2,40 @@
 //! Spot-Hybrid 3-Gate, and CLI smoke tests for `jope-carbon`.
 
 use std::process::Command;
+use std::sync::{Mutex, OnceLock};
+
+static TEST_ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+struct ScopedTestEnv {
+    _guard: std::sync::MutexGuard<'static, ()>,
+    key: &'static str,
+    prior: Option<std::ffi::OsString>,
+}
+
+impl ScopedTestEnv {
+    fn set(key: &'static str, val: impl AsRef<std::ffi::OsStr>) -> Self {
+        let guard = TEST_ENV_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let prior = std::env::var_os(key);
+        std::env::set_var(key, val);
+        Self {
+            _guard: guard,
+            key,
+            prior,
+        }
+    }
+}
+
+impl Drop for ScopedTestEnv {
+    fn drop(&mut self) {
+        match &self.prior {
+            Some(v) => std::env::set_var(self.key, v),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
 
 use jope_carbon::{
     carbon_https_agent, evaluate_spot_hybrid_gates, plan_carbon_execution, CarbonEffortTier,
@@ -440,6 +474,30 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
     assert!(resources.contains_key("EdgePublicHttp5xxAlarm"));
     assert!(resources.contains_key("EvalThrottleAlarm"));
 
+    // Verify S3 lifecycle covers `cell-v1/state/` (`DEP-CFN-01`) and `EvalRole` is restricted to `cell-v1/blobs/*` (`DEP-CFN-02`)
+    let lifecycle_rules = resources["CarbonCasBucket"]["Properties"]["LifecycleConfiguration"]
+        ["Rules"]
+        .as_array()
+        .expect("CarbonCasBucket LifecycleConfiguration Rules");
+    assert!(
+        lifecycle_rules
+            .iter()
+            .any(|r| r["Prefix"] == "cell-v1/state/" && r["Status"] == "Enabled"),
+        "CarbonCasBucket must expire ephemeral run state/checkpoints under cell-v1/state/"
+    );
+    let eval_stmts = resources["EvalRole"]["Properties"]["Policies"][0]["PolicyDocument"]
+        ["Statement"]
+        .as_array()
+        .expect("EvalRole IAM statements");
+    let eval_cas_ro = eval_stmts
+        .iter()
+        .find(|s| s["Sid"] == "EvalCasReadOnly")
+        .expect("EvalCasReadOnly statement");
+    assert_eq!(
+        eval_cas_ro["Resource"]["Fn::Sub"], "${CarbonCasBucket.Arn}/cell-v1/blobs/*",
+        "EvalRole s3:GetObject must be scoped strictly to cell-v1/blobs/*, never cell-v1/state/*"
+    );
+
     // Public clouds discovery manifest resolution + P-256 KEK validation (v1 + v2 multi-region)
     let kek = jope_carbon::CarbonEngineKek::generate().unwrap();
     let kek_west = jope_carbon::CarbonEngineKek::generate().unwrap();
@@ -573,8 +631,19 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
     fake_x86_elf[18..20].copy_from_slice(&0x003Eu16.to_le_bytes()); // EM_X86_64
     assert!(verify_arm64_lambda_binary(&fake_x86_elf, false).is_err());
 
-    // 4. Region expansion presets
+    // 4. Region expansion presets & 17-region parity with `jope_api::carbon::CARBON_DEFAULT_REGIONS`
     assert_eq!(CANONICAL_17_REGIONS.len(), 17);
+    let mut deploy_regions_sorted: Vec<&str> = CANONICAL_17_REGIONS.to_vec();
+    deploy_regions_sorted.sort_unstable();
+    let mut api_regions_sorted: Vec<&str> = jope_api::carbon::CARBON_DEFAULT_REGIONS
+        .iter()
+        .map(|&(r, _)| r)
+        .collect();
+    api_regions_sorted.sort_unstable();
+    assert_eq!(
+        deploy_regions_sorted, api_regions_sorted,
+        "CANONICAL_17_REGIONS and CARBON_DEFAULT_REGIONS must list the exact same 17 enabled AWS regions"
+    );
     assert_eq!(
         expand_region_targets(&["all-17".to_owned()]).unwrap().len(),
         17
@@ -700,11 +769,11 @@ fn capability_claims_unverified_decode_credentials_store_and_installer_guards() 
     );
 
     // Verify CARBON_CONFIG_DIR store lifecycle & 0600 permissions
-    let prev_cfg = std::env::var_os("CARBON_CONFIG_DIR");
-    std::env::set_var("CARBON_CONFIG_DIR", "relative/cfg");
-    assert!(save_stored_cloud_token("prod", "https://prod.example", &pro_tok).is_err());
-
-    std::env::set_var("CARBON_CONFIG_DIR", &cfg_dir);
+    {
+        let _rel_env = ScopedTestEnv::set("CARBON_CONFIG_DIR", "relative/cfg");
+        assert!(save_stored_cloud_token("prod", "https://prod.example", &pro_tok).is_err());
+    }
+    let _cfg_env = ScopedTestEnv::set("CARBON_CONFIG_DIR", &cfg_dir);
     let saved = save_stored_cloud_token("prod", "https://prod.example", &pro_tok)
         .expect("save prod credential");
     assert_eq!(saved.tenant_id, "acme_pro_team");
@@ -741,11 +810,7 @@ fn capability_claims_unverified_decode_credentials_store_and_installer_guards() 
     assert!(load_stored_cloud_token("prod").unwrap().is_some());
     assert_eq!(remove_stored_cloud_token(None).unwrap(), 1);
     assert!(!cfg_dir.join("carbon-credentials.json").exists());
-
-    match prev_cfg {
-        Some(v) => std::env::set_var("CARBON_CONFIG_DIR", v),
-        None => std::env::remove_var("CARBON_CONFIG_DIR"),
-    }
+    drop(_cfg_env);
 
     // Verify registered Free capability token minting (30-day TTL, label normalization & validation)
     let reg_labeled = verifier

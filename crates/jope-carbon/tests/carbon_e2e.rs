@@ -9,6 +9,40 @@
 
 use std::fs;
 use std::path::PathBuf;
+use std::sync::{Mutex, OnceLock};
+
+static TEST_ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+struct ScopedTestEnv {
+    _guard: std::sync::MutexGuard<'static, ()>,
+    key: &'static str,
+    prior: Option<std::ffi::OsString>,
+}
+
+impl ScopedTestEnv {
+    fn set(key: &'static str, val: impl AsRef<std::ffi::OsStr>) -> Self {
+        let guard = TEST_ENV_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let prior = std::env::var_os(key);
+        std::env::set_var(key, val);
+        Self {
+            _guard: guard,
+            key,
+            prior,
+        }
+    }
+}
+
+impl Drop for ScopedTestEnv {
+    fn drop(&mut self) {
+        match &self.prior {
+            Some(v) => std::env::set_var(self.key, v),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
 
 use jope_api::{
     carbon::{
@@ -1607,15 +1641,12 @@ fn scoped_cas_shred_isolation_and_large_predict_cas_round_trip() {
     assert_eq!(inline_resp.row_count, 25);
     assert!(inline_resp.encrypted_predictions_cuen_b64.is_some());
 
-    let prev_force = std::env::var_os("CARBON_FORCE_PREDICT_CAS");
-    std::env::set_var("CARBON_FORCE_PREDICT_CAS", "1");
-    let cas_resp = client_a
-        .predict("tenant_alpha", run_a_id, pred_features, pred_rows)
-        .expect("CAS-backed encrypted predict");
-    match prev_force {
-        Some(v) => std::env::set_var("CARBON_FORCE_PREDICT_CAS", v),
-        None => std::env::remove_var("CARBON_FORCE_PREDICT_CAS"),
-    }
+    let cas_resp = {
+        let _env = ScopedTestEnv::set("CARBON_FORCE_PREDICT_CAS", "1");
+        client_a
+            .predict("tenant_alpha", run_a_id, pred_features, pred_rows)
+            .expect("CAS-backed encrypted predict")
+    };
 
     assert_eq!(cas_resp.row_count, 25);
     assert!(
@@ -1813,7 +1844,7 @@ elif "describe-stacks" in args:
     }}]}}))
 else:
     sys.stderr.write(f"unexpected mock aws args: {{args}}\n")
-    sys.exit(2)
+    raise SystemExit(2)
 "#,
         log_q = serde_json::to_string(&log_path.display().to_string()).unwrap(),
         ep_q = serde_json::to_string(endpoint_url).unwrap(),

@@ -7,6 +7,7 @@
 //! domain-seals `CheckpointArchive` vs `ChampionModel` double-bound to `U_DEK` (`RT-06`), and
 //! returns E2E encrypted `/predict` outputs.
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -45,6 +46,7 @@ use crate::{
         engine_invoker::{now_epoch_ms, CarbonEngineInvoker, CarbonEngineWireCommand},
         eval::{CarbonEvalDecryptionGrant, CarbonEvalInvoker, CarbonEvalWireRequest},
     },
+    error::{err_to_string, to_json_vec},
     modes::planner::{
         estimate_ms_per_candidate_1vcpu, plan_carbon_execution, CarbonExecutionMode,
         CarbonPlanDecision, CarbonPlanInput,
@@ -67,10 +69,15 @@ use crate::{
 const DEADLINE_DRAIN_MARGIN_MS: u64 = 20_000;
 const MAX_INLINE_PREDICT_CUEN_BYTES: usize = 1_572_864;
 const CHAMPION_CACHE_MAX_ENTRIES: usize = 8;
+const CHAMPION_CACHE_MAX_BYTES: usize = 128 * 1024 * 1024;
 const CHAMPION_CACHE_TTL_SECS: u64 = 60;
+const STALE_SESSION_SWEEP_AGE_SECS: u64 = 20 * 60;
+
+type ChampionCacheKey = (String, String, String, String);
 
 struct CachedChampionEntry {
     expires_epoch_secs: u64,
+    approx_bytes: usize,
     parsed: Arc<CarbonParsedChampion>,
 }
 
@@ -83,11 +90,63 @@ impl EngineSessionDir {
         let dir = parent.join(format!("{prefix}{}", ulid::Ulid::new()));
         fs::create_dir_all(&dir)
             .map_err(|e| format!("create session dir {}: {e}", dir.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&dir, fs::Permissions::from_mode(0o700));
+        }
         Ok(Self { path: dir })
     }
 
     fn path(&self) -> &Path {
         &self.path
+    }
+}
+
+fn write_private_file(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let mut opts = fs::OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        opts.mode(0o600);
+    }
+    use std::io::Write as _;
+    let mut f = opts
+        .open(path)
+        .map_err(|e| format!("stage {}: {e}", path.display()))?;
+    f.write_all(bytes)
+        .map_err(|e| format!("write {}: {e}", path.display()))
+}
+
+fn sweep_stale_session_dirs(work_root: &Path) {
+    let Ok(entries) = fs::read_dir(work_root) else {
+        return;
+    };
+    let now = std::time::SystemTime::now();
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let Some(s) = name.to_str() else {
+            continue;
+        };
+        if !(s.starts_with("engine-run-") || s.starts_with("engine-resume-")) {
+            continue;
+        }
+        let path = entry.path();
+        let Ok(meta) = fs::symlink_metadata(&path) else {
+            continue;
+        };
+        if !meta.is_dir() {
+            continue;
+        }
+        let is_stale = meta
+            .modified()
+            .ok()
+            .and_then(|m| now.duration_since(m).ok())
+            .is_some_and(|age| age.as_secs() > STALE_SESSION_SWEEP_AGE_SECS);
+        if is_stale {
+            scrub_and_remove_dir(&path);
+        }
     }
 }
 
@@ -145,15 +204,13 @@ pub struct CarbonEngineWorker {
     engine_kek: Option<Arc<CarbonEngineKek>>,
     work_root: PathBuf,
     force_hybrid_fanout: bool,
-    champion_cache: Mutex<BTreeMap<(String, String, String), CachedChampionEntry>>,
+    champion_cache: Mutex<BTreeMap<ChampionCacheKey, CachedChampionEntry>>,
 }
 
 struct OpenedEngineRunInputs {
     landmark_bundle: FitLandmarkBundle,
     fit_bytes: Zeroizing<Vec<u8>>,
     fit_plaintext_sha256: String,
-    holdout_bytes: Zeroizing<Vec<u8>>,
-    holdout_plaintext_sha256: String,
 }
 
 impl CarbonEngineWorker {
@@ -163,7 +220,13 @@ impl CarbonEngineWorker {
         seal_key: CarbonSealKey,
         work_root: PathBuf,
     ) -> Result<Self, String> {
-        fs::create_dir_all(&work_root).map_err(|e| format!("create engine work_root: {e}"))?;
+        fs::create_dir_all(&work_root).err_ctx("create engine work_root")?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&work_root, fs::Permissions::from_mode(0o700));
+        }
+        sweep_stale_session_dirs(&work_root);
         Ok(Self {
             cas,
             eval_invoker,
@@ -191,7 +254,7 @@ impl CarbonEngineWorker {
         deadline_epoch_ms: Option<u64>,
     ) -> Result<Vec<u8>, String> {
         let cmd: CarbonEngineWireCommand =
-            serde_json::from_slice(payload).map_err(|e| format!("decode engine command: {e}"))?;
+            serde_json::from_slice(payload).err_ctx("decode engine command")?;
         self.execute_command(&cmd, deadline_epoch_ms)
     }
 
@@ -203,8 +266,7 @@ impl CarbonEngineWorker {
         match cmd {
             CarbonEngineWireCommand::StartRun { request, region } => {
                 match self.execute_start_run(request, region, deadline_epoch_ms) {
-                    Ok(progress) => serde_json::to_vec(&progress)
-                        .map_err(|e| format!("encode start progress: {e}")),
+                    Ok(progress) => to_json_vec(&progress),
                     Err(err) => {
                         self.record_failed_status(
                             &request.tenant_id,
@@ -220,24 +282,20 @@ impl CarbonEngineWorker {
                 resume,
                 region,
             } => match self.execute_resume_run(run_id, resume, region, deadline_epoch_ms) {
-                Ok(progress) => serde_json::to_vec(&progress)
-                    .map_err(|e| format!("encode resume progress: {e}")),
+                Ok(progress) => to_json_vec(&progress),
                 Err(err) => {
                     self.record_failed_status(&resume.tenant_id, run_id, &err);
                     Err(err)
                 }
             },
             CarbonEngineWireCommand::Predict { run_id, predict } => {
-                let pred = self.execute_predict(run_id, predict)?;
-                serde_json::to_vec(&pred).map_err(|e| format!("encode predict response: {e}"))
+                to_json_vec(&self.execute_predict(run_id, predict)?)
             }
             CarbonEngineWireCommand::Explain { run_id, explain } => {
-                let exp = self.execute_explain(run_id, explain)?;
-                serde_json::to_vec(&exp).map_err(|e| format!("encode explain response: {e}"))
+                to_json_vec(&self.execute_explain(run_id, explain)?)
             }
             CarbonEngineWireCommand::Export { run_id, export } => {
-                let exp = self.execute_export(run_id, export)?;
-                serde_json::to_vec(&exp).map_err(|e| format!("encode export response: {e}"))
+                to_json_vec(&self.execute_export(run_id, export)?)
             }
         }
     }
@@ -275,9 +333,9 @@ impl CarbonEngineWorker {
             .ok_or_else(|| "missing wrapped_u_dek_b64 for encrypted run".to_owned())?;
         let cudk_bytes = base64::engine::general_purpose::STANDARD
             .decode(b64)
-            .map_err(|e| format!("invalid wrapped_u_dek_b64: {e}"))?;
+            .err_ctx("invalid wrapped_u_dek_b64")?;
         let dek = unwrap_u_dek_with_kek(kek, &cudk_bytes, tenant_id, run_id_str)
-            .map_err(|e| e.to_string())?;
+            .map_err(err_to_string)?;
         Ok(Some(dek))
     }
 
@@ -289,7 +347,7 @@ impl CarbonEngineWorker {
     ) -> Result<OpenedEngineRunInputs, String> {
         let lm_wire = base64::engine::general_purpose::STANDARD
             .decode(&create.landmark_bundle_b64)
-            .map_err(|e| format!("invalid landmark_bundle_b64: {e}"))?;
+            .err_ctx("invalid landmark_bundle_b64")?;
         let lm_bundle = if let Some(dek) = u_dek {
             let pt = decrypt_cuen_payload(
                 dek,
@@ -298,12 +356,11 @@ impl CarbonEngineWorker {
                 run_str,
                 &lm_wire,
             )
-            .map_err(|e| format!("decrypt landmark_bundle failed: {e}"))?;
+            .err_ctx("decrypt landmark_bundle failed")?;
             FitLandmarkBundle::from_wire_bytes(&pt)
-                .map_err(|e| format!("invalid decrypted FitLandmarkBundle: {e}"))?
+                .err_ctx("invalid decrypted FitLandmarkBundle")?
         } else {
-            FitLandmarkBundle::from_wire_bytes(&lm_wire)
-                .map_err(|e| format!("invalid FitLandmarkBundle: {e}"))?
+            FitLandmarkBundle::from_wire_bytes(&lm_wire).err_ctx("invalid FitLandmarkBundle")?
         };
         if lm_bundle.feature_count() != create.feature_names.len() {
             return Err("FitLandmarkBundle feature_count mismatch with feature_names".to_owned());
@@ -317,10 +374,6 @@ impl CarbonEngineWorker {
             blob_scope.as_deref(),
             &create.fit_jmat_sha256.to_ascii_lowercase(),
         )?;
-        let raw_holdout = self.cas.get_scoped_blob_verified(
-            blob_scope.as_deref(),
-            &create.holdout_jmat_sha256.to_ascii_lowercase(),
-        )?;
 
         if let Some(dek) = u_dek {
             let fit_pt = decrypt_cuen_payload(
@@ -330,35 +383,128 @@ impl CarbonEngineWorker {
                 CAS_BLOB_CUEN_SCOPE,
                 &raw_fit,
             )
-            .map_err(|e| format!("decrypt fit.jmat CUEN failed: {e}"))?;
-            let holdout_pt = decrypt_cuen_payload(
+            .err_ctx("decrypt fit.jmat CUEN failed")?;
+            let fit_sha = sha256_lower_hex(&fit_pt);
+            Ok(OpenedEngineRunInputs {
+                landmark_bundle: lm_bundle,
+                fit_bytes: fit_pt,
+                fit_plaintext_sha256: fit_sha,
+            })
+        } else {
+            let fit_sha = create.fit_jmat_sha256.to_ascii_lowercase();
+            Ok(OpenedEngineRunInputs {
+                landmark_bundle: lm_bundle,
+                fit_bytes: Zeroizing::new(raw_fit),
+                fit_plaintext_sha256: fit_sha,
+            })
+        }
+    }
+
+    fn load_and_open_holdout(
+        &self,
+        create: &CarbonCreateRunRequest,
+        u_dek: Option<&[u8; 32]>,
+    ) -> Result<(Zeroizing<Vec<u8>>, String), String> {
+        let blob_scope = match create.upload_id.as_deref() {
+            Some(uid) => Some(canonical_blob_scope(&create.tenant_id, uid)?),
+            None => None,
+        };
+        let raw_holdout = self.cas.get_scoped_blob_verified(
+            blob_scope.as_deref(),
+            &create.holdout_jmat_sha256.to_ascii_lowercase(),
+        )?;
+        if let Some(dek) = u_dek {
+            let pt = decrypt_cuen_payload(
                 dek,
                 CuenPayloadKind::HoldoutJmat,
                 &create.tenant_id,
                 CAS_BLOB_CUEN_SCOPE,
                 &raw_holdout,
             )
-            .map_err(|e| format!("decrypt holdout.jmat CUEN failed: {e}"))?;
-            let fit_sha = sha256_lower_hex(&fit_pt);
-            let holdout_sha = sha256_lower_hex(&holdout_pt);
-            Ok(OpenedEngineRunInputs {
-                landmark_bundle: lm_bundle,
-                fit_bytes: fit_pt,
-                fit_plaintext_sha256: fit_sha,
-                holdout_bytes: holdout_pt,
-                holdout_plaintext_sha256: holdout_sha,
-            })
+            .err_ctx("decrypt holdout.jmat CUEN failed")?;
+            let sha = sha256_lower_hex(&pt);
+            Ok((pt, sha))
         } else {
-            let fit_sha = create.fit_jmat_sha256.to_ascii_lowercase();
-            let holdout_sha = create.holdout_jmat_sha256.to_ascii_lowercase();
-            Ok(OpenedEngineRunInputs {
-                landmark_bundle: lm_bundle,
-                fit_bytes: Zeroizing::new(raw_fit),
-                fit_plaintext_sha256: fit_sha,
-                holdout_bytes: Zeroizing::new(raw_holdout),
-                holdout_plaintext_sha256: holdout_sha,
-            })
+            let sha = create.holdout_jmat_sha256.to_ascii_lowercase();
+            Ok((Zeroizing::new(raw_holdout), sha))
         }
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn load_stored_create_and_udek(
+        &self,
+        tenant_id: &str,
+        run_id_str: &str,
+        wrapped_u_dek_b64: Option<&str>,
+    ) -> Result<
+        (
+            jope_api::ids::RunId,
+            CarbonCreateRunRequest,
+            Option<Zeroizing<[u8; 32]>>,
+        ),
+        String,
+    > {
+        let run_id = run_id_str
+            .parse()
+            .map_err(|_| format!("invalid RunId '{run_id_str}'"))?;
+        let req_key = canonical_run_state_key(tenant_id, run_id_str, "request.json")?;
+        let req_bytes = self
+            .cas
+            .get_state_object(&req_key)?
+            .ok_or_else(|| format!("missing request.json for run '{run_id_str}'"))?;
+        let stored_create: CarbonCreateRunRequest =
+            serde_json::from_slice(&req_bytes).err_ctx("corrupt request.json")?;
+        let u_dek = self.unwrap_optional_udek(
+            stored_create.encrypted_cuen,
+            wrapped_u_dek_b64,
+            tenant_id,
+            run_id_str,
+        )?;
+        Ok((run_id, stored_create, u_dek))
+    }
+
+    fn open_unsealed_champion_bytes(
+        &self,
+        tenant_id: &str,
+        run_id_str: &str,
+        u_dek: Option<&[u8; 32]>,
+    ) -> Result<Zeroizing<Vec<u8>>, String> {
+        let champ_key = canonical_run_state_key(tenant_id, run_id_str, "sealed_champion.enc")?;
+        let champ_enc = self
+            .cas
+            .get_state_object(&champ_key)?
+            .ok_or_else(|| format!("run '{run_id_str}' has no sealed champion model"))?;
+        let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
+            &self.seal_key,
+            CarbonSealDomain::ChampionModel,
+            tenant_id,
+            run_id_str,
+            u_dek,
+            &champ_enc,
+        )
+        .err_ctx("sealed champion authentication failed")?;
+        Ok(decrypted_champ)
+    }
+
+    fn seal_response_cuen_to_client(
+        tenant_id: &str,
+        run_id_str: &str,
+        client_pubkey_b64: Option<&str>,
+        kind: CuenPayloadKind,
+        plaintext: &[u8],
+    ) -> Result<(Vec<u8>, String), String> {
+        let client_pub_b64 =
+            client_pubkey_b64.ok_or_else(|| "missing client_response_pubkey_b64".to_owned())?;
+        let client_pub = decode_p256_pubkey_b64(client_pub_b64).map_err(err_to_string)?;
+        let r_dek = generate_random_u_dek().map_err(err_to_string)?;
+        let resp_cuen = encrypt_cuen_payload(&r_dek, kind, tenant_id, run_id_str, plaintext)
+            .map_err(err_to_string)?;
+        let resp_cudk = wrap_u_dek_to_pubkey(&r_dek, &client_pub, tenant_id, run_id_str)
+            .map_err(err_to_string)?;
+        Ok((
+            resp_cuen,
+            base64::engine::general_purpose::STANDARD.encode(resp_cudk),
+        ))
     }
 
     fn execute_start_run(
@@ -379,8 +525,6 @@ impl CarbonEngineWorker {
             landmark_bundle: lm_bundle,
             fit_bytes,
             fit_plaintext_sha256: fit_pt_sha,
-            holdout_bytes,
-            holdout_plaintext_sha256: holdout_pt_sha,
         } = self.load_and_open_inputs(create, &run_str, u_dek.as_deref())?;
 
         let effort = map_api_effort(create.effort);
@@ -391,13 +535,19 @@ impl CarbonEngineWorker {
 
         let session_dir = EngineSessionDir::create(&self.work_root, "engine-run-")?;
         let fit_path = session_dir.path().join("fit.jmat");
-        fs::write(&fit_path, &*fit_bytes).map_err(|e| format!("stage fit.jmat: {e}"))?;
+        write_private_file(&fit_path, &fit_bytes)?;
+        let inproc_fit = if use_hybrid {
+            drop(fit_bytes);
+            None
+        } else {
+            Some(fit_bytes)
+        };
         let store_dir = session_dir.path().join("store");
         let scratch_dir = session_dir.path().join("scratch");
 
         let ranker = open_verified_ranker()?;
         let bundle_digest = ranker
-            .as_ref()
+            .as_deref()
             .and_then(|r| r.digest().strip_prefix("sha256:").map(str::to_owned))
             .unwrap_or_else(|| "0".repeat(64));
 
@@ -450,12 +600,12 @@ impl CarbonEngineWorker {
                 use_hybrid,
                 &store_dir,
                 &scratch_dir,
-                &fit_bytes,
+                inproc_fit,
                 &fit_pt_sha,
                 u_dek.as_deref(),
                 plan,
                 &lm_bundle,
-                ranker.as_ref(),
+                ranker.as_deref(),
                 effort.planned_waves(),
                 deadline_epoch_ms,
                 t0,
@@ -470,8 +620,6 @@ impl CarbonEngineWorker {
             region,
             &decision,
             use_hybrid,
-            &holdout_bytes,
-            &holdout_pt_sha,
             u_dek.as_deref(),
             outcome,
             effort.planned_waves(),
@@ -496,7 +644,7 @@ impl CarbonEngineWorker {
             .get_state_object(&req_key)?
             .ok_or_else(|| format!("missing stored request.json for run '{run_id_str}'"))?;
         let mut create: CarbonCreateRunRequest =
-            serde_json::from_slice(&req_bytes).map_err(|e| format!("corrupt request.json: {e}"))?;
+            serde_json::from_slice(&req_bytes).err_ctx("corrupt request.json")?;
         if let Some(new_effort) = resume.effort {
             create.effort = new_effort;
         }
@@ -522,7 +670,7 @@ impl CarbonEngineWorker {
             u_dek.as_deref(),
             &sealed_ckp_bytes,
         )
-        .map_err(|e| format!("sealed checkpoint authentication failed: {e}"))?;
+        .err_ctx("sealed checkpoint authentication failed")?;
 
         if let Ok(stop_key) = canonical_run_state_key(&resume.tenant_id, run_id_str, "stop.json") {
             let _ = self.cas.delete_state_object(&stop_key);
@@ -532,8 +680,6 @@ impl CarbonEngineWorker {
             landmark_bundle: lm_bundle,
             fit_bytes,
             fit_plaintext_sha256: fit_pt_sha,
-            holdout_bytes,
-            holdout_plaintext_sha256: holdout_pt_sha,
         } = self.load_and_open_inputs(&create, run_id_str, u_dek.as_deref())?;
 
         let effort = map_api_effort(create.effort);
@@ -544,7 +690,13 @@ impl CarbonEngineWorker {
 
         let session_dir = EngineSessionDir::create(&self.work_root, "engine-resume-")?;
         let fit_path = session_dir.path().join("fit.jmat");
-        fs::write(&fit_path, &*fit_bytes).map_err(|e| format!("stage fit.jmat: {e}"))?;
+        write_private_file(&fit_path, &fit_bytes)?;
+        let inproc_fit = if use_hybrid {
+            drop(fit_bytes);
+            None
+        } else {
+            Some(fit_bytes)
+        };
         let store_dir = session_dir.path().join("store");
         let scratch_dir = session_dir.path().join("scratch");
 
@@ -554,7 +706,7 @@ impl CarbonEngineWorker {
             &create.run_id,
             &fit_path,
         )
-        .map_err(|e| format!("unpack & rebind paused checkpoint failed: {e}"))?;
+        .err_ctx("unpack & rebind paused checkpoint failed")?;
 
         let ranker = open_verified_ranker()?;
         let extra_waves = resume
@@ -587,12 +739,12 @@ impl CarbonEngineWorker {
                 use_hybrid,
                 &store_dir,
                 &scratch_dir,
-                &fit_bytes,
+                inproc_fit,
                 &fit_pt_sha,
                 u_dek.as_deref(),
                 rebound_plan,
                 &lm_bundle,
-                ranker.as_ref(),
+                ranker.as_deref(),
                 extra_waves,
                 deadline_epoch_ms,
                 t0,
@@ -607,8 +759,6 @@ impl CarbonEngineWorker {
             region,
             &decision,
             use_hybrid,
-            &holdout_bytes,
-            &holdout_pt_sha,
             u_dek.as_deref(),
             outcome,
             waves_target,
@@ -624,48 +774,32 @@ impl CarbonEngineWorker {
         run_id_str: &str,
         pred_req: &CarbonPredictRequest,
     ) -> Result<CarbonPredictResponse, String> {
-        let run_id = run_id_str
-            .parse()
-            .map_err(|_| format!("invalid RunId '{run_id_str}'"))?;
-        let req_key = canonical_run_state_key(&pred_req.tenant_id, run_id_str, "request.json")?;
-        let req_bytes = self
-            .cas
-            .get_state_object(&req_key)?
-            .ok_or_else(|| format!("missing request.json for run '{run_id_str}'"))?;
-        let stored_create: CarbonCreateRunRequest =
-            serde_json::from_slice(&req_bytes).map_err(|e| format!("corrupt request.json: {e}"))?;
-        let tier = wire_to_product_tier(stored_create.tier);
-
-        let u_dek = self.unwrap_optional_udek(
-            stored_create.encrypted_cuen,
-            pred_req.wrapped_u_dek_b64.as_deref(),
+        let (run_id, stored_create, u_dek) = self.load_stored_create_and_udek(
             &pred_req.tenant_id,
             run_id_str,
+            pred_req.wrapped_u_dek_b64.as_deref(),
         )?;
+        let tier = wire_to_product_tier(stored_create.tier);
 
         let champ_key =
             canonical_run_state_key(&pred_req.tenant_id, run_id_str, "sealed_champion.enc")?;
         let Some(champ_enc) = self.cas.get_state_object(&champ_key)? else {
             if let Ok(mut guard) = self.champion_cache.lock() {
-                guard.retain(|(t, r, _), _| t != &pred_req.tenant_id || r != run_id_str);
+                guard.retain(|(t, r, _, _), _| t != &pred_req.tenant_id || r != run_id_str);
             }
             return Err(format!("run '{run_id_str}' has no sealed champion model"));
         };
-        let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
-            &self.seal_key,
-            CarbonSealDomain::ChampionModel,
-            &pred_req.tenant_id,
-            run_id_str,
-            u_dek.as_deref(),
-            &champ_enc,
-        )
-        .map_err(|e| format!("sealed champion authentication failed: {e}"))?;
-        let champ_pt_sha = sha256_lower_hex(&decrypted_champ);
+        let champ_enc_sha = sha256_lower_hex(&champ_enc);
+        let u_dek_tag = match u_dek.as_deref() {
+            Some(dek) => sha256_lower_hex(dek),
+            None => "plain".to_owned(),
+        };
         let now_secs = now_epoch_ms() / 1_000;
-        let cache_key = (
+        let cache_key: ChampionCacheKey = (
             pred_req.tenant_id.clone(),
             run_id_str.to_owned(),
-            champ_pt_sha,
+            champ_enc_sha,
+            u_dek_tag,
         );
         let parsed_champion = {
             let cached = self.champion_cache.lock().ok().and_then(|mut guard| {
@@ -675,28 +809,56 @@ impl CarbonEngineWorker {
             match cached {
                 Some(hit) => hit,
                 None => {
+                    let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
+                        &self.seal_key,
+                        CarbonSealDomain::ChampionModel,
+                        &pred_req.tenant_id,
+                        run_id_str,
+                        u_dek.as_deref(),
+                        &champ_enc,
+                    )
+                    .err_ctx("sealed champion authentication failed")?;
+                    let approx_bytes = decrypted_champ.len().max(1_024);
                     let parsed = Arc::new(
                         CarbonParsedChampion::from_json_bytes(&decrypted_champ)
-                            .map_err(|e| format!("champion parse failed: {e}"))?,
+                            .err_ctx("champion parse failed")?,
                     );
-                    if let Ok(mut guard) = self.champion_cache.lock() {
-                        if guard.len() >= CHAMPION_CACHE_MAX_ENTRIES {
-                            guard.clear();
+                    if approx_bytes <= CHAMPION_CACHE_MAX_BYTES {
+                        if let Ok(mut guard) = self.champion_cache.lock() {
+                            let mut total_bytes: usize =
+                                guard.values().map(|v| v.approx_bytes).sum();
+                            while guard.len() >= CHAMPION_CACHE_MAX_ENTRIES
+                                || total_bytes.saturating_add(approx_bytes)
+                                    > CHAMPION_CACHE_MAX_BYTES
+                            {
+                                let Some(oldest_key) = guard
+                                    .iter()
+                                    .min_by_key(|(_, v)| v.expires_epoch_secs)
+                                    .map(|(k, _)| k.clone())
+                                else {
+                                    break;
+                                };
+                                if let Some(removed) = guard.remove(&oldest_key) {
+                                    total_bytes = total_bytes.saturating_sub(removed.approx_bytes);
+                                }
+                            }
+                            guard.insert(
+                                cache_key,
+                                CachedChampionEntry {
+                                    expires_epoch_secs: now_secs
+                                        .saturating_add(CHAMPION_CACHE_TTL_SECS),
+                                    approx_bytes,
+                                    parsed: Arc::clone(&parsed),
+                                },
+                            );
                         }
-                        guard.insert(
-                            cache_key,
-                            CachedChampionEntry {
-                                expires_epoch_secs: now_secs
-                                    .saturating_add(CHAMPION_CACHE_TTL_SECS),
-                                parsed: Arc::clone(&parsed),
-                            },
-                        );
                     }
                     parsed
                 }
             }
         };
 
+        let mut pending_input_delete: Option<(Option<String>, String)> = None;
         let (feat_names, rows) = if let Some(dek) = u_dek.as_ref() {
             let enc_wire = if let Some(cas_sha) = pred_req.encrypted_rows_cas_sha256.as_deref() {
                 let in_scope = match pred_req.predict_upload_id.as_deref() {
@@ -707,7 +869,7 @@ impl CarbonEngineWorker {
                 let bytes = self
                     .cas
                     .get_scoped_blob_verified(in_scope.as_deref(), &sha_lc)?;
-                let _ = self.cas.delete_scoped_blob(in_scope.as_deref(), &sha_lc);
+                pending_input_delete = Some((in_scope, sha_lc));
                 bytes
             } else {
                 let enc_b64 = pred_req
@@ -716,7 +878,7 @@ impl CarbonEngineWorker {
                     .ok_or_else(|| "missing encrypted_rows_cuen_b64".to_owned())?;
                 base64::engine::general_purpose::STANDARD
                     .decode(enc_b64)
-                    .map_err(|e| format!("invalid encrypted_rows_cuen_b64: {e}"))?
+                    .err_ctx("invalid encrypted_rows_cuen_b64")?
             };
             let pt = decrypt_cuen_payload(
                 dek,
@@ -725,9 +887,9 @@ impl CarbonEngineWorker {
                 run_id_str,
                 &enc_wire,
             )
-            .map_err(|e| format!("decrypt predict features failed: {e}"))?;
-            let decoded: CarbonEncryptedPredictPayload = serde_json::from_slice(&pt)
-                .map_err(|e| format!("invalid encrypted predict JSON: {e}"))?;
+            .err_ctx("decrypt predict features failed")?;
+            let decoded: CarbonEncryptedPredictPayload =
+                serde_json::from_slice(&pt).err_ctx("invalid encrypted predict JSON")?;
             (decoded.feature_names, decoded.rows)
         } else {
             (pred_req.feature_names.clone(), pred_req.rows.clone())
@@ -752,7 +914,10 @@ impl CarbonEngineWorker {
 
         let predictions = parsed_champion
             .predict(&feat_names, &rows)
-            .map_err(|e| format!("champion predict failed: {e}"))?;
+            .err_ctx("champion predict failed")?;
+        if let Some((in_scope, sha_lc)) = pending_input_delete {
+            let _ = self.cas.delete_scoped_blob(in_scope.as_deref(), &sha_lc);
+        }
 
         let mut pred_le = Zeroizing::new(Vec::with_capacity(predictions.len() * 8));
         for &val in &predictions {
@@ -762,24 +927,13 @@ impl CarbonEngineWorker {
         let row_count = predictions.len() as u32;
 
         if stored_create.encrypted_cuen {
-            let client_pub_b64 = pred_req
-                .client_response_pubkey_b64
-                .as_deref()
-                .ok_or_else(|| "missing client_response_pubkey_b64".to_owned())?;
-            let client_pub = decode_p256_pubkey_b64(client_pub_b64).map_err(|e| e.to_string())?;
-            let r_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
-            let resp_cuen = encrypt_cuen_payload(
-                &r_dek,
-                CuenPayloadKind::PredictOutputs,
+            let (resp_cuen, resp_cudk_b64) = Self::seal_response_cuen_to_client(
                 &pred_req.tenant_id,
                 run_id_str,
+                pred_req.client_response_pubkey_b64.as_deref(),
+                CuenPayloadKind::PredictOutputs,
                 &pred_le,
-            )
-            .map_err(|e| e.to_string())?;
-            let resp_cudk =
-                wrap_u_dek_to_pubkey(&r_dek, &client_pub, &pred_req.tenant_id, run_id_str)
-                    .map_err(|e| e.to_string())?;
-            let resp_cudk_b64 = base64::engine::general_purpose::STANDARD.encode(resp_cudk);
+            )?;
             if pred_req.prefer_cas_output || resp_cuen.len() > MAX_INLINE_PREDICT_CUEN_BYTES {
                 let out_sha = sha256_lower_hex(&resp_cuen);
                 let out_scope = match pred_req.predict_upload_id.as_deref() {
@@ -830,63 +984,18 @@ impl CarbonEngineWorker {
         run_id_str: &str,
         explain_req: &CarbonExplainRequest,
     ) -> Result<CarbonExplainResponse, String> {
-        let run_id = run_id_str
-            .parse()
-            .map_err(|_| format!("invalid RunId '{run_id_str}'"))?;
-        let req_key = canonical_run_state_key(&explain_req.tenant_id, run_id_str, "request.json")?;
-        let req_bytes = self
-            .cas
-            .get_state_object(&req_key)?
-            .ok_or_else(|| format!("missing request.json for run '{run_id_str}'"))?;
-        let stored_create: CarbonCreateRunRequest =
-            serde_json::from_slice(&req_bytes).map_err(|e| format!("corrupt request.json: {e}"))?;
-
-        let u_dek = self.unwrap_optional_udek(
-            stored_create.encrypted_cuen,
-            explain_req.wrapped_u_dek_b64.as_deref(),
+        let (run_id, stored_create, u_dek) = self.load_stored_create_and_udek(
             &explain_req.tenant_id,
             run_id_str,
+            explain_req.wrapped_u_dek_b64.as_deref(),
         )?;
-
-        let champ_key =
-            canonical_run_state_key(&explain_req.tenant_id, run_id_str, "sealed_champion.enc")?;
-        let champ_enc = self
-            .cas
-            .get_state_object(&champ_key)?
-            .ok_or_else(|| format!("run '{run_id_str}' has no sealed champion model"))?;
-        let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
-            &self.seal_key,
-            CarbonSealDomain::ChampionModel,
+        let decrypted_champ = self.open_unsealed_champion_bytes(
             &explain_req.tenant_id,
             run_id_str,
             u_dek.as_deref(),
-            &champ_enc,
-        )
-        .map_err(|e| format!("sealed champion authentication failed: {e}"))?;
-
-        let blob_scope = match stored_create.upload_id.as_deref() {
-            Some(uid) => Some(canonical_blob_scope(&stored_create.tenant_id, uid)?),
-            None => None,
-        };
-        let raw_holdout = self.cas.get_scoped_blob_verified(
-            blob_scope.as_deref(),
-            &stored_create.holdout_jmat_sha256.to_ascii_lowercase(),
         )?;
-        let (holdout_bytes, holdout_pt_sha) = if let Some(dek) = u_dek.as_deref() {
-            let pt = decrypt_cuen_payload(
-                dek,
-                CuenPayloadKind::HoldoutJmat,
-                &stored_create.tenant_id,
-                CAS_BLOB_CUEN_SCOPE,
-                &raw_holdout,
-            )
-            .map_err(|e| format!("decrypt holdout.jmat CUEN failed: {e}"))?;
-            let sha = sha256_lower_hex(&pt);
-            (pt, sha)
-        } else {
-            let sha = stored_create.holdout_jmat_sha256.to_ascii_lowercase();
-            (Zeroizing::new(raw_holdout), sha)
-        };
+        let (holdout_bytes, holdout_pt_sha) =
+            self.load_and_open_holdout(&stored_create, u_dek.as_deref())?;
 
         let (baseline_loss, importances) = explain_champion_on_holdout(
             &decrypted_champ,
@@ -898,33 +1007,20 @@ impl CarbonEngineWorker {
             explain_req.top_k.map(|k| k as usize),
             stored_create.seed.0,
         )
-        .map_err(|e| format!("champion holdout explain failed: {e}"))?;
+        .err_ctx("champion holdout explain failed")?;
 
         if stored_create.encrypted_cuen {
-            let client_pub_b64 = explain_req
-                .client_response_pubkey_b64
-                .as_deref()
-                .ok_or_else(|| "missing client_response_pubkey_b64".to_owned())?;
-            let client_pub = decode_p256_pubkey_b64(client_pub_b64).map_err(|e| e.to_string())?;
-            let r_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
-            let pt_json = Zeroizing::new(
-                serde_json::to_vec(&CarbonEncryptedExplainPayload {
-                    baseline_holdout_loss: baseline_loss,
-                    feature_importances: importances,
-                })
-                .map_err(|e| format!("encode encrypted explain JSON: {e}"))?,
-            );
-            let resp_cuen = encrypt_cuen_payload(
-                &r_dek,
-                CuenPayloadKind::ExplainOutputs,
+            let pt_json = Zeroizing::new(to_json_vec(&CarbonEncryptedExplainPayload {
+                baseline_holdout_loss: baseline_loss,
+                feature_importances: importances,
+            })?);
+            let (resp_cuen, resp_cudk_b64) = Self::seal_response_cuen_to_client(
                 &explain_req.tenant_id,
                 run_id_str,
+                explain_req.client_response_pubkey_b64.as_deref(),
+                CuenPayloadKind::ExplainOutputs,
                 &pt_json,
-            )
-            .map_err(|e| e.to_string())?;
-            let resp_cudk =
-                wrap_u_dek_to_pubkey(&r_dek, &client_pub, &explain_req.tenant_id, run_id_str)
-                    .map_err(|e| e.to_string())?;
+            )?;
             return Ok(CarbonExplainResponse {
                 run_id,
                 method: "holdout_permutation_v1".to_owned(),
@@ -933,9 +1029,7 @@ impl CarbonEngineWorker {
                 encrypted_explain_cuen_b64: Some(
                     base64::engine::general_purpose::STANDARD.encode(resp_cuen),
                 ),
-                response_cudk_b64: Some(
-                    base64::engine::general_purpose::STANDARD.encode(resp_cudk),
-                ),
+                response_cudk_b64: Some(resp_cudk_b64),
             });
         }
 
@@ -954,39 +1048,13 @@ impl CarbonEngineWorker {
         run_id_str: &str,
         export_req: &CarbonExportRequest,
     ) -> Result<CarbonExportResponse, String> {
-        let run_id = run_id_str
-            .parse()
-            .map_err(|_| format!("invalid RunId '{run_id_str}'"))?;
-        let req_key = canonical_run_state_key(&export_req.tenant_id, run_id_str, "request.json")?;
-        let req_bytes = self
-            .cas
-            .get_state_object(&req_key)?
-            .ok_or_else(|| format!("missing request.json for run '{run_id_str}'"))?;
-        let stored_create: CarbonCreateRunRequest =
-            serde_json::from_slice(&req_bytes).map_err(|e| format!("corrupt request.json: {e}"))?;
-
-        let u_dek = self.unwrap_optional_udek(
-            stored_create.encrypted_cuen,
+        let (run_id, stored_create, u_dek) = self.load_stored_create_and_udek(
+            &export_req.tenant_id,
+            run_id_str,
             export_req.wrapped_u_dek_b64.as_deref(),
-            &export_req.tenant_id,
-            run_id_str,
         )?;
-
-        let champ_key =
-            canonical_run_state_key(&export_req.tenant_id, run_id_str, "sealed_champion.enc")?;
-        let champ_enc = self
-            .cas
-            .get_state_object(&champ_key)?
-            .ok_or_else(|| format!("run '{run_id_str}' has no sealed champion model"))?;
-        let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
-            &self.seal_key,
-            CarbonSealDomain::ChampionModel,
-            &export_req.tenant_id,
-            run_id_str,
-            u_dek.as_deref(),
-            &champ_enc,
-        )
-        .map_err(|e| format!("sealed champion authentication failed: {e}"))?;
+        let decrypted_champ =
+            self.open_unsealed_champion_bytes(&export_req.tenant_id, run_id_str, u_dek.as_deref())?;
 
         let source_code = Zeroizing::new(
             export_champion_standalone_source(
@@ -994,28 +1062,18 @@ impl CarbonEngineWorker {
                 &stored_create.target_name,
                 export_req.lang,
             )
-            .map_err(|e| format!("champion standalone export failed: {e}"))?,
+            .err_ctx("champion standalone export failed")?,
         );
         let source_sha256 = sha256_lower_hex(source_code.as_bytes());
 
         if stored_create.encrypted_cuen {
-            let client_pub_b64 = export_req
-                .client_response_pubkey_b64
-                .as_deref()
-                .ok_or_else(|| "missing client_response_pubkey_b64".to_owned())?;
-            let client_pub = decode_p256_pubkey_b64(client_pub_b64).map_err(|e| e.to_string())?;
-            let r_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
-            let resp_cuen = encrypt_cuen_payload(
-                &r_dek,
-                CuenPayloadKind::ExportArtifact,
+            let (resp_cuen, resp_cudk_b64) = Self::seal_response_cuen_to_client(
                 &export_req.tenant_id,
                 run_id_str,
+                export_req.client_response_pubkey_b64.as_deref(),
+                CuenPayloadKind::ExportArtifact,
                 source_code.as_bytes(),
-            )
-            .map_err(|e| e.to_string())?;
-            let resp_cudk =
-                wrap_u_dek_to_pubkey(&r_dek, &client_pub, &export_req.tenant_id, run_id_str)
-                    .map_err(|e| e.to_string())?;
+            )?;
             return Ok(CarbonExportResponse {
                 run_id,
                 lang: export_req.lang,
@@ -1024,9 +1082,7 @@ impl CarbonEngineWorker {
                 encrypted_export_cuen_b64: Some(
                     base64::engine::general_purpose::STANDARD.encode(resp_cuen),
                 ),
-                response_cudk_b64: Some(
-                    base64::engine::general_purpose::STANDARD.encode(resp_cudk),
-                ),
+                response_cudk_b64: Some(resp_cudk_b64),
             });
         }
 
@@ -1050,7 +1106,7 @@ impl CarbonEngineWorker {
         use_hybrid: bool,
         store_dir: &Path,
         scratch_dir: &Path,
-        fit_bytes: &[u8],
+        mut inproc_fit_bytes: Option<Zeroizing<Vec<u8>>>,
         fit_pt_sha: &str,
         u_dek: Option<&[u8; 32]>,
         plan: Plan,
@@ -1147,6 +1203,7 @@ impl CarbonEngineWorker {
         } else {
             2usize
         };
+        let fallback_fit_path = plan.matrix_path.clone();
         let session_opts = CarbonWaveSessionOptions {
             store_dir,
             plan,
@@ -1172,7 +1229,7 @@ impl CarbonEngineWorker {
                         &create.tenant_id,
                         CAS_BLOB_CUEN_SCOPE,
                     )
-                    .map_err(|e| e.to_string())?;
+                    .map_err(err_to_string)?;
                     Some((
                         create.tenant_id.clone(),
                         base64::engine::general_purpose::STANDARD.encode(*subkey),
@@ -1181,7 +1238,6 @@ impl CarbonEngineWorker {
                 } else {
                     None
                 };
-                let fallback_fit_bytes = Arc::new(Zeroizing::new(fit_bytes.to_vec()));
                 let fallback_fit_pt_sha = fit_pt_sha.to_owned();
                 let fallback_scratch_dir = scratch_dir.to_path_buf();
                 let eval_inv_exec = Arc::clone(&eval_invocations);
@@ -1212,12 +1268,15 @@ impl CarbonEngineWorker {
                             Ok(out)
                         }
                         Err(err) if is_retriable_eval_capacity_error(&err) => {
-                            // Zero-drop saturation safety valve: if regional `carbon-eval` concurrency
-                            // saturates under multi-hundred-user bursts, evaluate this candidate batch
-                            // directly inside `carbon-engine`'s 3,008 MB Graviton2 container!
+                            // Zero-drop saturation safety valve: read staged `fit.jmat` lazily only
+                            // on capacity saturation so normal HybridFanOut holds 0 fit bytes in RAM.
                             eval_fb_exec.fetch_add(1, Ordering::Relaxed);
+                            let lazy_fit =
+                                Zeroizing::new(fs::read(&fallback_fit_path).map_err(|e| {
+                                    anyhow::anyhow!("read fallback staged fit.jmat: {e}")
+                                })?);
                             evaluate_carbon_eval_shard(
-                                fallback_fit_bytes.as_slice(),
+                                lazy_fit.as_slice(),
                                 &fallback_fit_pt_sha,
                                 &fallback_scratch_dir,
                                 req,
@@ -1234,14 +1293,18 @@ impl CarbonEngineWorker {
                     &should_pause,
                     &mut on_wave,
                 )
-                .map_err(|e| format!("hybrid wave execution failed: {e}"))?
+                .err_ctx("hybrid wave execution failed")?
             } else {
+                let raw_fit_vec = match inproc_fit_bytes.take() {
+                    Some(mut z) => std::mem::take(&mut *z),
+                    None => fs::read(&fallback_fit_path).err_ctx("read staged fit.jmat")?,
+                };
                 let inproc_exec = CarbonInProcessExecutor::open_fit(
-                    fit_bytes.to_vec(),
+                    raw_fit_vec,
                     fit_pt_sha,
                     scratch_dir.to_path_buf(),
                 )
-                .map_err(|e| format!("open fit in-process failed: {e}"))?;
+                .err_ctx("open fit in-process failed")?;
                 run_carbon_waves_with_calibration(
                     session_opts,
                     cal_mode,
@@ -1249,7 +1312,7 @@ impl CarbonEngineWorker {
                     &should_pause,
                     &mut on_wave,
                 )
-                .map_err(|e| format!("solo wave execution failed: {e}"))?
+                .err_ctx("solo wave execution failed")?
             };
         Ok((
             outcome,
@@ -1267,8 +1330,6 @@ impl CarbonEngineWorker {
         region: &str,
         decision: &CarbonPlanDecision,
         use_hybrid: bool,
-        holdout_bytes: &[u8],
-        holdout_pt_sha: &str,
         u_dek: Option<&[u8; 32]>,
         outcome: CarbonWaveRunOutcome,
         waves_target: u32,
@@ -1286,7 +1347,7 @@ impl CarbonEngineWorker {
             u_dek,
             &outcome.store_archive_bytes,
         )
-        .map_err(|e| format!("seal checkpoint failed: {e}"))?;
+        .err_ctx("seal checkpoint failed")?;
         let ckp_sha = sha256_lower_hex(sealed_ckp.wire_bytes());
         self.cas.put_state_object(
             &canonical_run_state_key(&create.tenant_id, run_str, "sealed_checkpoint.enc")?,
@@ -1306,21 +1367,22 @@ impl CarbonEngineWorker {
                 u_dek,
                 champ_bytes,
             )
-            .map_err(|e| format!("seal champion failed: {e}"))?;
+            .err_ctx("seal champion failed")?;
             champ_sha = Some(sha256_lower_hex(sealed_champ.wire_bytes()));
             self.cas.put_state_object(
                 &canonical_run_state_key(&create.tenant_id, run_str, "sealed_champion.enc")?,
                 sealed_champ.wire_bytes(),
             )?;
+            let (holdout_bytes, holdout_pt_sha) = self.load_and_open_holdout(create, u_dek)?;
             let (h_loss, h_val) = evaluate_outer_holdout_only(
                 champ_bytes,
-                holdout_bytes,
-                holdout_pt_sha,
+                &holdout_bytes,
+                &holdout_pt_sha,
                 &create.target_name,
                 &create.feature_names,
                 &create.objective,
             )
-            .map_err(|e| format!("outer holdout evaluation failed: {e}"))?;
+            .err_ctx("outer holdout evaluation failed")?;
             outer_loss = Some(h_loss);
             outer_metric = Some(h_val);
         }
@@ -1366,8 +1428,7 @@ impl CarbonEngineWorker {
             failure_message: None,
             eval_fallback_shards: (eval_fallback_shards > 0).then_some(eval_fallback_shards),
         };
-        let progress_bytes =
-            serde_json::to_vec(&progress).map_err(|e| format!("encode final progress: {e}"))?;
+        let progress_bytes = to_json_vec(&progress)?;
         self.cas.put_state_object(
             &canonical_run_state_key(&create.tenant_id, run_str, "status.json")?,
             &progress_bytes,
@@ -1392,7 +1453,7 @@ impl CarbonEngineWorker {
             features: feature_count,
             est_ms_per_candidate_1vcpu: estimate_ms_per_candidate_1vcpu(fit_rows, feature_count),
         })
-        .map_err(|e| e.to_string())
+        .map_err(err_to_string)
     }
 }
 
@@ -1430,15 +1491,32 @@ pub fn verify_cold_start_r882_digest_pin(
     Ok(())
 }
 
-fn open_verified_ranker() -> Result<Option<jope_service::run::learned::AdmittedRanker>, String> {
+fn open_verified_ranker() -> Result<Option<Arc<jope_service::run::learned::AdmittedRanker>>, String>
+{
     use std::sync::OnceLock;
+    static EMBEDDED_RANKER: OnceLock<
+        Result<Option<Arc<jope_service::run::learned::AdmittedRanker>>, String>,
+    > = OnceLock::new();
     static COLD_START_PIN_CHECK: OnceLock<Result<(), String>> = OnceLock::new();
 
-    let ranker = try_open_embedded_ranker()
-        .map_err(|e| format!("r882 neural ranker verification failed: {e}"))?;
+    let custom_dir_set = std::env::var_os("CARBON_MODEL_R882_DIR").is_some();
+    let ranker: Option<Arc<jope_service::run::learned::AdmittedRanker>> = if custom_dir_set {
+        try_open_embedded_ranker()
+            .err_ctx("r882 neural ranker verification failed")?
+            .map(Arc::new)
+    } else {
+        match EMBEDDED_RANKER.get_or_init(|| {
+            try_open_embedded_ranker()
+                .map(|opt| opt.map(Arc::new))
+                .err_ctx("r882 neural ranker verification failed")
+        }) {
+            Ok(opt) => opt.clone(),
+            Err(err) => return Err(err.clone()),
+        }
+    };
     let expected_env = std::env::var("CARBON_R882_DIGEST").ok();
-    let layer_present = std::env::var_os("CARBON_MODEL_R882_DIR").is_some()
-        || Path::new("/opt/jope-models/r882/release-catalog.json").exists();
+    let layer_present =
+        custom_dir_set || Path::new("/opt/jope-models/r882/release-catalog.json").exists();
     let actual_digest = ranker.as_ref().map(|r| r.digest());
     if layer_present {
         let cached = COLD_START_PIN_CHECK.get_or_init(|| {

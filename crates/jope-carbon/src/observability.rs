@@ -519,11 +519,18 @@ pub fn emit_cli_error(json_mode: bool, raw_message: &str) -> ExitCode {
     ExitCode::from(code)
 }
 
-#[cfg(all(unix, not(feature = "serve")))]
+static GLOBAL_SIGINT_FLAG: std::sync::OnceLock<Arc<AtomicBool>> = std::sync::OnceLock::new();
+
+fn mark_termination_signal_received() {
+    SIGINT_RECEIVED.store(true, Ordering::SeqCst);
+    if let Some(flag) = GLOBAL_SIGINT_FLAG.get() {
+        flag.store(true, Ordering::SeqCst);
+    }
+}
+
+#[cfg(unix)]
 #[allow(unsafe_code)]
 mod thin_cli_signal {
-    use std::sync::atomic::Ordering;
-
     type SigHandler = extern "C" fn(i32);
 
     extern "C" {
@@ -531,13 +538,13 @@ mod thin_cli_signal {
     }
 
     extern "C" fn on_termination_signal(_sig: i32) {
-        super::SIGINT_RECEIVED.store(true, Ordering::SeqCst);
+        super::mark_termination_signal_received();
     }
 
     pub(super) fn register_once() {
         const SIGINT_NUM: i32 = 2;
         const SIGTERM_NUM: i32 = 15;
-        // SAFETY: `on_termination_signal` performs only an async-signal-safe `AtomicBool::store`.
+        // SAFETY: `on_termination_signal` performs only lock-free atomic loads/stores.
         unsafe {
             let _ = signal(SIGINT_NUM, on_termination_signal);
             let _ = signal(SIGTERM_NUM, on_termination_signal);
@@ -545,11 +552,9 @@ mod thin_cli_signal {
     }
 }
 
-#[cfg(all(windows, not(feature = "serve")))]
+#[cfg(windows)]
 #[allow(unsafe_code)]
 mod thin_cli_signal {
-    use std::sync::atomic::Ordering;
-
     type ConsoleHandler = unsafe extern "system" fn(u32) -> i32;
 
     #[link(name = "kernel32")]
@@ -558,48 +563,28 @@ mod thin_cli_signal {
     }
 
     unsafe extern "system" fn on_ctrl_event(_ctrl_type: u32) -> i32 {
-        super::SIGINT_RECEIVED.store(true, Ordering::SeqCst);
+        super::mark_termination_signal_received();
         1
     }
 
     pub(super) fn register_once() {
-        // SAFETY: `on_ctrl_event` performs only an atomic store and returns TRUE (1) so cooperative
-        // loops can shred or persist handles cleanly before exiting.
+        // SAFETY: `on_ctrl_event` performs only lock-free atomic loads/stores and returns TRUE (1).
         unsafe {
             let _ = SetConsoleCtrlHandler(Some(on_ctrl_event), 1);
         }
     }
 }
 
-/// Install a cooperative Ctrl-C (`SIGINT` / `SIGTERM`) flag across both thin (`--features cli`)
-/// and full (`--features serve`) builds.
+/// Install a zero-thread cooperative Ctrl-C (`SIGINT` / `SIGTERM`) flag across both thin
+/// (`--features cli`) and full (`--features serve`) builds (`ASYNC-01`).
 pub fn install_sigint_flag() -> Arc<AtomicBool> {
-    let flag = Arc::new(AtomicBool::new(false));
-    #[cfg(feature = "serve")]
-    {
-        let flag_bg = Arc::clone(&flag);
-        let _ = std::thread::Builder::new()
-            .name("carbon-sigint-watch".to_owned())
-            .spawn(move || {
-                if let Ok(rt) = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                {
-                    rt.block_on(async move {
-                        if tokio::signal::ctrl_c().await.is_ok() {
-                            SIGINT_RECEIVED.store(true, Ordering::SeqCst);
-                            flag_bg.store(true, Ordering::SeqCst);
-                        }
-                    });
-                }
-            });
-    }
-    #[cfg(all(any(unix, windows), not(feature = "serve")))]
+    let shared = GLOBAL_SIGINT_FLAG.get_or_init(|| Arc::new(AtomicBool::new(false)));
+    #[cfg(any(unix, windows))]
     {
         static ONCE: std::sync::OnceLock<()> = std::sync::OnceLock::new();
         ONCE.get_or_init(thin_cli_signal::register_once);
     }
-    flag
+    Arc::clone(shared)
 }
 
 #[cfg(test)]

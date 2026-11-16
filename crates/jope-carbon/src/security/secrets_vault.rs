@@ -6,13 +6,13 @@
 //! directly into `Zeroizing` memory, while preserving `[active, previous]` dual-key rotation and offline
 //! environment-variable overrides for local unit/emulator harnesses.
 
-use std::io::Read;
 use std::sync::OnceLock;
 use std::time::Duration;
 
 use zeroize::Zeroizing;
 
 use crate::{
+    error::{err_to_string, to_json_vec},
     security::{
         auth::CarbonAuthVerifier,
         seal::CarbonSealKey,
@@ -176,8 +176,7 @@ pub fn fetch_secretsmanager_secret_string(
             serde_json::Value::String(vid.to_owned()),
         );
     }
-    let payload = serde_json::to_vec(&serde_json::Value::Object(req_json))
-        .map_err(|e| format!("encode GetSecretValue payload: {e}"))?;
+    let payload = to_json_vec(&serde_json::Value::Object(req_json))?;
 
     let agent = carbon_https_agent();
     let mut last_err = String::new();
@@ -220,14 +219,13 @@ pub fn fetch_secretsmanager_secret_string(
             }
         };
         let status = resp.status().as_u16();
-        let mut body = Zeroizing::new(Vec::new());
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut body)
-            .map_err(|e| format!("read GetSecretValue body: {e}"))?;
+        let body = Zeroizing::new(crate::storage::cas::read_bounded(
+            resp.body_mut().as_reader(),
+            256 * 1024,
+            "GetSecretValue body",
+        )?);
         if status == 200 {
-            let parsed: serde_json::Value = serde_json::from_slice(&body)
-                .map_err(|e| format!("decode GetSecretValue response JSON: {e}"))?;
+            let parsed: serde_json::Value = serde_json::from_slice(&body).map_err(err_to_string)?;
             let secret_str = parsed
                 .get("SecretString")
                 .and_then(|v| v.as_str())

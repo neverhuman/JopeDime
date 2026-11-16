@@ -9,12 +9,40 @@ MATRIX_ASSET="${3:?matrix asset required}"
 
 mkdir -p target/carbon-matrix
 
+emit_posix_tarballs() {
+  local asset_name="$1"
+  local bin_src="$2"
+  local stage_dir="target/carbon-matrix/.stage-${asset_name}"
+  rm -rf "$stage_dir"
+  mkdir -p "$stage_dir"
+  cp "$bin_src" "$stage_dir/carbon"
+  chmod 0755 "$stage_dir/carbon"
+  tar -C "$stage_dir" -czf "target/carbon-matrix/${asset_name}.tar.gz" carbon
+  if command -v xz >/dev/null 2>&1; then
+    tar -C "$stage_dir" -cf - carbon | xz -c > "target/carbon-matrix/${asset_name}.tar.xz"
+  fi
+  if command -v zstd >/dev/null 2>&1; then
+    tar -C "$stage_dir" -cf - carbon | zstd -q -19 -o "target/carbon-matrix/${asset_name}.tar.zst"
+  fi
+  rm -rf "$stage_dir"
+}
+
 if [[ "$MATRIX_LABEL" == "linux-x86_64" ]]; then
   rustup target add x86_64-unknown-linux-musl
   cargo build --locked --profile carbon-cli --target x86_64-unknown-linux-musl \
     -p jope-carbon --no-default-features --features cli --bin carbon
   cp target/x86_64-unknown-linux-musl/carbon-cli/carbon "target/carbon-matrix/$MATRIX_ASSET"
+  emit_posix_tarballs "$MATRIX_ASSET" "target/carbon-matrix/$MATRIX_ASSET"
   "target/carbon-matrix/$MATRIX_ASSET" --version
+elif [[ "$MATRIX_LABEL" == "linux-aarch64" ]]; then
+  rustup target add aarch64-unknown-linux-musl
+  cargo build --locked --profile carbon-cli --target aarch64-unknown-linux-musl \
+    -p jope-carbon --no-default-features --features cli --bin carbon
+  cp target/aarch64-unknown-linux-musl/carbon-cli/carbon "target/carbon-matrix/$MATRIX_ASSET"
+  emit_posix_tarballs "$MATRIX_ASSET" "target/carbon-matrix/$MATRIX_ASSET"
+  if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
+    "target/carbon-matrix/$MATRIX_ASSET" --version
+  fi
 elif [[ "$MATRIX_LABEL" == "darwin-universal" ]]; then
   rustup target add aarch64-apple-darwin x86_64-apple-darwin
   cargo build --locked --profile carbon-cli --target aarch64-apple-darwin \
@@ -31,15 +59,10 @@ elif [[ "$MATRIX_LABEL" == "darwin-universal" ]]; then
   codesign --force -s - target/carbon-matrix/carbon-darwin-x86_64
   codesign --force -s - target/carbon-matrix/carbon-darwin-universal
   for darwin_slice in carbon-darwin-arm64 carbon-darwin-x86_64 carbon-darwin-universal; do
-    stage_slice="target/carbon-matrix/.stage-$darwin_slice"
-    rm -rf "$stage_slice"
-    mkdir -p "$stage_slice"
-    cp "target/carbon-matrix/$darwin_slice" "$stage_slice/carbon"
-    tar -C "$stage_slice" -czf "target/carbon-matrix/${darwin_slice}.tar.gz" carbon
-    rm -rf "$stage_slice"
+    emit_posix_tarballs "$darwin_slice" "target/carbon-matrix/$darwin_slice"
   done
   target/carbon-matrix/carbon-darwin-universal --version
-else
+elif [[ "$MATRIX_LABEL" == "windows-x86_64" || "$MATRIX_LABEL" == "windows-arm64" || "$MATRIX_LABEL" == "windows-aarch64" ]]; then
   rustup target add "$MATRIX_TARGET"
   if [[ "$MATRIX_TARGET" == *-pc-windows-msvc ]]; then
     if ! command -v nasm >/dev/null 2>&1; then
@@ -62,4 +85,17 @@ else
   if [[ "$MATRIX_LABEL" == "windows-x86_64" ]]; then
     "target/carbon-matrix/$MATRIX_ASSET" --version
   fi
+else
+  echo "unsupported matrix label: $MATRIX_LABEL" >&2
+  exit 2
 fi
+
+(
+  cd target/carbon-matrix
+  rm -f "SHA256SUMS-${MATRIX_LABEL}.txt"
+  if command -v sha256sum >/dev/null 2>&1; then
+    find . -maxdepth 1 -type f ! -name 'SHA256SUMS*' -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > "SHA256SUMS-${MATRIX_LABEL}.txt"
+  else
+    find . -maxdepth 1 -type f ! -name 'SHA256SUMS*' -exec basename {} \; | LC_ALL=C sort | xargs shasum -a 256 > "SHA256SUMS-${MATRIX_LABEL}.txt"
+  fi
+)

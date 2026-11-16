@@ -1,6 +1,7 @@
-//! `v1.1.0` gateway & storage live coverage checks (`API-LIVE-08..10`, `STO-LIVE-01`, `CLI-LIVE-01`)
+//! Gateway & storage live coverage checks (`API-LIVE-08..10`, `STO-LIVE-01`, `CLI-LIVE-01`)
 //! executed automatically by `carbon coverage-audit` whenever `GET /v1/carbon/version` is deployed.
 
+use crate::error::CarbonErrCtx as _;
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
@@ -44,7 +45,7 @@ fn fetch_cas_output_bytes(url: &str) -> Result<(u16, Vec<u8>), String> {
                 .with_config()
                 .limit(16 * 1024 * 1024)
                 .read_to_vec()
-                .map_err(|e| format!("read CAS output GET body: {e}"))?;
+                .err_ctx("read CAS output GET body")?;
             Ok((status, bytes))
         }
         Err(e) => Err(format!("CAS output GET failed: {e}")),
@@ -115,13 +116,13 @@ fn execute_cas_backed_predict(
     cudk: &[u8],
     feature_names: &[String],
 ) -> Result<(u16, bool), String> {
-    let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+    let resp_kek = CarbonEngineKek::generate().map_err(crate::error::err_to_string)?;
     let rows = vec![vec![Some(0.25); feature_names.len()]; 16];
     let pt = serde_json::to_vec(&CarbonEncryptedPredictPayload {
         feature_names: feature_names.to_vec(),
         rows,
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cuen_req = encrypt_cuen_payload(
         u_dek,
         CuenPayloadKind::PredictFeatures,
@@ -129,7 +130,7 @@ fn execute_cas_backed_predict(
         run_id_str,
         &pt,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let prep_bytes = serde_json::to_vec(&CarbonPreparePredictRequest {
         tenant_id: tenant_id.to_owned(),
         predict_cuen: CarbonUploadSlotWire {
@@ -137,7 +138,7 @@ fn execute_cas_backed_predict(
             bytes: DecimalU64(cuen_req.len() as u64),
         },
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (cp, pb) = send_raw_edge_http(
         base,
         "POST",
@@ -149,7 +150,7 @@ fn execute_cas_backed_predict(
         return Ok((cp, false));
     }
     let prep_resp: CarbonPreparePredictResponse =
-        serde_json::from_slice(&pb).map_err(|e| e.to_string())?;
+        serde_json::from_slice(&pb).map_err(crate::error::err_to_string)?;
     let (put_c, _) = send_raw_put_url(&prep_resp.input_target.url, &cuen_req, true)?;
     if !matches!(put_c, 200..=204) {
         return Ok((put_c, false));
@@ -179,7 +180,7 @@ fn verify_cas_predict_response(
         client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
         wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
     })
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let (code, body) = send_raw_edge_http(
         base,
         "POST",
@@ -190,7 +191,8 @@ fn verify_cas_predict_response(
     if code != 200 {
         return Ok((code, false));
     }
-    let parsed: CarbonPredictResponse = serde_json::from_slice(&body).map_err(|e| e.to_string())?;
+    let parsed: CarbonPredictResponse =
+        serde_json::from_slice(&body).map_err(crate::error::err_to_string)?;
     let Some(cas_url) = parsed.encrypted_predictions_cas_url.as_deref() else {
         return Ok((code, false));
     };
@@ -202,11 +204,11 @@ fn verify_cas_predict_response(
         resp_kek,
         &base64::engine::general_purpose::STANDARD
             .decode(parsed.response_cudk_b64.as_deref().unwrap_or(""))
-            .map_err(|e| e.to_string())?,
+            .map_err(crate::error::err_to_string)?,
         tenant_id,
         run_id_str,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let dec = decrypt_cuen_payload(
         &r_dek,
         CuenPayloadKind::PredictOutputs,
@@ -214,7 +216,7 @@ fn verify_cas_predict_response(
         run_id_str,
         &cuen_out,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let digest_ok = dec.len() == 16 * 8 && sha256_lower_hex(&dec) == parsed.predictions_sha256;
     Ok((200, digest_ok))
 }
@@ -227,7 +229,8 @@ fn check_predict_prepare_roundtrip(
     checks: &mut Vec<CarbonCoverageCheckResult>,
 ) -> Result<usize, String> {
     let t = Instant::now();
-    let kek = decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(|e| e.to_string())?;
+    let kek =
+        decode_p256_pubkey_b64(inp.expected_kek_pubkey_b64).map_err(crate::error::err_to_string)?;
     let upl = upload_encrypted_dataset(
         base,
         bearer_a,
@@ -244,9 +247,9 @@ fn check_predict_prepare_roundtrip(
         &rid_s,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
     let cudk = wrap_u_dek_to_pubkey(&upl.u_dek, &kek, inp.pro_tenant_a, &rid_s)
-        .map_err(|e| e.to_string())?;
+        .map_err(crate::error::err_to_string)?;
     let req = build_encrypted_create_req(
         rid,
         did,
@@ -316,7 +319,7 @@ fn create_scoped_fast_run(
     prepared: &CarbonClientPreparedDataset,
     tag: &str,
 ) -> Result<ScopedRunFixture, String> {
-    let kek = decode_p256_pubkey_b64(kek_b64).map_err(|e| e.to_string())?;
+    let kek = decode_p256_pubkey_b64(kek_b64).map_err(crate::error::err_to_string)?;
     let upl = upload_encrypted_dataset(base, bearer, tenant_id, CarbonTierWire::Pro, prepared)?;
     let (rid, did) = make_ids(tag)?;
     let rid_s = rid.to_string();
@@ -327,9 +330,9 @@ fn create_scoped_fast_run(
         &rid_s,
         &prepared.landmark_bundle.to_wire_bytes(),
     )
-    .map_err(|e| e.to_string())?;
-    let cudk =
-        wrap_u_dek_to_pubkey(&upl.u_dek, &kek, tenant_id, &rid_s).map_err(|e| e.to_string())?;
+    .map_err(crate::error::err_to_string)?;
+    let cudk = wrap_u_dek_to_pubkey(&upl.u_dek, &kek, tenant_id, &rid_s)
+        .map_err(crate::error::err_to_string)?;
     let req = build_encrypted_create_req(
         rid,
         did,
@@ -455,7 +458,7 @@ fn check_self_verify_trust_roots(
     Ok(())
 }
 
-pub(super) fn run_v11_deployed_checks(
+pub(super) fn run_gateway_deployed_checks(
     inp: &CarbonCloudCoverageInput<'_>,
     base: &str,
     bearer_a: &str,

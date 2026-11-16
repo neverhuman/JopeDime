@@ -14,6 +14,7 @@
 //!    `medium` / `high` / `ultra` phase-timing & itemized AWS cost matrix, 200-user multi-region
 //!    concurrency burst, and zero-credential Ubuntu/Alpine client E2E receipts (`docs/carbon/evidence/*`).
 
+use crate::error::CarbonErrCtx as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write as _;
@@ -260,7 +261,7 @@ fn assert_no_secret_substrings(label: &str, text: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn html_escape(raw: &str) -> String {
+pub(crate) fn html_esc(raw: &str) -> String {
     let mut out = String::with_capacity(raw.len() + 16);
     for ch in raw.chars() {
         match ch {
@@ -273,6 +274,10 @@ fn html_escape(raw: &str) -> String {
         }
     }
     out
+}
+
+fn html_escape(raw: &str) -> String {
+    html_esc(raw)
 }
 
 fn format_inline_code_html(raw: &str) -> String {
@@ -600,8 +605,8 @@ pub fn execute_carbon_spec_verify(
     if sha256_lower_hex(&ci_qual_raw) != receipt.ci_qualification_sha256 {
         return Err("ci-quickstart-qualification.json SHA-256 mismatch".to_owned());
     }
-    let ci_qual: CiQuickstartQualificationReceipt = serde_json::from_slice(&ci_qual_raw)
-        .map_err(|e| format!("parse ci-quickstart-qualification.json: {e}"))?;
+    let ci_qual: CiQuickstartQualificationReceipt =
+        serde_json::from_slice(&ci_qual_raw).err_ctx("parse ci-quickstart-qualification.json")?;
     if !ci_qual.all_passed || ci_qual.passed_tests != ci_qual.total_tests || ci_qual.total_tests < 8
     {
         return Err(format!(
@@ -935,20 +940,20 @@ pub fn run_ci_quickstart_qualification(
         generated_epoch_ms: now_epoch_ms(),
         clouds,
     };
-    let clouds_bytes = serde_json::to_vec_pretty(&clouds_manifest)
-        .map_err(|e| format!("serialize clouds manifest: {e}"))?;
+    let clouds_bytes =
+        serde_json::to_vec_pretty(&clouds_manifest).err_ctx("serialize clouds manifest")?;
 
     let mut steps = Vec::new();
     let user_home = scratch.path().join("user_home");
     let bin_dir = user_home.join(".local").join("bin");
     let cfg_dir = user_home.join(".config").join("jopedime");
-    fs::create_dir_all(&user_home).map_err(|e| format!("create user_home: {e}"))?;
+    fs::create_dir_all(&user_home).err_ctx("create user_home")?;
 
     // --- CI-QS-01: Signed `deploy/carbon/install.sh` + ECDSA-P256 verification + tamper refusal ---
     {
         let t0 = Instant::now();
         let rel_dir = scratch.path().join("mock_release");
-        fs::create_dir_all(&rel_dir).map_err(|e| format!("create mock_release: {e}"))?;
+        fs::create_dir_all(&rel_dir).err_ctx("create mock_release")?;
         let install_sh = repo_root.join("deploy").join("carbon").join("install.sh");
         if !install_sh.is_file() {
             return Err(format!(
@@ -970,7 +975,7 @@ pub fn run_ci_quickstart_qualification(
             ])
             .arg(&key_pem)
             .status()
-            .map_err(|e| format!("openssl ecparam: {e}"))?;
+            .err_ctx("openssl ecparam")?;
         if !gen_st.success() {
             return Err("openssl ecparam key generation failed".to_owned());
         }
@@ -981,7 +986,7 @@ pub fn run_ci_quickstart_qualification(
             .arg(&pub_pem)
             .stderr(Stdio::null())
             .status()
-            .map_err(|e| format!("openssl ec pubout: {e}"))?;
+            .err_ctx("openssl ec pubout")?;
         if !pub_st.success() {
             return Err("openssl ec -pubout failed".to_owned());
         }
@@ -993,31 +998,30 @@ pub fn run_ci_quickstart_qualification(
             }
         }
         fs::write(rel_dir.join("carbon-clouds.json"), &clouds_bytes)
-            .map_err(|e| format!("write release carbon-clouds.json: {e}"))?;
+            .err_ctx("write release carbon-clouds.json")?;
 
-        let bin_raw = fs::read(carbon_bin).map_err(|e| format!("read carbon_bin: {e}"))?;
+        let bin_raw = fs::read(carbon_bin).err_ctx("read carbon_bin")?;
         let bin_sha = sha256_lower_hex(&bin_raw);
         let clouds_sha = sha256_lower_hex(&clouds_bytes);
         let sums_text = format!(
             "{bin_sha}  carbon-linux-x86_64-musl\n{bin_sha}  carbon-linux-aarch64-musl\n{clouds_sha}  carbon-clouds.json\n"
         );
         let sums_path = rel_dir.join("SHA256SUMS.txt");
-        fs::write(&sums_path, sums_text.as_bytes())
-            .map_err(|e| format!("write SHA256SUMS: {e}"))?;
+        fs::write(&sums_path, sums_text.as_bytes()).err_ctx("write SHA256SUMS")?;
 
         let sig_der = Command::new("openssl")
             .args(["dgst", "-sha256", "-sign"])
             .arg(&key_pem)
             .arg(&sums_path)
             .output()
-            .map_err(|e| format!("openssl dgst -sign: {e}"))?;
+            .err_ctx("openssl dgst -sign")?;
         if !sig_der.status.success() {
             return Err("openssl dgst -sign failed".to_owned());
         }
         let sig_b64 =
             base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &sig_der.stdout);
         fs::write(rel_dir.join("SHA256SUMS.txt.sig"), format!("{sig_b64}\n"))
-            .map_err(|e| format!("write SHA256SUMS.txt.sig: {e}"))?;
+            .err_ctx("write SHA256SUMS.txt.sig")?;
 
         let inst_out = Command::new("sh")
             .arg(&install_sh)
@@ -1031,11 +1035,11 @@ pub fn run_ci_quickstart_qualification(
             .arg(&pub_pem)
             .env("HOME", &user_home)
             .output()
-            .map_err(|e| format!("run install.sh: {e}"))?;
+            .err_ctx("run install.sh")?;
 
         // Verify tampered ECDSA signature is strictly rejected before binary installation.
         let tampered_dir = scratch.path().join("mock_release_tampered");
-        fs::create_dir_all(&tampered_dir).map_err(|e| format!("create tampered_dir: {e}"))?;
+        fs::create_dir_all(&tampered_dir).err_ctx("create tampered_dir")?;
         for name in [
             "carbon-linux-x86_64-musl",
             "carbon-linux-aarch64-musl",
@@ -1045,7 +1049,7 @@ pub fn run_ci_quickstart_qualification(
             let _ = fs::copy(rel_dir.join(name), tampered_dir.join(name));
         }
         fs::write(tampered_dir.join("SHA256SUMS.txt.sig"), "AAAA\n")
-            .map_err(|e| format!("write tampered SHA256SUMS.txt.sig: {e}"))?;
+            .err_ctx("write tampered SHA256SUMS.txt.sig")?;
         let bad_out = Command::new("sh")
             .arg(&install_sh)
             .arg("--source-dir")
@@ -1059,12 +1063,12 @@ pub fn run_ci_quickstart_qualification(
             .arg("--skip-ping")
             .env("HOME", &user_home)
             .output()
-            .map_err(|e| format!("run tampered install.sh: {e}"))?;
+            .err_ctx("run tampered install.sh")?;
 
         let ver_out = Command::new(bin_dir.join("carbon"))
             .arg("--version")
             .output()
-            .map_err(|e| format!("installed carbon --version: {e}"))?;
+            .err_ctx("installed carbon --version")?;
         let ver_text = String::from_utf8_lossy(&ver_out.stdout).trim().to_owned();
         let inst_stderr = String::from_utf8_lossy(&inst_out.stderr);
         let bad_stderr = String::from_utf8_lossy(&bad_out.stderr);
@@ -1098,12 +1102,14 @@ pub fn run_ci_quickstart_qualification(
     // --- CI-QS-02: `carbon doctor --cloud all` ---
     {
         let t0 = Instant::now();
+        let pub_pem = scratch.path().join("ci_test_signing.pub");
         let doc_out = Command::new(&installed_bin)
-            .args(["doctor", "--cloud", "all"])
+            .args(["doctor", "--cloud", "all", "--allow-test-pubkey"])
+            .arg(&pub_pem)
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
-            .map_err(|e| format!("run carbon doctor: {e}"))?;
+            .err_ctx("run carbon doctor")?;
         let stdout_s = String::from_utf8_lossy(&doc_out.stdout);
         let doc_json = parse_cli_json(&doc_out.stdout, "carbon doctor --cloud all")?;
         let ok = doc_out.status.success()
@@ -1137,7 +1143,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
             .output()
-            .map_err(|e| format!("run carbon quickstart: {e}"))?;
+            .err_ctx("run carbon quickstart")?;
         let stderr_s = String::from_utf8_lossy(&qs_out.stderr);
         let rj = parse_cli_json(&qs_out.stdout, "carbon quickstart")?;
         let ok = qs_out.status.success()
@@ -1175,14 +1181,14 @@ pub fn run_ci_quickstart_qualification(
     {
         let t0 = Instant::now();
         let empty_cwd = scratch.path().join("empty_quickstart_cwd");
-        fs::create_dir_all(&empty_cwd).map_err(|e| format!("create empty_cwd: {e}"))?;
+        fs::create_dir_all(&empty_cwd).err_ctx("create empty_cwd")?;
         let emit_out = Command::new(&installed_bin)
             .args(["quickstart", "--emit-csv", "sample.csv", "--csv-only"])
             .current_dir(&empty_cwd)
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
-            .map_err(|e| format!("quickstart --emit-csv: {e}"))?;
+            .err_ctx("quickstart --emit-csv")?;
         let run_out = Command::new(&installed_bin)
             .args(["run", "--csv", "sample.csv", "--progress", "--shred"])
             .current_dir(&empty_cwd)
@@ -1190,7 +1196,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
             .output()
-            .map_err(|e| format!("carbon run --csv sample.csv: {e}"))?;
+            .err_ctx("carbon run --csv sample.csv")?;
         let rj = parse_cli_json(&run_out.stdout, "carbon run --csv sample.csv")?;
         let ok = emit_out.status.success()
             && run_out.status.success()
@@ -1236,7 +1242,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
             .output()
-            .map_err(|e| format!("run bom csv: {e}"))?;
+            .err_ctx("run bom csv")?;
         let async_out = Command::new(&installed_bin)
             .arg("run")
             .arg("--csv")
@@ -1246,7 +1252,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
             .output()
-            .map_err(|e| format!("run 1200x6 async csv: {e}"))?;
+            .err_ctx("run 1200x6 async csv")?;
 
         let bom_stderr = String::from_utf8_lossy(&bom_out.stderr);
         let async_rj = parse_cli_json(&async_out.stdout, "carbon run medium_1200x6.csv")?;
@@ -1289,12 +1295,12 @@ pub fn run_ci_quickstart_qualification(
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
-            .map_err(|e| format!("carbon register: {e}"))?;
+            .err_ctx("carbon register")?;
         let reg_j = parse_cli_json(&reg_out.stdout, "carbon register --free")?;
 
         let pro_tok = emu_us
             .mint_capability_token("pro_ci_spec_user", CarbonTierWire::Pro, false)
-            .map_err(|e| format!("mint pro token: {e}"))?;
+            .err_ctx("mint pro token")?;
         let mut login_child = Command::new(&installed_bin)
             .args(["login", "--cloud", "prod", "--token-file", "-"])
             .env("HOME", &user_home)
@@ -1303,13 +1309,13 @@ pub fn run_ci_quickstart_qualification(
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|e| format!("spawn carbon login: {e}"))?;
+            .err_ctx("spawn carbon login")?;
         if let Some(mut stdin) = login_child.stdin.take() {
             let _ = writeln!(stdin, "{pro_tok}");
         }
         let login_out = login_child
             .wait_with_output()
-            .map_err(|e| format!("wait carbon login: {e}"))?;
+            .err_ctx("wait carbon login")?;
 
         let mut effort_summaries = Vec::new();
         let mut all_efforts_ok = reg_out.status.success() && login_out.status.success();
@@ -1355,7 +1361,7 @@ pub fn run_ci_quickstart_qualification(
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
-            .map_err(|e| format!("carbon logout: {e}"))?;
+            .err_ctx("carbon logout")?;
         all_efforts_ok = all_efforts_ok
             && logout_out.status.success()
             && !cfg_dir.join("carbon-credentials.json").exists();
@@ -1410,7 +1416,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .env("RAYON_NUM_THREADS", "4")
             .output()
-            .map_err(|e| format!("run against CarbonEnterpriseServer: {e}"))?;
+            .err_ctx("run against CarbonEnterpriseServer")?;
         let vpc_rj = parse_cli_json(&vpc_run.stdout, "carbon run --endpoint vpc")?;
         vpc_srv.shutdown();
 
@@ -1456,7 +1462,7 @@ pub fn run_ci_quickstart_qualification(
             .env("HOME", &user_home)
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
-            .map_err(|e| format!("run carbon redteam: {e}"))?;
+            .err_ctx("run carbon redteam")?;
         let rt_json = parse_cli_json(&rt_out.stdout, "carbon redteam --cloud prod")?;
         let vecs = j_slice(&rt_json, "vectors");
         let passed_vecs = vecs.iter().filter(|v| v["passed"] == true).count();
@@ -1856,8 +1862,7 @@ fn render_terminal_card(shot_id: &str, window_title: &str, badge: &str, body_pre
 pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<PathBuf, String> {
     fs::create_dir_all(&opts.out_dir)
         .map_err(|e| format!("create {}: {e}", opts.out_dir.display()))?;
-    fs::create_dir_all(opts.out_dir.join("screenshots"))
-        .map_err(|e| format!("create screenshots dir: {e}"))?;
+    fs::create_dir_all(opts.out_dir.join("screenshots")).err_ctx("create screenshots dir")?;
 
     let resolved_sha = match &opts.source_sha {
         Some(s) if !s.trim().is_empty() => s.clone(),
@@ -1868,7 +1873,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     };
 
     let ci_qual: CiQuickstartQualificationReceipt = if opts.run_ci_qualification {
-        let exe = std::env::current_exe().map_err(|e| format!("current_exe: {e}"))?;
+        let exe = std::env::current_exe().err_ctx("current_exe")?;
         let abs_out_dir = fs::canonicalize(&opts.out_dir)
             .map_err(|e| format!("canonicalize {}: {e}", opts.out_dir.display()))?;
         let abs_repo_root = fs::canonicalize(&opts.repo_root)
@@ -1885,10 +1890,8 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         );
     };
 
-    let ci_qual_bytes =
-        serde_json::to_vec_pretty(&ci_qual).map_err(|e| format!("serialize ci_qual: {e}"))?;
-    let ci_qual_text =
-        String::from_utf8(ci_qual_bytes.clone()).map_err(|e| format!("ci_qual utf8: {e}"))?;
+    let ci_qual_bytes = serde_json::to_vec_pretty(&ci_qual).err_ctx("serialize ci_qual")?;
+    let ci_qual_text = String::from_utf8(ci_qual_bytes.clone()).err_ctx("ci_qual utf8")?;
     assert_no_secret_substrings("ci-quickstart-qualification.json", &ci_qual_text)?;
     let ci_qual_out = opts.out_dir.join("ci-quickstart-qualification.json");
     fs::write(&ci_qual_out, &ci_qual_bytes)
@@ -1928,10 +1931,10 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     {
         let cov_rcpt =
             crate::cli::spec_code_coverage::load_and_evaluate_code_coverage(cov_in, &resolved_sha)?;
-        let cov_bytes = serde_json::to_vec_pretty(&cov_rcpt)
-            .map_err(|e| format!("serialize code-coverage-summary.json: {e}"))?;
-        let cov_text = String::from_utf8(cov_bytes.clone())
-            .map_err(|e| format!("code-coverage-summary.json UTF-8: {e}"))?;
+        let cov_bytes =
+            serde_json::to_vec_pretty(&cov_rcpt).err_ctx("serialize code-coverage-summary.json")?;
+        let cov_text =
+            String::from_utf8(cov_bytes.clone()).err_ctx("code-coverage-summary.json UTF-8")?;
         assert_no_secret_substrings(
             crate::cli::spec_code_coverage::CODE_COVERAGE_SUMMARY_FILENAME,
             &cov_text,
@@ -3320,13 +3323,13 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
             .collect(),
         evidence_ledger: ledger,
     };
-    let manifest_bytes = serde_json::to_vec_pretty(&manifest)
-        .map_err(|e| format!("serialize spec-bundle-manifest.json: {e}"))?;
+    let manifest_bytes =
+        serde_json::to_vec_pretty(&manifest).err_ctx("serialize spec-bundle-manifest.json")?;
     fs::write(
         opts.out_dir.join("spec-bundle-manifest.json"),
         &manifest_bytes,
     )
-    .map_err(|e| format!("write spec-bundle-manifest.json: {e}"))?;
+    .err_ctx("write spec-bundle-manifest.json")?;
 
     if !ci_qual.all_passed {
         return Err(format!(

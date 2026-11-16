@@ -136,16 +136,62 @@ pub fn split_lambda_name_and_qualifier(raw: &str) -> (&str, Option<&str>) {
     (trimmed, None)
 }
 
+/// Parse an ISO-8601 UTC timestamp (`YYYY-MM-DDTHH:MM:SS[.fff]Z` or `+00:00`) into UNIX epoch seconds.
+#[cfg(feature = "edge")]
+pub fn parse_iso8601_utc_epoch_secs(raw: &str) -> Option<u64> {
+    let s = raw.trim();
+    let core = s
+        .strip_suffix('Z')
+        .or_else(|| s.strip_suffix('z'))
+        .or_else(|| s.strip_suffix("+00:00"))
+        .or_else(|| s.strip_suffix("-00:00"))?;
+    let (date_part, time_part) = core.split_once('T').or_else(|| core.split_once(' '))?;
+    let mut d_it = date_part.split('-');
+    let y: i64 = d_it.next()?.parse().ok()?;
+    let m: u64 = d_it.next()?.parse().ok()?;
+    let d: u64 = d_it.next()?.parse().ok()?;
+    if d_it.next().is_some() || !(1..=12).contains(&m) || !(1..=31).contains(&d) || y < 1970 {
+        return None;
+    }
+    let hms_only = time_part.split('.').next()?;
+    let mut t_it = hms_only.split(':');
+    let hh: u64 = t_it.next()?.parse().ok()?;
+    let mm: u64 = t_it.next()?.parse().ok()?;
+    let ss: u64 = t_it.next()?.parse().ok()?;
+    if t_it.next().is_some() || hh > 23 || mm > 59 || ss > 60 {
+        return None;
+    }
+    let y_adj = if m <= 2 { y - 1 } else { y };
+    let era = if y_adj >= 0 {
+        y_adj / 400
+    } else {
+        (y_adj - 399) / 400
+    };
+    let yoe = (y_adj - era * 400) as u64;
+    let mp = if m > 2 { m - 3 } else { m + 9 };
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + (doe as i64) - 719_468;
+    if days < 0 {
+        return None;
+    }
+    Some((days as u64) * 86_400 + hh * 3_600 + mm * 60 + ss)
+}
+
 #[cfg(feature = "edge")]
 fn resolve_profile_credentials_cached(profile: &str) -> Result<CarbonAwsCredentials, String> {
     use std::sync::{Mutex, OnceLock};
-    static PROFILE_CACHE: OnceLock<
-        Mutex<std::collections::BTreeMap<String, CarbonAwsCredentials>>,
-    > = OnceLock::new();
+    type CachedCredEntry = (CarbonAwsCredentials, Option<u64>);
+    static PROFILE_CACHE: OnceLock<Mutex<std::collections::BTreeMap<String, CachedCredEntry>>> =
+        OnceLock::new();
     let cache = PROFILE_CACHE.get_or_init(|| Mutex::new(std::collections::BTreeMap::new()));
+    let now_secs = crate::storage::cas::now_epoch_secs();
     if let Ok(guard) = cache.lock() {
-        if let Some(existing) = guard.get(profile) {
-            return Ok(existing.clone());
+        if let Some((existing, exp_opt)) = guard.get(profile) {
+            let fresh = exp_opt.is_none_or(|exp| now_secs.saturating_add(300) < exp);
+            if fresh {
+                return Ok(existing.clone());
+            }
         }
     }
     let aws_bin = resolve_aws_cli_binary();
@@ -179,13 +225,17 @@ fn resolve_profile_credentials_cached(profile: &str) -> Result<CarbonAwsCredenti
         .and_then(|v| v.as_str())
         .filter(|s| !s.trim().is_empty())
         .map(|s| Zeroizing::new(s.to_owned()));
+    let exp_secs = parsed
+        .get("Expiration")
+        .and_then(|v| v.as_str())
+        .and_then(parse_iso8601_utc_epoch_secs);
     let creds = CarbonAwsCredentials {
         access_key_id: ak,
         secret_access_key: Zeroizing::new(sk),
         session_token: token,
     };
     if let Ok(mut guard) = cache.lock() {
-        guard.insert(profile.to_owned(), creds.clone());
+        guard.insert(profile.to_owned(), (creds.clone(), exp_secs));
     }
     Ok(creds)
 }
@@ -218,7 +268,7 @@ pub fn format_amz_timestamp_utc(epoch_secs: u64) -> (String, String) {
 }
 
 #[cfg(feature = "edge")]
-fn derive_sigv4_signing_key(
+pub(crate) fn derive_sigv4_signing_key(
     secret_access_key: &str,
     date_stamp: &str,
     region: &str,
@@ -532,6 +582,88 @@ impl CarbonPresigner {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn presign_s3_v4_core(
+        creds: &CarbonAwsCredentials,
+        method: &str,
+        region: &str,
+        bucket: &str,
+        object_key: &str,
+        amz_date_iso8601: &str,
+        expires_secs: u32,
+        extra_signed_headers: &[(&str, String)],
+        payload_hash: &str,
+    ) -> Result<String, &'static str> {
+        if amz_date_iso8601.len() < 8 || expires_secs == 0 || expires_secs > 604_800 {
+            return Err("invalid SigV4 timestamp or expiration window");
+        }
+        let date_stamp = &amz_date_iso8601[..8];
+        let (host, encoded_path, full_base_url) =
+            resolve_s3_request_target(bucket, region, object_key)?;
+        let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
+        let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
+
+        let mut hdrs: Vec<(String, String)> = vec![("host".to_owned(), host)];
+        for (k, v) in extra_signed_headers {
+            hdrs.push(((*k).to_ascii_lowercase(), v.clone()));
+        }
+        hdrs.sort_by(|a, b| a.0.cmp(&b.0));
+        let signed_hdrs = hdrs
+            .iter()
+            .map(|(k, _)| k.as_str())
+            .collect::<Vec<_>>()
+            .join(";");
+        let mut canonical_hdrs = String::new();
+        for (k, v) in &hdrs {
+            canonical_hdrs.push_str(k);
+            canonical_hdrs.push(':');
+            canonical_hdrs.push_str(v);
+            canonical_hdrs.push('\n');
+        }
+
+        let mut query_pairs: Vec<(String, String)> = vec![
+            ("X-Amz-Algorithm".to_owned(), "AWS4-HMAC-SHA256".to_owned()),
+            (
+                "X-Amz-Credential".to_owned(),
+                url_encode_component(&credential_raw),
+            ),
+            (
+                "X-Amz-Date".to_owned(),
+                url_encode_component(amz_date_iso8601),
+            ),
+            ("X-Amz-Expires".to_owned(), expires_secs.to_string()),
+            (
+                "X-Amz-SignedHeaders".to_owned(),
+                url_encode_component(&signed_hdrs),
+            ),
+        ];
+        if let Some(tok) = &creds.session_token {
+            query_pairs.push((
+                "X-Amz-Security-Token".to_owned(),
+                url_encode_component(tok.as_str()),
+            ));
+        }
+        query_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+        let canonical_query = query_pairs
+            .iter()
+            .map(|(k, v)| format!("{k}={v}"))
+            .collect::<Vec<_>>()
+            .join("&");
+
+        let canonical_request = format!(
+            "{method}\n{encoded_path}\n{canonical_query}\n{canonical_hdrs}\n{signed_hdrs}\n{payload_hash}"
+        );
+        let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
+        let string_to_sign =
+            format!("AWS4-HMAC-SHA256\n{amz_date_iso8601}\n{credential_scope}\n{req_hash}");
+        let k_signing =
+            derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
+        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
+        Ok(format!(
+            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
+        ))
+    }
+
     /// Size- and SHA-256-pinned AWS SigV4 S3 `PUT` presigner (`RT-04`): signs
     /// `content-length;host;x-amz-content-sha256` so S3 rejects any `PUT` whose byte length or
     /// SHA-256 payload digest differs from the edge-admitted values!
@@ -556,57 +688,21 @@ impl CarbonPresigner {
             return Err("invalid SigV4 timestamp, expiration, SHA-256, or byte length");
         }
         let lower_sha = expected_sha256_hex.to_ascii_lowercase();
-        let date_stamp = &amz_date_iso8601[..8];
-        let (host, encoded_path, full_base_url) =
-            resolve_s3_request_target(bucket, region, object_key)?;
-        let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
-        let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
-        let signed_hdrs = "content-length;host;x-amz-content-sha256";
-
-        let mut query_pairs: Vec<(String, String)> = vec![
-            ("X-Amz-Algorithm".to_owned(), "AWS4-HMAC-SHA256".to_owned()),
-            (
-                "X-Amz-Credential".to_owned(),
-                url_encode_component(&credential_raw),
-            ),
-            (
-                "X-Amz-Date".to_owned(),
-                url_encode_component(amz_date_iso8601),
-            ),
-            ("X-Amz-Expires".to_owned(), expires_secs.to_string()),
-            (
-                "X-Amz-SignedHeaders".to_owned(),
-                url_encode_component(signed_hdrs),
-            ),
+        let extra = [
+            ("content-length", exact_content_length.to_string()),
+            ("x-amz-content-sha256", lower_sha.clone()),
         ];
-        if let Some(tok) = &creds.session_token {
-            query_pairs.push((
-                "X-Amz-Security-Token".to_owned(),
-                url_encode_component(tok.as_str()),
-            ));
-        }
-        query_pairs.sort_by(|a, b| a.0.cmp(&b.0));
-
-        let canonical_query = query_pairs
-            .iter()
-            .map(|(k, v)| format!("{k}={v}"))
-            .collect::<Vec<_>>()
-            .join("&");
-
-        let canonical_request = format!(
-            "PUT\n{encoded_path}\n{canonical_query}\ncontent-length:{exact_content_length}\nhost:{host}\nx-amz-content-sha256:{lower_sha}\n\n{signed_hdrs}\n{lower_sha}"
-        );
-        let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
-        let string_to_sign =
-            format!("AWS4-HMAC-SHA256\n{amz_date_iso8601}\n{credential_scope}\n{req_hash}");
-
-        let k_signing =
-            derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
-        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
-
-        Ok(format!(
-            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
-        ))
+        Self::presign_s3_v4_core(
+            creds,
+            "PUT",
+            region,
+            bucket,
+            object_key,
+            amz_date_iso8601,
+            expires_secs,
+            &extra,
+            &lower_sha,
+        )
     }
 
     pub fn presign_s3_put_v4_with_creds(
@@ -618,56 +714,17 @@ impl CarbonPresigner {
         expires_secs: u32,
         payload_hash_or_unsigned: &str,
     ) -> Result<String, &'static str> {
-        if amz_date_iso8601.len() < 8 || expires_secs == 0 || expires_secs > 604_800 {
-            return Err("invalid SigV4 timestamp or expiration window");
-        }
-        let date_stamp = &amz_date_iso8601[..8];
-        let (host, encoded_path, full_base_url) =
-            resolve_s3_request_target(bucket, region, object_key)?;
-        let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
-        let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
-
-        let mut query_pairs: Vec<(String, String)> = vec![
-            ("X-Amz-Algorithm".to_owned(), "AWS4-HMAC-SHA256".to_owned()),
-            (
-                "X-Amz-Credential".to_owned(),
-                url_encode_component(&credential_raw),
-            ),
-            (
-                "X-Amz-Date".to_owned(),
-                url_encode_component(amz_date_iso8601),
-            ),
-            ("X-Amz-Expires".to_owned(), expires_secs.to_string()),
-            ("X-Amz-SignedHeaders".to_owned(), "host".to_owned()),
-        ];
-        if let Some(tok) = &creds.session_token {
-            query_pairs.push((
-                "X-Amz-Security-Token".to_owned(),
-                url_encode_component(tok.as_str()),
-            ));
-        }
-        query_pairs.sort_by(|a, b| a.0.cmp(&b.0));
-
-        let canonical_query = query_pairs
-            .iter()
-            .map(|(k, v)| format!("{k}={v}"))
-            .collect::<Vec<_>>()
-            .join("&");
-
-        let canonical_request = format!(
-            "PUT\n{encoded_path}\n{canonical_query}\nhost:{host}\n\nhost\n{payload_hash_or_unsigned}"
-        );
-        let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
-        let string_to_sign =
-            format!("AWS4-HMAC-SHA256\n{amz_date_iso8601}\n{credential_scope}\n{req_hash}");
-
-        let k_signing =
-            derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
-        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
-
-        Ok(format!(
-            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
-        ))
+        Self::presign_s3_v4_core(
+            creds,
+            "PUT",
+            region,
+            bucket,
+            object_key,
+            amz_date_iso8601,
+            expires_secs,
+            &[],
+            payload_hash_or_unsigned,
+        )
     }
 
     /// Presign a short-lived AWS SigV4 S3 `GET` URL for streaming large encrypted `/predict`
@@ -680,56 +737,17 @@ impl CarbonPresigner {
         amz_date_iso8601: &str,
         expires_secs: u32,
     ) -> Result<String, &'static str> {
-        if amz_date_iso8601.len() < 8 || expires_secs == 0 || expires_secs > 604_800 {
-            return Err("invalid SigV4 timestamp or expiration window");
-        }
-        let date_stamp = &amz_date_iso8601[..8];
-        let (host, encoded_path, full_base_url) =
-            resolve_s3_request_target(bucket, region, object_key)?;
-        let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
-        let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
-
-        let mut query_pairs: Vec<(String, String)> = vec![
-            ("X-Amz-Algorithm".to_owned(), "AWS4-HMAC-SHA256".to_owned()),
-            (
-                "X-Amz-Credential".to_owned(),
-                url_encode_component(&credential_raw),
-            ),
-            (
-                "X-Amz-Date".to_owned(),
-                url_encode_component(amz_date_iso8601),
-            ),
-            ("X-Amz-Expires".to_owned(), expires_secs.to_string()),
-            ("X-Amz-SignedHeaders".to_owned(), "host".to_owned()),
-        ];
-        if let Some(tok) = &creds.session_token {
-            query_pairs.push((
-                "X-Amz-Security-Token".to_owned(),
-                url_encode_component(tok.as_str()),
-            ));
-        }
-        query_pairs.sort_by(|a, b| a.0.cmp(&b.0));
-
-        let canonical_query = query_pairs
-            .iter()
-            .map(|(k, v)| format!("{k}={v}"))
-            .collect::<Vec<_>>()
-            .join("&");
-
-        let canonical_request = format!(
-            "GET\n{encoded_path}\n{canonical_query}\nhost:{host}\n\nhost\nUNSIGNED-PAYLOAD"
-        );
-        let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
-        let string_to_sign =
-            format!("AWS4-HMAC-SHA256\n{amz_date_iso8601}\n{credential_scope}\n{req_hash}");
-
-        let k_signing =
-            derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
-        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
-
-        Ok(format!(
-            "{full_base_url}?{canonical_query}&X-Amz-Signature={signature}"
-        ))
+        Self::presign_s3_v4_core(
+            creds,
+            "GET",
+            region,
+            bucket,
+            object_key,
+            amz_date_iso8601,
+            expires_secs,
+            &[],
+            "UNSIGNED-PAYLOAD",
+        )
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -849,34 +867,88 @@ pub fn resolve_s3_request_target(
     Ok((host, canonical_uri, full_url))
 }
 
+#[cfg(feature = "edge")]
+fn parse_loopback_service_endpoint(
+    env_var: &str,
+    raw: &str,
+) -> Result<Option<(String, String)>, String> {
+    let trimmed = raw.trim().trim_end_matches('/');
+    if trimmed.is_empty() {
+        return Ok(None);
+    }
+    let (scheme, authority) = if let Some(rest) = trimmed.strip_prefix("https://") {
+        ("https", rest)
+    } else if let Some(rest) = trimmed.strip_prefix("http://") {
+        ("http", rest)
+    } else {
+        return Err(format!(
+            "{env_var} must start with http://127.0.0.1 or https://127.0.0.1"
+        ));
+    };
+    if !is_loopback_authority(authority) {
+        return Err(format!(
+            "{env_var} is restricted strictly to loopback 127.0.0.1 / [::1]"
+        ));
+    }
+    Ok(Some((
+        authority.to_owned(),
+        format!("{scheme}://{authority}"),
+    )))
+}
+
 /// Resolve `(host_header, endpoint_url)` for AWS Secrets Manager JSON-RPC calls.
 /// Defaults to `https://secretsmanager.{region}.amazonaws.com/`, allowing `CARBON_SECRETSMANAGER_ENDPOINT_URL`
 /// strictly for loopback `127.0.0.1` / `[::1]` test harnesses (refusing all non-loopback hosts).
 #[cfg(feature = "edge")]
 pub fn resolve_secretsmanager_endpoint(region: &str) -> Result<(String, String), String> {
     if let Ok(raw) = std::env::var("CARBON_SECRETSMANAGER_ENDPOINT_URL") {
-        let trimmed = raw.trim().trim_end_matches('/');
-        if !trimmed.is_empty() {
-            let (scheme, authority) = if let Some(rest) = trimmed.strip_prefix("https://") {
-                ("https", rest)
-            } else if let Some(rest) = trimmed.strip_prefix("http://") {
-                ("http", rest)
-            } else {
-                return Err(
-                    "CARBON_SECRETSMANAGER_ENDPOINT_URL must start with http://127.0.0.1 or https://127.0.0.1"
-                        .to_owned(),
-                );
-            };
-            if !is_loopback_authority(authority) {
-                return Err(
-                    "CARBON_SECRETSMANAGER_ENDPOINT_URL is restricted strictly to loopback 127.0.0.1 / [::1]"
-                        .to_owned(),
-                );
-            }
-            return Ok((authority.to_owned(), format!("{scheme}://{authority}/")));
+        if let Some((host, base)) =
+            parse_loopback_service_endpoint("CARBON_SECRETSMANAGER_ENDPOINT_URL", &raw)?
+        {
+            return Ok((host, format!("{base}/")));
         }
     }
     let host = format!("secretsmanager.{region}.amazonaws.com");
     let url = format!("https://{host}/");
     Ok((host, url))
+}
+
+/// Resolve `(host_header, canonical_uri, canonical_query, full_url)` for AWS Lambda
+/// `POST /2015-03-31/functions/{fn}/invocations` calls, supporting optional `:qualifier`
+/// (`?Qualifier=...`) and loopback `CARBON_LAMBDA_ENDPOINT_URL` (`127.0.0.1` / `[::1]`).
+#[cfg(feature = "edge")]
+pub fn resolve_lambda_invoke_endpoint(
+    region: &str,
+    function_name: &str,
+) -> Result<(String, String, String, String), String> {
+    let (host, base) = match std::env::var("CARBON_LAMBDA_ENDPOINT_URL") {
+        Ok(raw) => match parse_loopback_service_endpoint("CARBON_LAMBDA_ENDPOINT_URL", &raw)? {
+            Some(pair) => pair,
+            None => {
+                let h = format!("lambda.{region}.amazonaws.com");
+                let b = format!("https://{h}");
+                (h, b)
+            }
+        },
+        Err(_) => {
+            let h = format!("lambda.{region}.amazonaws.com");
+            let b = format!("https://{h}");
+            (h, b)
+        }
+    };
+    let (fn_base, qualifier) = split_lambda_name_and_qualifier(function_name);
+    let uri = format!(
+        "/2015-03-31/functions/{}/invocations",
+        url_encode_component(fn_base)
+    );
+    let canonical_query = match qualifier {
+        Some(q) => format!("Qualifier={}", url_encode_component(q)),
+        None => String::new(),
+    };
+    let url = if canonical_query.is_empty() {
+        format!("{base}{uri}")
+    } else {
+        format!("{base}{uri}?{canonical_query}")
+    };
+    Ok((host, uri, canonical_query, url))
 }
