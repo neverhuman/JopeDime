@@ -6,7 +6,7 @@ included, on random splits (`in_corpus_dev91_disclosure = true`, `canonical_prom
 | Quantity | Value |
 |---|---|
 | Arm | `h458d.RECALL_CANON_E2000_ALL91`: legacy stack + one canonical-slot specialist per family at 2,000 exposures |
-| Elo | **2343.8** (95% interval 2181 to 2619), rank 1 |
+| Elo | **2343.8** (95% interval 2181 to 2619 in the look-2 receipt's own fit; 2195 to 2612 in the 35-row ladder re-fit), rank 1 |
 | Same stack without the specialist block | 1859.0 (in-corpus), rank 5 |
 | Kumo Large | 2070.2; families won, tied, lost against it: 16, 0, 3 |
 | Pair test against the stack alone | 17-1-1 families, +1.035 u, sign-flip p 7.6e-6, pass |
