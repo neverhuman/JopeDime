@@ -40,15 +40,20 @@ jobs:
 
           # 1. Lite client appliance profile + zero-engine normal dependency graph check
           cargo build --locked -p jope-appliance --no-default-features --features client
-          cargo tree --locked -p jope-appliance --no-default-features --features client -e normal --prefix none --format '{p}' > "$evidence/lite-cargo-tree.txt"
+          cargo tree --locked -p jope-appliance --no-default-features --features client -e normal --prefix none --format '{p} {f}' > "$evidence/lite-cargo-tree.txt"
           python3 - "$evidence/lite-cargo-tree.txt" <<'PY'
           import pathlib
           import sys
-          packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
-          banned = {"jope-service", "feat-math", "candle-core", "tokio", "tch", "torch-sys", "rusqlite", "pyo3"}
+          lines = [line.strip() for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.strip()]
+          packages = {line.split()[0] for line in lines}
+          banned = {"jope-service", "candle-core", "tokio", "dope-core", "onig", "onig_sys", "esaxx-rs", "tch", "torch-sys", "rusqlite", "libsqlite3-sys", "pyo3", "openssl-sys", "aws-lc-sys", "syntect"}
           found = sorted(packages & banned)
           if found:
               raise SystemExit(f"lite client normal graph contains forbidden server packages: {found}")
+          for line in lines:
+              parts = line.split()
+              if parts[0] == "feat-math" and any("fitted-cpp" in tok for tok in parts[1:]):
+                  raise SystemExit(f"lite client normal graph enabled forbidden C++ feature on feat-math: {line}")
           if "jope-client" not in packages:
               raise SystemExit("lite client normal graph missing jope-client")
           PY
@@ -61,7 +66,7 @@ jobs:
           import pathlib
           import sys
           packages = {line.split()[0] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.split()}
-          banned = {"jope-service", "feat-math", "candle-core", "tokio", "tch", "torch-sys", "rusqlite", "pyo3"}
+          banned = {"jope-service", "jope-runtime", "feat-math", "candle-core", "tokio", "axum", "tch", "torch-sys", "rusqlite", "pyo3"}
           found = sorted(packages & banned)
           if found:
               raise SystemExit(f"carbon thin CLI normal graph contains forbidden server packages: {found}")

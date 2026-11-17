@@ -35,27 +35,17 @@ pub(crate) fn execute_passive_download_redirect(
         );
     }
 
-    let default_pub_tag = std::env::var("CARBON_PUBLISHED_INSTALLER_TAG")
+    let explicit_pub_tag = std::env::var("CARBON_PUBLISHED_INSTALLER_TAG")
         .ok()
-        .map(|v| v.trim().to_owned())
-        .filter(|v| is_valid_release_tag(v) && v != "latest")
-        .unwrap_or_else(|| crate::CARBON_PUBLISHED_INSTALLER_TAG.to_owned());
+        .and_then(|v| normalize_pinned_installer_tag(&v));
 
     let (tag, asset, target_url) = match clean_path {
-        "/carbon/install.sh" => (
-            default_pub_tag.clone(),
-            "install.sh".to_owned(),
-            format!(
-                "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.sh"
-            ),
-        ),
-        "/carbon/install.ps1" => (
-            default_pub_tag.clone(),
-            "install.ps1".to_owned(),
-            format!(
-                "https://github.com/neverhuman/JopeDime/releases/download/{default_pub_tag}/install.ps1"
-            ),
-        ),
+        "/carbon/install.sh" => {
+            resolve_installer_redirect("install.sh", explicit_pub_tag.as_deref())
+        }
+        "/carbon/install.ps1" => {
+            resolve_installer_redirect("install.ps1", explicit_pub_tag.as_deref())
+        }
         "/carbon/carbon-clouds.json" => (
             "latest".to_owned(),
             "carbon-clouds.json".to_owned(),
@@ -350,4 +340,67 @@ fn infer_download_platform(
     };
 
     (os, arch, libc, archive)
+}
+
+fn normalize_pinned_installer_tag(raw: &str) -> Option<String> {
+    let trimmed = raw.trim();
+    if is_valid_release_tag(trimmed) && trimmed != "latest" {
+        Some(trimmed.to_owned())
+    } else {
+        None
+    }
+}
+
+fn resolve_installer_redirect(
+    script: &str,
+    explicit_pub_tag: Option<&str>,
+) -> (String, String, String) {
+    match explicit_pub_tag {
+        Some(pinned) => (
+            pinned.to_owned(),
+            script.to_owned(),
+            format!("https://github.com/neverhuman/JopeDime/releases/download/{pinned}/{script}"),
+        ),
+        None => (
+            "latest".to_owned(),
+            script.to_owned(),
+            format!("https://github.com/neverhuman/JopeDime/releases/latest/download/{script}"),
+        ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_pinned_installer_tag, resolve_installer_redirect};
+
+    #[test]
+    fn installer_redirects_to_latest_by_default_and_honors_valid_pin_override() {
+        let (tag_sh, asset_sh, url_sh) = resolve_installer_redirect("install.sh", None);
+        assert_eq!(tag_sh, "latest");
+        assert_eq!(asset_sh, "install.sh");
+        assert_eq!(
+            url_sh,
+            "https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh"
+        );
+
+        let (tag_ps1, asset_ps1, url_ps1) = resolve_installer_redirect("install.ps1", None);
+        assert_eq!(tag_ps1, "latest");
+        assert_eq!(asset_ps1, "install.ps1");
+        assert_eq!(
+            url_ps1,
+            "https://github.com/neverhuman/JopeDime/releases/latest/download/install.ps1"
+        );
+
+        let pinned = normalize_pinned_installer_tag(" carbon-cli-v1.2.0 ");
+        assert_eq!(pinned.as_deref(), Some("carbon-cli-v1.2.0"));
+        let (p_tag, _, p_url) = resolve_installer_redirect("install.sh", pinned.as_deref());
+        assert_eq!(p_tag, "carbon-cli-v1.2.0");
+        assert_eq!(
+            p_url,
+            "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.2.0/install.sh"
+        );
+
+        assert_eq!(normalize_pinned_installer_tag("latest"), None);
+        assert_eq!(normalize_pinned_installer_tag("../bad"), None);
+    }
 }

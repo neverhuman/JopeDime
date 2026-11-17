@@ -139,6 +139,13 @@ jobs:
     # about two minutes on a blackholed connection before it resets.
     timeout-minutes: 20
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -175,6 +182,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ 'xbabe1-ci' }}"]
     timeout-minutes: 35
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -227,6 +241,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 45
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -272,6 +293,13 @@ jobs:
       MKL_NUM_THREADS: "1"
       JOPE_RUST_TEST_PARTITION: slice:${{ matrix.shard }}/3
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -303,6 +331,13 @@ jobs:
     env:
       JOPE_PARITY_STRICT: "1"
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -330,6 +365,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 20
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -357,6 +399,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 25
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -384,6 +433,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 35
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -423,6 +479,13 @@ jobs:
     env:
       JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -522,6 +585,13 @@ jobs:
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 20
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

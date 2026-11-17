@@ -24,7 +24,7 @@ import xml.etree.ElementTree as ET
 
 LOCK = Path(__file__).with_name("browser-deps.lock.json")
 # The archive mirror occasionally drops a connection; a job fetches about a hundred packages.
-ATTEMPTS = 4
+ATTEMPTS = 6
 BACKOFF_SECONDS = 2.0
 # Socket timeout for each attempt, applied to the connect and to every read. When one of the mirror's addresses
 # stops answering (91.189.91.83 on 2026-11-10), each fetch that resolves to it first waits this long before the

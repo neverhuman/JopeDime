@@ -27,7 +27,13 @@ exception_status=0
 bash ops/ci/verify-pyexec-exceptions.sh "$output/input/source" "$auditor" \
   "$output/pyexec-exceptions.json" "$PWD" "$output/input/SOURCE_MANIFEST.json" || exception_status=$?
 if [[ -f "$output/summary.md" && -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-  cat "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
+  summary_bytes=$(wc -c < "$output/summary.md")
+  if (( summary_bytes <= 900000 )); then
+    cat "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
+  else
+    head -c 900000 "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
+    printf '\n\n_(Step summary truncated at 900 KB to fit GitHub Actions 1024 KB limit; complete report retained in `summary.md`.)_\n' >> "$GITHUB_STEP_SUMMARY"
+  fi
 fi
 # JOPE_AUDIT_REPORT_ONLY=1 (trusted main, until the score reaches the floor) passes only an
 # auditor policy failure (exit 1) below the 85 floor whose reports and captured input verified;

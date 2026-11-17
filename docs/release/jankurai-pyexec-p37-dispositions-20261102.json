@@ -2,6 +2,33 @@
   "auditor": "jankurai 1.7.6",
   "cross_file_findings": [
     {
+      "check_id": "HLT-023-INPUT-BOUNDARY-GAP:security",
+      "fingerprint": "sha256:ae2e6c6309a5e93001be6645bc47b3c1d4fe0a129ff71cfe2a9d25c98fec7d1c",
+      "justification": "Restored on 2026-11-17. PR #2347 eliminated all Jankurai findings in crates/jope-carbon, clearing the single repo-wide HLT-023 slot previously occupied by crates/jope-carbon/src/bin/carbon.rs:236 (#2249/#2272), so the exclusion-stripped P37 cross scan once again emits this pre-existing test_fresh32.py identity alongside v2_rowsel_build.py HLT-001. Source bytes are unchanged (participant sha256 92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05). The exact-path exclusion stays.",
+      "line": 33,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+      },
+      "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+      "raw_identity": {
+        "category": "security",
+        "check_id": "HLT-023-INPUT-BOUNDARY-GAP:security",
+        "evidence": [
+          "self.assertEqual(self.db.execute('SELECT state,proof_json FROM '+q.PACKETS+' WHERE packet_id=?',('a'*64,)).fetchone()[:],('claimed','held failure untouched'))"
+        ],
+        "fingerprint": "sha256:ae2e6c6309a5e93001be6645bc47b3c1d4fe0a129ff71cfe2a9d25c98fec7d1c",
+        "line": 33,
+        "participants": [
+          "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py"
+        ],
+        "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+        "problem": "unsafe or unvalidated input boundary marker appears in product code",
+        "reason": "input handling risk needs deterministic negative tests",
+        "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+      },
+      "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+    },
+    {
       "check_id": "HLT-001-DEAD-MARKER:vibe",
       "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
       "justification": "Restored on 2026-11-10. The appliance fallback fix in crates/jope-appliance/src/cmd/run/args.rs cleared the single fallback-soup slot, so the exclusion-stripped P37 cross scan emits this identity again. The score scan still excludes the file. Source bytes are unchanged (participant sha256 b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00). The except at line 831 records a dataset failure and continues; it is not a stub. The exact-path exclusion stays. Re-checked on 2026-11-12 at origin/main 12094371bc2919c835b6671299dc1b68589a4d72 with jankurai 1.7.6: the exclusion-stripped full audit still emits this raw identity.",
@@ -43,7 +70,7 @@
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         }
       ],
-      "justification": "Cross-file inventory no longer lists this identity. On 2026-11-12, jankurai 1.7.6 audit --full --read-only of origin/main 12094371bc2919c835b6671299dc1b68589a4d72, with the two exact-path exclusions removed and --changed on this file and deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py, returned one HLT-023 and it was not this file: crates/jope-carbon/src/bin/carbon.rs:236, fingerprint sha256:11f4386f3e188ccbd0a5dee0fddcc39c743bc3572e202865ab3bf310fd1b16f8, matched_term string sql, evidence the Pro-tier doc comment added in a0574f71a1028eb5ded51d4a17ae263e5d52919d (#2249). That comment occupies the single cross-scan HLT-023 slot. The same command with that one comment neutralized emits this identity again (sha256:ae2e6c6309a5e93001be6645bc47b3c1d4fe0a129ff71cfe2a9d25c98fec7d1c, line 33) together with the v2_rowsel HLT-001. Carbon sources were not edited. audit-file --mode advisory still returns this one preexisting finding, and paths.findings keeps it. The exact-path exclusion stays. The raw-identity comparison is unchanged.",
+      "justification": "Restored to cross_file_findings on 2026-11-17 after PR #2347 cleared crates/jope-carbon's HLT-023 slot (#2249/#2272). Both audit-file --mode advisory and the exclusion-stripped full cross scan emit this single preexisting HLT-023 identity at line 33; source bytes (92be7f56...) and exact-path exclusion are unchanged.",
       "sha256": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
     },
     "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": {
