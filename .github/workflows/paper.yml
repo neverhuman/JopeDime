@@ -23,6 +23,13 @@ jobs:
     env:
       JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/target/full-audit" ]; then chmod -R u+rwX "$GITHUB_WORKSPACE/target/full-audit" || true; fi
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
