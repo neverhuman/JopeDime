@@ -1,0 +1,25 @@
+{
+  "wave": "H468",
+  "status": "RUNNING",
+  "script_sha256": "a55c7f6f246e6980c485fe869ad18f7d2c9ea7536676f2cf0b1daaa9c0b674cc",
+  "arms": ["pairnf_z40", "acc4_z40", "lk4lr2_z40"],
+  "control": "pairnf_z40",
+  "seeds": [1, 2, 3],
+  "partitions": ["h452a/", "h452b/"],
+  "folds": 5,
+  "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+  "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+  "smoke_h452a_fold0": {
+    "lk4lr2_z40": {"changed": 141, "kept": 26, "W": 12, "L": 13, "gain": -0.001516},
+    "acc4_z40": {"changed": 135, "kept": 17, "W": 9, "L": 7, "gain": 0.000475},
+    "h467_pairnf_z40_same_cell": {"changed": 134, "kept": 15, "gain": 0.000629}
+  },
+  "probe": {"utc": "2026-11-17T15:01:05Z", "ok": true, "control_full_sha_equals_h467_probe": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439", "peak_rss_gb": 6.33, "min_memavail_gb": 76.8},
+  "launch_utc": "2026-11-17T15:01:46Z",
+  "incumbent_val_utility": 1.1389572403748425,
+  "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "host": "xbabe2",
+  "device": "cpu",
+  "sealed_or_holdout_reads": 0,
+  "verdict": null
+}
