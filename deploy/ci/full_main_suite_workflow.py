@@ -170,7 +170,7 @@ class FullMainTests(unittest.TestCase):
             }).encode()
             digest = hashlib.sha256(payload).hexdigest()
             (live_dir / 'live-ci-4tier-docker.json').write_bytes(payload)
-            (live_dir / 'MANIFEST.sha256').write_text(f'{digest}  live-ci-4tier-docker.json\n')
+            (live_dir / 'live-ci-4tier-docker.sha256').write_text(f'{digest}  live-ci-4tier-docker.json\n')
             cov_payload = json.dumps({'schema': 'jopedime.carbon.code-coverage-summary.v1'}).encode()
             cov_digest = hashlib.sha256(cov_payload).hexdigest()
             (spec_dir / 'live-ci-4tier-docker.json').write_bytes(payload)
@@ -185,6 +185,10 @@ class FullMainTests(unittest.TestCase):
                 'live_ci_qualification_sha256': digest,
                 'code_coverage_sha256': cov_digest,
             }))
+            aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
+            # Legacy MANIFEST.sha256 sidecar remains accepted as fallback when live-ci-4tier-docker.sha256 is absent.
+            (live_dir / 'live-ci-4tier-docker.sha256').unlink()
+            (live_dir / 'MANIFEST.sha256').write_text(f'{digest}  ./live-ci-4tier-docker.json\n')
             aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
             (spec_dir / 'spec-pdf-receipt.json').write_text(json.dumps({
                 'live_ci_qualification_sha256': digest,
