@@ -131,11 +131,20 @@ def verify_carbon_live_e2e(root, source_sha, run_id, attempt, spec_root=None):
     path = _receipt(root, 'live-ci-4tier-docker.json')
     raw_bytes = path.read_bytes()
     digest = hashlib.sha256(raw_bytes).hexdigest()
-    manifest_path = path.parent / 'MANIFEST.sha256'
-    _require(manifest_path.is_file(), 'missing MANIFEST.sha256 next to live-ci-4tier-docker.json')
+    manifest_path = path.parent / 'live-ci-4tier-docker.sha256'
+    if not manifest_path.is_file():
+        manifest_path = path.parent / 'MANIFEST.sha256'
     _require(
-        f'{digest}  live-ci-4tier-docker.json' in manifest_path.read_text().splitlines(),
-        'MANIFEST.sha256 digest mismatch for live-ci-4tier-docker.json',
+        manifest_path.is_file(),
+        'missing live-ci-4tier-docker.sha256 or MANIFEST.sha256 next to live-ci-4tier-docker.json',
+    )
+    expected_lines = {
+        f'{digest}  live-ci-4tier-docker.json',
+        f'{digest}  ./live-ci-4tier-docker.json',
+    }
+    _require(
+        bool(expected_lines & set(manifest_path.read_text().splitlines())),
+        'SHA-256 sidecar digest mismatch for live-ci-4tier-docker.json',
     )
     receipt = json.loads(raw_bytes)
     _require(receipt.get('schema') == 'jopedime.carbon.live-ci-4tier-docker.v1', 'invalid carbon live schema')
