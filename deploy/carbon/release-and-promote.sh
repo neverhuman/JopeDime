@@ -18,6 +18,8 @@ SIGNING_KEY="/etc/jope-release/signing.key"
 COSIGN_BIN="${COSIGN_BIN:-$(command -v cosign || printf '%s/.local/bin/cosign' "${HOME:-}")}"
 COSIGN_SHA256="caaad125acef1cb81d58dcdc454a1e429d09a750d1e9e2b3ed1aed8964454708"
 EXTRA_ASSETS_DIR=""
+DEV_APP_PUBKEYS_B64=""
+PROD_APP_PUBKEYS_B64=""
 SKIP_DEPLOY=0
 SKIP_GH_RELEASE=0
 ALLOW_PARTIAL_MATRIX=0
@@ -39,6 +41,8 @@ while [[ $# -gt 0 ]]; do
     --prod-regions) PROD_REGIONS="$2"; shift 2 ;;
     --signing-key) SIGNING_KEY="$2"; shift 2 ;;
     --extra-assets-dir) EXTRA_ASSETS_DIR="$2"; shift 2 ;;
+    --dev-app-pubkeys-b64) DEV_APP_PUBKEYS_B64="$2"; shift 2 ;;
+    --prod-app-pubkeys-b64) PROD_APP_PUBKEYS_B64="$2"; shift 2 ;;
     --skip-deploy) SKIP_DEPLOY=1; shift 1 ;;
     --skip-gh-release) SKIP_GH_RELEASE=1; shift 1 ;;
     --allow-partial-matrix) ALLOW_PARTIAL_MATRIX=1; shift 1 ;;
@@ -48,6 +52,13 @@ done
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
+
+if [[ -z "$DEV_APP_PUBKEYS_B64" && -s "$REPO_ROOT/deploy/carbon/pubkeys/veox-app-dev.pub" ]]; then
+  DEV_APP_PUBKEYS_B64="$(tr -d '[:space:]' < "$REPO_ROOT/deploy/carbon/pubkeys/veox-app-dev.pub")"
+fi
+if [[ -z "$PROD_APP_PUBKEYS_B64" && -s "$REPO_ROOT/deploy/carbon/pubkeys/veox-app-prod.pub" ]]; then
+  PROD_APP_PUBKEYS_B64="$(tr -d '[:space:]' < "$REPO_ROOT/deploy/carbon/pubkeys/veox-app-prod.pub")"
+fi
 
 if [[ -n "$(git status --porcelain)" ]]; then
   die "working tree must be clean before cutting an immutable Carbon release"
@@ -81,12 +92,22 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
   cargo build --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --no-default-features --features eval --bin carbon-worker
   cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- emu --self-test --real-workers >/dev/null
 
+  DEV_PUBKEY_ARGS=()
+  if [[ -n "$DEV_APP_PUBKEYS_B64" ]]; then
+    DEV_PUBKEY_ARGS=(--app-auth-pubkeys-b64 "$DEV_APP_PUBKEYS_B64")
+  fi
+  PROD_PUBKEY_ARGS=()
+  if [[ -n "$PROD_APP_PUBKEYS_B64" ]]; then
+    PROD_PUBKEY_ARGS=(--app-auth-pubkeys-b64 "$PROD_APP_PUBKEYS_B64")
+  fi
+
   say "Step 2/5: Deploying and red-teaming dev cell (us-east-2)..."
   cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
     --manifest "$OUT_DIR/release-manifest.json" \
     --env dev \
     --regions us-east-2 \
     --bootstrap-secrets \
+    "${DEV_PUBKEY_ARGS[@]}" \
     --json-out "$OUT_DIR/deploy-dev-receipt.json"
 
   say "Step 3/5: Promoting and red-teaming prod cells ($PROD_REGIONS)..."
@@ -95,6 +116,7 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     --env prod \
     --regions "$PROD_REGIONS" \
     --bootstrap-secrets \
+    "${PROD_PUBKEY_ARGS[@]}" \
     --json-out "$OUT_DIR/deploy-prod-receipt.json"
 
   say "Step 4/5: Generating multi-region pinned carbon-clouds.json and verifying zero drift..."

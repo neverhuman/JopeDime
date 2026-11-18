@@ -128,28 +128,31 @@ AWS_PROFILE=veox-jepson-prod \
 | Edge Sliding-Window Rate Limits (`CarbonRateLimiter`) | `300/min` `uploads/prepare`, `120/min` `POST /runs`, `120/min` `DELETE /runs/{id}` | Per-`tenant_id` (`veox_usr_*` per-user `ctk2.*` tokens get independent per-user rate buckets!). |
 | Regional Lambda Concurrent Executions Quota (`L-B99A9384`) | **`1,000` / region** across all 5 Wave-1 `prod` regions | `us-east-2`, `us-east-1`, `us-west-2`, `eu-west-1`, `eu-central-1`. |
 
-### Resolving the `896` Reserved Concurrency Bottleneck
+### Resolving the `896` Reserved Concurrency Bottleneck (Reclaimed `2026-11-18`)
 
-Live inspection across all 5 Wave-1 `prod` regions (`us-east-2`, `us-east-1`, `us-west-2`, `eu-west-1`, `eu-central-1`) confirmed:
+Live inspection across all 5 Wave-1 `prod` regions (`us-east-2`, `us-east-1`, `us-west-2`, `eu-west-1`, `eu-central-1`) plus `ca-central-1` confirmed:
 - `jopedime-carbon-prod-{edge,engine,eval}` have `ReservedConcurrentExecutions = None` (drawing from each region's unreserved pool).
-- Legacy research function **`jope-gp-hwm-hybrid-x86-20261001`** holds **`ReservedConcurrentExecutions = 896`** in each of those 5 regions (plus `4` on `jopedime-carbon-dev-eval` in `us-east-2`), leaving only **`100–104` unreserved concurrent executions per region** (`~516` across the 5-region Wave-1 pool).
-
-When no HWM Lambda harvest campaign is running, an authorized operator can reclaim all `896` slots per region (`~4,480` slots across Wave-1) in `< 5 s` without deleting the legacy function:
+- Retired campaign function **`jope-gp-hwm-hybrid-x86-20261001`** previously held **`ReservedConcurrentExecutions = 896`** (`0` invocations over 14 days), leaving only `100–104` unreserved concurrent executions per region.
+- On `2026-11-18`, [`deploy/carbon/reclaim-idle-concurrency.sh`](../../deploy/carbon/reclaim-idle-concurrency.sh) verified `0` invocations and released `jope-gp-hwm-hybrid-x86-20261001`'s `896` reservation across all 6 regions, restoring **`996–1,000` unreserved concurrent slots per region (`~5,000` across Wave-1 `prod`)**.
 
 ```sh
-for r in us-east-2 us-east-1 us-west-2 eu-west-1 eu-central-1; do
-  AWS_PROFILE=veox-jepson-prod aws lambda delete-function-concurrency \
-    --region "$r" \
-    --function-name jope-gp-hwm-hybrid-x86-20261001
-done
+AWS_PROFILE=veox-jepson-prod bash deploy/carbon/reclaim-idle-concurrency.sh \
+  --json-out docs/carbon/evidence/concurrency-reclaim.json
 ```
 
-### Classification Roadmap
+### Pinned `app.veox.ai` `ctk2.*` Public Verification Keys (`2026-11-18`)
 
-- **Current (`v1.2.x` / `v1.3.0`)**: Regression (`45` built-in objectives including `rmse`, `mae`, `huber`, `pinball`, `tail_var`, `asymmetric_mse`, and custom `@file.json` expressions). Binary/multiclass classification currently stays on the `veox` native worker lane (`ai-veox-app` PR `#155` already routes `task == Regression` to Carbon and classification to the appliance/native lane).
-- **Planned Phase 2 (Carbon Binary & Multiclass Classification)**:
-  1. `jope-prep`: stratified deterministic split (`SplitPlan::stratified`) + class-distribution conditioning landmarks in `JLMB` + integer class label dictionary in `CarbonTabularEncoder`.
-  2. `jope-service` / `jope-runtime`: log-loss / Brier / ROC-AUC / PR-AUC objectives over existing logistic & GBDT logit heads + Platt/isotonic probability calibration + probability vector `/predict` & standalone `python`/`rust`/`js`/`cpp` export.
+- **`dev` (`jopedime-carbon-dev`, `us-east-2`)**: Tracked in [`deploy/carbon/pubkeys/veox-app-dev.pub`](../../deploy/carbon/pubkeys/veox-app-dev.pub) (`kid = veox-app-dev-2026-11`), wired automatically by `deploy/carbon/release-and-promote.sh`.
+- **`prod` (`jopedime-carbon-prod`, Wave-1 5 regions)**: Tracked in [`deploy/carbon/pubkeys/veox-app-prod.pub`](../../deploy/carbon/pubkeys/veox-app-prod.pub) (`kid = veox-app-prod-2026-11`), wired automatically by `deploy/carbon/release-and-promote.sh`.
+
+### Classification Status & Roadmap
+
+- **Current (`v1.3.0`)**:
+  - **Regression**: `45` built-in objectives (`rmse`, `mae`, `huber`, `pinball`, `tail_var`, `asymmetric_mse`, and custom `@file.json` expressions).
+  - **2-Class Binary Classification**: Universal 2-class categorical/boolean/numeric target conditioning (`jope-prep::target`: `yes`/`no`, `true`/`false`, `+`/`-`, `<=50K`/`>50K`, `0`/`1`, arbitrary 2-class strings) with deterministic stratified splits (`SplitPlan::stratified_binary`), `binary_target` metrics (`holdout_roc_auc`, `holdout_brier`, `holdout_logloss`, `holdout_accuracy`), and `prediction,predicted_probability,predicted_label` CSV scoring.
+- **Planned Next Milestone (Multiclass `>= 3` Classes & Dedicated Binary Neural GP Bundle)**:
+  1. Export dedicated binary/multiclass neural GP landmark weights alongside `r882`.
+  2. Multi-column class probability vectors and `>= 3`-class macro-F1 / log-loss search heads (until then, `>= 3`-class tables decline cleanly to the `veox` appliance lane).
 
 ---
 

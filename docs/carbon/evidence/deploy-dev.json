@@ -1,5 +1,5 @@
 {
-  "timestamp_epoch_ms": 1794978638483,
+  "timestamp_epoch_ms": 1795018810596,
   "environment": "dev",
   "release_id": "1b9f6396cb3ff81b",
   "git_sha": "1b9f63967c67c9c8f5adeceff6701dafd5fbeb5d",
@@ -11,22 +11,14 @@
       "environment": "dev",
       "release_id": "1b9f6396cb3ff81b",
       "dry_run": false,
-      "change_set_action_count": 14,
+      "change_set_action_count": 6,
       "change_set_summary": [
         "Modify EdgeFunctionUrl (AWS::Lambda::Url)",
         "Modify EdgeFunction (AWS::Lambda::Function)",
         "Modify EdgeLiveAlias (AWS::Lambda::Alias)",
-        "Add EdgeVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
-        "Remove EdgeVersion50c8226b4d911c53 (AWS::Lambda::Version)",
-        "Modify EngineFunction (AWS::Lambda::Function)",
-        "Modify EngineLiveAlias (AWS::Lambda::Alias)",
-        "Add EngineVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
-        "Remove EngineVersion50c8226b4d911c53 (AWS::Lambda::Version)",
-        "Modify EvalFunction (AWS::Lambda::Function)",
-        "Modify EvalLiveAlias (AWS::Lambda::Alias)",
-        "Add EvalVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
-        "Remove EvalVersion50c8226b4d911c53 (AWS::Lambda::Version)",
-        "Modify R882ModelLayer (AWS::Lambda::LayerVersion)"
+        "Add EdgeVersion1b9f6396cb3ff81bebac5ecf (AWS::Lambda::Version)",
+        "Remove EdgeVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
+        "Modify EngineFunction (AWS::Lambda::Function)"
       ],
       "artifacts_bucket": "jopedime-carbon-artifacts-714044927654-us-east-2",
       "cas_bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
@@ -34,19 +26,19 @@
       "public_edge_endpoint_url": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
       "engine_kek_pubkey_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
       "live_versions": {
-        "edge_version": "9",
+        "edge_version": "10",
         "engine_version": "9",
         "eval_version": "9"
       },
       "previous_versions": {
-        "edge_version": "8",
-        "engine_version": "8",
-        "eval_version": "8"
+        "edge_version": "9",
+        "engine_version": "9",
+        "eval_version": "9"
       },
       "r882_layer_version_arn": "arn:aws:lambda:us-east-2:714044927654:layer:jopedime-carbon-dev-r882:9",
       "redteam_passed_vectors": 17,
       "redteam_total_vectors": 17,
-      "wall_ms": 126285.095022
+      "wall_ms": 97175.703571
     }
   ]
 }

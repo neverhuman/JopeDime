@@ -1,0 +1,69 @@
+{
+  "schema": "jope.carbon.concurrency_reclaim_receipt.v1",
+  "captured_utc": "2026-11-18T15:55:09Z",
+  "lookback_start_utc": "2026-11-04T15:55:09Z",
+  "lookback_days": 14,
+  "dry_run": false,
+  "regions": [
+    {
+      "region": "us-east-2",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 100,
+      "unreserved_after": 996,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    },
+    {
+      "region": "us-east-1",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 104,
+      "unreserved_after": 1000,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    },
+    {
+      "region": "us-west-2",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 104,
+      "unreserved_after": 1000,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    },
+    {
+      "region": "eu-central-1",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 104,
+      "unreserved_after": 1000,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    },
+    {
+      "region": "eu-west-1",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 104,
+      "unreserved_after": 1000,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    },
+    {
+      "region": "ca-central-1",
+      "function_name": "jope-gp-hwm-hybrid-x86-20261001",
+      "action": "deleted_concurrency",
+      "reserved_before": 896,
+      "unreserved_before": 104,
+      "unreserved_after": 1000,
+      "total_limit": 1000,
+      "recent_invocations": 0
+    }
+  ]
+}
