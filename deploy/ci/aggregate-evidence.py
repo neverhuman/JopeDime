@@ -171,6 +171,7 @@ def verify_carbon_live_e2e(root, source_sha, run_id, attempt, spec_root=None):
     _require(int(install.get('doctor_prod_healthy_regions', 0)) >= 5, 'doctor_prod_healthy_regions >= 5 required')
     _require(install.get('quickstart_passed') is True, 'quickstart_passed required')
     _require(install.get('live_anon_high_gate_status') == 403, 'live_anon_high_gate_status == 403 required')
+    prod_public_mint_closed = install.get('live_prod_public_mint_gate_status') == 403
     runs = receipt.get('runs', [])
     expected_pairs = {(c, e) for c in ('dev', 'prod') for e in ('fast', 'medium', 'high', 'ultra')}
     _require(len(runs) == 8, f'expected 8 dev+prod tier runs, got {len(runs)}')
@@ -186,8 +187,14 @@ def verify_carbon_live_e2e(root, source_sha, run_id, attempt, spec_root=None):
             'positive itemized cost_estimate required',
         )
         target = entry.get('execution_target')
-        if entry.get('effort') in ('fast', 'medium') or mode == 'live_pro_secrets':
+        cloud = entry.get('cloud')
+        effort = entry.get('effort')
+        if mode == 'live_pro_secrets':
             _require(target == 'aws_live', f'expected aws_live target for {entry}')
+        elif effort in ('fast', 'medium') and not (cloud == 'prod' and prod_public_mint_closed):
+            _require(target == 'aws_live', f'expected aws_live target for {entry}')
+        elif effort in ('fast', 'medium') and cloud == 'prod' and prod_public_mint_closed:
+            _require(target in ('aws_live', 'ci_emulator'), f'expected aws_live or ci_emulator target for {entry}')
         else:
             _require(target == 'ci_emulator', f'expected ci_emulator target for {entry}')
     _require(

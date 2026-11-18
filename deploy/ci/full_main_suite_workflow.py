@@ -190,8 +190,61 @@ class FullMainTests(unittest.TestCase):
             (live_dir / 'live-ci-4tier-docker.sha256').unlink()
             (live_dir / 'MANIFEST.sha256').write_text(f'{digest}  ./live-ci-4tier-docker.json\n')
             aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
+            # Closed-prod Option B (`live_prod_public_mint_gate_status == 403`) permits `ci_emulator` on `prod`
+            # `fast`/`medium` while still requiring `aws_live` on `dev` `fast`/`medium` and rejecting unverified closed-prod.
+            closed_runs = []
+            for cloud in ('dev', 'prod'):
+                for effort in ('fast', 'medium', 'high', 'ultra'):
+                    closed_runs.append({
+                        'cloud': cloud, 'effort': effort,
+                        'execution_target': 'aws_live' if (cloud == 'dev' and effort in ('fast', 'medium')) else 'ci_emulator',
+                        'final_state': 'completed', 'encrypted_cuen': True, 'shredded_after_run': True,
+                        'holdout_r2': 0.999, 'total_wall_ms': 420.0,
+                        'cost_estimate': {'total_estimated_usd': 0.0001, 'runs_per_1_usd': 10000.0},
+                    })
+            closed_doc = json.loads(payload)
+            closed_doc['runs'] = closed_runs
+            # Without `live_prod_public_mint_gate_status == 403`, `prod/fast` on `ci_emulator` must be rejected.
+            unverified_bytes = json.dumps(closed_doc).encode()
+            unverified_digest = hashlib.sha256(unverified_bytes).hexdigest()
+            (live_dir / 'live-ci-4tier-docker.json').write_bytes(unverified_bytes)
+            (live_dir / 'MANIFEST.sha256').write_text(f'{unverified_digest}  ./live-ci-4tier-docker.json\n')
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', None)
+            # With `live_prod_public_mint_gate_status == 403`, closed-prod Option B passes cleanly,
+            # while `dev/fast` on `ci_emulator` is still rejected.
+            closed_doc['install']['live_prod_public_mint_gate_status'] = 403
+            closed_bytes = json.dumps(closed_doc).encode()
+            closed_digest = hashlib.sha256(closed_bytes).hexdigest()
+            (live_dir / 'live-ci-4tier-docker.json').write_bytes(closed_bytes)
+            (live_dir / 'MANIFEST.sha256').write_text(f'{closed_digest}  ./live-ci-4tier-docker.json\n')
+            (spec_dir / 'live-ci-4tier-docker.json').write_bytes(closed_bytes)
+            (spec_dir / 'spec-bundle-manifest.json').write_text(json.dumps({
+                'live_ci_qualification_file': 'live-ci-4tier-docker.json',
+                'live_ci_qualification_sha256': closed_digest,
+                'code_coverage_file': 'code-coverage-summary.json',
+                'code_coverage_sha256': cov_digest,
+            }))
             (spec_dir / 'spec-pdf-receipt.json').write_text(json.dumps({
-                'live_ci_qualification_sha256': digest,
+                'live_ci_qualification_sha256': closed_digest,
+                'code_coverage_sha256': cov_digest,
+            }))
+            aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', base / 'spec')
+            dev_tamper_doc = json.loads(closed_bytes)
+            for item in dev_tamper_doc['runs']:
+                if item['cloud'] == 'dev' and item['effort'] == 'fast':
+                    item['execution_target'] = 'ci_emulator'
+            dev_tamper_bytes = json.dumps(dev_tamper_doc).encode()
+            dev_tamper_digest = hashlib.sha256(dev_tamper_bytes).hexdigest()
+            (live_dir / 'live-ci-4tier-docker.json').write_bytes(dev_tamper_bytes)
+            (live_dir / 'MANIFEST.sha256').write_text(f'{dev_tamper_digest}  ./live-ci-4tier-docker.json\n')
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_carbon_live_e2e(live_dir, source_sha, '123', '1', None)
+            # Restore valid closed_bytes for spec-pdf-receipt digest mismatch checks below.
+            (live_dir / 'live-ci-4tier-docker.json').write_bytes(closed_bytes)
+            (live_dir / 'MANIFEST.sha256').write_text(f'{closed_digest}  ./live-ci-4tier-docker.json\n')
+            (spec_dir / 'spec-pdf-receipt.json').write_text(json.dumps({
+                'live_ci_qualification_sha256': closed_digest,
                 'code_coverage_sha256': '0' * 64,
             }))
             with self.assertRaises(AssertionError):
