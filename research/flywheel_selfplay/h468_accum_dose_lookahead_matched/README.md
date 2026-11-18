@@ -1,32 +1,66 @@
 # H468: accumulation dose-response and displacement-matched Lookahead on the gated pairnf step (offline, adapter-only)
 
-**Status: `RUNNING` (pre-registration record).** This README records the design, code hash and launch before any CV result exists. The verdict, metrics and red-team will be added when all 3 seeds write `summary.json`.
+**Verdict: `NO_LIFT`.** Neither arm beats the `pairnf_z40` control on every seed. `acc4_z40` (4 × 1,024-context gradient accumulation) has the best median, Elo **+5.6** vs the control's **+4.7**, but strict passes on 0/3 seeds (Elo CI low −0.9 / −0.9 / −0.7). Its paired gain vs the control is +0.0025 [+0.0001, +0.0069] / −0.0005 [−0.0029, +0.0013] / +0.0015 [−0.0001, +0.0037], so the CI clears 0 on seed 1 only: the same pattern as H467 acc2, with no dose-response. `lk4lr2_z40` (Lookahead k = 4, α = 0.5 at lr 6e-4) is no longer degenerate: it keeps 19% of changed decisions vs the control's 15%. But the extra changes win less often (non-floor pass win rate 55.8% vs 57.7%), so its median Elo is +5.1 with strict 0/3 and every paired CI spanning 0. CV selected `acc4_z40` / `pairnf_z40` / `acc4_z40`. val91: median gain **+0.0020**, Elo +11.5 on every seed, all CIs span 0 (lowest CI lows −0.0001 / −0.0005 / −0.0002), not_worse on 3/3 seeds. No breakthrough.
 
-## Hypothesis
-H467 (`NO_LIFT`) left two open threads. `acc2_z40` (2 × 1,024-context gradient accumulation) was the only arm with a positive median vs the control (Elo +5.7 vs +4.7; paired gain +0.0025 / −0.0006 / +0.0005, CI above 0 on seed 1 only). `look4_z40` (Lookahead k = 4, α = 0.5) was a design confound, not a test: it halved the displacement, so the z ≥ 0.40 gate kept 1 change in 2,438. H468 keeps the gate (z ≥ 0.40), the objective and 16 steps fixed and resolves both. Every arm shares the control's random streams (`rng_arm = pairnf`):
-- `pairnf_z40`: the control, H452-H467 pairnf + z ≥ 0.40, 16 steps, lr 3e-4. Adapter shas must equal the H467 `pairnf_z40` cells.
-- `acc4_z40`: accumulation **dose-response**: 4 independent 1,024-context micro-batches per step (effective batch 4,096, mean gradient, same lr, steps and clip). Micro-batches 0/1 are acc2's draws and 2/3 use their own keyed streams. If the acc2 signal is real lower gradient noise, acc4 should beat the control on every seed with the paired CI above 0.
-- `lk4lr2_z40`: **displacement-matched** Lookahead: k = 4, α = 0.5 with lr 6e-4 (2×). The 2× comes from the H467 control/look4 z-margin ratio (p90 1.94, p99 1.80, max 1.91), so the kept-set size is back near the control's and Lookahead's smoothing is tested on its own.
+## Hypothesis (pre-registered in #2357)
+H467 left two open threads. `acc2_z40` was the only arm with a positive median vs the control (Elo +5.7 vs +4.7, paired CI > 0 on seed 1 only), and `look4_z40` was a design confound (Lookahead halved the displacement below the z ≥ 0.40 gate). H468 keeps the gate, objective and 16 steps fixed, with every arm on the control's random streams (`rng_arm = pairnf`):
+- `acc4_z40`: accumulation dose-response (effective batch 4,096). If acc2's signal were real lower gradient noise, acc4 should beat the control on every seed with the paired CI above 0.
+- `lk4lr2_z40`: displacement-matched Lookahead, k4 α0.5 at lr 6e-4 (2× from the H467 z-margin ratio).
 
-Not repeated (already falsified on this instrument): Polyak/EMA tail average and ASAM (H457), 32-step dose and fbal (H461), recalibrated gate and cosine dose (H463), ctxnorm, tail clip and pair weight 2 (H466), acc2 alone, un-matched Lookahead and BT label smoothing (H467).
-
-## Pre-registered rules (unchanged from H452-H467)
-- **Selection** uses Elo only: per seed, the max mean non-floor OOF Elo over the two partitions (ties broken by pooled gain).
-- **Strict:** pooled OOF gain > 0.002 and gain CI low > 0; pooled Elo > 0 and Elo CI low > 0; non-floor Elo CI low > 0; Elo > 0 on each partition. CIs are 95% family bootstraps; reporting uses the median across 3 seeds.
-- An arm counts only if it also beats the control in the paired family bootstrap (arm − control CI low > 0). Ties never win.
-- **LIFT** requires a non-control arm that beats the control on the median across 3 seeds with the paired CI above 0, plus a clean red-team and val91 not_worse on every seed. Otherwise the verdict is `NO_LIFT`.
+## Pre-registered rules (unchanged from H452–H467)
+Selection takes the max mean non-floor OOF Elo over the two partitions. Strict requires pooled OOF gain > 0.002 with gain CI low > 0, pooled Elo > 0 with Elo CI low > 0, non-floor Elo CI low > 0, and Elo > 0 on each partition. An arm counts only if it also beats the control in the paired family bootstrap. Ties never win. LIFT needs that on every seed, plus val91 not_worse on every seed and a clean red-team.
 
 ## Setup
-- **Code:** `h468_trainfold_cv.py`, sha256 `a55c7f6f246e6980c485fe869ad18f7d2c9ea7536676f2cf0b1daaa9c0b674cc` (checked with `sha256sum -c` by the waiter before every launch). It differs from `h467_trainfold_cv.py` only in the arm table, the default `--arms`, the probe's full-train arm list, a `--smoke` mode and the docstring. `accum` and `look` reuse the H467/H457 branches. CPU only, so no GPU and no `qualification.lock`. It runs at `nice 19` with 16 threads per seed and aborts itself at MemAvailable < 15 GB.
-- **Scratch:** `~/jope-data/hwave-h468` on xbabe2, a copy of `round-3175.pt`, never the live run directory. The run never touches xbabe0 or xbabe3.
-- **Data:** the real S3 packet: 1,219 DL-Train contexts (205 families) and 91 DL-Val contexts (19 families), family overlap 0 (asserted). val91 is read once per seed, for the CV-selected arm only, as a regression check. No sealed or holdout data is read (the sealed meta-test group is not in the packet).
-- **DOPE frozen:** composite sha `c51a56d0...` is checked before and after. Only the 29,211 adapter parameters train.
-- **Partitions:** the two H452 floor-stratified, family-grouped 5-fold partitions (`h452a/`, `h452b/`), 3 trained bases × 2 partitions × 5 folds per seed, plus 1 full-train run for the selected arm.
-- **Smoke (real config, partition `h452a/` fold 0 only, no val91):** both new arms ran 16 steps at the real config on 2026-11-17 and kept nonzero changes, so neither is gate-degenerate like H467 look4. `lk4lr2_z40` changed 141 / kept 26 (H467 control on the same cell: 134 / 15), W 12 / L 13, gain −0.0015, 806 s. `acc4_z40` changed 135 / kept 17 (H467 acc2: 135 / 17), W 9 / L 7, gain +0.0005, 2,973 s (≈3.6× the control). DOPE intact after both, peak RSS 6.3 GB, min MemAvailable 69.9 GB. Single-fold smoke numbers are not evidence and are not used for selection.
-- **Probe:** PROBE_OK at 2026-11-17 15:01 UTC (seed 1, one 1-step fold per arm plus a full-train build of every arm), DOPE after `c51a56d0...`, peak RSS 6.3 GB, min MemAvailable 76.8 GB, incumbent val parity 1.1389572403748425. The control's full-train adapter sha `5f3acc50...` equals the H467 probe's.
-- **Launch:** `waiter.sh` (started 2026-11-17 15:01 UTC, `MAXALIVE=3 SEEDS="1 2 3" MEMGATE=30`) launches seeds 1/2/3 one per 15 min when MemAvailable >= 30 GB and machine CPU busy% + 16 threads <= 85% hold on 2 consecutive checks. It relaunches a dead seed (any cause), resume-safe via `results/fold_sig`, at most 5 times per seed, never has more than 3 seeds alive, and SIGTERMs only its own seed process if it hangs more than 10 min after `summary.json`. Each seed also aborts itself at MemAvailable < 15 GB. Expected cost is ≈5.6× H467's control-only arm time per seed (acc4 ≈3.6×), so about 14-16 h per seed; expected close about 05:00-09:00 UTC Nov 18.
+- **Code:** `h468_trainfold_cv.py` as pre-registered (sha256 `a55c7f6f…`, re-verified by the waiter before every launch and after the run). CPU only, `nice 19`, 16 threads per seed, on the scratch copy `~/jope-data/hwave-h468` on xbabe2 (a copy of `round-3175.pt`, sha256 `1d6ea900…`). Never the live run dir, never xbabe0 or xbabe3. No GPU, so no `qualification.lock`.
+- **Runs:** seeds 1/2/3 launched 2026-11-17 15:06 / 15:27 / 15:47 UTC. Seeds 1 and 3 each hit their own 15 GB MemAvailable guard once (other owners' load, at 13.7–14.4 GB) and the waiter relaunched them resume-safe via `results/fold_sig` (21:22 / 21:42 UTC). DONE at 06:04 / 04:58 / 07:17 UTC Nov 18. The waiter exited cleanly at 07:22 UTC (00:22 MST).
+- **Data and model:** the real S3 packet, 1,219 DL-Train contexts (205 families) and 91 DL-Val contexts (19 families), family overlap 0. DOPE `c51a56d0…` stayed frozen (before = after on every seed), and only the 29,211 adapter params trained. Incumbent val parity is 1.1389572403748425 on every seed.
+- **Compute:** peak RSS 6.3 GB per seed. Min MemAvailable 35.5 / 15.2 / 36.6 GB (seed 2 came within 0.2 GB of its guard). acc4 costs about 3.6× the control per fold.
 
-## Aggregation (when every seed has `results/seedN/summary.json`)
-Copy `h467_aggregate.py` and `h467_redteam.py`, then run `WAVE=H468 python3 h468_aggregate.py aggregate.json` and `ARMS=pairnf_z40,acc4_z40,lk4lr2_z40 python3 h468_redteam.py redteam.json`.
+## Outcome
+**CV** (pooled OOF over 2 × 1,219 TRAIN contexts; values are seeds 1 / 2 / 3, median in parentheses):
+
+| Arm | OOF gain | Elo vs incumbent | Elo 95% CI (family bootstrap) | Non-floor Elo | W / L (ties rest of 2,438) | Strict (utility-strict) | Recovered / new gate fails (of 38) | vs control (gain, CI) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **pairnf_z40** (control) | +0.0048 / +0.0069 / +0.0056 (+0.0056) | +4.7 / +6.6 / +3.8 (+4.7) | [−1.3, +10.6] / [+0.7, +12.3] / [−1.8, +9.4] | +4.3 / +5.9 / +3.3 | 122/89, 128/82, 115/88 | 1/3 (3/3) | 3, 5, 4 / 0 | — |
+| acc4_z40 | +0.0072 / +0.0064 / +0.0071 (+0.0071) | +5.6 / +5.3 / +5.7 (+5.6) | [−0.9, +11.8] / [−0.9, +11.3] / [−0.7, +12.2] | +4.9 / +4.8 / +5.1 | 133/94, 131/94, 133/93 | 0/3 (3/3) | 5, 4, 5 / 0 | +0.0025 [+0.0001, +0.0069]; −0.0005 [−0.0029, +0.0013]; +0.0015 [−0.0001, +0.0037] |
+| lk4lr2_z40 | +0.0072 / +0.0074 / +0.0064 (+0.0072) | +5.1 / +6.0 / +4.3 (+5.1) | [−1.6, +11.5] / [−1.0, +12.6] / [−2.2, +10.7] | +4.5 / +5.4 / +3.6 | 156/120, 157/115, 150/120 | 0/3 (3/3) | 5, 5, 5 / 0 | +0.0024 [−0.0001, +0.0068]; +0.0005 [−0.0004, +0.0016]; +0.0008 [−0.0007, +0.0030] |
+
+Head-to-head on contexts where the arm and the control differ:
+- acc4_z40 (32 / 45 / 49): arm better 19 / 20 / 28, control better 13 / 25 / 21 (Elo +65.9 / −38.8 / +50.0, every CI spans 0).
+- lk4lr2_z40 (77 / 73 / 86): arm better 41 / 32 / 46, control better 36 / 41 / 40 (Elo +22.6 / −43.1 / +24.3, every CI spans 0).
+
+**val91 regression check** (the CV-selected arm trained on all 1,219 TRAIN contexts):
+
+| Seed | Selected arm | Gain | Gain CI | W / T / L | Elo | Changed / kept | New gate failures | not_worse |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | acc4_z40 | +0.0021 | [−0.0001, +0.0049] | 5/84/2 | +11.5 | 54 / 7 | 0 | true |
+| 2 | pairnf_z40 | +0.0011 | [−0.0005, +0.0028] | 4/86/1 | +11.5 | 54 / 5 | 0 | true |
+| 3 | acc4_z40 | +0.0020 | [−0.0002, +0.0047] | 5/84/2 | +11.5 | 54 / 7 | 0 | true |
+
+Across seeds the median val91 gain is +0.0020 and the median Elo +11.5. Every CI spans 0. The pre-registered LIFT rule fails: no arm beats the control on every seed, and the selected arm passes strict on 0/3 seeds.
+
+## Red-team (`h468_redteam.py`, `h468_aggregate.py`, copied from H467; output under `redteam` / `aggregate` in `metrics.json`)
+1. **Control reproduction.** All 30 `pairnf_z40` cells have the same adapter sha and identical OOF vectors as H467 (30/30).
+2. **Why seeds 1 and 2 gave the identical acc4_z40 p0cv3 gain (+0.011531).** It is not a seed-plumbing bug, a cache hit or a deterministic path. The two cells have different adapters (sha `1b45c09f…` vs `39c61ce6…`), different step-0/16 losses (14.271→13.767 vs 14.425→13.554), and z-margins that differ by up to 0.061 on the changed decisions. The per-seed init perturbation, dropout and context/slate streams are all keyed on the seed (`key(seed, rng_arm, tag, …)`), the pre-flight assert checks the streams differ, and the resume path only reads a cell's own `{arm}_{tag}_seed{N}.json`. But the decision is discrete: both adapters changed the same 151 held-out picks, and the z ≥ 0.40 gate kept the same 27 with the same programs, so the utility vector (and its mean) is bit-identical. The cell is dominated by one held-out context where the kept change recovers an incumbent gate failure (+2.2315 of the fold's 244 contexts, ≈ +0.0091 of the +0.0115). The same vector appears for `pairnf_z40` seed 2 and for H467 `acc2_z40` seeds 1 and 2 in that cell. Control seed 1 (+0.0024) differs only by not keeping that one context. The red-team now lists every identical fold OOF pair (`identical_fold_oof`): 7 pairs over 30 cell groups, all with distinct adapter shas. Takeaway: fold gains are lumpy, and a single floor recovery moves a fold by ~0.009, so seed agreement on a fold gain is not evidence of shared randomness.
+3. **acc4 (mechanism).** acc4 keeps 109–116 changes per partition vs the control's 99–108, with 99–106 shared. Its non-floor pass win rate is 57.7% (383 W / 281 L over 6 cells), the same as the control's 57.7% (353 / 259). Most of its edge over the control comes from floor recoveries (5 / 4 / 5 vs 3 / 5 / 4), not from better non-floor picks. Going from acc2 to acc4 doesn't add anything (median Elo +5.7 → +5.6, paired CI > 0 on seed 1 only in both).
+4. **lk4lr2 (mechanism).** The displacement match worked, slightly overshooting: |z| of changed decisions p50 / p90 / p99 / max 0.198 / 0.475 / 0.653 / 0.870 vs the control's 0.177 / 0.437 / 0.599 / 0.790, so the gate keeps 824 of 4,322 (19.1%) vs 630 of 4,266 (14.8%). The extra kept changes have a lower non-floor pass win rate (448 W / 355 L, 55.8%). With the confound gone, Lookahead smoothing adds no signal.
+5. **Seed noise.** Seed disagreement on OOF decisions per partition: control 25–32, acc4 15–27, lk4lr2 25–38. `seed_independence` holds for every arm × seed pair, and adapter shas are distinct in every cell.
+6. **Selection / winner's curse.** Selection used TRAIN-fold CV only (non-floor Elo), never val. The selection bootstrap picks the selected arm as argmax only 47% / 60% / 73% of the time, and the max-arm non-floor Elo CI is [−0.9, +11.9] / [+0.3, +12.3] / [−1.1, +11.4]. No arm or seed was dropped or re-run selectively.
+7. **Ties.** About 91% of CV decisions and 84–86 of 91 val91 decisions are ties by design. Ties count 0.5 in Elo and never satisfy strict. The 0.002 strict margin is unchanged.
+8. **Metric direction.** Utility is higher-is-better (negated fitness, −2.0 on gate fail). Gains are paired candidate − incumbent on the same contexts. Verdicts report Elo, not AUC, and the aggregator recomputes them from the per-seed fields.
+9. **Leakage.** Folds are family-disjoint and exclude val families (asserted, family overlap 0). The red-team rebuilds both partitions and matches the logged fold maps (floors 4/4/4/3/4). No sealed or holdout reads: the only holdout, the sealed meta-test group, is not in the packet and was never touched.
+10. **Safety.** DOPE `c51a56d0` is intact on every DONE line (before = after). There were 2 own-guard MemAvailable aborts (seeds 1 and 3, caused by other owners' load) and 0 OOM kills. Both resumed deterministically. No other owner's job was paused or killed. The wave scripts contain no ssh, rsync, xbabe0 or xbabe3 target. xbabe2 disk is at 95% (~426 GB free), and the wave dir is ~466 MB. No large objects are committed.
+
+## Meaning
+Gradient-noise reduction is exhausted on this instrument. acc2 and acc4 both add a few kept changes at the same ~58% non-floor win rate, worth about +1 Elo on the median, which can't be separated from the control. Displacement-matched Lookahead keeps more changes at a lower win rate. H451–H468 agree that the gated step is worth about +4 to +6 OOF Elo and is not separable from 0 on val91.
+
+## Next step
+H469 (`~/jope-data/hwave-h469`, pre-registered separately) tests per-context robust losses on the same instrument and streams: trimmed-mean per-context loss (drop the top 10% / 25% per step) and a soft Cauchy (log1p) per-context loss, so heavy contexts can't dominate the step. While designing it we found the adapter's modality dropout is inert under the locked harness (bit-identical predictions and adapters for p ∈ {0, 0.10, 0.25, 0.5, 0.99}), so dropout was dropped as a lever.
+
+No adoption nudge was sent to the flywheel owner.
+
+Artifacts:
+- `metrics.json`: `aggregate` (fold-gain vectors dropped for size) and `redteam` as produced on xbabe2.
+- `h468_trainfold_cv.py` (as run), `h468_aggregate.py`, `h468_redteam.py`.
 
 Raw logs, losses and fold signatures stay on xbabe2 in `~/jope-data/hwave-h468`.
