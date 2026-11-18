@@ -1235,13 +1235,14 @@ dependencies = [
 
 [[package]]
 name = "dope-core"
-version = "1.1.0"
-source = "git+https://github.com/neverhuman/dope?rev=15e12aa3dc33851655580f6aa7c9c66353143f23#15e12aa3dc33851655580f6aa7c9c66353143f23"
+version = "1.2.0"
+source = "git+https://github.com/neverhuman/dope?rev=9cd8d6200c2a65b32bbf0cb24dc314b385dc4952#9cd8d6200c2a65b32bbf0cb24dc314b385dc4952"
 dependencies = [
  "brotli",
  "candle-core",
  "candle-nn",
  "csv",
+ "dope-norm",
  "half",
  "rayon",
  "safetensors 0.7.0",
@@ -1249,6 +1250,16 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "dope-norm"
+version = "0.1.0"
+source = "git+https://github.com/neverhuman/dope?rev=9cd8d6200c2a65b32bbf0cb24dc314b385dc4952#9cd8d6200c2a65b32bbf0cb24dc314b385dc4952"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
 ]
 
 [[package]]

@@ -5,6 +5,10 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Encoders
+
+- encoders: pin `dope-core` to DOPE `9cd8d6200c2a65b32bbf0cb24dc314b385dc4952` (engine workspace `1.2.0` on that commit; `engine/` matches `#356` at `bc7825b4`, and `#357` does not change it). There is no newer signed `dope-engine` tag than `dope-engine-v1.1.0`. `PREPARATION_SOURCE` follows the new revision. The MLC-v3 weight digest stays `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`. This is a source pin, not a weight release and not a scientific accuracy claim. Public landmark bundles are sanitized before conditioning.
+
 ### Native AutoML regressors
 
 - automl: release `kimik3p1_max` 1.0.0 as tag `kimik3p1_max-v1.0.0` (`jope_automl::KIMIK3P1_MAX_VERSION`). The frozen source hash is unchanged. The workspace crate version stays 1.0.0.
