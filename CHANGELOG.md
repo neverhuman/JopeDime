@@ -7,7 +7,7 @@ the commit areas (crate or lane) named in each subject line.
 
 ### Encoders
 
-- encoders: pin `dope-core` to DOPE `9cd8d6200c2a65b32bbf0cb24dc314b385dc4952` (engine workspace `1.2.0` on that commit; `engine/` matches `#356` at `bc7825b4`, and `#357` does not change it). There is no newer signed `dope-engine` tag than `dope-engine-v1.1.0`. `PREPARATION_SOURCE` follows the new revision. The MLC-v3 weight digest stays `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`. This is a source pin, not a weight release and not a scientific accuracy claim. Public landmark bundles are sanitized before conditioning.
+- encoders: pin `dope-core` to DOPE `e6dba52be0c89560147b7f9699c8ed4e9b4e9acf` (`#359`). `engine/` is identical to `#358` at `71dfa6b9` (Rust research view and 196-D packet). `#359` does not change the engine. Engine workspace stays `1.2.0`. There is no newer signed `dope-engine` tag than `dope-engine-v1.1.0`. `PREPARATION_SOURCE` follows the new revision. The MLC-v3 weight digest stays `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`. This is a source pin, not a weight release and not a scientific accuracy claim. Public landmark bundles are sanitized before conditioning.
 
 ### Native AutoML regressors
 
