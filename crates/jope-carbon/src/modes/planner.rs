@@ -27,14 +27,14 @@ pub const S3_STANDARD_USD_PER_GB_MONTH: f64 = 0.023;
 /// AWS internet data transfer out fee in USD per decimal GB (`$0.09`).
 pub const AWS_INTERNET_EGRESS_USD_PER_GB: f64 = 0.09;
 
-/// Memory configured on `carbon-edge` (`256 MB` Graviton2).
-pub const EDGE_MEMORY_MB: usize = 256;
+/// Memory configured on `carbon-edge` (`1,024 MB` Graviton2, `0.58` vCPU).
+pub const EDGE_MEMORY_MB: usize = 1_024;
 
-/// Memory configured on `carbon-engine` (`3,008 MB` -> `~2` full vCPUs for neural Wave-0).
-pub const ENGINE_MEMORY_MB: usize = 3_008;
+/// Memory configured on `carbon-engine` (`3,538 MB` = `2.00` full Graviton2 vCPUs).
+pub const ENGINE_MEMORY_MB: usize = 3_538;
 
-/// Memory configured on `carbon-eval` in `deploy/carbon/cloudformation-cell.json` (`1,769 MB` = `1.0` full vCPU).
-pub const DEPLOYED_EVAL_MEMORY_MB: u32 = 1_769;
+/// Memory configured on `carbon-eval` in `deploy/carbon/cloudformation-cell.json` (`3,538 MB` = `2.00` full vCPUs).
+pub const DEPLOYED_EVAL_MEMORY_MB: u32 = 3_538;
 
 /// `EvalMemoryClass` is an enum for the five Arm64 Graviton2 `carbon-eval` worker memory classes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -407,7 +407,7 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
 
     let eval_class = if ((input.product_tier != CarbonProductTier::Free
         && input.effort >= CarbonEffortTier::High)
-        || solo_wall_ms > 8_000.0)
+        || solo_wall_ms > 3_500.0)
         && base_class < EvalMemoryClass::M1769Mb
     {
         EvalMemoryClass::M1769Mb
@@ -442,10 +442,10 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
     let hybrid_estimated_usd = engine_coord_usd + eval_compute_usd + invocation_fees_usd;
 
     let lease_budget_ms = f64::from(input.effort.lease_ceiling_secs()) * 1_000.0;
-    let mode = if solo_wall_ms <= 8_000.0 {
+    let mode = if solo_wall_ms <= 3_500.0 {
         CarbonExecutionMode::SoloSingleLambda
     } else if solo_wall_ms > 0.45 * lease_budget_ms
-        || (solo_wall_ms / hybrid_wall_ms >= 2.0
+        || (solo_wall_ms / hybrid_wall_ms >= 1.8
             && hybrid_estimated_usd <= solo_estimated_usd * 1.45)
     {
         CarbonExecutionMode::HybridFanOut

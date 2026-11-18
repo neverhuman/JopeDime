@@ -878,3 +878,68 @@ fn synthesize_template_edge_tag_and_pinned_veox_pubkeys_validate_cleanly() {
         assert_eq!(decoded[0], 0x04);
     }
 }
+
+#[test]
+fn v131_max_performance_pinned_handle_and_large_comparators() {
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let pub_b64 = fs::read_to_string(repo_root.join("deploy/carbon/pubkeys/veox-app-prod.pub"))
+        .expect("read prod pubkey")
+        .trim()
+        .to_owned();
+
+    // 1. Zero-ping pinned-handle client construction + transport/key validation
+    let pinned_client = jope_carbon::CarbonThinClient::from_pinned_handle(
+        "https://us-east-2.carbon.neverhuman.org/".to_owned(),
+        &pub_b64,
+    )
+    .expect("from_pinned_handle valid HTTPS + P-256 KEK");
+    assert_eq!(
+        pinned_client.active_endpoint(),
+        "https://us-east-2.carbon.neverhuman.org"
+    );
+    assert!(pinned_client.has_zero_knowledge_kek());
+    assert!(
+        jope_carbon::CarbonThinClient::from_pinned_handle(
+            "http://us-east-2.carbon.neverhuman.org".to_owned(),
+            &pub_b64
+        )
+        .is_err(),
+        "non-loopback HTTP must be rejected"
+    );
+    assert!(
+        jope_carbon::CarbonThinClient::from_pinned_handle(
+            "https://us-east-2.carbon.neverhuman.org".to_owned(),
+            "not-a-valid-pubkey"
+        )
+        .is_err(),
+        "malformed KEK must be rejected"
+    );
+
+    // 2. Medium-large fit split (`4,800` fit rows > `3,500`, e.g. `parkinsons-telemonitoring` scale)
+    //    emits both `ridge_l2` and `lightgbm_style` comparators cleanly.
+    let fit_x: Vec<Vec<f64>> = (0..4_800)
+        .map(|i| {
+            let u = (i as f64) * 0.01;
+            vec![u.sin(), u.cos(), (u * 0.5).tanh(), (i % 17) as f64 * 0.1]
+        })
+        .collect();
+    let fit_y: Vec<f64> = fit_x
+        .iter()
+        .map(|r| 2.5 * r[0] - 1.4 * r[1] + 0.8 * r[2] * r[3])
+        .collect();
+    let holdout_x: Vec<Vec<f64>> = (4_800..5_600)
+        .map(|i| {
+            let u = (i as f64) * 0.01;
+            vec![u.sin(), u.cos(), (u * 0.5).tanh(), (i % 17) as f64 * 0.1]
+        })
+        .collect();
+    let holdout_y: Vec<f64> = holdout_x
+        .iter()
+        .map(|r| 2.5 * r[0] - 1.4 * r[1] + 0.8 * r[2] * r[3])
+        .collect();
+    let scores = jope_carbon::cli::bench_suite::compute_quick_run_comparators(
+        &fit_x, &fit_y, &holdout_x, &holdout_y, 42,
+    );
+    assert!(scores.iter().any(|c| c.key == "ridge_l2"));
+    assert!(scores.iter().any(|c| c.key == "lightgbm_style"));
+}

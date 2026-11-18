@@ -12,7 +12,7 @@
 //!
 //! [ADR-0007]: ../../docs/adr/ADR-0007-carbon-lambda-cells.md
 
-/// Semantic release version of Carbon (`1.3.0`) embedded at compile time (`build.rs`).
+/// Semantic release version of Carbon (`1.3.1`) embedded at compile time (`build.rs`).
 pub const CARBON_PKG_VERSION: &str = env!("CARBON_SEMVER");
 /// Full source Git commit SHA embedded at compile time (`build.rs`).
 pub const CARBON_GIT_SHA: &str = env!("CARBON_GIT_SHA");
@@ -20,9 +20,9 @@ pub const CARBON_GIT_SHA: &str = env!("CARBON_GIT_SHA");
 pub const CARBON_BUILD_TARGET: &str = env!("CARBON_BUILD_TARGET");
 /// Cargo profile (`carbon-cli`, `dist`, `release`, `debug`) embedded at compile time.
 pub const CARBON_BUILD_PROFILE: &str = env!("CARBON_BUILD_PROFILE");
-/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.3.0`).
+/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.3.1`).
 pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
-/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.3.0`).
+/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.3.1`).
 pub const CARBON_PUBLISHED_INSTALLER_TAG: &str = env!("CARBON_PUBLISHED_INSTALLER_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
