@@ -540,6 +540,65 @@ class LocalRetentionTests(unittest.TestCase):
             self.assertEqual(0, verified.returncode, verified.stderr)
             self.assertIn('receipt.json: OK', result.stdout)
 
+    def test_step_summary_preview_keeps_the_full_manifest_on_disk(self):
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-preview-', dir=scratch) as name:
+            base = Path(name)
+            source = base/'source'
+            source.mkdir()
+            for index in range(25):
+                (source/f'file-{index:02d}.txt').write_text(f'row {index}\n')
+            root = base/'retained'
+            summary = base/'summary.md'
+            env = dict(os.environ, JOPE_LOCAL_EVIDENCE_ROOT=str(root),
+                       GITHUB_REPOSITORY='neverhuman/JopeDime',
+                       JOPE_EVIDENCE_S3_URI='', GITHUB_STEP_SUMMARY=str(summary),
+                       JOPE_LOCAL_EVIDENCE_DAYS='14', TMPDIR=str(base))
+            result = subprocess.run(
+                ['bash', str(ROOT/'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            destination = root/'neverhuman_JopeDime'/'fixture'
+            full = (destination/'step-summary.md').read_text()
+            preview = summary.read_text()
+            self.assertIn('file-24.txt', full)
+            self.assertIn('file-00.txt', full)
+            self.assertNotIn('file-24.txt', preview)
+            self.assertIn('file-00.txt', preview)
+            self.assertIn('5 more files in MANIFEST.sha256', preview)
+            self.assertLess(len(preview.encode()), 900_000)
+            verified = subprocess.run(['sha256sum', '--check', 'MANIFEST.sha256'],
+                                      cwd=destination, capture_output=True, text=True)
+            self.assertEqual(0, verified.returncode, verified.stderr)
+
+    def test_aggregate_step_summary_cap_replaces_an_oversized_live_file(self):
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='summary-cap-', dir=scratch) as name:
+            base = Path(name)
+            summary = base/'summary.md'
+            summary.write_text('x' * 1_000_000)
+            env = dict(os.environ, GITHUB_STEP_SUMMARY=str(summary),
+                       GITHUB_RUN_ID='44364383884', GITHUB_RUN_ATTEMPT='1')
+            result = subprocess.run(
+                ['bash', str(ROOT/'deploy/ci/cap-step-summary.sh')],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            text = summary.read_text()
+            self.assertLess(len(text.encode()), 1024 * 1024)
+            self.assertIn('1000000 bytes', text)
+            self.assertIn('ci-aggregate-44364383884-1', text)
+            self.assertNotIn('x' * 100, text)
+            small = base/'small.md'
+            small.write_text('kept\n')
+            env['GITHUB_STEP_SUMMARY'] = str(small)
+            result = subprocess.run(
+                ['bash', str(ROOT/'deploy/ci/cap-step-summary.sh')],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual('kept\n', small.read_text())
+
 class WorkflowAdmissionTests(unittest.TestCase):
     def job(self, text, name):
         match = re.search(rf'^  {re.escape(name)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:|\Z)', text, re.M | re.S)
@@ -618,6 +677,14 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertIn('aggregate-evidence.py filter-needs', full)
         self.assertNotIn('JOPE_UI_EVIDENCE', ci)
         self.assertNotIn('NEEDS_JSON"]); n.pop(', ci + full)
+        aggregate = self.job(ci, 'aggregate')
+        record = aggregate.find('Record the aggregate step summary in the inventory')
+        upload = aggregate.find('Upload aggregate inventory')
+        cap = aggregate.find('bash deploy/ci/cap-step-summary.sh')
+        self.assertGreaterEqual(record, 0)
+        self.assertLess(record, upload)
+        self.assertLess(upload, cap)
+        self.assertIn('step-summary.md', aggregate)
 
     def test_ci_pr_triggers_draft_guards_and_aggregate_pr_lane_routing(self):
         ci = (ROOT/'.github/workflows/ci.yml').read_text()

@@ -889,9 +889,26 @@ jobs:
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
           cargo run -q --locked -p jope-ci -- test-partition rust-shards --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --output "$output/rust-test-partition.json"
+      - name: Record the aggregate step summary in the inventory
+        if: always()
+        run: |
+          set -euo pipefail
+          output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$output"
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ] && [ -f "$GITHUB_STEP_SUMMARY" ]; then
+            cp "$GITHUB_STEP_SUMMARY" "$output/step-summary.md"
+          else
+            printf 'no step summary\n' > "$output/step-summary.md"
+          fi
       - name: Upload aggregate inventory
         if: always()
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
+      # Retention above can append another manifest preview. Cap after that append
+      # so the upload GitHub performs at job end stays under 1024 KB. The copy in
+      # the inventory is the complete pre-upload summary.
+      - name: Cap the aggregate step summary
+        if: always()
+        run: bash deploy/ci/cap-step-summary.sh
