@@ -25,6 +25,8 @@ SPEC.loader.exec_module(MODULE)
 
 class BrowserDependencies(unittest.TestCase):
     def setUp(self):
+        MODULE.PREFERRED_MIRROR = None
+        MODULE.MIRROR_FAILURES.clear()
         scratch = ROOT / "target/tmp"
         scratch.mkdir(parents=True, exist_ok=True)
         self.directory = tempfile.TemporaryDirectory(prefix="browser-deps-controls-", dir=scratch)
@@ -183,13 +185,22 @@ class BrowserDependencies(unittest.TestCase):
         self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
 
     def test_a_dead_mirror_address_cannot_exhaust_the_job_budget(self):
-        """Each attempt is bounded, and one timeout per locked package still fits in the 25-minute job."""
+        """A handshake timeout is long enough to finish, and it is not paid once per package.
+
+        observatory-ui allows 25 minutes and typescript-parity allows 20. The locks are large
+        enough that 30s times the package count does not fit, so a dead mirror has to be left
+        behind after it fails and the working source cached.
+        """
         archive = self.archive.read_bytes()
         self.fetch([TimeoutError("timed out"), archive])
         self.assertEqual(2, self.calls)
         self.assertEqual([MODULE.TIMEOUT_SECONDS] * 2, self.timeouts)
-        packages = len(json.loads(Path(__file__).with_name("browser-deps.lock.json").read_bytes())["packages"])
-        self.assertLess(packages * MODULE.TIMEOUT_SECONDS, 25 * 60 * 3 // 4)
+        lock_dir = Path(__file__).resolve().parent
+        packages = len(json.loads((lock_dir / "browser-deps.lock.json").read_bytes())["packages"])
+        typescript = len(json.loads((lock_dir / "typescript" / "browser-deps.lock.json").read_bytes())["packages"])
+        self.assertGreater(packages * MODULE.TIMEOUT_SECONDS, 25 * 60 * 3 // 4)
+        self.assertGreater(typescript * MODULE.TIMEOUT_SECONDS, 20 * 60)
+        self.assertLess(len(MODULE.MIRRORS) * MODULE.TIMEOUT_SECONDS, 20 * 60 * 3 // 4)
 
     def test_an_unreachable_address_is_tried_last_for_the_rest_of_the_process(self):
         """One dead mirror address costs one bounded connect, not one wait per package."""
@@ -287,6 +298,8 @@ class BrowserDependencies(unittest.TestCase):
             with self.subTest(code=code), mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures, \
                     mock.patch.object(MODULE.time, "sleep") as sleep:
                 (self.root / "proof.json").unlink(missing_ok=True)
+                (self.cache / "preferred-mirror").unlink(missing_ok=True)
+                MODULE.PREFERRED_MIRROR = None
                 self.fetch([self.http(code), archive])
                 self.assertEqual([mirror + self.POOL for mirror in MODULE.MIRRORS], self.urls)
                 # Gone is not a transport failure: no demotion, no backoff, no snapshot.
@@ -340,6 +353,46 @@ class BrowserDependencies(unittest.TestCase):
             self.fetch([self.http(404), TimeoutError("timed out"), archive])
             self.assertEqual({MODULE.MIRRORS[1]: 1}, failures)
         self.assertEqual([MODULE.MIRRORS[0] + self.POOL] + [MODULE.MIRRORS[1] + self.POOL] * 2, self.urls)
+
+    def test_retry_backoff_grows_and_is_capped(self):
+        self.assertEqual(MODULE.BACKOFF_SECONDS, MODULE.backoff(1))
+        self.assertEqual(MODULE.BACKOFF_SECONDS * 2, MODULE.backoff(2))
+        self.assertEqual(MODULE.BACKOFF_SECONDS * 4, MODULE.backoff(3))
+        self.assertLessEqual(MODULE.backoff(8), MODULE.BACKOFF_CAP_SECONDS)
+        self.assertEqual(MODULE.BACKOFF_CAP_SECONDS, MODULE.backoff(8))
+
+    def test_a_cached_mirror_is_preferred_over_the_locked_mirror(self):
+        archive = self.archive.read_bytes()
+        (self.cache / "preferred-mirror").write_text(MODULE.MIRRORS[1] + "\n")
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}):
+            self.fetch([archive])
+        self.assertEqual([MODULE.MIRRORS[1] + self.POOL], self.urls)
+        self.assertEqual(MODULE.MIRRORS[1] + "\n", (self.cache / "preferred-mirror").read_text())
+
+    def test_a_handshake_timeout_on_every_live_mirror_uses_the_pinned_snapshot(self):
+        """URLError from a timed-out TLS handshake is the observatory-ui failure on run 44392514985."""
+        archive = self.archive.read_bytes()
+        snapshot = f"https://snapshot.ubuntu.com/ubuntu/{MODULE.SNAPSHOT_STAMP}/{self.POOL}"
+        handshake = urllib.error.URLError(TimeoutError("The handshake operation timed out"))
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures:
+            self.fetch([handshake, handshake, archive])
+            self.assertEqual(MODULE.DEMOTE_AFTER, failures[MODULE.MIRRORS[0]])
+            self.assertEqual(MODULE.DEMOTE_AFTER, failures[MODULE.MIRRORS[1]])
+        self.assertEqual([mirror + self.POOL for mirror in MODULE.MIRRORS] + [snapshot], self.urls)
+        self.assertIn(f"fetched from snapshot {MODULE.SNAPSHOT_STAMP} after mirror transport failure", self.stderr)
+        self.assertIn("sha256 verified", self.stderr)
+        self.assertEqual("snapshot\n", (self.cache / "preferred-mirror").read_text())
+        self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+
+    def test_a_cached_snapshot_is_used_before_a_demoted_mirror(self):
+        archive = self.archive.read_bytes()
+        snapshot = f"https://snapshot.ubuntu.com/ubuntu/{MODULE.SNAPSHOT_STAMP}/{self.POOL}"
+        (self.cache / "preferred-mirror").write_text("snapshot\n")
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {mirror: MODULE.DEMOTE_AFTER for mirror in MODULE.MIRRORS}):
+            self.fetch([archive])
+        self.assertEqual([snapshot], self.urls)
+        self.assertIn("fetched from cached snapshot", self.stderr)
+        self.assertNotIn("gone from archive", self.stderr)
 
     def test_only_official_pool_paths_have_a_snapshot_fallback(self):
         stamp = MODULE.SNAPSHOT_STAMP
