@@ -1940,6 +1940,16 @@
       ],
       "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
     },
+    "job:.github/workflows/typescript.yml/browser-archive": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "typescript-browser-archive"
+      ],
+      "scope": "Trusted-base checkout that fills and verifies the pinned Ubuntu deb archives for the TypeScript browser tools, then saves them with actions/cache. This job is not the TypeScript/Wasm qualification; a cache fill is not a passing parity run. Configuration is not a passing run."
+    },
     "job:.github/workflows/typescript.yml/trust-admission": {
       "discovery": {
         "kind": "workflow-job"
@@ -23333,6 +23343,35 @@
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "static"
+    },
+    "typescript-browser-archive": {
+      "checks": [
+        "python3 deploy/ci/browser-deps.py --lock deploy/ci/typescript/browser-deps.lock.json --cache target/tool-cache/typescript-browser (sha256 and size of each pinned archive; a download happens only when the archive is absent from the tool cache)"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/typescript.yml",
+        "browser-archive"
+      ],
+      "environment": {
+        "cache": "actions/cache key browser-deps-typescript-v1 of deploy/ci/typescript/browser-deps.lock.json",
+        "checkout": "trusted base SHA (pull request base, or github.sha when there is no pull request); never the pull request head",
+        "runner": "jope-ci linux x64",
+        "shell": "bash"
+      },
+      "evidence": [
+        "actions/cache restore and save of target/tool-cache/typescript-browser/archives",
+        "browser-deps receipt of each pinned archive sha256 and size"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "trusted base SHA",
+        "deploy/ci/typescript/browser-deps.lock.json"
+      ],
+      "path_applicability": "Every admitted invocation of the reusable TypeScript workflow. Filling the archive cache is not TypeScript qualification.",
+      "requires_nonzero_tests": false,
+      "result_backend": "none",
+      "stage": "execution"
     },
     "typescript-parity": {
       "checks": [
