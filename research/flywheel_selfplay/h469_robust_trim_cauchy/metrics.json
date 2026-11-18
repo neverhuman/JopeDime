@@ -1,0 +1,28 @@
+{
+  "wave": "H469",
+  "status": "RUNNING",
+  "script_sha256": "36a6d776a492cc5354d8b2fa6f0cd7af24db0a40e0deb367cc77bf261429346e",
+  "arms": ["pairnf_z40", "trim10_z40", "trim25_z40", "cauchy_z40"],
+  "control": "pairnf_z40",
+  "seeds": [1, 2, 3],
+  "partitions": ["h452a/", "h452b/"],
+  "folds": 5,
+  "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+  "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+  "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+  "redteam_prereg": ["floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift", "kept changes < 0.5x control => gate-starved (displacement confound)", "trim / cauchy scale use detached training-batch losses only; no val labels"],
+  "smoke_h452a_fold0_seed1": {
+    "pairnf_z40": {"changed": 134, "kept": 15, "W": 10, "L": 4, "gain": 0.000629, "equals_h468_cell": true},
+    "trim10_z40": {"changed": 139, "kept": 15, "W": 9, "L": 5, "gain": -0.000156},
+    "trim25_z40": {"changed": 132, "kept": 5, "W": 2, "L": 3, "gain": 0.008535, "nonfloor_gain": -0.000221, "recovered_gatefails": 1},
+    "cauchy_z40": {"changed": 127, "kept": 4, "W": 1, "L": 2, "gain": -0.000125}
+  },
+  "probe": {"utc": "2026-11-18T08:04:02Z", "ok": true, "control_full_sha_equals_h468_probe": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439", "peak_rss_gb": 6.32, "min_memavail_gb": 63.4},
+  "launch_utc": "2026-11-18T08:35:30Z",
+  "incumbent_val_utility": 1.1389572403748425,
+  "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "host": "xbabe2",
+  "device": "cpu",
+  "sealed_or_holdout_reads": 0,
+  "verdict": null
+}
