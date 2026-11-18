@@ -62,14 +62,45 @@ if [ -n "$candidates" ]; then
 fi
 echo "evidence $name retained at $where ${s3:+and $s3}"
 echo "sha256 manifest:"; cat "$manifest"
-if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
-  { echo "### Evidence \`$name\`"; echo "- local: \`$where\`"; [ -z "$s3" ] || echo "- s3: \`$s3\`"
-    echo '```'; cat "$manifest"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-if [ -n "${GITHUB_STEP_SUMMARY:-}" ] && [ -n "$candidates" ]; then
-  {
+# The complete manifest and aged-directory list stay beside the verified copy.
+# The job summary gets a short preview. GitHub rejects a step summary above
+# 1024 KB; aggregate job 135065988632 reported 3478 KB.
+{
+  echo "### Evidence \`$name\`"
+  echo "- local: \`$where\`"
+  [ -z "$s3" ] || echo "- s3: \`$s3\`"
+  echo '```'
+  cat "$manifest"
+  echo '```'
+  if [ -n "$candidates" ]; then
     echo "- Aged directories retained for custody review (older than ${days}d):"
     printf '%s\n' "$candidates"
+  fi
+} > "$dest/step-summary.md"
+if [ -n "$candidates" ]; then
+  printf '%s\n' "$candidates" > "$dest/AGED-CANDIDATES.txt"
+fi
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  file_count=$(wc -l < "$manifest" | tr -d ' ')
+  {
+    echo "### Evidence \`$name\`"
+    echo "- local: \`$where\`"
+    [ -z "$s3" ] || echo "- s3: \`$s3\`"
+    echo "- files: ${file_count}"
+    echo "- full report: \`$dest/step-summary.md\` and \`$dest/MANIFEST.sha256\`"
+    echo '```'
+    awk 'NR<=20 { print }' "$manifest"
+    if [ "$file_count" -gt 20 ]; then
+      echo "... $((file_count - 20)) more files in MANIFEST.sha256"
+    fi
+    echo '```'
+    if [ -n "$candidates" ]; then
+      cand_count=$(wc -l < "$dest/AGED-CANDIDATES.txt" | tr -d ' ')
+      echo "- Aged directories retained for custody review (older than ${days}d): ${cand_count} (full list: \`$dest/AGED-CANDIDATES.txt\`; this step does not delete them)"
+      awk 'NR<=20 { print }' "$dest/AGED-CANDIDATES.txt"
+      if [ "$cand_count" -gt 20 ]; then
+        echo "... $((cand_count - 20)) more"
+      fi
+    fi
   } >> "$GITHUB_STEP_SUMMARY"
 fi
