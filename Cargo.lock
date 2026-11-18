@@ -1236,7 +1236,7 @@ dependencies = [
 [[package]]
 name = "dope-core"
 version = "1.2.0"
-source = "git+https://github.com/neverhuman/dope?rev=9cd8d6200c2a65b32bbf0cb24dc314b385dc4952#9cd8d6200c2a65b32bbf0cb24dc314b385dc4952"
+source = "git+https://github.com/neverhuman/dope?rev=e6dba52be0c89560147b7f9699c8ed4e9b4e9acf#e6dba52be0c89560147b7f9699c8ed4e9b4e9acf"
 dependencies = [
  "brotli",
  "candle-core",
@@ -1255,7 +1255,7 @@ dependencies = [
 [[package]]
 name = "dope-norm"
 version = "0.1.0"
-source = "git+https://github.com/neverhuman/dope?rev=9cd8d6200c2a65b32bbf0cb24dc314b385dc4952#9cd8d6200c2a65b32bbf0cb24dc314b385dc4952"
+source = "git+https://github.com/neverhuman/dope?rev=e6dba52be0c89560147b7f9699c8ed4e9b4e9acf#e6dba52be0c89560147b7f9699c8ed4e9b4e9acf"
 dependencies = [
  "serde",
  "serde_json",
