@@ -364,8 +364,11 @@ fn resolve_fallback_token_for_handle(handle: &CarbonSavedModelHandle) -> Option<
         if let Ok(raw) = fs::read(&reg_path) {
             let z_raw = Zeroizing::new(raw);
             if let Ok(reg_handle) = serde_json::from_slice::<CarbonSavedModelHandle>(&z_raw) {
-                if let Some(tok) = reg_handle.capability_token.filter(|s| !s.trim().is_empty()) {
-                    return Some(tok);
+                if reg_handle.tenant_id == handle.tenant_id {
+                    if let Some(tok) = reg_handle.capability_token.filter(|s| !s.trim().is_empty())
+                    {
+                        return Some(tok);
+                    }
                 }
             }
         }
@@ -559,7 +562,8 @@ pub fn execute_predict_csv_with_handle(
         batches += 1;
     }
 
-    // If the input CSV also includes the target column with finite values, compute out-of-sample metrics!
+    // If the input CSV also includes the target column with finite values (or mapped binary labels),
+    // compute out-of-sample evaluation metrics!
     let eval_if_labeled = table
         .headers
         .iter()
@@ -567,7 +571,11 @@ pub fn execute_predict_csv_with_handle(
         .and_then(|t_idx| {
             let mut y_true = Vec::with_capacity(table.rows.len());
             for r in &table.rows {
-                let val = parse_flexible_numeric_f64(r[t_idx].as_deref()?)?;
+                let raw_cell = r[t_idx].as_deref()?;
+                let val = match &handle.encoder.target_binary_map {
+                    Some(bm) => bm.encode_label(raw_cell)?,
+                    None => parse_flexible_numeric_f64(raw_cell)?,
+                };
                 y_true.push(val);
             }
             compute_residual_quantiles(&y_true, &all_predictions, None)
@@ -593,13 +601,28 @@ pub fn execute_predict_csv_with_handle(
                 buf.push_str(val);
             }
         };
-        let mut csv_buf = String::with_capacity(all_predictions.len() * 24 + 128);
+        let write_pred_tail = |buf: &mut String, pred: f64| {
+            if let Some(bm) = &handle.encoder.target_binary_map {
+                let (prob, lbl) = bm.decode_prediction(pred, 0.5);
+                buf.push_str(&format!("{pred:.8},{prob:.8},"));
+                push_csv_cell(buf, lbl);
+                buf.push('\n');
+            } else {
+                buf.push_str(&format!("{pred:.8}\n"));
+            }
+        };
+        let pred_header = if handle.encoder.target_binary_map.is_some() {
+            "prediction,predicted_probability,predicted_label\n"
+        } else {
+            "prediction\n"
+        };
+        let mut csv_buf = String::with_capacity(all_predictions.len() * 32 + 128);
         if include_inputs {
             for h in &table.headers {
                 push_csv_cell(&mut csv_buf, h);
                 csv_buf.push(',');
             }
-            csv_buf.push_str("prediction\n");
+            csv_buf.push_str(pred_header);
             for (row, &pred) in table.rows.iter().zip(all_predictions.iter()) {
                 for cell in row {
                     if let Some(s) = cell {
@@ -607,20 +630,22 @@ pub fn execute_predict_csv_with_handle(
                     }
                     csv_buf.push(',');
                 }
-                csv_buf.push_str(&format!("{pred:.8}\n"));
+                write_pred_tail(&mut csv_buf, pred);
             }
         } else if let Some(idx) = id_idx {
             push_csv_cell(&mut csv_buf, &table.headers[idx]);
-            csv_buf.push_str(",prediction\n");
+            csv_buf.push(',');
+            csv_buf.push_str(pred_header);
             for (row, &pred) in table.rows.iter().zip(all_predictions.iter()) {
                 let id_val = row[idx].as_deref().unwrap_or("");
                 push_csv_cell(&mut csv_buf, id_val);
-                csv_buf.push_str(&format!(",{pred:.8}\n"));
+                csv_buf.push(',');
+                write_pred_tail(&mut csv_buf, pred);
             }
         } else {
-            csv_buf.push_str("prediction\n");
+            csv_buf.push_str(pred_header);
             for &pred in &all_predictions {
-                csv_buf.push_str(&format!("{pred:.8}\n"));
+                write_pred_tail(&mut csv_buf, pred);
             }
         }
 

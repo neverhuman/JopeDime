@@ -107,6 +107,7 @@ fn validate_single_tier_run(
     expected_cloud: &str,
     expected_effort: &str,
     mode: &str,
+    prod_public_mint_closed: bool,
 ) -> Result<(), String> {
     let target = v_str(run, "execution_target");
     if target != "aws_live" && target != "ci_emulator" {
@@ -119,7 +120,10 @@ fn validate_single_tier_run(
             "live-ci-4tier-docker.json: live_pro_secrets requires aws_live on {expected_cloud}/{expected_effort}"
         ));
     }
-    if matches!(expected_effort, "fast" | "medium") && target != "aws_live" {
+    if matches!(expected_effort, "fast" | "medium")
+        && !(expected_cloud == "prod" && prod_public_mint_closed && mode != "live_pro_secrets")
+        && target != "aws_live"
+    {
         return Err(format!(
             "live-ci-4tier-docker.json: {expected_cloud}/{expected_effort} must execute on aws_live"
         ));
@@ -187,6 +191,8 @@ pub fn validate_live_ci_4tier_receipt(
             runs.len()
         ));
     }
+    let prod_public_mint_closed =
+        v_u64(&doc["install"], "live_prod_public_mint_gate_status") == 403;
     for cloud in EXPECTED_CLOUDS {
         for effort in EXPECTED_EFFORTS {
             let found = runs
@@ -195,7 +201,7 @@ pub fn validate_live_ci_4tier_receipt(
                 .ok_or_else(|| {
                     format!("live-ci-4tier-docker.json: missing run for {cloud}/{effort}")
                 })?;
-            validate_single_tier_run(found, cloud, effort, mode)?;
+            validate_single_tier_run(found, cloud, effort, mode, prod_public_mint_closed)?;
         }
     }
 
@@ -216,6 +222,8 @@ pub fn validate_live_ci_4tier_receipt(
 fn target_badge_html(target: &str) -> &'static str {
     if target == "aws_live" {
         "<span class=\"pill-pass\">AWS LIVE</span>"
+    } else if target == "aws_live/emu" {
+        "<span style=\"background:#ccfbf1;color:#0f766e;padding:1px 5px;border-radius:4px;font-weight:700;font-size:7.3pt;\">LIVE / EMU</span>"
     } else {
         "<span style=\"background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;font-weight:700;font-size:7.3pt;\">CI EMULATOR</span>"
     }

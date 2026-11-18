@@ -37,7 +37,7 @@ use crate::{
             decommission_unstacked_prototype_resources, read_current_live_aliases,
             read_stack_outputs_map,
         },
-        redteam::execute_carbon_redteam_suite,
+        redteam::{execute_carbon_redteam_suite, execute_carbon_redteam_suite_with_tokens},
         runner::{execute_carbon_cli_run, CarbonCliRunOptions},
     },
     security::{
@@ -205,6 +205,8 @@ struct CellSecretDocument {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     previous_engine_kek_hex: Option<String>,
     engine_kek_pubkey_b64: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    app_auth_pubkeys_b64: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -216,6 +218,8 @@ struct EdgeSecretDocument {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     previous_auth_secret_hex: Option<String>,
     engine_kek_pubkey_b64: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    app_auth_pubkeys_b64: Option<String>,
 }
 
 pub(crate) struct VaultSecretBinding {
@@ -1284,6 +1288,7 @@ fn generate_cell_secret_document(
         engine_kek_hex: (*kek_hex).clone(),
         previous_engine_kek_hex: None,
         engine_kek_pubkey_b64: pub_b64.clone(),
+        app_auth_pubkeys_b64: None,
     };
     let serialized =
         Zeroizing::new(serde_json::to_string(&doc).err_ctx("serialize CellSecretDocument")?);
@@ -1315,6 +1320,7 @@ fn ensure_edge_secrets_in_vault(
         auth_secret_hex: cell_doc.auth_secret_hex.clone(),
         previous_auth_secret_hex: cell_doc.previous_auth_secret_hex.clone(),
         engine_kek_pubkey_b64: cell_doc.engine_kek_pubkey_b64.clone(),
+        app_auth_pubkeys_b64: cell_doc.app_auth_pubkeys_b64.clone(),
     };
     let desired_json =
         Zeroizing::new(serde_json::to_string(&desired).err_ctx("serialize EdgeSecretDocument")?);
@@ -1351,6 +1357,7 @@ fn ensure_edge_secrets_in_vault(
                     && cur.auth_secret_hex == desired.auth_secret_hex
                     && cur.previous_auth_secret_hex == desired.previous_auth_secret_hex
                     && cur.engine_kek_pubkey_b64 == desired.engine_kek_pubkey_b64
+                    && cur.app_auth_pubkeys_b64 == desired.app_auth_pubkeys_b64
             })
             .unwrap_or(false);
         if !in_sync && !dry_run {
@@ -1423,6 +1430,18 @@ fn ensure_edge_secrets_in_vault(
     Ok((arn, version_id))
 }
 
+fn normalize_app_pubkeys_override(raw: Option<&str>) -> Result<Option<Option<String>>, String> {
+    let Some(val) = raw.map(str::trim).filter(|s| !s.is_empty()) else {
+        return Ok(None);
+    };
+    if val.eq_ignore_ascii_case("CLEAR") {
+        return Ok(Some(None));
+    }
+    let _ = jope_envelope::parse_pinned_pubkeys_csv(val)
+        .map_err(|e| format!("invalid --app-auth-pubkeys-b64: {e}"))?;
+    Ok(Some(Some(val.to_owned())))
+}
+
 pub(crate) fn ensure_cell_secrets_in_vault(
     creds: &CarbonAwsCredentials,
     region: &str,
@@ -1431,6 +1450,27 @@ pub(crate) fn ensure_cell_secrets_in_vault(
     required_auth_secret_hex: Option<&str>,
     dry_run: bool,
 ) -> Result<VaultSecretBinding, String> {
+    ensure_cell_secrets_in_vault_with_pubkeys(
+        creds,
+        region,
+        environment,
+        bootstrap_if_missing,
+        required_auth_secret_hex,
+        None,
+        dry_run,
+    )
+}
+
+pub(crate) fn ensure_cell_secrets_in_vault_with_pubkeys(
+    creds: &CarbonAwsCredentials,
+    region: &str,
+    environment: &str,
+    bootstrap_if_missing: bool,
+    required_auth_secret_hex: Option<&str>,
+    app_auth_pubkeys_override: Option<&str>,
+    dry_run: bool,
+) -> Result<VaultSecretBinding, String> {
+    let desired_app_pubkeys = normalize_app_pubkeys_override(app_auth_pubkeys_override)?;
     let secret_id = format!("jopedime/carbon/{environment}/cell-secrets");
     let get_req = serde_json::to_vec(&serde_json::json!({
         "SecretId": secret_id,
@@ -1460,41 +1500,51 @@ pub(crate) fn ensure_cell_secrets_in_vault(
         );
         let mut parsed_doc: CellSecretDocument = serde_json::from_str(&secret_str)
             .map_err(|e| format!("invalid CellSecretDocument schema in '{secret_id}': {e}"))?;
+        let mut mutated_cell_doc = false;
         if let Some(req_auth) = required_auth_secret_hex {
-            if parsed_doc.auth_secret_hex != req_auth.trim() && !dry_run {
+            if parsed_doc.auth_secret_hex != req_auth.trim() {
                 let prior_auth =
                     std::mem::replace(&mut parsed_doc.auth_secret_hex, req_auth.trim().to_owned());
                 if !prior_auth.trim().is_empty() {
                     parsed_doc.previous_auth_secret_hex = Some(prior_auth);
                 }
-                let updated_json = Zeroizing::new(
-                    serde_json::to_string(&parsed_doc)
-                        .err_ctx("serialize synced CellSecretDocument")?,
-                );
-                let tok_hex = random_32byte_hex()?;
-                let put_payload = Zeroizing::new(
-                    serde_json::to_vec(&serde_json::json!({
-                        "SecretId": secret_id,
-                        "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
-                        "SecretString": &*updated_json,
-                    }))
-                    .map_err(crate::error::err_to_string)?,
-                );
-                let (p_status, p_body) =
-                    call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
-                if p_status != 200 {
-                    return Err(format!(
-                        "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status})"
-                    ));
-                }
-                let put_val: serde_json::Value =
-                    serde_json::from_slice(&p_body).err_ctx("parse PutSecretValue response")?;
-                version_id = put_val
-                    .get("VersionId")
-                    .and_then(|v| v.as_str())
-                    .ok_or_else(|| "PutSecretValue response missing VersionId".to_owned())?
-                    .to_owned();
+                mutated_cell_doc = true;
             }
+        }
+        if let Some(target_pubkeys) = desired_app_pubkeys {
+            if parsed_doc.app_auth_pubkeys_b64 != target_pubkeys {
+                parsed_doc.app_auth_pubkeys_b64 = target_pubkeys;
+                mutated_cell_doc = true;
+            }
+        }
+        if mutated_cell_doc && !dry_run {
+            let updated_json = Zeroizing::new(
+                serde_json::to_string(&parsed_doc)
+                    .err_ctx("serialize synced CellSecretDocument")?,
+            );
+            let tok_hex = random_32byte_hex()?;
+            let put_payload = Zeroizing::new(
+                serde_json::to_vec(&serde_json::json!({
+                    "SecretId": secret_id,
+                    "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
+                    "SecretString": &*updated_json,
+                }))
+                .map_err(crate::error::err_to_string)?,
+            );
+            let (p_status, p_body) =
+                call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
+            if p_status != 200 {
+                return Err(format!(
+                    "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status})"
+                ));
+            }
+            let put_val: serde_json::Value =
+                serde_json::from_slice(&p_body).err_ctx("parse PutSecretValue response")?;
+            version_id = put_val
+                .get("VersionId")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "PutSecretValue response missing VersionId".to_owned())?
+                .to_owned();
         }
         let (edge_arn, edge_vid) =
             ensure_edge_secrets_in_vault(creds, region, environment, &parsed_doc, dry_run)?;
@@ -1533,8 +1583,13 @@ pub(crate) fn ensure_cell_secrets_in_vault(
 
     let (secret_json, pubkey_b64, auth_hex) =
         generate_cell_secret_document(required_auth_secret_hex)?;
-    let parsed_doc: CellSecretDocument =
+    let mut parsed_doc: CellSecretDocument =
         serde_json::from_str(&secret_json).err_ctx("parse generated CellSecretDocument")?;
+    if let Some(target_pubkeys) = desired_app_pubkeys {
+        parsed_doc.app_auth_pubkeys_b64 = target_pubkeys;
+    }
+    let secret_json =
+        Zeroizing::new(serde_json::to_string(&parsed_doc).err_ctx("serialize CellSecretDocument")?);
     let tok_hex = random_32byte_hex()?;
     let client_req_token = format_uuid_from_random_hex(&tok_hex);
     let create_payload = Zeroizing::new(
@@ -1970,15 +2025,30 @@ fn wait_for_stack_completion(region: &str, stack_name: &str) -> Result<(), Strin
     ))
 }
 
+#[derive(Clone, Copy)]
+struct RegionDeployContext<'a> {
+    creds: &'a CarbonAwsCredentials,
+    account_id: &'a str,
+    manifest: &'a CarbonReleaseManifest,
+    manifest_dir: &'a Path,
+    opts: &'a CarbonDeployOptions,
+    global_auth_secret_hex: &'a str,
+    app_auth_pubkeys_override: Option<&'a str>,
+}
+
 fn deploy_single_region(
-    creds: &CarbonAwsCredentials,
-    account_id: &str,
-    manifest: &CarbonReleaseManifest,
-    manifest_dir: &Path,
-    opts: &CarbonDeployOptions,
+    ctx: &RegionDeployContext<'_>,
     region: &str,
-    global_auth_secret_hex: &str,
 ) -> Result<CarbonRegionDeployReceipt, String> {
+    let RegionDeployContext {
+        creds,
+        account_id,
+        manifest,
+        manifest_dir,
+        opts,
+        global_auth_secret_hex,
+        app_auth_pubkeys_override,
+    } = *ctx;
     let t0 = Instant::now();
     let stack_name = format!("jopedime-carbon-{}", opts.environment);
     let artifacts_bucket = opts
@@ -1988,12 +2058,13 @@ fn deploy_single_region(
 
     // 1. Ensure regional secrets exist in AWS Secrets Manager with global `auth_secret_hex` sync,
     //    dedicated `edge-secrets` (`DEP-SEC-01`), and strictly read-only `--dry-run` (`DEP-SEC-02`)!
-    let vault = ensure_cell_secrets_in_vault(
+    let vault = ensure_cell_secrets_in_vault_with_pubkeys(
         creds,
         region,
         &opts.environment,
         opts.bootstrap_secrets,
         Some(global_auth_secret_hex),
+        app_auth_pubkeys_override,
         opts.dry_run,
     )?;
 
@@ -2411,7 +2482,31 @@ fn deploy_single_region(
                 }
             }
             if !opts.skip_redteam {
-                let report = execute_carbon_redteam_suite(url)?;
+                let report = match execute_carbon_redteam_suite(url) {
+                    Ok(r) => r,
+                    Err(err) if err.contains("anonymous_disabled") => {
+                        let u_a = ulid::Ulid::new().to_string().to_ascii_lowercase();
+                        let u_b = ulid::Ulid::new().to_string().to_ascii_lowercase();
+                        let tok_a = mint_capability_token_from_vault(
+                            &opts.environment,
+                            region,
+                            &format!("rt_a_{}", &u_a[u_a.len().saturating_sub(16)..]),
+                            jope_api::carbon::CarbonTierWire::Free,
+                            900,
+                            false,
+                        )?;
+                        let tok_b = mint_capability_token_from_vault(
+                            &opts.environment,
+                            region,
+                            &format!("rt_b_{}", &u_b[u_b.len().saturating_sub(16)..]),
+                            jope_api::carbon::CarbonTierWire::Free,
+                            900,
+                            false,
+                        )?;
+                        execute_carbon_redteam_suite_with_tokens(url, Some((tok_a, tok_b)))?
+                    }
+                    Err(err) => return Err(err),
+                };
                 if !report.all_passed {
                     let failed_ids: Vec<String> = report
                         .vectors
@@ -2478,6 +2573,16 @@ fn deploy_single_region(
 
 /// Execute single-region or multi-region wave deployment from a verified `release-manifest.json`.
 pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployReport, String> {
+    execute_carbon_deploy_with_app_pubkeys(opts, None)
+}
+
+/// Execute single-region or multi-region wave deployment with an optional `app_auth_pubkeys_b64`
+/// override (`[active, previous]` comma-separated Base64 uncompressed P-256 public keys, or `CLEAR`).
+pub fn execute_carbon_deploy_with_app_pubkeys(
+    opts: &CarbonDeployOptions,
+    app_auth_pubkeys_b64: Option<&str>,
+) -> Result<CarbonDeployReport, String> {
+    let _ = normalize_app_pubkeys_override(app_auth_pubkeys_b64)?;
     if !matches!(opts.environment.as_str(), "dev" | "staging" | "prod") {
         return Err(format!(
             "unsupported environment '{}' (expected dev, staging, or prod)",
@@ -2509,26 +2614,28 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
 
     // Resolve canonical global `auth_secret_hex` from primary vault region (`us-east-2`) so every
     // regional cell verifies the same `ctk1.*` capability tokens while retaining isolated regional KEKs.
-    let primary_vault = ensure_cell_secrets_in_vault(
+    let primary_vault = ensure_cell_secrets_in_vault_with_pubkeys(
         &creds,
         "us-east-2",
         &opts.environment,
         opts.bootstrap_secrets,
         None,
+        app_auth_pubkeys_b64,
         opts.dry_run,
     )?;
 
+    let deploy_ctx = RegionDeployContext {
+        creds: &creds,
+        account_id: &account_id,
+        manifest: &manifest,
+        manifest_dir: &manifest_dir,
+        opts,
+        global_auth_secret_hex: &primary_vault.auth_secret_hex,
+        app_auth_pubkeys_override: app_auth_pubkeys_b64,
+    };
     let mut receipts = Vec::with_capacity(target_regions.len());
     if let Some(canary_region) = target_regions.first() {
-        let canary_receipt = deploy_single_region(
-            &creds,
-            &account_id,
-            &manifest,
-            &manifest_dir,
-            opts,
-            canary_region,
-            &primary_vault.auth_secret_hex,
-        )?;
+        let canary_receipt = deploy_single_region(&deploy_ctx, canary_region)?;
         // Progressive wave promotion gate: before rolling out beyond the first (canary) region,
         // verify a live zero-knowledge `r882` GP inference & cryptographic shred round-trip!
         if target_regions.len() > 1 && !opts.dry_run && !opts.skip_redteam {
@@ -2537,6 +2644,17 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
                 .as_ref()
                 .or(canary_receipt.edge_endpoint_url.as_ref())
             {
+                let canary_auth_tok = CarbonAuthVerifier::from_hex(&primary_vault.auth_secret_hex)
+                    .map_err(crate::error::err_to_string)
+                    .and_then(|v| {
+                        v.mint_token(&CarbonCapabilityClaims {
+                            tenant_id: "canary_wave_gate".to_owned(),
+                            tier: jope_api::carbon::CarbonTierWire::Free,
+                            exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(300),
+                            admin: false,
+                        })
+                        .map_err(crate::error::err_to_string)
+                    })?;
                 let canary_gate = execute_carbon_cli_run(&CarbonCliRunOptions {
                     endpoints: vec![canary_url.clone()],
                     csv_path: None,
@@ -2552,7 +2670,7 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
                     stop_after_ms: None,
                     resume_after_stop: false,
                     predict_rows: 4,
-                    auth_token: None,
+                    auth_token: Some(canary_auth_tok),
                     shred_after_run: true,
                 })
                 .map_err(|e| {
@@ -2587,28 +2705,14 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
         }
         receipts.push(canary_receipt);
 
-        let creds_ref = &creds;
-        let manifest_ref = &manifest;
+        let ctx_ref = &deploy_ctx;
         for chunk in target_regions[1..].chunks(4) {
             let chunk_results: Vec<Result<CarbonRegionDeployReceipt, String>> =
                 thread::scope(|s| {
                     let mut handles = Vec::with_capacity(chunk.len());
                     for region in chunk {
                         let reg = region.as_str();
-                        let auth_hex = primary_vault.auth_secret_hex.as_str();
-                        let acc = account_id.as_str();
-                        let mdir = manifest_dir.as_path();
-                        handles.push(s.spawn(move || {
-                            deploy_single_region(
-                                creds_ref,
-                                acc,
-                                manifest_ref,
-                                mdir,
-                                opts,
-                                reg,
-                                auth_hex,
-                            )
-                        }));
+                        handles.push(s.spawn(move || deploy_single_region(ctx_ref, reg)));
                     }
                     handles
                         .into_iter()

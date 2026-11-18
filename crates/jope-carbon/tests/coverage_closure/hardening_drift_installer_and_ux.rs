@@ -1112,6 +1112,7 @@ fn cli_ux_upgrade_aliases_tarxz_uninstall_token_stdin_doctor_completions_keep_ep
                 had_header: true,
                 extra_na_tokens: Vec::new(),
                 inf_as_nan: false,
+                target_binary_map: None,
             },
             fit_rows: 10,
             holdout_rows: 2,

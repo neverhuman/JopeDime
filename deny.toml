@@ -15,6 +15,11 @@ ignore = [
   # response buffering in the Streamable HTTP *client* transports (transport-streamable-http-client-*), which no crate
   # here enables. Remove with the rmcp >= 3.9.0 bump.
   { id = "RUSTSEC-2026-0462", reason = "only rmcp server + transport-io are enabled; the affected HTTP client transports are not compiled; remove with rmcp >= 3.9.0" },
+  # chrono 0.4.45 and humantime 2.4.0 (informational "unmaintained" advisories with patched = [], affecting all versions).
+  # Neither reports a vulnerability; replacing chrono/humantime across object_store, arrow, env_logger and rmcp requires
+  # coordinated upstream bumps. Remove once workspace dependencies migrate to jiff/time.
+  { id = "RUSTSEC-2026-0542", reason = "informational unmaintained notice on humantime (no CVE/vulnerability, patched = []); remove once transitive callers migrate off humantime" },
+  { id = "RUSTSEC-2026-0543", reason = "informational unmaintained notice on chrono (no CVE/vulnerability, patched = []); remove once object_store/arrow/rmcp migrate to jiff or time" },
 ]
 
 [licenses]

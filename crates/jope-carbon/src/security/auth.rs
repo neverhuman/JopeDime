@@ -26,9 +26,13 @@ use crate::error::{CarbonError, CarbonResult};
 #[cfg(feature = "edge")]
 const TOKEN_PREFIX: &str = "ctk1.";
 #[cfg(feature = "edge")]
+const APP_TOKEN_PREFIX: &str = "ctk2.";
+#[cfg(feature = "edge")]
 const MAX_RATE_BUCKETS: usize = 65_536;
 /// Maximum allowed capability-token lifetime (`90` days) for CLI/vault `token-mint` issuance.
 pub const MAX_MINT_TOKEN_TTL_SECS: u64 = 90 * 86_400;
+/// Default maximum allowed lifetime (`24` hours) for asymmetric `ctk2.*` app-minted capability tokens.
+pub const DEFAULT_MAX_CTK2_TTL_SECS: u64 = 86_400;
 
 /// Strictly validate `tenant_id` (`^[A-Za-z0-9_-]{3,64}$`) so two distinct tenants can never
 /// collide after path normalization (`RT-08`).
@@ -86,9 +90,48 @@ impl CarbonCapabilityClaims {
     /// Note: Server-side authorization MUST always call [`CarbonAuthVerifier::verify_token`].
     pub fn decode_unverified(token: &str) -> CarbonResult<Self> {
         let trimmed = token.trim();
+        if let Some(after_ctk2) = trimmed.strip_prefix(APP_TOKEN_PREFIX) {
+            let Some((payload_b64, sig_b64)) = after_ctk2.split_once('.') else {
+                return Err(CarbonError::CapabilityAuthFailed {
+                    reason: "malformed ctk2 capability token segments",
+                });
+            };
+            let sig_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+                .decode(sig_b64)
+                .map_err(|_| CarbonError::CapabilityAuthFailed {
+                    reason: "malformed ctk2 capability token base64url signature",
+                })?;
+            if sig_bytes.len() != 64 {
+                return Err(CarbonError::CapabilityAuthFailed {
+                    reason: "ctk2 capability token ECDSA P-256 signature must be 64 bytes",
+                });
+            }
+            let claims_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+                .decode(payload_b64)
+                .map_err(|_| CarbonError::CapabilityAuthFailed {
+                    reason: "malformed ctk2 capability token base64url payload",
+                })?;
+            let app_claims: jope_envelope::AppCapabilityClaims =
+                serde_json::from_slice(&claims_bytes).map_err(|_| {
+                    CarbonError::CapabilityAuthFailed {
+                        reason: "invalid ctk2 capability token claims JSON",
+                    }
+                })?;
+            validate_strict_tenant_id(&app_claims.tenant_id)?;
+            let tier = match app_claims.tier {
+                jope_envelope::AppTokenTier::Free => CarbonTierWire::Free,
+                jope_envelope::AppTokenTier::Pro => CarbonTierWire::Pro,
+            };
+            return Ok(Self {
+                tenant_id: app_claims.tenant_id,
+                tier,
+                exp_epoch_secs: app_claims.exp_epoch_secs,
+                admin: false,
+            });
+        }
         let Some(after_prefix) = trimmed.strip_prefix(TOKEN_PREFIX) else {
             return Err(CarbonError::CapabilityAuthFailed {
-                reason: "unrecognized capability token version prefix (expected ctk1.)",
+                reason: "unrecognized capability token version prefix (expected ctk1. or ctk2.)",
             });
         };
         let Some((payload_b64, sig_hex)) = after_prefix.split_once('.') else {
@@ -119,14 +162,16 @@ impl CarbonCapabilityClaims {
     }
 }
 
-/// `CarbonAuthVerifier` is a struct signing and constant-time verifying `HMAC-SHA256` capability
-/// tokens for Free anonymous sessions and Pro/Admin tenants, supporting zero-downtime `[active, previous]`
-/// secret rotation.
+/// `CarbonAuthVerifier` is a struct signing and constant-time verifying `HMAC-SHA256` (`ctk1.*`)
+/// and pinned asymmetric ECDSA P-256 (`ctk2.*`, `ADR-0007`) capability tokens, supporting
+/// zero-downtime `[active, previous]` rotation.
 #[cfg(feature = "edge")]
 #[derive(Clone)]
 pub struct CarbonAuthVerifier {
     secret: Zeroizing<[u8; 32]>,
     previous_secret: Option<Zeroizing<[u8; 32]>>,
+    app_issuer_pubkeys: Vec<[u8; 65]>,
+    max_app_token_ttl_secs: u64,
 }
 
 #[cfg(feature = "edge")]
@@ -135,6 +180,8 @@ impl std::fmt::Debug for CarbonAuthVerifier {
         f.debug_struct("CarbonAuthVerifier")
             .field("secret", &"[REDACTED]")
             .field("has_previous_secret", &self.previous_secret.is_some())
+            .field("app_issuer_pubkey_count", &self.app_issuer_pubkeys.len())
+            .field("max_app_token_ttl_secs", &self.max_app_token_ttl_secs)
             .finish()
     }
 }
@@ -145,6 +192,8 @@ impl CarbonAuthVerifier {
         Self {
             secret: Zeroizing::new(secret),
             previous_secret: None,
+            app_issuer_pubkeys: Vec::new(),
+            max_app_token_ttl_secs: DEFAULT_MAX_CTK2_TTL_SECS,
         }
     }
 
@@ -152,6 +201,34 @@ impl CarbonAuthVerifier {
     pub fn with_previous_secret(mut self, previous: Option<[u8; 32]>) -> Self {
         self.previous_secret = previous.map(Zeroizing::new);
         self
+    }
+
+    /// Attach pinned uncompressed SEC1 P-256 public keys (`0x04 || X || Y`, 65 bytes each)
+    /// accepted for asymmetric `ctk2.*` app-minted per-user tokens (`[active, previous]` rotation).
+    pub fn with_app_issuer_pubkeys(mut self, pubkeys: Vec<[u8; 65]>) -> Self {
+        self.app_issuer_pubkeys = pubkeys;
+        self
+    }
+
+    /// Parse and attach comma-separated Base64 uncompressed SEC1 P-256 public keys (`CARBON_APP_AUTH_PUBKEYS`).
+    pub fn with_app_issuer_pubkeys_csv(self, csv_b64: &str) -> CarbonResult<Self> {
+        let keys = jope_envelope::parse_pinned_pubkeys_csv(csv_b64).map_err(|_| {
+            CarbonError::CapabilityAuthFailed {
+                reason: "CARBON_APP_AUTH_PUBKEYS must contain valid comma-separated Base64 uncompressed P-256 public keys",
+            }
+        })?;
+        Ok(self.with_app_issuer_pubkeys(keys))
+    }
+
+    /// Override the maximum remaining TTL accepted for `ctk2.*` app-minted tokens.
+    pub fn with_max_app_token_ttl_secs(mut self, ttl_secs: u64) -> Self {
+        self.max_app_token_ttl_secs = ttl_secs.max(60);
+        self
+    }
+
+    /// Return the number of pinned `ctk2.*` issuer public keys configured on this verifier.
+    pub fn app_issuer_pubkey_count(&self) -> usize {
+        self.app_issuer_pubkeys.len()
     }
 
     pub fn from_hex(hex_str: &str) -> CarbonResult<Self> {
@@ -299,12 +376,42 @@ impl CarbonAuthVerifier {
         self.verify_token(token, now_epoch_secs)
     }
 
-    /// Constant-time verify a raw `ctk1.<payload>.<sig>` token string.
+    /// Constant-time verify a raw `ctk1.<payload>.<sig>` or asymmetric `ctk2.<payload>.<sig>` token string.
     pub fn verify_token(
         &self,
         token: &str,
         now_epoch_secs: u64,
     ) -> CarbonResult<CarbonCapabilityClaims> {
+        if token.starts_with(APP_TOKEN_PREFIX) {
+            if self.app_issuer_pubkeys.is_empty() {
+                return Err(CarbonError::CapabilityAuthFailed {
+                    reason: "app-minted ctk2 capability tokens are not enabled on this gateway",
+                });
+            }
+            let app_claims = jope_envelope::verify_ctk2_token_with_pubkeys(
+                token,
+                &self.app_issuer_pubkeys,
+                now_epoch_secs,
+                self.max_app_token_ttl_secs,
+            )
+            .map_err(|err| CarbonError::CapabilityAuthFailed {
+                reason: match err {
+                    jope_envelope::EnvelopeError::InvalidMaterial(msg)
+                    | jope_envelope::EnvelopeError::AuthenticationFailed(msg) => msg,
+                },
+            })?;
+            validate_strict_tenant_id(&app_claims.tenant_id)?;
+            let tier = match app_claims.tier {
+                jope_envelope::AppTokenTier::Free => CarbonTierWire::Free,
+                jope_envelope::AppTokenTier::Pro => CarbonTierWire::Pro,
+            };
+            return Ok(CarbonCapabilityClaims {
+                tenant_id: app_claims.tenant_id,
+                tier,
+                exp_epoch_secs: app_claims.exp_epoch_secs,
+                admin: false,
+            });
+        }
         let Some(after_prefix) = token.strip_prefix(TOKEN_PREFIX) else {
             return Err(CarbonError::CapabilityAuthFailed {
                 reason: "unrecognized capability token version prefix",

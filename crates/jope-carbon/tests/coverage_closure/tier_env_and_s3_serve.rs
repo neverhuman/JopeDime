@@ -86,6 +86,7 @@ fn unit_inproc_free_medium_and_local_emu_free_ultra_403_and_anon_medium_close_ma
             region: "us-east-2".to_owned(),
             public_base_url: String::new(),
             enterprise_self_hosted: false,
+            allow_public_free_mint: true,
             catalog: CarbonRegionCatalog {
                 catalog_version: 1,
                 regions: vec![CarbonRegionDescriptor {
@@ -417,13 +418,13 @@ fn loopback_sigv4_s3_cas_and_enterprise_serve_s3_all_8_tier_cells_and_shred() {
         .expect("s3 serve pro 4-effort");
         assert!(rcpt.encrypted_cuen && rcpt.shredded_after_run);
     }
-    // The 6 completed runs deleted 100% of their 12 blobs; only the 2 pre-run uploads whose
-    // subsequent `POST /v1/carbon/runs` was rejected with HTTP 403 (`free x high` & `free x ultra`)
-    // remain unassociated until S3's 1-day `blobs/` lifecycle rule expires them.
+    // All 6 completed runs and both pre-run uploads whose subsequent `POST /v1/carbon/runs`
+    // was rejected with HTTP 403 (`free x high` & `free x ultra`) shred 100% of their S3 CAS
+    // blobs immediately (`ShredOnDropGuard` auto-shreds failed/rejected uploads on drop).
     assert_eq!(
         mock_s3.object_count_with_prefix("test-carbon-cas/serve-s3/blobs/"),
-        4,
-        "all 6 completed S3 runs must shred 100% of their blobs (leaving only the 2 rejected 403 uploads)"
+        0,
+        "all 6 completed S3 runs and 2 rejected 403 uploads must shred 100% of their blobs"
     );
     assert!(
         !mock_s3.has_key_ending_with(".enc"),

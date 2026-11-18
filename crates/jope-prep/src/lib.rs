@@ -11,6 +11,7 @@ pub mod jmat_lite;
 pub mod landmarks;
 pub mod objective;
 pub mod split;
+pub mod target;
 
 pub use conditioning::{FitLandmarkBundle, FIT_LANDMARK_WIRE_BYTES};
 pub use cuen::{
@@ -28,3 +29,6 @@ pub use objective::{
     MAX_OBJECTIVE_COLUMNS, MAX_OBJECTIVE_EXPR_NODES, MAX_OBJECTIVE_SPEC_BYTES, OBJECTIVE_VERSION,
 };
 pub use split::{SplitPlan, DEFAULT_HOLDOUT_FRACTION, MAX_LANDMARK_FIT_ROWS};
+pub use target::{
+    compute_binary_holdout_metrics, BinaryHoldoutMetrics, BinaryTargetError, BinaryTargetMapping,
+};

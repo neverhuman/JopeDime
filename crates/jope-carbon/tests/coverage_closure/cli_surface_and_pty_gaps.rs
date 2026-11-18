@@ -128,6 +128,7 @@ fn cli_pty_tables_runs_fitness_and_doctor_online_and_error_modes() {
                     had_header: true,
                     extra_na_tokens: Vec::new(),
                     inf_as_nan: false,
+                    target_binary_map: None,
                 },
                 fit_rows: 80,
                 holdout_rows: 20,

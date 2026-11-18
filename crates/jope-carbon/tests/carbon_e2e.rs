@@ -492,6 +492,7 @@ fn enterprise_serve_vpc_no_limit_and_cloud_free_tier_rejection() {
             region: "us-east-2".to_owned(),
             public_base_url: "https://demo.lambda-url.us-east-2.on.aws".to_owned(),
             enterprise_self_hosted: false,
+            allow_public_free_mint: true,
             catalog: jope_api::carbon::CarbonRegionCatalog::default_17_region_catalog(
                 "carbon.jopedime.cloud",
             ),
@@ -1701,6 +1702,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     cfg_prod.edge_binary_path = Some(edge_bin);
     cfg_prod.auth_secret = prod_secret;
     cfg_prod.engine_kek_scalar = prod_kek_scalar;
+    cfg_prod.allow_public_free_mint = false;
     let mut emu_prod = CarbonLocalLambdaEmulator::start(cfg_prod).expect("start prod emulator");
 
     let dev_kek_b64 = CarbonEngineKek::from_scalar_bytes(&dev_kek_scalar)
@@ -1731,6 +1733,12 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
     let prod_tok_b = emu_prod
         .mint_capability_token("pro_emu_prod_b", CarbonTierWire::Pro, false)
         .unwrap();
+    let prod_free_tok_a = emu_prod
+        .mint_capability_token("free_emu_prod_a", CarbonTierWire::Free, false)
+        .unwrap();
+    let prod_free_tok_b = emu_prod
+        .mint_capability_token("free_emu_prod_b", CarbonTierWire::Free, false)
+        .unwrap();
     let prod_exp = CarbonAuthVerifier::from_secret(prod_secret)
         .mint_token(&CarbonCapabilityClaims {
             tenant_id: "pro_emu_prod_a".to_owned(),
@@ -1755,6 +1763,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
         pro_token_b: &dev_tok_b,
         expired_pro_token_a: &dev_exp,
         signing_pub_pem: &signing_pub_pem,
+        pre_minted_free: None,
     })
     .expect("execute dev coverage audit");
 
@@ -1782,6 +1791,12 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
         pro_token_b: &prod_tok_b,
         expired_pro_token_a: &prod_exp,
         signing_pub_pem: &signing_pub_pem,
+        pre_minted_free: Some((
+            "free_emu_prod_a",
+            &prod_free_tok_a,
+            "free_emu_prod_b",
+            &prod_free_tok_b,
+        )),
     })
     .expect("execute prod coverage audit");
 

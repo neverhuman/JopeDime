@@ -455,10 +455,10 @@ limits and client examples](docs/program-source-stream.md).
 | What | 1.0.0 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
-| Workspace | 40 members: 33 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| Workspace | 41 members: 34 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | tracked in `docs/parity/test-inventory.json` across 38 packages; a listing, not a run <sup>5</sup> |
+| Rust tests | tracked in `docs/parity/test-inventory.json` across 39 packages; a listing, not a run <sup>5</sup> |
 | Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) <sup>5</sup> |
 | CI | 18 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 26 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
 | Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 36 lanes <sup>7</sup> |
@@ -602,7 +602,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 40 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 41 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |
@@ -614,7 +614,7 @@ The 40 workspace members, by directory under `crates/`; the package name follows
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
 | Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression objectives via CLI/API/MCP](docs/regression-objectives.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
-| Carbon cells | [`jope-prep`](crates/jope-prep/README.md), [`jope-carbon`](crates/jope-carbon/README.md) (binaries `carbon-edge`, `carbon`), [`deploy/carbon`](deploy/carbon/cloudformation-cell.json) | Client-side deterministic `FIT`/`HOLDOUT` splitting, `FIT`-only landmark conditioning (`6,368` B `JLMB` v1), standalone `JMAT` v1 encoding, and zero-knowledge `CUEN` v1 + `CUDK` v1 per-user envelope encryption (`jope-prep`, WASM-clean); feature-separated regional edge gateway (`carbon-edge`), `r882` Free/Pro neural-guided `engine` and stateless `eval` AWS Lambda Custom Runtime (`2018-06-01`) workers, declarative CloudFormation cell deployment (`carbon package`, `carbon deploy`, `carbon rollback`; [runbook](docs/runbooks/carbon-lambda-deploy.md)), Enterprise VPC/on-prem `carbon serve` (`no_limit()`), credential-free `carbon emu` + 16-vector `carbon redteam`, `CCKP` v2 double-bound state sealing, and 3-Gate Spot-Hybrid advisor (`jope-carbon`, [ADR-0007](docs/adr/ADR-0007-carbon-lambda-cells.md)). Qualified on local CI and live `us-east-2` Graviton2 (`jopedime-carbon-dev`). |
+| Carbon cells | [`jope-prep`](crates/jope-prep/README.md), `jope-envelope`, [`jope-carbon`](crates/jope-carbon/README.md) (binaries `carbon-edge`, `carbon`), [`deploy/carbon`](deploy/carbon/cloudformation-cell.json) | Client-side deterministic `FIT`/`HOLDOUT` splitting, `FIT`-only landmark conditioning (`6,368` B `JLMB` v1), standalone `JMAT` v1 encoding (`jope-prep`), and standalone WASM-ready zero-knowledge `CUEN` v1 + `CUDK` v1 per-user envelope encryption and `ctk2.*` P-256 tokens (`jope-envelope`); feature-separated regional edge gateway (`carbon-edge`), `r882` Free/Pro neural-guided `engine` and stateless `eval` AWS Lambda Custom Runtime (`2018-06-01`) workers, declarative CloudFormation cell deployment (`carbon package`, `carbon deploy`, `carbon rollback`; [runbook](docs/runbooks/carbon-lambda-deploy.md)), Enterprise VPC/on-prem `carbon serve` (`no_limit()`), credential-free `carbon emu` + 16-vector `carbon redteam`, `CCKP` v2 double-bound state sealing, and 3-Gate Spot-Hybrid advisor (`jope-carbon`, [ADR-0007](docs/adr/ADR-0007-carbon-lambda-cells.md)). Qualified on local CI and live `us-east-2` Graviton2 (`jopedime-carbon-dev`). |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
 
 | Path | Role |

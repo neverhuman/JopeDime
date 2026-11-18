@@ -29,8 +29,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     ca-certificates curl openssl zstd && rm -rf /var/lib/apt/lists/*
 ";
 
-const FORBIDDEN_RECEIPT_MARKERS: [&str; 11] = [
+const FORBIDDEN_RECEIPT_MARKERS: [&str; 12] = [
     concat!("ctk", "1."),
+    concat!("ctk", "2."),
     concat!("AK", "IA"),
     concat!("AS", "IA"),
     concat!("BEGIN ", "PRIVATE KEY"),
@@ -134,7 +135,7 @@ struct InProcessDualEmulators {
 }
 
 impl InProcessDualEmulators {
-    fn start(work_dir: PathBuf) -> Result<(Self, String, String, String), String> {
+    fn start(work_dir: PathBuf) -> Result<(Self, String, String, String, String), String> {
         if work_dir.exists() {
             let _ = fs::remove_dir_all(&work_dir);
         }
@@ -152,6 +153,7 @@ impl InProcessDualEmulators {
         let mut prod_cfg = CarbonEmuConfig::for_dir(work_dir.join("prod_cell"));
         prod_cfg.auth_secret = [0x46u8; 32];
         prod_cfg.engine_kek_scalar = [0x13u8; 32];
+        prod_cfg.allow_public_free_mint = false;
 
         let emu_dev = CarbonLocalLambdaEmulator::start(dev_cfg)?;
         let emu_prod = CarbonLocalLambdaEmulator::start(prod_cfg)?;
@@ -159,6 +161,8 @@ impl InProcessDualEmulators {
             emu_dev.mint_capability_token("pro_ci_emu_dev", CarbonTierWire::Pro, false)?;
         let prod_tok =
             emu_prod.mint_capability_token("pro_ci_emu_prod", CarbonTierWire::Pro, false)?;
+        let prod_free_tok =
+            emu_prod.mint_capability_token("free_ci_emu_prod", CarbonTierWire::Free, false)?;
         let clouds_json = serde_json::to_string_pretty(&build_emu_clouds(&emu_dev, &emu_prod))
             .err_ctx("serialize in-memory emu-clouds.json")?;
         Ok((
@@ -169,6 +173,7 @@ impl InProcessDualEmulators {
             },
             dev_tok,
             prod_tok,
+            prod_free_tok,
             clouds_json,
         ))
     }
@@ -371,10 +376,12 @@ fn build_container_posix_script(
     mode: &str,
     dev_pro_tok: &str,
     prod_pro_tok: &str,
+    prod_free_tok: &str,
     emu_clouds_json: Option<&str>,
 ) -> String {
     let dev_b64 = B64_STD.encode(dev_pro_tok.trim().as_bytes());
     let prod_b64 = B64_STD.encode(prod_pro_tok.trim().as_bytes());
+    let prod_free_b64 = B64_STD.encode(prod_free_tok.trim().as_bytes());
     let clouds_b64 = B64_STD.encode(emu_clouds_json.unwrap_or("").as_bytes());
 
     format!(
@@ -382,6 +389,7 @@ fn build_container_posix_script(
 MODE='{mode}'
 DEV_PRO_B64='{dev_b64}'
 PROD_PRO_B64='{prod_b64}'
+PROD_FREE_B64='{prod_free_b64}'
 EMU_CLOUDS_B64='{clouds_b64}'
 
 CARBON_BIN='/root/.local/bin/carbon'
@@ -466,7 +474,7 @@ retry2 "$CARBON_BIN" doctor --cloud all >/root/doctor.json
 emit_block DOCTOR /root/doctor.json
 
 t_q0=$(date +%s%3N)
-retry2 "$CARBON_BIN" quickstart >/root/quickstart.json
+retry2 "$CARBON_BIN" quickstart --cloud dev >/root/quickstart.json
 t_q1=$(date +%s%3N)
 emit_kv QS_WALL_MS "$((t_q1 - t_q0))"
 emit_block QUICKSTART /root/quickstart.json
@@ -515,6 +523,12 @@ run_tier() {{
 }}
 
 if [ "$MODE" = "live_pro_secrets" ]; then
+  set +e
+  "$CARBON_BIN" register --free --cloud prod --label ci_prod >/root/gate_PROD_REG.txt 2>&1
+  prod_reg_rc=$?
+  set -e
+  emit_kv GATE_PROD_REG_RC "$prod_reg_rc"
+  emit_block GATE_PROD_REG_OUT /root/gate_PROD_REG.txt
   login_b64 dev "$DEV_PRO_B64" ""
   login_b64 prod "$PROD_PRO_B64" ""
   for eff in fast medium high ultra; do
@@ -527,32 +541,55 @@ if [ "$MODE" = "live_pro_secrets" ]; then
   done
 else
   retry2 "$CARBON_BIN" register --free --cloud dev --label ci_dev >/dev/null
-  retry2 "$CARBON_BIN" register --free --cloud prod --label ci_prod >/dev/null
+  set +e
+  "$CARBON_BIN" register --free --cloud prod --label ci_prod >/root/gate_PROD_REG.txt 2>&1
+  prod_reg_rc=$?
+  set -e
+  emit_kv GATE_PROD_REG_RC "$prod_reg_rc"
+  emit_block GATE_PROD_REG_OUT /root/gate_PROD_REG.txt
   probe_free_gate() {{
     g_cloud="$1"
     g_eff="$2"
     g_tag="$3"
+    g_manifest="$4"
     set +e
-    "$CARBON_BIN" run --csv "$CSV_PATH" --target target --cloud "$g_cloud" --free --effort "$g_eff" --shred >"/root/gate_${{g_tag}}.txt" 2>&1
+    if [ -n "$g_manifest" ]; then
+      "$CARBON_BIN" run --csv "$CSV_PATH" --target target --cloud "$g_cloud" --free --effort "$g_eff" --shred --clouds-manifest "$g_manifest" >"/root/gate_${{g_tag}}.txt" 2>&1
+    else
+      "$CARBON_BIN" run --csv "$CSV_PATH" --target target --cloud "$g_cloud" --free --effort "$g_eff" --shred >"/root/gate_${{g_tag}}.txt" 2>&1
+    fi
     g_rc=$?
     set -e
     emit_kv "GATE_${{g_tag}}_RC" "$g_rc"
     emit_block "GATE_${{g_tag}}_OUT" "/root/gate_${{g_tag}}.txt"
   }}
-  probe_free_gate dev high DEV_HIGH
-  probe_free_gate dev ultra DEV_ULTRA
-  probe_free_gate prod ultra PROD_ULTRA
-  for eff in fast medium; do
-    run_tier dev "$eff" --free aws_live "" &
-    pid_d=$!
-    run_tier prod "$eff" --free aws_live "" &
-    pid_p=$!
-    wait "$pid_d"
-    wait "$pid_p"
-  done
+  probe_free_gate dev high DEV_HIGH ""
+  probe_free_gate dev ultra DEV_ULTRA ""
   umask 077
   printf '%s' "$EMU_CLOUDS_B64" | base64 -d >"$EMU_CLOUDS"
   chmod 600 "$EMU_CLOUDS"
+  if [ "$prod_reg_rc" -eq 0 ]; then
+    probe_free_gate prod ultra PROD_ULTRA ""
+    for eff in fast medium; do
+      run_tier dev "$eff" --free aws_live "" &
+      pid_d=$!
+      run_tier prod "$eff" --free aws_live "" &
+      pid_p=$!
+      wait "$pid_d"
+      wait "$pid_p"
+    done
+  else
+    login_b64 prod "$PROD_FREE_B64" "$EMU_CLOUDS"
+    probe_free_gate prod ultra PROD_ULTRA "$EMU_CLOUDS"
+    for eff in fast medium; do
+      run_tier dev "$eff" --free aws_live "" &
+      pid_d=$!
+      run_tier prod "$eff" --free ci_emulator "$EMU_CLOUDS" &
+      pid_p=$!
+      wait "$pid_d"
+      wait "$pid_p"
+    done
+  fi
   login_b64 dev "$DEV_PRO_B64" "$EMU_CLOUDS"
   login_b64 prod "$PROD_PRO_B64" "$EMU_CLOUDS"
   for eff in high ultra; do
@@ -702,12 +739,17 @@ fn build_per_tier_comparison(runs: &[Value]) -> Result<Vec<Value>, String> {
             .iter()
             .find(|r| r["cloud"] == "prod" && r["effort"] == effort)
             .ok_or_else(|| format!("missing prod run for effort={effort}"))?;
-        if dev["execution_target"] != prod["execution_target"] {
+        let combined_target = if dev["execution_target"] == prod["execution_target"] {
+            dev["execution_target"].clone()
+        } else if dev["execution_target"] == "aws_live" && prod["execution_target"] == "ci_emulator"
+        {
+            json!("aws_live/emu")
+        } else {
             return Err(format!("mismatched execution_target for effort={effort}"));
-        }
+        };
         rows.push(json!({
             "effort": effort,
-            "execution_target": dev["execution_target"],
+            "execution_target": combined_target,
             "waves_target": dev["waves_target"],
             "dev": summarize_side(dev),
             "prod": summarize_side(prod),
@@ -779,6 +821,11 @@ fn assemble_receipt_from_framed(
     let dev_high_gate = decode_gate("GATE_DEV_HIGH_RC", "GATE_DEV_HIGH_OUT");
     let dev_ultra_gate = decode_gate("GATE_DEV_ULTRA_RC", "GATE_DEV_ULTRA_OUT");
     let prod_ultra_gate = decode_gate("GATE_PROD_ULTRA_RC", "GATE_PROD_ULTRA_OUT");
+    let prod_reg_gate = framed
+        .kvs
+        .get("GATE_PROD_REG_RC")
+        .and_then(|s| s.parse::<u64>().ok())
+        .map(|rc| if rc == 0 { 200 } else { 403 });
 
     let mut runs = Vec::with_capacity(8);
     let mut total_usd = 0.0f64;
@@ -850,6 +897,9 @@ fn assemble_receipt_from_framed(
         }
         if let Some(code) = prod_ultra_gate {
             obj.insert("live_prod_free_ultra_gate_status".to_owned(), json!(code));
+        }
+        if let Some(code) = prod_reg_gate {
+            obj.insert("live_prod_public_mint_gate_status".to_owned(), json!(code));
         }
     }
     let dataset = json!({
@@ -969,17 +1019,24 @@ pub fn execute_ci_live_4tier_docker(
     let script = if use_live_pro {
         sensitive_tokens.push(live_dev_tok.clone());
         sensitive_tokens.push(live_prod_tok.clone());
-        build_container_posix_script(mode, &live_dev_tok, &live_prod_tok, None)
+        build_container_posix_script(mode, &live_dev_tok, &live_prod_tok, "", None)
     } else {
         let scratch = opts
             .out_dir
             .join(format!(".emu-work-{}", std::process::id()));
-        let (emus, emu_dev_tok, emu_prod_tok, clouds_json) =
+        let (emus, emu_dev_tok, emu_prod_tok, emu_prod_free_tok, clouds_json) =
             InProcessDualEmulators::start(scratch)?;
         sensitive_tokens.push(emu_dev_tok.clone());
         sensitive_tokens.push(emu_prod_tok.clone());
+        sensitive_tokens.push(emu_prod_free_tok.clone());
         emu_opt = Some(emus);
-        build_container_posix_script(mode, &emu_dev_tok, &emu_prod_tok, Some(&clouds_json))
+        build_container_posix_script(
+            mode,
+            &emu_dev_tok,
+            &emu_prod_tok,
+            &emu_prod_free_tok,
+            Some(&clouds_json),
+        )
     };
 
     let run_id = std::env::var("GITHUB_RUN_ID").unwrap_or_else(|_| "local".to_owned());
@@ -1288,5 +1345,59 @@ mod tests {
         assert!(rcpt_tok
             .validate(&sha, true, &[String::from("my_custom_tok_99")])
             .is_err());
+
+        // Verify `ctk2.` asymmetric token marker is also refused by receipt hygiene guard
+        let leak_ctk2 = format!("{}{}", "ctk", "2.eyJ0ZW5hbnRfaWQiOiJ1In0.sig");
+        let framed_ctk2 = synthetic_framed_output("live_pro_secrets", &leak_ctk2);
+        let rcpt_ctk2 = assemble_receipt_from_framed(
+            &framed_ctk2,
+            &ReceiptBuildContext {
+                source_sha: &sha,
+                run_id: "99003",
+                attempt: 1,
+                mode: "live_pro_secrets",
+                total_wall_ms: 9800.0,
+                image_id: &img_id,
+                repo_digest: &repo_dig,
+            },
+            json!({"total_residual_cas_blobs": 0}),
+        )
+        .expect("assemble ctk2 test receipt");
+        assert!(rcpt_ctk2.validate(&sha, true, &[]).is_err());
+
+        // Verify post-rollout Option B (`GATE_PROD_REG_RC = 9` -> `live_prod_public_mint_gate_status = 403`,
+        // `dev` fast/medium on `aws_live`, `prod` fast/medium on `ci_emulator`) validates cleanly!
+        let mut framed_closed =
+            synthetic_framed_output("zero_secrets_hybrid_live_and_emulator", "closed");
+        framed_closed
+            .kvs
+            .insert("GATE_PROD_REG_RC".into(), "9".into());
+        framed_closed
+            .kvs
+            .insert("TARGET_prod_fast".into(), "ci_emulator".into());
+        framed_closed
+            .kvs
+            .insert("TARGET_prod_medium".into(), "ci_emulator".into());
+        let rcpt_closed = assemble_receipt_from_framed(
+            &framed_closed,
+            &ReceiptBuildContext {
+                source_sha: &sha,
+                run_id: "99004",
+                attempt: 1,
+                mode: "zero_secrets_hybrid_live_and_emulator",
+                total_wall_ms: 9900.0,
+                image_id: &img_id,
+                repo_digest: &repo_dig,
+            },
+            json!({"total_residual_cas_blobs": 0}),
+        )
+        .expect("assemble closed-prod Option B receipt");
+        assert_eq!(
+            rcpt_closed.install["live_prod_public_mint_gate_status"],
+            json!(403)
+        );
+        rcpt_closed
+            .validate(&sha, false, &[])
+            .expect("validate closed-prod Option B receipt");
     }
 }

@@ -1266,6 +1266,7 @@ mod full_stack {
                 region: "us-east-2".to_owned(),
                 public_base_url: "https://us-east-2.carbon.neverhuman.org".to_owned(),
                 enterprise_self_hosted: false,
+                allow_public_free_mint: true,
                 catalog: CarbonRegionCatalog {
                     catalog_version: 1,
                     regions: Vec::new(),
@@ -1352,6 +1353,7 @@ mod full_stack {
                 had_header: true,
                 extra_na_tokens: Vec::new(),
                 inf_as_nan: false,
+                target_binary_map: None,
             },
             fit_rows: 100,
             holdout_rows: 25,

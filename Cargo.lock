@@ -2631,6 +2631,7 @@ dependencies = [
  "http-body-util",
  "jope-api",
  "jope-comparators",
+ "jope-envelope",
  "jope-paths",
  "jope-prep",
  "jope-runtime",
@@ -2777,6 +2778,24 @@ dependencies = [
  "serde_json",
  "tempfile",
  "toml",
+]
+
+[[package]]
+name = "jope-envelope"
+version = "1.0.0"
+dependencies = [
+ "aes",
+ "base64 0.23.1",
+ "cipher",
+ "getrandom 0.3.4",
+ "hex",
+ "jope-prep",
+ "p256",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "zeroize",
 ]
 
 [[package]]

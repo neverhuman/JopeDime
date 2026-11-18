@@ -38,6 +38,7 @@ pub struct CarbonRuntimeSecrets {
     pub engine_kek_hex: Option<Zeroizing<String>>,
     pub previous_engine_kek_hex: Option<Zeroizing<String>>,
     pub engine_kek_pubkey_b64: Option<String>,
+    pub app_auth_pubkeys_b64: Option<String>,
 }
 
 impl std::fmt::Debug for CarbonRuntimeSecrets {
@@ -98,6 +99,13 @@ pub fn parse_secret_bundle_json_for_role(
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(str::to_owned);
+    let app_auth_pubkeys_b64 = obj
+        .get("app_auth_pubkeys_b64")
+        .or_else(|| obj.get("app_auth_pubkeys"))
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned);
 
     Ok(CarbonRuntimeSecrets {
         seal_secret_hex: if scrub_engine_secrets {
@@ -128,6 +136,7 @@ pub fn parse_secret_bundle_json_for_role(
             extract_nonempty_zeroized(obj, &["previous_engine_kek_hex"])
         },
         engine_kek_pubkey_b64,
+        app_auth_pubkeys_b64,
     })
 }
 
@@ -354,7 +363,13 @@ pub fn resolve_edge_secrets(
         .map(Zeroizing::new)
         .or_else(|| vault_ref.and_then(|v| v.previous_auth_secret_hex.clone()));
 
-    let auth_verifier = match auth_hex_opt {
+    let app_pubkeys_opt = std::env::var("CARBON_APP_AUTH_PUBKEYS")
+        .ok()
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty())
+        .or_else(|| vault_ref.and_then(|v| v.app_auth_pubkeys_b64.clone()));
+
+    let mut auth_verifier = match auth_hex_opt {
         Some(active_hex) => Some(
             CarbonAuthVerifier::from_hex_with_previous(
                 &active_hex,
@@ -367,6 +382,15 @@ pub fn resolve_edge_secrets(
         }
         None => None,
     };
+    if let Some(pubkeys_csv) = app_pubkeys_opt {
+        if let Some(verifier) = auth_verifier.take() {
+            auth_verifier = Some(
+                verifier
+                    .with_app_issuer_pubkeys_csv(&pubkeys_csv)
+                    .map_err(|e| e.to_string())?,
+            );
+        }
+    }
 
     let pubkey_opt = std::env::var("CARBON_ENGINE_KEK_PUBKEY_B64")
         .ok()

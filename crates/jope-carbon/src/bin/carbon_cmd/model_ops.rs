@@ -2,6 +2,99 @@
 
 use super::*;
 
+fn apply_handle_target_overrides(
+    handle: &mut jope_carbon::CarbonSavedModelHandle,
+    target_opts: &HandleTargetArgs,
+) -> Result<(), String> {
+    let explicit_tier = resolve_explicit_tier_flag(
+        target_opts.free,
+        target_opts.pro,
+        target_opts.tier.as_deref(),
+    )?;
+    if let Some(t) = explicit_tier {
+        handle.tier = t;
+    }
+    if let Some(ref tid) = target_opts.tenant {
+        let trimmed = tid.trim();
+        if !trimmed.is_empty() {
+            handle.tenant_id = trimmed.to_owned();
+        }
+    }
+    if let Some(ref cloud_name) = target_opts.cloud {
+        let trimmed = cloud_name.trim();
+        if !trimmed.is_empty() {
+            handle.cloud = Some(trimmed.to_owned());
+        }
+    }
+    if let Some(ref ep) = target_opts.endpoint {
+        let trimmed = ep.trim();
+        if !trimmed.is_empty()
+            && trimmed.trim_end_matches('/') != handle.endpoint.trim().trim_end_matches('/')
+        {
+            handle.endpoint = trimmed.to_owned();
+            handle.engine_kek_pubkey_b64 = None;
+        }
+    } else if target_opts.clouds_manifest.is_some() {
+        if let Some(ref cloud_name) = handle.cloud {
+            let entry =
+                resolve_public_cloud_endpoint(cloud_name, target_opts.clouds_manifest.as_deref())?;
+            let pins = entry.pinned_keks_by_endpoint();
+            let norm_ep = handle.endpoint.trim().trim_end_matches('/');
+            if let Some(pin) = pins.get(norm_ep) {
+                handle.engine_kek_pubkey_b64 = Some(pin.clone());
+            } else if !entry.public_endpoint.trim().is_empty() {
+                handle.endpoint = entry.public_endpoint.clone();
+                handle.engine_kek_pubkey_b64 = entry.engine_kek_pubkey_b64;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn execute_stateless_remote_shred(
+    run_id_raw: &str,
+    target_opts: &HandleTargetArgs,
+    override_tok: Option<String>,
+) -> Result<jope_api::carbon::CarbonShredRunResponse, String> {
+    let run_id = run_id_raw.trim();
+    jope_carbon::validate_strict_run_id(run_id).map_err(|e| e.to_string())?;
+    let explicit_tier = resolve_explicit_tier_flag(
+        target_opts.free,
+        target_opts.pro,
+        target_opts.tier.as_deref(),
+    )?;
+    let endpoints = target_opts
+        .endpoint
+        .as_ref()
+        .map(|s| vec![s.clone()])
+        .unwrap_or_default();
+    let resolved = resolve_cli_target_and_auth(
+        endpoints,
+        target_opts.cloud.clone(),
+        target_opts.clouds_manifest.as_deref(),
+        None,
+        "us-east-2",
+        explicit_tier,
+        target_opts.tenant.clone(),
+        "",
+        override_tok,
+        None,
+        false,
+        CarbonTierWire::Pro,
+    )
+    .map_err(|(_, msg)| msg)?;
+    if resolved.tenant_id.trim().is_empty() {
+        return Err(
+            "stateless `carbon shred --run <RUN_ID>` without a local handle requires --tenant <TENANT_ID> or a capability token (--token / `carbon login`)".to_owned(),
+        );
+    }
+    let mut client = resolved.probed_client;
+    if let Some(tok) = resolved.auth_token {
+        client = client.with_capability_token(tok);
+    }
+    client.shred_run(&resolved.tenant_id, run_id)
+}
+
 pub(crate) fn is_model_ops_cmd(cmd: &Command) -> bool {
     matches!(
         cmd,
@@ -209,6 +302,7 @@ pub(crate) fn dispatch_model_ops(
             token_stdin,
             format,
             json,
+            target_opts,
         } => {
             let Some(csv_path) = csv.or(csv_flag) else {
                 return emit_cli_error(json, "missing input CSV path");
@@ -221,10 +315,14 @@ pub(crate) fn dispatch_model_ops(
                 Ok(t) => t,
                 Err(e) => return emit_cli_error(json, &e),
             };
-            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+            let (mut handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref())
+            {
                 Ok(pair) => pair,
                 Err(e) => return emit_cli_error(json, &e),
             };
+            if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                return emit_cli_error(json, &e);
+            }
             match execute_predict_csv_with_handle(
                 &handle,
                 &csv_path,
@@ -378,15 +476,20 @@ pub(crate) fn dispatch_model_ops(
             token_file,
             token_stdin,
             json,
+            target_opts,
         } => {
             let override_tok = match read_cli_token_source(token, token_file, token_stdin) {
                 Ok(t) => t,
                 Err(e) => return emit_cli_error(json, &e),
             };
-            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+            let (mut handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref())
+            {
                 Ok(pair) => pair,
                 Err(e) => return emit_cli_error(json, &e),
             };
+            if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                return emit_cli_error(json, &e);
+            }
             match query_handle_status(&handle, override_tok) {
                 Ok(status) => {
                     if let Ok(s) = serde_json::to_string_pretty(&status) {
@@ -404,31 +507,62 @@ pub(crate) fn dispatch_model_ops(
             token_file,
             token_stdin,
             json,
+            target_opts,
         } => {
             let override_tok = match read_cli_token_source(token, token_file, token_stdin) {
                 Ok(t) => t,
                 Err(e) => return emit_cli_error(json, &e),
             };
-            let (handle, resolved_path) =
-                match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
-                    Ok(pair) => pair,
-                    Err(e) => return emit_cli_error(json, &e),
-                };
-            let explicit_opt = model.as_deref().or(Some(resolved_path.as_path()));
-            match shred_handle_and_local_keys(&handle, explicit_opt, override_tok) {
-                Ok((remote, local_deleted)) => {
-                    let _ = write_stdout_line(
-                        &serde_json::to_string_pretty(&serde_json::json!({
-                            "run_id": remote.run_id,
-                            "remote_shredded": remote.shredded,
-                            "remote_objects_deleted": remote.objects_deleted,
-                            "local_key_handle_shredded": local_deleted,
-                        }))
-                        .unwrap_or_default(),
-                    );
-                    ExitCode::SUCCESS
+            match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                Ok((mut handle, resolved_path)) => {
+                    if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                        return emit_cli_error(json, &e);
+                    }
+                    let explicit_opt = model.as_deref().or(Some(resolved_path.as_path()));
+                    match shred_handle_and_local_keys(&handle, explicit_opt, override_tok) {
+                        Ok((remote, local_deleted)) => {
+                            let _ = write_stdout_line(
+                                &serde_json::to_string_pretty(&serde_json::json!({
+                                    "run_id": remote.run_id,
+                                    "remote_shredded": remote.shredded,
+                                    "remote_objects_deleted": remote.objects_deleted,
+                                    "local_key_handle_shredded": local_deleted,
+                                }))
+                                .unwrap_or_default(),
+                            );
+                            ExitCode::SUCCESS
+                        }
+                        Err(err) => emit_cli_error(json, &format!("carbon shred failed: {err}")),
+                    }
                 }
-                Err(err) => emit_cli_error(json, &format!("carbon shred failed: {err}")),
+                Err(load_err) => {
+                    if let (None, Some(ref rid)) = (&model, &run) {
+                        if !rid.trim().eq_ignore_ascii_case("latest") {
+                            return match execute_stateless_remote_shred(
+                                rid,
+                                &target_opts,
+                                override_tok,
+                            ) {
+                                Ok(remote) => {
+                                    let _ = write_stdout_line(
+                                        &serde_json::to_string_pretty(&serde_json::json!({
+                                            "run_id": remote.run_id,
+                                            "remote_shredded": remote.shredded,
+                                            "remote_objects_deleted": remote.objects_deleted,
+                                            "local_key_handle_shredded": false,
+                                        }))
+                                        .unwrap_or_default(),
+                                    );
+                                    ExitCode::SUCCESS
+                                }
+                                Err(err) => {
+                                    emit_cli_error(json, &format!("carbon shred failed: {err}"))
+                                }
+                            };
+                        }
+                    }
+                    emit_cli_error(json, &load_err)
+                }
             }
         }
         Command::Fitness { action } => execute_fitness_command(action),
@@ -441,15 +575,20 @@ pub(crate) fn dispatch_model_ops(
             token_stdin,
             format,
             json,
+            target_opts,
         } => {
             let override_tok = match read_cli_token_source(token, token_file, token_stdin) {
                 Ok(t) => t,
                 Err(e) => return emit_cli_error(json, &e),
             };
-            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+            let (mut handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref())
+            {
                 Ok(pair) => pair,
                 Err(e) => return emit_cli_error(json, &e),
             };
+            if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                return emit_cli_error(json, &e);
+            }
             let client = match build_client_for_handle(&handle, override_tok) {
                 Ok(c) => c,
                 Err(e) => return emit_cli_error(json, &e),
@@ -483,6 +622,7 @@ pub(crate) fn dispatch_model_ops(
             token_file,
             token_stdin,
             json,
+            target_opts,
         } => {
             let lang_wire = match parse_export_lang(&lang) {
                 Ok(l) => l,
@@ -492,10 +632,14 @@ pub(crate) fn dispatch_model_ops(
                 Ok(t) => t,
                 Err(e) => return emit_cli_error(json, &e),
             };
-            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+            let (mut handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref())
+            {
                 Ok(pair) => pair,
                 Err(e) => return emit_cli_error(json, &e),
             };
+            if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                return emit_cli_error(json, &e);
+            }
             let client = match build_client_for_handle(&handle, override_tok) {
                 Ok(c) => c,
                 Err(e) => return emit_cli_error(json, &e),
@@ -564,6 +708,7 @@ pub(crate) fn dispatch_model_ops(
             token_file,
             token_stdin,
             json,
+            target_opts,
         } => {
             let effort_opt = match effort.as_deref() {
                 Some(raw) => match parse_api_effort(raw) {
@@ -581,6 +726,9 @@ pub(crate) fn dispatch_model_ops(
                     Ok(pair) => pair,
                     Err(e) => return emit_cli_error(json, &e),
                 };
+            if let Err(e) = apply_handle_target_overrides(&mut handle, &target_opts) {
+                return emit_cli_error(json, &e);
+            }
             let client = match build_client_for_handle(&handle, override_tok) {
                 Ok(c) => c,
                 Err(e) => return emit_cli_error(json, &e),

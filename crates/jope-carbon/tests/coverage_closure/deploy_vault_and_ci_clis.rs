@@ -171,6 +171,7 @@ fn cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audi
     cfg_prod.region = "us-east-2".to_owned();
     cfg_prod.auth_secret = [0x52; 32];
     cfg_prod.engine_kek_scalar = [0x22; 32];
+    cfg_prod.allow_public_free_mint = false;
     let prod_auth_hex = hex::encode(cfg_prod.auth_secret);
     let mut emu_prod = CarbonLocalLambdaEmulator::start(cfg_prod).expect("start emu_prod");
     let (_, prod_probed) =
@@ -377,6 +378,8 @@ esac
         String::from_utf8_lossy(&dep_dry.stderr)
     );
 
+    let (app_key, _app_hex) = jope_carbon::envelope::AppSigningKey::generate().expect("keygen");
+    let app_pub_b64 = app_key.pubkey_b64();
     let full_json = tmp.path().join("deploy-full.json");
     let dep_full = Command::new(&bin)
         .args([
@@ -389,6 +392,8 @@ esac
             "us-east-2",
             "--decommission-unstacked-prototype",
             "--skip-redteam",
+            "--app-auth-pubkeys-b64",
+            &app_pub_b64,
             "--json-out",
             full_json.to_str().expect("utf8"),
         ])

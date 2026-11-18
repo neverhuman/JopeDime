@@ -72,8 +72,18 @@ fn make_ids(tag: &str) -> Result<(RunId, DatasetId), String> {
     Ok((run_id, ds_id))
 }
 
-/// Execute all 16 adversarial red-team vectors (`V-01`..`V-16`) against `endpoint`.
+/// Execute all 17 adversarial red-team vectors (`V-01`..`V-17`) against `endpoint`.
 pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuiteReport, String> {
+    execute_carbon_redteam_suite_with_tokens(endpoint, None)
+}
+
+/// Execute all 17 adversarial red-team vectors (`V-01`..`V-17`) against `endpoint`, optionally
+/// supplying two pre-minted Free-tier capability tokens (`(token_a, token_b)`) when testing a
+/// production gateway where unauthenticated `/v1/carbon/auth/anonymous` is disabled (`403`).
+pub fn execute_carbon_redteam_suite_with_tokens(
+    endpoint: &str,
+    pre_minted_free_tokens: Option<(String, String)>,
+) -> Result<CarbonRedTeamSuiteReport, String> {
     let (mut client_a, probed) = CarbonThinClient::connect_fastest(vec![endpoint.to_owned()])?;
     let best = probed
         .first()
@@ -86,9 +96,56 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
     let kek_pub = decode_p256_pubkey_b64(&kek_b64).map_err(crate::error::err_to_string)?;
     let v1_1_wire = client_a.fetch_server_version()?.is_some();
 
-    let anon_a = client_a.authenticate_anonymous()?;
     let mut client_b = CarbonThinClient::connect_fastest(vec![base.clone()])?.0;
-    let anon_b = client_b.authenticate_anonymous()?;
+    let (anon_a, anon_b) = if let Some((tok_a, tok_b)) = pre_minted_free_tokens {
+        let claims_a = crate::security::auth::CarbonCapabilityClaims::decode_unverified(&tok_a)
+            .map_err(|e| format!("invalid redteam token A: {e}"))?;
+        let claims_b = crate::security::auth::CarbonCapabilityClaims::decode_unverified(&tok_b)
+            .map_err(|e| format!("invalid redteam token B: {e}"))?;
+        client_a = client_a.with_capability_token(tok_a.clone());
+        client_b = client_b.with_capability_token(tok_b.clone());
+        (
+            jope_api::carbon::CarbonAnonymousAuthResponse {
+                tenant_id: claims_a.tenant_id,
+                capability_token: tok_a,
+                tier: claims_a.tier,
+                expires_epoch_secs: DecimalU64(claims_a.exp_epoch_secs),
+                engine_kek_pubkey_b64: Some(kek_b64.clone()),
+            },
+            jope_api::carbon::CarbonAnonymousAuthResponse {
+                tenant_id: claims_b.tenant_id,
+                capability_token: tok_b,
+                tier: claims_b.tier,
+                expires_epoch_secs: DecimalU64(claims_b.exp_epoch_secs),
+                engine_kek_pubkey_b64: Some(kek_b64.clone()),
+            },
+        )
+    } else {
+        match client_a.authenticate_anonymous() {
+            Ok(a) => {
+                let b = client_b.authenticate_anonymous()?;
+                (a, b)
+            }
+            Err(err) if err.contains("anonymous_disabled") => {
+                let secret_hex = std::env::var("CARBON_AUTH_SECRET_HEX").map_err(|_| {
+                    format!("{err} (pass --env prod or CARBON_AUTH_SECRET_HEX to mint ephemeral Free redteam tokens)")
+                })?;
+                let verifier = crate::security::auth::CarbonAuthVerifier::from_hex(&secret_hex)
+                    .map_err(|e| e.to_string())?;
+                let now_s = now_epoch_ms() / 1_000;
+                let a = verifier
+                    .mint_anonymous_free(now_s, Some(kek_b64.clone()))
+                    .map_err(|e| e.to_string())?;
+                let b = verifier
+                    .mint_anonymous_free(now_s, Some(kek_b64.clone()))
+                    .map_err(|e| e.to_string())?;
+                client_a = client_a.with_capability_token(a.capability_token.clone());
+                client_b = client_b.with_capability_token(b.capability_token.clone());
+                (a, b)
+            }
+            Err(err) => return Err(err),
+        }
+    };
 
     let bearer_a = format!("Bearer {}", anon_a.capability_token);
     let bearer_b = format!("Bearer {}", anon_b.capability_token);

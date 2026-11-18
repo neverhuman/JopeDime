@@ -959,6 +959,7 @@ fn edge_async_202_threshold_and_retry_idempotent_create_run() {
             region: "us-east-2".to_owned(),
             public_base_url: "https://edge-test.example".to_owned(),
             enterprise_self_hosted: false,
+            allow_public_free_mint: true,
             catalog: CarbonRegionCatalog {
                 catalog_version: 1,
                 regions: vec![CarbonRegionDescriptor {
@@ -1353,10 +1354,10 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     };
 
     assert_eq!(CARBON_RELEASE_TAG, SPEC_RELEASE_TAG);
-    assert_eq!(CARBON_RELEASE_TAG, "carbon-cli-v1.2.1");
+    assert_eq!(CARBON_RELEASE_TAG, "carbon-cli-v1.3.0");
     assert_eq!(
         jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG,
-        "carbon-cli-v1.2.0"
+        "carbon-cli-v1.2.1"
     );
     assert!(!CARBON_GIT_SHA.is_empty());
 
@@ -1871,8 +1872,8 @@ fn adaptive_cost_estimator_routes_medium_scale_fast_to_hybrid_fanout() {
         CarbonExecutionMode, CarbonPlanInput, CarbonProductTier, EvalMemoryClass,
     };
 
-    assert_eq!(jope_carbon::CARBON_PKG_VERSION, "1.2.1");
-    assert_eq!(jope_carbon::CARBON_RELEASE_TAG, "carbon-cli-v1.2.1");
+    assert_eq!(jope_carbon::CARBON_PKG_VERSION, "1.3.0");
+    assert_eq!(jope_carbon::CARBON_RELEASE_TAG, "carbon-cli-v1.3.0");
 
     let small_est = estimate_ms_per_candidate_1vcpu(160, 5);
     let med_est = estimate_ms_per_candidate_1vcpu(1_040, 8);
@@ -2292,8 +2293,8 @@ fn spec_report_and_verify_bind_live_ci_4tier_docker_receipt_and_reject_tamper() 
             "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
             "timestamp_epoch_ms": 1794622000000u64,
             "source_sha": sha,
-            "binary_version": "1.2.1",
-            "release_tag": "carbon-cli-v1.2.1",
+            "binary_version": "1.3.0",
+            "release_tag": "carbon-cli-v1.3.0",
             "emulator_regions": ["prod:us-east-2", "prod:eu-central-1", "dev:us-east-2"],
             "emulator_edge_invocations": 42,
             "emulator_engine_invocations": 12,

@@ -884,6 +884,7 @@
           "dep:aws-lc-rs",
           "dep:base64",
           "dep:jope-api",
+          "dep:jope-envelope",
           "dep:jope-prep",
           "dep:rustls",
           "dep:ureq",
@@ -2276,6 +2277,20 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-envelope": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-envelope/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Standalone pure-Rust WASM-ready zero-knowledge client envelope (`CUEN\\x01` + `CUDK\\x01`) and asymmetric `ECDSA-P256` `ctk2.*` capability token crate (`ADR-0007` Phase C7)."
     },
     "package:jope-learning": {
       "discovery": {
@@ -6130,6 +6145,16 @@
         "full-python"
       ],
       "scope": "CPU unit check that relative or empty HOME values are refused before tilde or default home path expansion."
+    },
+    "python:research/flywheel_selfplay/dope_value_probe/test_dope_value_probe.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Unscored DOPE value-probe layout, arm-width, and family-mean delta contract checks from PR #2358; offline research outside release lanes."
     },
     "python:research/flywheel_selfplay/golden/test_generate.py": {
       "discovery": {
@@ -14538,7 +14563,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -15877,6 +15902,22 @@
         "full-default"
       ],
       "scope": "Carbon deployment security split (`edge-secrets` vs `cell-secrets`, `PT_INTERP` static ELF guard, `CARBON_R882_DIGEST` cold-start pin, security headers), stateless allowlisted `302` passive download telemetry redirects, cross-OS `install.sh` and `install.ps1` ECDSA verification/tamper/uninstall contracts, secret redaction, semantic exit codes, compressed/UTF-16/JSONL/currency/ISO-date tabular conditioning, offline `--dry-run`, and end-to-end custom `--fitness` (`aux` weight columns) + `CUEN\\x01` `explain` + standalone `export` + `predict --out -` + `shred`."
+    },
+    "target:jope-carbon/test/veox_integration_v130": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/tests/veox_integration_v130.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "End-to-end `app.veox.ai` / `jAIn` integration suite: large-table `HybridFanOut` local-engine champion refit + JS/C++17 standalone export, unconditional auto-shred on failed `fit`, `prod` anonymous/register `403` refusal, asymmetric P-256 `ctk2.*` per-user token rotation & cross-tenant refusal, `jope.carbon.fit_receipt.v1` `holdout_rows_sha256` golden parity, standalone `--save` handle Free token persistence, and `jope-envelope` <-> `aws-lc-rs` wire interop."
     },
     "target:jope-ci/bin/jope-ci": {
       "discovery": {
@@ -17710,6 +17751,23 @@
         "full-default"
       ],
       "scope": "The committed model lock, a packed fixture manifest, and a fitted model header validate against schemas/jope.appliance-*.v1 with the repository's own JSON Schema validator (jope-datasets)."
+    },
+    "target:jope-envelope/lib/jope_envelope": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-envelope/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Pure-Rust constant-time NIST SP 800-38D AES-256-GCM, RFC 5869 HKDF-SHA256, `CUEN\\x01`/`CUDK\\x01` envelope wrapping/unwrapping, and `ECDSA-P256` `ctk2.*` capability token signing & dual-key verification unit tests."
     },
     "target:jope-learning/bin/jope-learning": {
       "discovery": {
@@ -21010,6 +21068,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-prep/test/binary_target_prep": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-prep/tests/binary_target_prep.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Universal 2-class binary categorical/boolean target conditioning (yes/no, true/false, semantic & arbitrary string pairs), class-stratified FIT/HOLDOUT splitting, JLMB + JMAT v1 encoding, binary probability metrics, and 1-class/multiclass fail-closed refusal."
+    },
     "target:jope-prep/test/prep": {
       "discovery": {
         "doctest": false,
@@ -21190,6 +21264,22 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Table contract, task inference, folds, losses, error taxonomy and device selection unit tests."
+    },
+    "target:jope-runtime/test/fitted_js_cpp_gbm_parity": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/fitted_js_cpp_gbm_parity.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Standalone fitted JavaScript (`Node`) and C++17 (`g++ -std=c++17`) codegen parity for `gbm` (`histgbm`), `histgbm2`, `blend` (`ensemble`), `ridge_gcv`, `krr`, `gpr`, and `ksmooth` champions against `Model::predict` to `< 1e-9`."
     },
     "target:jope-runtime/test/fitted_js_qualification": {
       "discovery": {

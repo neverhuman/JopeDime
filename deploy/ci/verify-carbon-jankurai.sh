@@ -31,7 +31,7 @@ auditor = sys.argv[1]
 stage_dir = pathlib.Path(sys.argv[2])
 paths = sorted(
     str(p)
-    for base in ("crates/jope-carbon", "deploy/carbon")
+    for base in ("crates/jope-carbon", "crates/jope-envelope", "deploy/carbon")
     for p in pathlib.Path(base).rglob("*")
     if p.is_file()
 )

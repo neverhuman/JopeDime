@@ -104,6 +104,108 @@ impl SplitPlan {
         })
     }
 
+    /// Construct a deterministic class-stratified `FIT` / `HOLDOUT` partition over a binary target
+    /// (`0` vs non-zero `1`), guaranteeing both classes appear in `FIT` and `HOLDOUT` whenever
+    /// each class has at least `2` rows and `total_holdout >= 2` / `total_fit >= 2`.
+    pub fn stratified_binary(
+        y_binary: &[u8],
+        seed: u64,
+        holdout_fraction: f64,
+    ) -> PrepResult<Self> {
+        let total_rows = y_binary.len();
+        if total_rows < 2 {
+            return Err(PrepError::InsufficientRows { rows: total_rows });
+        }
+        if !holdout_fraction.is_finite() || holdout_fraction <= 0.0 || holdout_fraction >= 1.0 {
+            return Err(PrepError::InvalidHoldoutFraction {
+                fraction: holdout_fraction,
+            });
+        }
+
+        let mut idx_0: Vec<usize> = Vec::new();
+        let mut idx_1: Vec<usize> = Vec::new();
+        for (i, &lbl) in y_binary.iter().enumerate() {
+            if lbl == 0 {
+                idx_0.push(i);
+            } else {
+                idx_1.push(i);
+            }
+        }
+        if idx_0.is_empty() || idx_1.is_empty() {
+            return Self::deterministic(total_rows, seed, holdout_fraction);
+        }
+
+        let mut rng = SplitMix64::new(seed ^ 0x4A4F_5045_4249_4E31);
+        for pool in [&mut idx_0, &mut idx_1] {
+            for i in (1..pool.len()).rev() {
+                let j = (rng.next_u64() as usize) % (i + 1);
+                pool.swap(i, j);
+            }
+        }
+
+        let desired_holdout = ((total_rows as f64) * holdout_fraction).round() as usize;
+        let total_holdout = desired_holdout.clamp(1, total_rows - 1);
+        let total_fit = total_rows - total_holdout;
+        let n0 = idx_0.len();
+        let n1 = idx_1.len();
+
+        // Allocate holdout counts `(h0, h1)` preserving `h0 + h1 == total_holdout` while keeping
+        // at least 1 row of each class in `FIT` (and in `HOLDOUT` when `n_k >= 2` and `total_holdout >= 2`).
+        let min_h0 = if n0 >= 2 && total_holdout >= 2 && total_fit >= 2 {
+            1
+        } else {
+            0
+        }
+        .max(
+            total_holdout.saturating_sub(n1.saturating_sub(if n1 >= 1 && total_fit >= 2 {
+                1
+            } else {
+                0
+            })),
+        );
+        let max_h0 = n0
+            .saturating_sub(if n0 >= 1 && total_fit >= 2 { 1 } else { 0 })
+            .min(total_holdout.saturating_sub(
+                if n1 >= 2 && total_holdout >= 2 && total_fit >= 2 {
+                    1
+                } else {
+                    0
+                },
+            ));
+        let prop_h0 = ((n0 as f64) * holdout_fraction).round() as usize;
+        let h0 = if min_h0 <= max_h0 {
+            prop_h0.clamp(min_h0, max_h0)
+        } else {
+            prop_h0.min(n0).min(total_holdout)
+        };
+        let h1 = total_holdout.saturating_sub(h0).min(n1);
+        let h0 = total_holdout.saturating_sub(h1).min(n0);
+
+        let mut holdout_rows = Vec::with_capacity(h0 + h1);
+        holdout_rows.extend_from_slice(&idx_0[..h0]);
+        holdout_rows.extend_from_slice(&idx_1[..h1]);
+        holdout_rows.sort_unstable();
+
+        let mut fit_rows = Vec::with_capacity(total_rows - holdout_rows.len());
+        fit_rows.extend_from_slice(&idx_0[h0..]);
+        fit_rows.extend_from_slice(&idx_1[h1..]);
+        fit_rows.sort_unstable();
+
+        let sampled_fit_rows = sample_fit_indices(&fit_rows, seed);
+        let fit_row_digest = hash_index_slice("jope.prep.fit_rows.v1", &fit_rows);
+        let holdout_row_digest = hash_index_slice("jope.prep.holdout_rows.v1", &holdout_rows);
+
+        Ok(Self {
+            total_rows,
+            seed,
+            fit_rows,
+            holdout_rows,
+            sampled_fit_rows,
+            fit_row_digest,
+            holdout_row_digest,
+        })
+    }
+
     /// Total row count of the unsplit source table.
     pub fn total_rows(&self) -> usize {
         self.total_rows

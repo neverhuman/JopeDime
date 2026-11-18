@@ -61,14 +61,14 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "e2e",
             Regex::new(&format!(
-                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist|jope-carbon|jope-api|jope-prep|jope-service)/|examples/objectives/|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|\.github/workflows/carbon-live-e2e\.yml$|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|deploy/carbon/|docs/carbon/|docs/release/signing\.pub$|{common})"
+                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist|jope-carbon|jope-api|jope-prep|jope-envelope|jope-service)/|examples/objectives/|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|\.github/workflows/carbon-live-e2e\.yml$|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|deploy/carbon/|docs/carbon/|docs/release/signing\.pub$|{common})"
             ))
             .expect("valid e2e regex"),
         ),
         (
             "carbon_live",
             Regex::new(
-                r"^(crates/(jope-carbon|jope-api|jope-prep|jope-service)/|deploy/carbon/|docs/carbon/|docs/release/signing\.pub$|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/(ci|carbon-live-e2e)\.yml$|\.github/actions/(upload-ci-evidence|download-ci-evidence)/|deploy/ci/(ci-plan\.py|aggregate-evidence\.py)$)",
+                r"^(crates/(jope-carbon|jope-api|jope-prep|jope-envelope|jope-service)/|deploy/carbon/|docs/carbon/|docs/release/signing\.pub$|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/(ci|carbon-live-e2e)\.yml$|\.github/actions/(upload-ci-evidence|download-ci-evidence)/|deploy/ci/(ci-plan\.py|aggregate-evidence\.py)$)",
             )
             .expect("valid carbon_live regex"),
         ),

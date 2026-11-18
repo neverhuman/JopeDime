@@ -51,10 +51,9 @@ use jope_carbon::{
 };
 #[cfg(feature = "engine")]
 use jope_carbon::{
-    execute_carbon_deploy, execute_carbon_drift_check, execute_carbon_package,
-    execute_carbon_rollback_multi, generate_public_clouds_manifest,
-    mint_capability_token_from_vault, resolve_cell_stack_endpoint, CarbonDeployOptions,
-    CarbonLiveAliasVersions, CarbonPackageOptions,
+    execute_carbon_drift_check, execute_carbon_package, execute_carbon_rollback_multi,
+    generate_public_clouds_manifest, mint_capability_token_from_vault, resolve_cell_stack_endpoint,
+    CarbonDeployOptions, CarbonLiveAliasVersions, CarbonPackageOptions,
 };
 #[cfg(feature = "emu")]
 use jope_carbon::{
@@ -70,7 +69,9 @@ pub(crate) mod auth_doctor;
 pub(crate) mod model_ops;
 pub(crate) mod ops_admin;
 
-pub(crate) use args::{emit_shell_completions, Command, CommonTrainArgs, FitnessCommand};
+pub(crate) use args::{
+    emit_shell_completions, Command, CommonTrainArgs, FitnessCommand, HandleTargetArgs,
+};
 
 const EMBEDDED_RELEASE_SIGNING_PUB_PEM: &str =
     include_str!("../../../../../docs/release/signing.pub");

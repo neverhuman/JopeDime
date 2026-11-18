@@ -1240,6 +1240,9 @@ impl CarbonEngineWorker {
                 };
                 let fallback_fit_pt_sha = fit_pt_sha.to_owned();
                 let fallback_scratch_dir = scratch_dir.to_path_buf();
+                let refit_fit_path = fallback_fit_path.clone();
+                let refit_fit_pt_sha = fallback_fit_pt_sha.clone();
+                let refit_scratch_dir = fallback_scratch_dir.clone();
                 let eval_inv_exec = Arc::clone(&eval_invocations);
                 let eval_ms_exec = Arc::clone(&eval_total_wall_ms);
                 let eval_fb_exec = Arc::clone(&eval_fallback_shards);
@@ -1249,7 +1252,7 @@ impl CarbonEngineWorker {
                             tenant_id: tid.clone(),
                             fit_slot_subkey_b64: sub_b64.clone(),
                             fit_plaintext_sha256: pt_sha.clone(),
-                            exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(60),
+                            exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(180),
                         }
                     });
                     let shard_t0 = Instant::now();
@@ -1285,6 +1288,21 @@ impl CarbonEngineWorker {
                         }
                         Err(err) => Err(anyhow::anyhow!("{err}")),
                     }
+                })
+                .with_local_refit(move |req| {
+                    // Execute Rung-2 champion refits locally inside `carbon-engine` (`3,008 MB`,
+                    // `2 vCPUs`, `900 s` timeout) so multi-megabyte fitted models never cross
+                    // `carbon-eval`'s 6 MB Lambda Runtime API response ceiling.
+                    let mut raw_fit = Zeroizing::new(fs::read(&refit_fit_path).map_err(|e| {
+                        anyhow::anyhow!("read staged fit.jmat for local champion refit: {e}")
+                    })?);
+                    let local_exec = CarbonInProcessExecutor::open_fit(
+                        std::mem::take(&mut *raw_fit),
+                        &refit_fit_pt_sha,
+                        refit_scratch_dir.clone(),
+                    )?;
+                    let (_resp, model_bytes) = local_exec.fitted_model_with_response(req)?;
+                    Ok(model_bytes)
                 });
                 run_carbon_waves_with_calibration(
                     session_opts,
@@ -1385,6 +1403,52 @@ impl CarbonEngineWorker {
             .err_ctx("outer holdout evaluation failed")?;
             outer_loss = Some(h_loss);
             outer_metric = Some(h_val);
+        }
+
+        if !outcome.paused && outcome.champion_model_bytes.is_none() {
+            let failure_msg = "search finished without a valid fitted champion model".to_owned();
+            let failed_progress = CarbonPublicWaveProgress {
+                run_id: create.run_id.clone(),
+                state: CarbonRunStateWire::Failed,
+                execution_mode: if use_hybrid {
+                    CarbonExecutionModeWire::HybridFanOut
+                } else {
+                    CarbonExecutionModeWire::SoloSingleLambda
+                },
+                eval_memory_mb: decision.eval_class.memory_mb() as u32,
+                eval_shards: if use_hybrid {
+                    resolve_effective_eval_shards(decision.shards_per_wave)
+                } else {
+                    0
+                },
+                eval_invocations: DecimalU64(eval_invocations),
+                eval_total_wall_ms: DecimalU64(eval_total_wall_ms),
+                wave_index: outcome.wave_index,
+                waves_target,
+                candidates_evaluated: DecimalU64(outcome.candidates_evaluated),
+                best_cv_loss: outcome.best_cv_loss,
+                best_cv_metric: outcome.best_cv_metric,
+                outer_holdout_loss: None,
+                outer_holdout_metric: None,
+                neural_seed_applied: outcome.neural_seed_applied,
+                neural_guidance_mode: Some(outcome.neural_guidance_mode.to_owned()),
+                bundle_digest: outcome.bundle_digest,
+                tier_applied: Some(create.tier),
+                encrypted_cuen: create.encrypted_cuen,
+                can_resume: false,
+                sealed_checkpoint_sha256: Some(ckp_sha),
+                sealed_champion_sha256: None,
+                elapsed_ms: DecimalU64(elapsed_ms),
+                region: region.to_owned(),
+                failure_message: Some(failure_msg.clone()),
+                eval_fallback_shards: (eval_fallback_shards > 0).then_some(eval_fallback_shards),
+            };
+            let failed_bytes = to_json_vec(&failed_progress)?;
+            self.cas.put_state_object(
+                &canonical_run_state_key(&create.tenant_id, run_str, "status.json")?,
+                &failed_bytes,
+            )?;
+            return Err(failure_msg);
         }
 
         let final_state = if outcome.paused {

@@ -320,6 +320,15 @@ impl MathPipeline {
         }
         Ok(source.into_bytes())
     }
+
+    /// Standalone C++17: the fitted pipeline, input contract scaling, and `predict_rows`.
+    pub fn export_cpp17(
+        &self,
+        missing_fills: Option<&[f64]>,
+        lower_clamp: Option<f64>,
+    ) -> Result<String> {
+        crate::fitted_cpp::emit_math_pipeline_cpp17(self, &self.genome, missing_fills, lower_clamp)
+    }
 }
 
 mod contract;

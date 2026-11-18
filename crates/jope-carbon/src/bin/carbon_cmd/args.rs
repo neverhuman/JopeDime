@@ -99,6 +99,31 @@ pub(crate) enum FitnessCommand {
     },
 }
 
+#[derive(Debug, Default, Clone, clap::Args)]
+pub(crate) struct HandleTargetArgs {
+    /// Optional named Carbon cloud (`dev` or `prod`); accepted for CLI flag symmetry and stateless `--run` operations.
+    #[arg(long)]
+    pub(crate) cloud: Option<String>,
+    /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+    #[arg(long)]
+    pub(crate) clouds_manifest: Option<String>,
+    /// Optional explicit endpoint URL overriding saved-handle or cloud discovery.
+    #[arg(long)]
+    pub(crate) endpoint: Option<String>,
+    /// Optional explicit tenant ID (used for stateless `carbon shred --run <ID>` when no local handle exists).
+    #[arg(long)]
+    pub(crate) tenant: Option<String>,
+    /// Accept `--free` for CLI flag symmetry across subcommands.
+    #[arg(long, conflicts_with_all = ["pro", "tier"])]
+    pub(crate) free: bool,
+    /// Accept `--pro` for CLI flag symmetry across subcommands.
+    #[arg(long, conflicts_with_all = ["free", "tier"])]
+    pub(crate) pro: bool,
+    /// Optional tier hint (`free`, `pro`, or `enterprise`) for CLI flag symmetry across subcommands.
+    #[arg(long, conflicts_with_all = ["free", "pro"])]
+    pub(crate) tier: Option<String>,
+}
+
 #[derive(Debug, clap::Args)]
 pub(crate) struct CommonTrainArgs {
     #[arg(long, value_delimiter = ',')]
@@ -264,6 +289,9 @@ pub(crate) enum Command {
         /// Skip post-deploy 16-vector red-team suite (not recommended outside offline diagnostics).
         #[arg(long)]
         skip_redteam: bool,
+        /// Optional comma-separated Base64 uncompressed P-256 public keys (`[active, previous]`, or `CLEAR`) synced to regional `edge-secrets` for asymmetric `ctk2.*` verification.
+        #[arg(long)]
+        app_auth_pubkeys_b64: Option<String>,
         /// Optional path to write the JSON deployment receipt.
         #[arg(long)]
         json_out: Option<PathBuf>,
@@ -499,6 +527,8 @@ pub(crate) enum Command {
         /// Emit pure JSON on stdout.
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Instant zero-network local dataset preflight: schema types, missingness, target stats, and AWS cost/time preview.
     Inspect {
@@ -547,6 +577,8 @@ pub(crate) enum Command {
         token_stdin: bool,
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Cryptographically shred remote S3/CAS objects (`DELETE /v1/carbon/runs/{id}`) AND zero-overwrite local key handles.
     Shred {
@@ -562,6 +594,8 @@ pub(crate) enum Command {
         token_stdin: bool,
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Inspect, validate, emit schema, or locally evaluate regression objectives (`--fitness`).
     Fitness {
@@ -591,6 +625,8 @@ pub(crate) enum Command {
         /// Emit pure JSON on stdout.
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Export the winning symbolic GP champion to standalone zero-dependency predictor source code (`POST /v1/carbon/runs/{id}/export`).
     Export {
@@ -615,6 +651,8 @@ pub(crate) enum Command {
         /// Emit structured JSON receipt on stdout instead of raw source text.
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Resume a paused multi-wave zero-knowledge Carbon run (`POST /v1/carbon/runs/{id}/resume`).
     Resume {
@@ -639,6 +677,8 @@ pub(crate) enum Command {
         /// Emit pure JSON on stdout.
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target_opts: HandleTargetArgs,
     },
     /// Check or install ECDSA-P256 cryptographically signed Carbon CLI updates (`SHA256SUMS.txt.sig`).
     #[command(visible_aliases = ["self-update", "update"])]
@@ -757,7 +797,7 @@ pub(crate) enum Command {
         #[arg(long)]
         markdown_out: Option<PathBuf>,
     },
-    /// Mint a signed `ctk1.*` capability token using AWS Secrets Manager (`--env`) or `CARBON_AUTH_SECRET_HEX`.
+    /// Mint a signed `ctk1.*` (Secrets Manager / HMAC) or asymmetric `ctk2.*` (`--signing-key-file`) capability token.
     TokenMint {
         #[arg(long)]
         tenant: String,
@@ -771,6 +811,24 @@ pub(crate) enum Command {
         environment: Option<String>,
         #[arg(long, default_value = "us-east-2")]
         region: String,
+        /// Optional PKCS#8 PEM or 64-char hex P-256 private key file to mint an asymmetric `ctk2.*` token offline (`ADR-0007`).
+        #[arg(long, conflicts_with = "environment")]
+        signing_key_file: Option<PathBuf>,
+        /// Optional issuer claim (`iss`, defaults to `app.veox.ai`) when minting `ctk2.*` tokens.
+        #[arg(long)]
+        issuer: Option<String>,
+        /// Optional key identifier (`kid`) embedded in `ctk2.*` claims.
+        #[arg(long)]
+        kid: Option<String>,
+    },
+    /// Generate an asymmetric NIST P-256 signing keypair for `app.veox.ai` per-user `ctk2.*` capability tokens (`ADR-0007`).
+    TokenKeygen {
+        /// Output path (`0600` PKCS#8 PEM) for the generated P-256 private key.
+        #[arg(long, short = 'o')]
+        out: PathBuf,
+        /// Optional key identifier (`kid`) echoed in the public key JSON receipt.
+        #[arg(long)]
+        kid: Option<String>,
     },
     /// Compute the deterministic Solo vs Hybrid Fan-Out execution plan for a dataset shape.
     Plan {
@@ -873,9 +931,9 @@ pub(crate) enum Command {
         /// Only write `--emit-csv` and exit without running a cloud job.
         #[arg(long, requires = "emit_csv")]
         csv_only: bool,
-        /// Named public Carbon cloud (`prod` or `dev`, defaults to `prod`).
-        #[arg(long, default_value = "prod")]
-        cloud: String,
+        /// Named public Carbon cloud (`prod` or `dev`; defaults to `prod` when logged in, otherwise `dev` sandbox).
+        #[arg(long)]
+        cloud: Option<String>,
         /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
         #[arg(long)]
         clouds_manifest: Option<String>,

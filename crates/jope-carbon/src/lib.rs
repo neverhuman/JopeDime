@@ -12,7 +12,7 @@
 //!
 //! [ADR-0007]: ../../docs/adr/ADR-0007-carbon-lambda-cells.md
 
-/// Semantic release version of Carbon (`1.2.1`) embedded at compile time (`build.rs`).
+/// Semantic release version of Carbon (`1.3.0`) embedded at compile time (`build.rs`).
 pub const CARBON_PKG_VERSION: &str = env!("CARBON_SEMVER");
 /// Full source Git commit SHA embedded at compile time (`build.rs`).
 pub const CARBON_GIT_SHA: &str = env!("CARBON_GIT_SHA");
@@ -20,9 +20,9 @@ pub const CARBON_GIT_SHA: &str = env!("CARBON_GIT_SHA");
 pub const CARBON_BUILD_TARGET: &str = env!("CARBON_BUILD_TARGET");
 /// Cargo profile (`carbon-cli`, `dist`, `release`, `debug`) embedded at compile time.
 pub const CARBON_BUILD_PROFILE: &str = env!("CARBON_BUILD_PROFILE");
-/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.2.1`).
+/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.3.0`).
 pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
-/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.2.0`).
+/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.2.1`).
 pub const CARBON_PUBLISHED_INSTALLER_TAG: &str = env!("CARBON_PUBLISHED_INSTALLER_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
@@ -117,15 +117,17 @@ pub use cli::{
         CarbonSavedModelHandle, CarbonUpgradeReceipt, CARBON_MODEL_HANDLE_SCHEMA,
     },
     redteam::{
-        execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,
-        CarbonRedTeamVectorResult,
+        execute_carbon_redteam_suite, execute_carbon_redteam_suite_with_tokens,
+        render_redteam_markdown, CarbonRedTeamSuiteReport, CarbonRedTeamVectorResult,
     },
     runner::{
-        execute_carbon_cli_benchmark, execute_carbon_cli_benchmark_with_token,
-        execute_carbon_cli_run, execute_carbon_cli_run_with_ux, generate_nonlinear_benchmark_rows,
-        load_numeric_csv, render_benchmark_markdown, render_pretty_run_scorecard,
-        resolve_objective_argument, CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport,
-        CarbonCliRunOptions, CarbonCliRunReceipt, CarbonCliRunUxConfig,
+        compute_canonical_holdout_rows_sha256, execute_carbon_cli_benchmark,
+        execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run,
+        execute_carbon_cli_run_with_ux, generate_nonlinear_benchmark_rows, load_numeric_csv,
+        render_benchmark_markdown, render_pretty_run_scorecard, resolve_objective_argument,
+        CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport, CarbonBinaryHoldoutSummary,
+        CarbonCliRunOptions, CarbonCliRunReceipt, CarbonCliRunUxConfig, CARBON_FIT_RECEIPT_SCHEMA,
+        CARBON_FIT_RECEIPT_SCHEMA_VERSION,
     },
     tabular::{
         inspect_tabular_file, inspect_tabular_file_with_tier, load_delimited_table,
@@ -137,6 +139,8 @@ pub use cli::{
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};
+#[cfg(feature = "edge")]
+pub use jope_envelope as envelope;
 #[cfg(feature = "serve")]
 pub use modes::serve::{
     CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEnterpriseServerHandle,
@@ -169,7 +173,8 @@ pub use modes::{
 };
 pub use role::{CarbonEffortTier, CarbonProductTier, CarbonRole};
 pub use security::auth::{
-    validate_strict_run_id, validate_strict_tenant_id, MAX_MINT_TOKEN_TTL_SECS,
+    validate_strict_run_id, validate_strict_tenant_id, DEFAULT_MAX_CTK2_TTL_SECS,
+    MAX_MINT_TOKEN_TTL_SECS,
 };
 #[cfg(feature = "edge")]
 pub use security::{
