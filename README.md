@@ -473,7 +473,7 @@ limits and client examples](docs/program-source-stream.md).
 | Rust tests | tracked in `docs/parity/test-inventory.json` across 39 packages; a listing, not a run <sup>5</sup> |
 | Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) <sup>5</sup> |
 | CI | 18 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 26 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 36 lanes <sup>7</sup> |
+| Coverage map | explicit item-to-lane ledger in `deploy/ci/coverage.json` over 37 lanes <sup>7</sup> |
 | Capability matrix | 849 rows: 353 moved, 86 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | exception register in `PYTHON_EXCEPTIONS.md` and migration plan in `PY_TO_RUST_PLAN.md` <sup>10</sup> |
