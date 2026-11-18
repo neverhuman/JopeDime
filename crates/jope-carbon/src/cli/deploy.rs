@@ -229,6 +229,7 @@ pub(crate) struct VaultSecretBinding {
     edge_version_id: String,
     pub(crate) engine_kek_pubkey_b64: String,
     pub(crate) auth_secret_hex: Zeroizing<String>,
+    pub(crate) app_auth_pubkeys_b64: Option<String>,
 }
 
 /// Expand region preset tokens (`canary`, `wave1`, `all-17`) or validate explicit region names.
@@ -445,6 +446,16 @@ pub fn verify_arm64_lambda_binary(
 /// Synthesize a release-bound CloudFormation template JSON by rewriting immutable
 /// `{Edge,Engine,Eval}VersionCurrent` logical IDs to `{Edge,Engine,Eval}Version<Suffix>`.
 pub fn synthesize_cell_template_for_release(release_id: &str) -> Result<String, String> {
+    synthesize_cell_template_for_release_with_edge_tag(release_id, None)
+}
+
+/// Synthesize a release-bound CloudFormation template JSON with an optional 8-char alphanumeric
+/// `edge_cfg_tag` appended to `EdgeVersion` so updating `edge-secrets` / `AppAuthPubkeysB64` on an
+/// existing `release_id` publishes a fresh immutable `AWS::Lambda::Version` and recycles `:live`.
+pub fn synthesize_cell_template_for_release_with_edge_tag(
+    release_id: &str,
+    edge_cfg_tag: Option<&str>,
+) -> Result<String, String> {
     let suffix: String = release_id
         .chars()
         .filter(|c| c.is_ascii_alphanumeric())
@@ -455,11 +466,17 @@ pub fn synthesize_cell_template_for_release(release_id: &str) -> Result<String, 
             "release_id '{release_id}' must contain at least 6 ASCII alphanumeric characters"
         ));
     }
+    let edge_extra: String = edge_cfg_tag
+        .unwrap_or("")
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(8)
+        .collect();
 
     let mut root: serde_json::Value = serde_json::from_str(CLOUDFORMATION_CELL_TEMPLATE_JSON)
         .err_ctx("parse embedded cloudformation-cell.json")?;
 
-    let edge_ver_id = format!("EdgeVersion{suffix}");
+    let edge_ver_id = format!("EdgeVersion{suffix}{edge_extra}");
     let engine_ver_id = format!("EngineVersion{suffix}");
     let eval_ver_id = format!("EvalVersion{suffix}");
 
@@ -1555,6 +1572,7 @@ pub(crate) fn ensure_cell_secrets_in_vault_with_pubkeys(
             edge_version_id: edge_vid,
             engine_kek_pubkey_b64: parsed_doc.engine_kek_pubkey_b64,
             auth_secret_hex: Zeroizing::new(parsed_doc.auth_secret_hex),
+            app_auth_pubkeys_b64: parsed_doc.app_auth_pubkeys_b64,
         });
     }
 
@@ -1578,6 +1596,7 @@ pub(crate) fn ensure_cell_secrets_in_vault_with_pubkeys(
             edge_version_id: String::new(),
             engine_kek_pubkey_b64: pubkey_b64,
             auth_secret_hex: auth_hex,
+            app_auth_pubkeys_b64: desired_app_pubkeys.flatten(),
         });
     }
 
@@ -1630,6 +1649,7 @@ pub(crate) fn ensure_cell_secrets_in_vault_with_pubkeys(
         edge_version_id: edge_vid,
         engine_kek_pubkey_b64: pubkey_b64,
         auth_secret_hex: auth_hex,
+        app_auth_pubkeys_b64: parsed_doc.app_auth_pubkeys_b64,
     })
 }
 
@@ -2155,7 +2175,20 @@ fn deploy_single_region(
     };
 
     // 4. Synthesize release-bound CloudFormation template inside a private 0700 stage dir
-    let synthesized_json = synthesize_cell_template_for_release(&manifest.release_id)?;
+    let app_pubkeys_param = vault.app_auth_pubkeys_b64.clone().unwrap_or_default();
+    let edge_cfg_tag = if !app_pubkeys_param.is_empty() || app_auth_pubkeys_override.is_some() {
+        let mut h = Sha256::new();
+        h.update(vault.edge_version_id.as_bytes());
+        h.update(b":");
+        h.update(app_pubkeys_param.as_bytes());
+        Some(hex::encode(&h.finalize()[..4]))
+    } else {
+        None
+    };
+    let synthesized_json = synthesize_cell_template_for_release_with_edge_tag(
+        &manifest.release_id,
+        edge_cfg_tag.as_deref(),
+    )?;
     struct SynthStageGuard(PathBuf);
     impl Drop for SynthStageGuard {
         fn drop(&mut self) {
@@ -2288,6 +2321,7 @@ fn deploy_single_region(
             "ParameterKey=EngineKekPubkeyB64,ParameterValue={}",
             vault.engine_kek_pubkey_b64
         ),
+        format!("ParameterKey=AppAuthPubkeysB64,ParameterValue={app_pubkeys_param}"),
         format!("ParameterKey=CasExpireDays,ParameterValue={cas_expire_days}"),
         format!("ParameterKey=LogRetentionDays,ParameterValue={log_retention_days}"),
     ];

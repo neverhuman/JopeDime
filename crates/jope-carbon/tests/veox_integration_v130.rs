@@ -850,3 +850,31 @@ fn e2e_binary_categorical_targets_yes_no_true_false_inspect_fit_predict_export_a
 
     emu.shutdown();
 }
+
+#[test]
+fn synthesize_template_edge_tag_and_pinned_veox_pubkeys_validate_cleanly() {
+    let base_tpl =
+        jope_carbon::cli::deploy::synthesize_cell_template_for_release("1b9f6396cb3ff81b")
+            .expect("base template");
+    assert!(base_tpl.contains("\"EdgeVersion1b9f6396cb3ff81b\""));
+
+    let tagged_tpl = jope_carbon::cli::deploy::synthesize_cell_template_for_release_with_edge_tag(
+        "1b9f6396cb3ff81b",
+        Some("a1b2c3d4"),
+    )
+    .expect("tagged template");
+    assert!(tagged_tpl.contains("\"EdgeVersion1b9f6396cb3ff81ba1b2c3d4\""));
+    assert!(tagged_tpl.contains("\"EngineVersion1b9f6396cb3ff81b\""));
+    assert!(tagged_tpl.contains("\"EvalVersion1b9f6396cb3ff81b\""));
+
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for rel in [
+        "deploy/carbon/pubkeys/veox-app-dev.pub",
+        "deploy/carbon/pubkeys/veox-app-prod.pub",
+    ] {
+        let raw = fs::read_to_string(repo_root.join(rel)).expect("read pinned veox pubkey");
+        let pub_b64 = raw.trim();
+        let decoded = envelope::decode_p256_pubkey_b64(pub_b64).expect("valid 65-byte SEC1 pubkey");
+        assert_eq!(decoded[0], 0x04);
+    }
+}
