@@ -457,7 +457,7 @@
         "Runtime": "provided.al2023",
         "Architectures": ["arm64"],
         "Handler": "bootstrap",
-        "MemorySize": 1769,
+        "MemorySize": 3538,
         "Timeout": 120,
         "EphemeralStorage": {"Size": 512},
         "ReservedConcurrentExecutions": {
@@ -510,7 +510,7 @@
         "Runtime": "provided.al2023",
         "Architectures": ["arm64"],
         "Handler": "bootstrap",
-        "MemorySize": 3008,
+        "MemorySize": 3538,
         "Timeout": 900,
         "EphemeralStorage": {"Size": 1024},
         "ReservedConcurrentExecutions": {
@@ -532,7 +532,7 @@
             "CARBON_REGION": {"Ref": "AWS::Region"},
             "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
             "CARBON_EVAL_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-eval:live"},
-            "CARBON_MAX_EVAL_SHARDS": {"Fn::If": ["IsProd", "4", "2"]},
+            "CARBON_MAX_EVAL_SHARDS": {"Fn::If": ["IsProd", "24", "16"]},
             "CARBON_MODEL_R882_DIR": "/opt/jope-models/r882",
             "CARBON_SECRETS_ARN": {"Ref": "SecretsArn"},
             "CARBON_SECRETS_VERSION_ID": {"Ref": "SecretsVersionId"},
@@ -569,7 +569,7 @@
         "Runtime": "provided.al2023",
         "Architectures": ["arm64"],
         "Handler": "bootstrap",
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Timeout": 300,
         "EphemeralStorage": {"Size": 512},
         "ReservedConcurrentExecutions": {

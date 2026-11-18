@@ -198,7 +198,104 @@ impl std::fmt::Debug for CarbonThinClient {
     }
 }
 
+fn probe_single_endpoint(
+    ag: &ureq::Agent,
+    base_url: String,
+    expected_kek: Option<String>,
+) -> Result<CarbonProbedEndpoint, String> {
+    let max_attempts = if is_loopback_endpoint_url(&base_url) {
+        1usize
+    } else {
+        3usize
+    };
+    let mut last_err = String::new();
+    for attempt in 0..max_attempts {
+        if attempt > 0 {
+            let backoff_ms = compute_backoff_with_jitter_ms(attempt - 1, 150, 800);
+            thread::sleep(Duration::from_millis(backoff_ms));
+        }
+        let t0 = Instant::now();
+        let (code, buf) = match send_raw_edge_http_with_agent(
+            ag,
+            &base_url,
+            "GET",
+            "/v1/carbon/ping",
+            &[("x-carbon-client-version", crate::CARBON_PKG_VERSION)],
+            None,
+        ) {
+            Ok(pair) => pair,
+            Err(e) => {
+                last_err = format!("{base_url}: {e}");
+                continue;
+            }
+        };
+        if code == 429 || code >= 500 {
+            last_err = format!("{base_url}: /v1/carbon/ping returned HTTP {code}");
+            continue;
+        }
+        if code != 200 {
+            return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
+        }
+        let ping = decode_wire_ping_response(&buf).map_err(|e| format!("{base_url}: {e}"))?;
+        if !ping.healthy {
+            last_err = format!("{base_url}: reported unhealthy");
+            continue;
+        }
+        if let Some(ref pin_b64) = expected_kek {
+            if ping.engine_kek_pubkey_b64.as_deref() != Some(pin_b64.as_str()) {
+                return Err(format!(
+                    "{base_url}: engine_kek_pubkey_b64 mismatch against pinned manifest"
+                ));
+            }
+        }
+        return Ok(CarbonProbedEndpoint {
+            base_url,
+            region: ping.region,
+            rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+            enterprise_self_hosted: ping.enterprise_self_hosted,
+            engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
+        });
+    }
+    Err(last_err)
+}
+
 impl CarbonThinClient {
+    /// Construct a zero-knowledge `CarbonThinClient` directly from a verified model handle's
+    /// pinned `endpoint` and `engine_kek_pubkey_b64` with zero `/v1/carbon/ping` round-trip.
+    pub fn from_pinned_handle(endpoint: String, kek_pubkey_b64: &str) -> Result<Self, String> {
+        let trimmed = endpoint.trim().trim_end_matches('/').to_owned();
+        if trimmed.is_empty() {
+            return Err("CarbonThinClient requires at least one endpoint URL".to_owned());
+        }
+        validate_endpoint_transport(&trimmed)?;
+        let kek_trimmed = kek_pubkey_b64.trim().to_owned();
+        let decoded = decode_p256_pubkey_b64(&kek_trimmed).map_err(crate::error::err_to_string)?;
+        let mut endpoint_keks = BTreeMap::new();
+        endpoint_keks.insert(trimmed.clone(), decoded);
+        let mut pinned_keks = BTreeMap::new();
+        pinned_keks.insert(trimmed.clone(), kek_trimmed);
+        Ok(Self {
+            endpoints: vec![trimmed],
+            active_idx: Arc::new(AtomicUsize::new(0)),
+            enterprise_self_hosted: false,
+            allow_unencrypted_enterprise: false,
+            endpoint_keks: Arc::new(Mutex::new(endpoint_keks)),
+            pinned_keks,
+            capability_token: None,
+            uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
+            uploaded_ids: Arc::new(Mutex::new(BTreeMap::new())),
+            run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
+            run_upload_keys: Arc::new(Mutex::new(BTreeMap::new())),
+            cached_server_version: Arc::new(Mutex::new(None)),
+            last_release_id: Arc::new(Mutex::new(None)),
+            poll_requests: Arc::new(AtomicU32::new(0)),
+            http_request_bytes: Arc::new(AtomicUsize::new(0)),
+            http_response_bytes: Arc::new(AtomicUsize::new(0)),
+            progress_observer: None,
+            agent: crate::tls::carbon_https_agent().clone(),
+        })
+    }
+
     /// Probe `/v1/carbon/ping` across all candidates in parallel and select a lowest-RTT healthy cell.
     pub fn connect_fastest(
         candidate_urls: Vec<String>,
@@ -212,6 +309,24 @@ impl CarbonThinClient {
     pub fn connect_fastest_pinned(
         candidate_urls: Vec<String>,
         pinned_keks: &BTreeMap<String, String>,
+    ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
+        Self::connect_candidates(candidate_urls, pinned_keks, false)
+    }
+
+    /// Hedged regional `/v1/carbon/ping` race: returns within a `<= 35 ms` grace window after the
+    /// fastest healthy KEK-verified cell responds (instead of waiting on distant continents),
+    /// while preserving all remaining candidate URLs for automatic regional failover.
+    pub fn connect_fastest_hedged(
+        candidate_urls: Vec<String>,
+        pinned_keks: &BTreeMap<String, String>,
+    ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
+        Self::connect_candidates(candidate_urls, pinned_keks, true)
+    }
+
+    fn connect_candidates(
+        candidate_urls: Vec<String>,
+        pinned_keks: &BTreeMap<String, String>,
+        early_return: bool,
     ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
         let mut deduped = Vec::new();
         for raw_url in candidate_urls {
@@ -236,78 +351,65 @@ impl CarbonThinClient {
 
         let agent = crate::tls::carbon_https_agent().clone();
         let probe_agent = crate::tls::carbon_probe_https_agent().clone();
-        let probe_outcomes: Vec<Result<CarbonProbedEndpoint, String>> = thread::scope(|s| {
-            let mut handles = Vec::with_capacity(deduped.len());
+        let use_grace_race = early_return
+            && deduped.len() > 1
+            && deduped.iter().all(|u| !is_loopback_endpoint_url(u));
+        let probe_outcomes: Vec<Result<CarbonProbedEndpoint, String>> = if use_grace_race {
+            let (tx, rx) = std::sync::mpsc::channel();
             for base in &deduped {
                 let base_url = base.clone();
                 let ag = probe_agent.clone();
                 let expected_kek = normalized_pins.get(&base_url).cloned();
-                handles.push(s.spawn(move || {
-                    let max_attempts = if is_loopback_endpoint_url(&base_url) {
-                        1usize
-                    } else {
-                        3usize
-                    };
-                    let mut last_err = String::new();
-                    for attempt in 0..max_attempts {
-                        if attempt > 0 {
-                            let backoff_ms = compute_backoff_with_jitter_ms(attempt - 1, 150, 800);
-                            thread::sleep(Duration::from_millis(backoff_ms));
-                        }
-                        let t0 = Instant::now();
-                        let (code, buf) = match send_raw_edge_http_with_agent(
-                            &ag,
-                            &base_url,
-                            "GET",
-                            "/v1/carbon/ping",
-                            &[("x-carbon-client-version", crate::CARBON_PKG_VERSION)],
-                            None,
-                        ) {
-                            Ok(pair) => pair,
-                            Err(e) => {
-                                last_err = format!("{base_url}: {e}");
-                                continue;
-                            }
-                        };
-                        if code == 429 || code >= 500 {
-                            last_err = format!("{base_url}: /v1/carbon/ping returned HTTP {code}");
-                            continue;
-                        }
-                        if code != 200 {
-                            return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
-                        }
-                        let ping = decode_wire_ping_response(&buf)
-                            .map_err(|e| format!("{base_url}: {e}"))?;
-                        if !ping.healthy {
-                            last_err = format!("{base_url}: reported unhealthy");
-                            continue;
-                        }
-                        if let Some(ref pin_b64) = expected_kek {
-                            if ping.engine_kek_pubkey_b64.as_deref() != Some(pin_b64.as_str()) {
-                                return Err(format!(
-                                    "{base_url}: engine_kek_pubkey_b64 mismatch against pinned manifest"
-                                ));
-                            }
-                        }
-                        return Ok(CarbonProbedEndpoint {
-                            base_url,
-                            region: ping.region,
-                            rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
-                            enterprise_self_hosted: ping.enterprise_self_hosted,
-                            engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
-                        });
-                    }
-                    Err(last_err)
-                }));
+                let tx_i = tx.clone();
+                thread::spawn(move || {
+                    let _ = tx_i.send(probe_single_endpoint(&ag, base_url, expected_kek));
+                });
             }
-            handles
-                .into_iter()
-                .map(|h| {
-                    h.join()
-                        .unwrap_or_else(|_| Err("regional ping probe thread panicked".to_owned()))
-                })
-                .collect()
-        });
+            drop(tx);
+            let mut collected = Vec::with_capacity(deduped.len());
+            let mut grace_deadline: Option<Instant> = None;
+            for _ in 0..deduped.len() {
+                let next_msg = if let Some(dl) = grace_deadline {
+                    let rem = dl.saturating_duration_since(Instant::now());
+                    if rem.is_zero() {
+                        break;
+                    }
+                    rx.recv_timeout(rem).ok()
+                } else {
+                    rx.recv().ok()
+                };
+                let Some(outcome) = next_msg else {
+                    break;
+                };
+                if grace_deadline.is_none() {
+                    if let Ok(ref probed) = outcome {
+                        let grace_ms = (probed.rtt_ms * 0.35).clamp(15.0, 35.0) as u64;
+                        grace_deadline = Some(Instant::now() + Duration::from_millis(grace_ms));
+                    }
+                }
+                collected.push(outcome);
+            }
+            collected
+        } else {
+            thread::scope(|s| {
+                let mut handles = Vec::with_capacity(deduped.len());
+                for base in &deduped {
+                    let base_url = base.clone();
+                    let ag = probe_agent.clone();
+                    let expected_kek = normalized_pins.get(&base_url).cloned();
+                    handles
+                        .push(s.spawn(move || probe_single_endpoint(&ag, base_url, expected_kek)));
+                }
+                handles
+                    .into_iter()
+                    .map(|h| {
+                        h.join().unwrap_or_else(|_| {
+                            Err("regional ping probe thread panicked".to_owned())
+                        })
+                    })
+                    .collect()
+            })
+        };
 
         let mut healthy = Vec::new();
         let mut errors = Vec::new();
@@ -353,7 +455,13 @@ impl CarbonThinClient {
             }
         }
         let enterprise_self_hosted = healthy[0].enterprise_self_hosted;
-        let ordered_endpoints: Vec<String> = healthy.iter().map(|h| h.base_url.clone()).collect();
+        let mut ordered_endpoints: Vec<String> =
+            healthy.iter().map(|h| h.base_url.clone()).collect();
+        for fallback_ep in &deduped {
+            if !ordered_endpoints.contains(fallback_ep) {
+                ordered_endpoints.push(fallback_ep.clone());
+            }
+        }
         Ok((
             Self {
                 endpoints: ordered_endpoints,
@@ -931,8 +1039,17 @@ impl CarbonThinClient {
             prep_resp.engine_kek_pubkey_b64.as_deref(),
         )?;
 
-        self.put_presigned_bytes(&prep_resp.fit_target.url, fit_wire.as_ref())?;
-        self.put_presigned_bytes(&prep_resp.holdout_target.url, holdout_wire.as_ref())?;
+        thread::scope(|s| -> Result<(), String> {
+            let fit_put =
+                s.spawn(|| self.put_presigned_bytes(&prep_resp.fit_target.url, fit_wire.as_ref()));
+            let hold_res =
+                self.put_presigned_bytes(&prep_resp.holdout_target.url, holdout_wire.as_ref());
+            let fit_res = fit_put
+                .join()
+                .map_err(|_| "fit S3 PUT worker thread panicked".to_owned())?;
+            fit_res?;
+            hold_res
+        })?;
         let upload_key = format!("{tenant_id}:{pt_fit_sha}");
         if let Ok(mut id_guard) = self.uploaded_ids.lock() {
             while id_guard.len() >= 128 {
@@ -968,9 +1085,10 @@ impl CarbonThinClient {
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let upload_key = format!("{tenant_id}:{pt_fit_sha}");
         let lm_wire = prepared.landmark_bundle.to_wire_bytes();
-        // Legacy v1.0.0 gateways do not expose `/v1/carbon/version` and reject `upload_id` via
-        // `#[serde(deny_unknown_fields)]`; send `upload_id` only when `/v1/carbon/version` is present.
-        let v1_1_wire = self.fetch_server_version()?.is_some();
+        // Legacy v1.0.0 gateways expose neither `x-carbon-release-id` nor `/v1/carbon/version`
+        // and reject `upload_id` via `#[serde(deny_unknown_fields)]`.
+        let v1_1_wire =
+            self.active_release_id().is_some() || self.fetch_server_version()?.is_some();
 
         let req = if let Some(kek_pub) = self.active_kek_pubkey() {
             let secret = self

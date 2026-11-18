@@ -683,7 +683,7 @@ fn compute_holdout_feature_drivers(
     if p == 0
         || p > 48
         || fit_x.len() < 12
-        || fit_x.len() > 2_500
+        || fit_x.len() > 25_000
         || holdout_x.len() < 8
         || fit_x.len() != fit_y.len()
         || holdout_x.len() != holdout_y.len()
@@ -702,9 +702,14 @@ fn compute_holdout_feature_drivers(
     let Ok(x_ho) = jope_comparators::FeatureMatrix::new(&ho_flat, holdout_x.len(), p) else {
         return Vec::new();
     };
+    let driver_cid = if fit_x.len() <= 3_500 {
+        jope_comparators::ComparatorId::RandomForest
+    } else {
+        jope_comparators::ComparatorId::LightgbmStyle
+    };
     let deadline = jope_comparators::Deadline::after(Duration::from_millis(250));
     let Ok(rf) = jope_comparators::fit_comparator(
-        jope_comparators::ComparatorId::RandomForest,
+        driver_cid,
         jope_comparators::ComparatorTier::Medium,
         x_tr,
         fit_y,
@@ -781,6 +786,8 @@ fn compute_objective_run_comparators(
     let p = fit_x.first().map(Vec::len).unwrap_or(0);
     if p == 0
         || fit_x.len() < 8
+        || fit_x.len() > 25_000
+        || fit_x.len() * p > 1_500_000
         || holdout_x.is_empty()
         || fit_x.len() != fit_y.len()
         || holdout_x.len() != holdout_y.len()
@@ -832,11 +839,17 @@ fn compute_objective_run_comparators(
             }
         }
     }
-    for cid in [
-        jope_comparators::ComparatorId::RandomForest,
-        jope_comparators::ComparatorId::LightgbmStyle,
-        jope_comparators::ComparatorId::AutogluonStyle,
-    ] {
+    let subset: &[jope_comparators::ComparatorId] =
+        if fit_x.len() <= 3_500 && fit_x.len() * p <= 500_000 {
+            &[
+                jope_comparators::ComparatorId::RandomForest,
+                jope_comparators::ComparatorId::LightgbmStyle,
+                jope_comparators::ComparatorId::AutogluonStyle,
+            ]
+        } else {
+            &[jope_comparators::ComparatorId::LightgbmStyle]
+        };
+    for &cid in subset {
         let t0 = Instant::now();
         let desc = cid.descriptor();
         let deadline = jope_comparators::Deadline::after(Duration::from_millis(300));
@@ -1299,6 +1312,53 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
     execute_carbon_cli_run_with_ux(opts, &CarbonCliRunUxConfig::default())
 }
 
+type LocalFitDiagnostics = (
+    Vec<CarbonComparatorScore>,
+    Option<HoldoutBaselineStats>,
+    Vec<CarbonFeatureImportanceEntry>,
+);
+
+#[allow(clippy::too_many_arguments)]
+fn compute_local_fit_diagnostics(
+    objective_spec: &ObjectiveSpec,
+    is_plain_rmse: bool,
+    feature_names: &[String],
+    fit_x: &[Vec<f64>],
+    fit_y: &[f64],
+    holdout_x: &[Vec<f64>],
+    holdout_y: &[f64],
+    holdout_aux_cols: &BTreeMap<String, Vec<f64>>,
+    seed: u64,
+) -> LocalFitDiagnostics {
+    let comparator_baselines = if fit_x.len() <= 25_000 {
+        compute_objective_run_comparators(
+            objective_spec,
+            is_plain_rmse,
+            fit_x,
+            fit_y,
+            holdout_x,
+            holdout_y,
+            holdout_aux_cols,
+            seed,
+        )
+    } else {
+        Vec::new()
+    };
+    let precomputed_ridge = if is_plain_rmse {
+        comparator_baselines
+            .iter()
+            .find(|c| c.key == "ridge_l2")
+            .map(|c| (c.rmse, c.r2))
+    } else {
+        None
+    };
+    let baseline_stats =
+        compute_holdout_baselines(fit_x, fit_y, holdout_x, holdout_y, precomputed_ridge);
+    let feature_importances =
+        compute_holdout_feature_drivers(feature_names, fit_x, fit_y, holdout_x, holdout_y, seed);
+    (comparator_baselines, baseline_stats, feature_importances)
+}
+
 /// Execute a complete `carbon run` lifecycle with optional pre-probed KEK-pinned client reuse,
 /// `--target` ergonomics, and interactive `stderr` wave/summary telemetry.
 pub fn execute_carbon_cli_run_with_ux(
@@ -1345,38 +1405,6 @@ pub fn execute_carbon_cli_run_with_ux(
         eval_holdout_count,
         sample_count,
     } = prepare_from_options(opts, ux, &objective_spec)?;
-    let comparator_baselines = if fit_x.len() <= 2_500 {
-        compute_objective_run_comparators(
-            &objective_spec,
-            is_plain_rmse,
-            &fit_x,
-            &fit_y,
-            &holdout_x,
-            &holdout_y,
-            &holdout_aux_cols,
-            opts.seed,
-        )
-    } else {
-        Vec::new()
-    };
-    let precomputed_ridge = if is_plain_rmse {
-        comparator_baselines
-            .iter()
-            .find(|c| c.key == "ridge_l2")
-            .map(|c| (c.rmse, c.r2))
-    } else {
-        None
-    };
-    let baseline_stats =
-        compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y, precomputed_ridge);
-    let feature_importances = compute_holdout_feature_drivers(
-        &prepared.feature_names,
-        &fit_x,
-        &fit_y,
-        &holdout_x,
-        &holdout_y,
-        opts.seed,
-    );
     let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
     let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
     let split_mode_applied = prepared
@@ -1389,8 +1417,22 @@ pub fn execute_carbon_cli_run_with_ux(
         &holdout_y,
     );
     let holdout_jmat_sha256 = hex::encode(prepared.artifacts.holdout_sha256);
+    let init_diag = || {
+        compute_local_fit_diagnostics(
+            &objective_spec,
+            is_plain_rmse,
+            &prepared.feature_names,
+            &fit_x,
+            &fit_y,
+            &holdout_x,
+            &holdout_y,
+            &holdout_aux_cols,
+            opts.seed,
+        )
+    };
 
     if ux.dry_run {
+        let (comparator_baselines, baseline_stats, feature_importances) = init_diag();
         let ptier = match opts.tier {
             CarbonTierWire::Free => CarbonProductTier::Free,
             CarbonTierWire::Pro => CarbonProductTier::Pro,
@@ -1510,347 +1552,392 @@ pub fn execute_carbon_cli_run_with_ux(
         });
     }
 
-    let (mut client, best_probe) = if let Some((pre_client, pre_probe)) = &ux.pre_probed {
-        pre_client.reset_telemetry_counters();
-        (pre_client.clone(), pre_probe.clone())
-    } else {
-        let (c, probed) =
-            CarbonThinClient::connect_fastest_pinned(opts.endpoints.clone(), &ux.pinned_keks)?;
-        let first = probed
-            .into_iter()
-            .next()
-            .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
-        (c, first)
-    };
-    if ux.allow_unencrypted_enterprise {
-        client = client.with_allow_unencrypted_enterprise(true);
-    }
-    if ux.show_stderr_progress {
-        eprintln!(
-            "[carbon] Connected to {} ({:.1} ms RTT, zero-knowledge KEK={})",
-            best_probe.region,
-            best_probe.rtt_ms,
-            best_probe.engine_kek_pubkey_b64.is_some()
+    let diag_cell: std::sync::OnceLock<LocalFitDiagnostics> = std::sync::OnceLock::new();
+    let (
+        client,
+        best_probe,
+        effective_tenant,
+        minted_ephemeral_token,
+        ds_id,
+        run_id_str,
+        mut shred_guard,
+        upload_ms,
+        paused_mid_run,
+        engine_search_invocations,
+        progress,
+        search_ms,
+        pred_resp,
+        predict_ms,
+        shredded_after_run,
+    ) = thread::scope(|s| -> Result<_, String> {
+        let diag_ref = &diag_cell;
+        let init_ref = &init_diag;
+        s.spawn(move || {
+            let _ = diag_ref.get_or_init(init_ref);
+        });
+
+        let (mut client, best_probe) = if let Some((pre_client, pre_probe)) = &ux.pre_probed {
+            pre_client.reset_telemetry_counters();
+            (pre_client.clone(), pre_probe.clone())
+        } else {
+            let (c, probed) =
+                CarbonThinClient::connect_fastest_hedged(opts.endpoints.clone(), &ux.pinned_keks)?;
+            let first = probed
+                .into_iter()
+                .next()
+                .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
+            (c, first)
+        };
+        if ux.allow_unencrypted_enterprise {
+            client = client.with_allow_unencrypted_enterprise(true);
+        }
+        if ux.show_stderr_progress {
+            eprintln!(
+                "[carbon] Connected to {} ({:.1} ms RTT, zero-knowledge KEK={})",
+                best_probe.region,
+                best_probe.rtt_ms,
+                best_probe.engine_kek_pubkey_b64.is_some()
+            );
+        }
+
+        let mut effective_tenant = opts.tenant_id.clone();
+        let mut minted_ephemeral_token = false;
+        if let Some(tok) = &opts.auth_token {
+            client = client.with_capability_token(tok.clone());
+        } else if !client.enterprise_self_hosted()
+            && opts.tier == CarbonTierWire::Free
+            && std::env::var("CARBON_AUTH_TOKEN").is_err()
+            && std::env::var("CARBON_AUTH_SECRET_HEX").is_err()
+        {
+            let anon = client.authenticate_anonymous()?;
+            effective_tenant = anon.tenant_id;
+            minted_ephemeral_token = true;
+        }
+
+        if ux.show_stderr_progress {
+            eprintln!(
+                "[carbon] Prepared {} rows ({} fit / {} holdout, {} features, target='{}') in {:.1} ms",
+                total_rows,
+                prepared.fit_rows,
+                prepared.holdout_rows,
+                prepared.feature_names.len(),
+                prepared.target_name,
+                prep_ms
+            );
+        }
+
+        let (run_id, ds_id) = mint_run_and_dataset_ids()?;
+        let run_id_str = run_id.to_string();
+
+        let t_upload = Instant::now();
+        let prep_upload = client.upload_prepared(&effective_tenant, opts.tier, &prepared)?;
+        let upload_ms = t_upload.elapsed().as_secs_f64() * 1_000.0;
+        if ux.show_stderr_progress {
+            let total_kib = ((prep_upload.fit_target.max_bytes.0
+                + prep_upload.holdout_target.max_bytes.0) as f64)
+                / 1024.0;
+            eprintln!(
+                "[carbon] Encrypted & uploaded JMAT blobs ({total_kib:.1} KiB) in {upload_ms:.1} ms"
+            );
+        }
+
+        let mut shred_guard = ShredOnDropGuard::new(
+            client.clone(),
+            effective_tenant.clone(),
+            run_id_str.clone(),
+            Some(prep_upload.upload_id.clone()),
+            Some(prep_upload.fit_target.sha256.clone()),
+            Some(prep_upload.holdout_target.sha256.clone()),
+            true,
         );
-    }
 
-    let mut effective_tenant = opts.tenant_id.clone();
-    let mut minted_ephemeral_token = false;
-    if let Some(tok) = &opts.auth_token {
-        client = client.with_capability_token(tok.clone());
-    } else if !client.enterprise_self_hosted()
-        && opts.tier == CarbonTierWire::Free
-        && std::env::var("CARBON_AUTH_TOKEN").is_err()
-        && std::env::var("CARBON_AUTH_SECRET_HEX").is_err()
-    {
-        let anon = client.authenticate_anonymous()?;
-        effective_tenant = anon.tenant_id;
-        minted_ephemeral_token = true;
-    }
-
-    if ux.show_stderr_progress {
-        eprintln!(
-            "[carbon] Prepared {} rows ({} fit / {} holdout, {} features, target='{}') in {:.1} ms",
-            total_rows,
-            prepared.fit_rows,
-            prepared.holdout_rows,
-            prepared.feature_names.len(),
-            prepared.target_name,
-            prep_ms
-        );
-    }
-
-    let (run_id, ds_id) = mint_run_and_dataset_ids()?;
-    let run_id_str = run_id.to_string();
-
-    let t_upload = Instant::now();
-    let prep_upload = client.upload_prepared(&effective_tenant, opts.tier, &prepared)?;
-    let upload_ms = t_upload.elapsed().as_secs_f64() * 1_000.0;
-    if ux.show_stderr_progress {
-        let total_kib = ((prep_upload.fit_target.max_bytes.0
-            + prep_upload.holdout_target.max_bytes.0) as f64)
-            / 1024.0;
-        eprintln!(
-            "[carbon] Encrypted & uploaded JMAT blobs ({total_kib:.1} KiB) in {upload_ms:.1} ms"
-        );
-    }
-
-    // Arm `ShredOnDropGuard` unconditionally right after upload so any failed `start_run`,
-    // `resume_run`, `/predict`, or handle persistence automatically shreds the staged CAS blobs
-    // and run state instead of leaving ciphertext until S3 lifecycle expiry.
-    let mut shred_guard = ShredOnDropGuard::new(
-        client.clone(),
-        effective_tenant.clone(),
-        run_id_str.clone(),
-        Some(prep_upload.upload_id.clone()),
-        Some(prep_upload.fit_target.sha256.clone()),
-        Some(prep_upload.holdout_target.sha256.clone()),
-        true,
-    );
-
-    let is_tty_progress = ux.show_stderr_progress && stderr_is_tty();
-    let spinner_state = Arc::new(Mutex::new((
-        None::<CarbonRunStateWire>,
-        0u32,
-        0u32,
-        0u64,
-        None::<f64>,
-    )));
-    if ux.show_stderr_progress {
-        let seen = Arc::new(Mutex::new((None::<CarbonRunStateWire>, u32::MAX)));
-        let spinner_ref = Arc::clone(&spinner_state);
-        let sigint_client = client.clone();
-        let sigint_tenant = effective_tenant.clone();
-        let sigint_run = run_id_str.clone();
-        client = client.with_progress_observer(move |p: &CarbonPublicWaveProgress| {
-            if sigint_received() {
-                let _ = sigint_client.signal_early_stop(
-                    &sigint_tenant,
-                    &sigint_run,
-                    Some("cli_sigint".to_owned()),
-                );
-            }
-            let cv_disp = p
-                .best_cv_metric
-                .or_else(|| p.best_cv_loss.map(|l| if is_maximize { -l } else { l }));
-            if let Ok(mut sp) = spinner_ref.lock() {
-                *sp = (
-                    Some(p.state),
+        let is_tty_progress = ux.show_stderr_progress && stderr_is_tty();
+        let spinner_state = Arc::new(Mutex::new((
+            None::<CarbonRunStateWire>,
+            0u32,
+            0u32,
+            0u64,
+            None::<f64>,
+        )));
+        if ux.show_stderr_progress {
+            let seen = Arc::new(Mutex::new((None::<CarbonRunStateWire>, u32::MAX)));
+            let spinner_ref = Arc::clone(&spinner_state);
+            let sigint_client = client.clone();
+            let sigint_tenant = effective_tenant.clone();
+            let sigint_run = run_id_str.clone();
+            client = client.with_progress_observer(move |p: &CarbonPublicWaveProgress| {
+                if sigint_received() {
+                    let _ = sigint_client.signal_early_stop(
+                        &sigint_tenant,
+                        &sigint_run,
+                        Some("cli_sigint".to_owned()),
+                    );
+                }
+                let cv_disp = p
+                    .best_cv_metric
+                    .or_else(|| p.best_cv_loss.map(|l| if is_maximize { -l } else { l }));
+                if let Ok(mut sp) = spinner_ref.lock() {
+                    *sp = (
+                        Some(p.state),
+                        p.wave_index,
+                        p.waves_target,
+                        p.candidates_evaluated.0,
+                        cv_disp,
+                    );
+                }
+                if is_tty_progress {
+                    return;
+                }
+                let Ok(mut guard) = seen.lock() else {
+                    return;
+                };
+                if guard.0 == Some(p.state) && guard.1 == p.wave_index {
+                    return;
+                }
+                *guard = (Some(p.state), p.wave_index);
+                let cv_txt = cv_disp
+                    .map(|v| format!("{v:.4}"))
+                    .unwrap_or_else(|| "-".to_owned());
+                eprintln!(
+                    "[carbon] Wave {}/{} ({:?}) | candidates={} | best_cv={} | elapsed={:.1}s",
                     p.wave_index,
                     p.waves_target,
+                    p.state,
                     p.candidates_evaluated.0,
-                    cv_disp,
+                    cv_txt,
+                    (p.elapsed_ms.0 as f64) / 1_000.0
+                );
+            });
+        }
+
+        let mut tty_spinner = TtySearchSpinner::start(is_tty_progress, spinner_state);
+
+        let t_search = Instant::now();
+        let mut paused_mid_run = false;
+        let mut engine_search_invocations = 1u32;
+        let mut progress = if let Some(delay_ms) = opts.stop_after_ms {
+            let client_arc = Arc::new(client.clone());
+            let stopper_client = Arc::clone(&client_arc);
+            let stop_tenant = effective_tenant.clone();
+            let stop_run = run_id_str.clone();
+            let stopper = thread::spawn(move || {
+                thread::sleep(Duration::from_millis(delay_ms));
+                let _ = stopper_client.signal_early_stop(
+                    &stop_tenant,
+                    &stop_run,
+                    Some("cli_stop_after_ms".to_owned()),
+                );
+            });
+            let p = client_arc.start_run(
+                run_id.clone(),
+                ds_id.clone(),
+                &effective_tenant,
+                opts.tier,
+                opts.effort,
+                &objective_wire,
+                opts.seed,
+                &prepared,
+            )?;
+            let _ = stopper.join();
+            p
+        } else {
+            client.start_run(
+                run_id.clone(),
+                ds_id.clone(),
+                &effective_tenant,
+                opts.tier,
+                opts.effort,
+                &objective_wire,
+                opts.seed,
+                &prepared,
+            )?
+        };
+
+        let persist_interrupted_handle = |prog: &CarbonPublicWaveProgress| -> Option<String> {
+            if opts.shred_after_run || !(ux.persist_handle || ux.save_model_path.is_some()) {
+                return None;
+            }
+            let sel_reg = if prog.region.is_empty() {
+                best_probe.region.clone()
+            } else {
+                prog.region.clone()
+            };
+            let u_dek_b64 = client
+                .export_run_udek(&effective_tenant, &run_id_str)
+                .map(|dek| base64::engine::general_purpose::STANDARD.encode(dek));
+            let handle = CarbonSavedModelHandle {
+                schema: CARBON_MODEL_HANDLE_SCHEMA.to_owned(),
+                created_epoch_ms: now_epoch_ms(),
+                run_id: run_id_str.clone(),
+                dataset_id: ds_id.to_string(),
+                tenant_id: effective_tenant.clone(),
+                tier: opts.tier,
+                cloud: ux.cloud_name.clone(),
+                endpoint: client.active_endpoint().to_owned(),
+                region: sel_reg,
+                engine_kek_pubkey_b64: client.active_kek_pubkey_b64(),
+                encrypted_cuen: prog.encrypted_cuen,
+                u_dek_b64,
+                capability_token: client.active_capability_token(),
+                encoder: encoder.clone(),
+                fit_rows: prepared.fit_rows,
+                holdout_rows: prepared.holdout_rows,
+                holdout_rmse: resolve_natural_metric(
+                    prog.outer_holdout_metric,
+                    prog.outer_holdout_loss,
+                ),
+                holdout_mae: None,
+                holdout_r2: None,
+                objective_name: objective_display_name.clone(),
+                objective_direction: objective_direction_label.clone(),
+                feature_importances: diag_ref.get().map(|d| d.2.clone()).unwrap_or_default(),
+            };
+            persist_model_handle_with_options(
+                &handle,
+                ux.save_model_path.as_deref(),
+                ux.embed_token || minted_ephemeral_token,
+            )
+            .ok()
+            .map(|p| p.display().to_string())
+        };
+
+        if sigint_received() {
+            tty_spinner.finish();
+            if opts.shred_after_run {
+                let _ = client.shred_run_with_upload(
+                    &effective_tenant,
+                    &run_id_str,
+                    Some(&prep_upload.upload_id),
+                    Some(&prep_upload.fit_target.sha256),
+                    Some(&prep_upload.holdout_target.sha256),
+                );
+                shred_guard.disarm();
+                return Err(
+                    "interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned(),
                 );
             }
-            if is_tty_progress {
-                return;
+            if let Some(saved_p) = persist_interrupted_handle(&progress) {
+                shred_guard.disarm();
+                return Err(format!(
+                    "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
+                    run_id_str
+                ));
             }
-            let Ok(mut guard) = seen.lock() else {
-                return;
-            };
-            if guard.0 == Some(p.state) && guard.1 == p.wave_index {
-                return;
-            }
-            *guard = (Some(p.state), p.wave_index);
-            let cv_txt = cv_disp
-                .map(|v| format!("{v:.4}"))
-                .unwrap_or_else(|| "-".to_owned());
-            eprintln!(
-                "[carbon] Wave {}/{} ({:?}) | candidates={} | best_cv={} | elapsed={:.1}s",
-                p.wave_index,
-                p.waves_target,
-                p.state,
-                p.candidates_evaluated.0,
-                cv_txt,
-                (p.elapsed_ms.0 as f64) / 1_000.0
-            );
-        });
-    }
-
-    let mut tty_spinner = TtySearchSpinner::start(is_tty_progress, spinner_state);
-
-    let t_search = Instant::now();
-    let mut paused_mid_run = false;
-    let mut engine_search_invocations = 1u32;
-    let mut progress = if let Some(delay_ms) = opts.stop_after_ms {
-        let client_arc = Arc::new(client.clone());
-        let stopper_client = Arc::clone(&client_arc);
-        let stop_tenant = effective_tenant.clone();
-        let stop_run = run_id_str.clone();
-        let stopper = thread::spawn(move || {
-            thread::sleep(Duration::from_millis(delay_ms));
-            let _ = stopper_client.signal_early_stop(
-                &stop_tenant,
-                &stop_run,
-                Some("cli_stop_after_ms".to_owned()),
-            );
-        });
-        let p = client_arc.start_run(
-            run_id.clone(),
-            ds_id.clone(),
-            &effective_tenant,
-            opts.tier,
-            opts.effort,
-            &objective_wire,
-            opts.seed,
-            &prepared,
-        )?;
-        let _ = stopper.join();
-        p
-    } else {
-        client.start_run(
-            run_id.clone(),
-            ds_id.clone(),
-            &effective_tenant,
-            opts.tier,
-            opts.effort,
-            &objective_wire,
-            opts.seed,
-            &prepared,
-        )?
-    };
-
-    let persist_interrupted_handle = |prog: &CarbonPublicWaveProgress| -> Option<String> {
-        if opts.shred_after_run || !(ux.persist_handle || ux.save_model_path.is_some()) {
-            return None;
-        }
-        let sel_reg = if prog.region.is_empty() {
-            best_probe.region.clone()
-        } else {
-            prog.region.clone()
-        };
-        let u_dek_b64 = client
-            .export_run_udek(&effective_tenant, &run_id_str)
-            .map(|dek| base64::engine::general_purpose::STANDARD.encode(dek));
-        let handle = CarbonSavedModelHandle {
-            schema: CARBON_MODEL_HANDLE_SCHEMA.to_owned(),
-            created_epoch_ms: now_epoch_ms(),
-            run_id: run_id_str.clone(),
-            dataset_id: ds_id.to_string(),
-            tenant_id: effective_tenant.clone(),
-            tier: opts.tier,
-            cloud: ux.cloud_name.clone(),
-            endpoint: client.active_endpoint().to_owned(),
-            region: sel_reg,
-            engine_kek_pubkey_b64: client.active_kek_pubkey_b64(),
-            encrypted_cuen: prog.encrypted_cuen,
-            u_dek_b64,
-            capability_token: client.active_capability_token(),
-            encoder: encoder.clone(),
-            fit_rows: prepared.fit_rows,
-            holdout_rows: prepared.holdout_rows,
-            holdout_rmse: resolve_natural_metric(
-                prog.outer_holdout_metric,
-                prog.outer_holdout_loss,
-            ),
-            holdout_mae: None,
-            holdout_r2: None,
-            objective_name: objective_display_name.clone(),
-            objective_direction: objective_direction_label.clone(),
-            feature_importances: feature_importances.clone(),
-        };
-        persist_model_handle_with_options(
-            &handle,
-            ux.save_model_path.as_deref(),
-            ux.embed_token || minted_ephemeral_token,
-        )
-        .ok()
-        .map(|p| p.display().to_string())
-    };
-
-    if sigint_received() {
-        tty_spinner.finish();
-        if opts.shred_after_run {
-            let _ = client.shred_run_with_upload(
-                &effective_tenant,
-                &run_id_str,
-                Some(&prep_upload.upload_id),
-                Some(&prep_upload.fit_target.sha256),
-                Some(&prep_upload.holdout_target.sha256),
-            );
-            shred_guard.disarm();
-            return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
-        }
-        if let Some(saved_p) = persist_interrupted_handle(&progress) {
-            shred_guard.disarm();
             return Err(format!(
-                "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
+                "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
                 run_id_str
             ));
         }
-        return Err(format!(
-            "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
-            run_id_str
-        ));
-    }
 
-    if opts.stop_after_ms.is_some() {
-        if progress.state == CarbonRunStateWire::Paused {
-            paused_mid_run = true;
-            if opts.resume_after_stop {
+        if opts.stop_after_ms.is_some() {
+            if progress.state == CarbonRunStateWire::Paused {
+                paused_mid_run = true;
+                if opts.resume_after_stop {
+                    engine_search_invocations += 1;
+                    progress = client.resume_run(
+                        &effective_tenant,
+                        &run_id_str,
+                        Some(opts.effort),
+                        Some(2),
+                    )?;
+                }
+            }
+        } else {
+            while progress.state == CarbonRunStateWire::Paused
+                && progress.can_resume
+                && progress.wave_index < progress.waves_target
+                && engine_search_invocations < 4
+                && !sigint_received()
+            {
+                paused_mid_run = true;
                 engine_search_invocations += 1;
+                let remaining = progress
+                    .waves_target
+                    .saturating_sub(progress.wave_index)
+                    .max(1);
                 progress = client.resume_run(
                     &effective_tenant,
                     &run_id_str,
                     Some(opts.effort),
-                    Some(2),
+                    Some(remaining),
                 )?;
             }
         }
-    } else {
-        while progress.state == CarbonRunStateWire::Paused
-            && progress.can_resume
-            && progress.wave_index < progress.waves_target
-            && engine_search_invocations < 4
-            && !sigint_received()
-        {
-            paused_mid_run = true;
-            engine_search_invocations += 1;
-            let remaining = progress
-                .waves_target
-                .saturating_sub(progress.wave_index)
-                .max(1);
-            progress = client.resume_run(
-                &effective_tenant,
-                &run_id_str,
-                Some(opts.effort),
-                Some(remaining),
-            )?;
-        }
-    }
-    tty_spinner.finish();
-    let search_ms = t_search.elapsed().as_secs_f64() * 1_000.0;
+        tty_spinner.finish();
+        let search_ms = t_search.elapsed().as_secs_f64() * 1_000.0;
 
-    if sigint_received() {
+        if sigint_received() {
+            if opts.shred_after_run {
+                let _ = client.shred_run_with_upload(
+                    &effective_tenant,
+                    &run_id_str,
+                    Some(&prep_upload.upload_id),
+                    Some(&prep_upload.fit_target.sha256),
+                    Some(&prep_upload.holdout_target.sha256),
+                );
+                shred_guard.disarm();
+                return Err(
+                    "interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned(),
+                );
+            }
+            if let Some(saved_p) = persist_interrupted_handle(&progress) {
+                shred_guard.disarm();
+                return Err(format!(
+                    "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
+                    run_id_str
+                ));
+            }
+            return Err(format!(
+                "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
+                run_id_str
+            ));
+        }
+
+        let predict_inputs: Vec<Vec<Option<f64>>> = predict_batch_x
+            .into_iter()
+            .map(|r| r.into_iter().map(Some).collect())
+            .collect();
+        let t_pred = Instant::now();
+        let pred_resp = client.predict(
+            &effective_tenant,
+            &run_id_str,
+            prepared.feature_names.clone(),
+            predict_inputs,
+        )?;
+        let predict_ms = t_pred.elapsed().as_secs_f64() * 1_000.0;
+
+        let mut shredded_after_run = false;
         if opts.shred_after_run {
-            let _ = client.shred_run_with_upload(
+            let shred = client.shred_run_with_upload(
                 &effective_tenant,
                 &run_id_str,
                 Some(&prep_upload.upload_id),
                 Some(&prep_upload.fit_target.sha256),
                 Some(&prep_upload.holdout_target.sha256),
-            );
+            )?;
+            shredded_after_run = shred.shredded;
             shred_guard.disarm();
-            return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
         }
-        if let Some(saved_p) = persist_interrupted_handle(&progress) {
-            shred_guard.disarm();
-            return Err(format!(
-                "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
-                run_id_str
-            ));
-        }
-        return Err(format!(
-            "interrupted by SIGINT (Ctrl+C); run '{}' stopped early",
-            run_id_str
-        ));
-    }
-
-    let predict_inputs: Vec<Vec<Option<f64>>> = predict_batch_x
-        .into_iter()
-        .map(|r| r.into_iter().map(Some).collect())
-        .collect();
-    let t_pred = Instant::now();
-    let pred_resp = client.predict(
-        &effective_tenant,
-        &run_id_str,
-        prepared.feature_names.clone(),
-        predict_inputs,
-    )?;
-    let predict_ms = t_pred.elapsed().as_secs_f64() * 1_000.0;
-
-    let mut shredded_after_run = false;
-    if opts.shred_after_run {
-        let shred = client.shred_run_with_upload(
-            &effective_tenant,
-            &run_id_str,
-            Some(&prep_upload.upload_id),
-            Some(&prep_upload.fit_target.sha256),
-            Some(&prep_upload.holdout_target.sha256),
-        )?;
-        shredded_after_run = shred.shredded;
-        shred_guard.disarm();
-    }
+        Ok((
+            client,
+            best_probe,
+            effective_tenant,
+            minted_ephemeral_token,
+            ds_id,
+            run_id_str,
+            shred_guard,
+            upload_ms,
+            paused_mid_run,
+            engine_search_invocations,
+            progress,
+            search_ms,
+            pred_resp,
+            predict_ms,
+            shredded_after_run,
+        ))
+    })?;
+    let (comparator_baselines, baseline_stats, feature_importances) =
+        diag_cell.into_inner().unwrap_or_else(init_diag);
     let total_wall_ms = t_total.elapsed().as_secs_f64() * 1_000.0;
 
     let n_holdout_f = (prepared.holdout_rows as f64).max(1.0);

@@ -405,15 +405,16 @@ pub fn build_client_for_handle(
     handle: &CarbonSavedModelHandle,
     override_auth_token: Option<String>,
 ) -> Result<CarbonThinClient, String> {
-    let mut pins = BTreeMap::new();
-    if let Some(kek) = &handle.engine_kek_pubkey_b64 {
-        pins.insert(
-            handle.endpoint.trim().trim_end_matches('/').to_owned(),
-            kek.clone(),
-        );
-    }
-    let (mut client, _) =
-        CarbonThinClient::connect_fastest_pinned(vec![handle.endpoint.clone()], &pins)?;
+    let mut client = if let Some(kek) = handle
+        .engine_kek_pubkey_b64
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        CarbonThinClient::from_pinned_handle(handle.endpoint.clone(), kek)?
+    } else {
+        CarbonThinClient::connect_fastest_pinned(vec![handle.endpoint.clone()], &BTreeMap::new())?.0
+    };
     let resolved_token = override_auth_token
         .filter(|s| !s.trim().is_empty())
         .or_else(|| {

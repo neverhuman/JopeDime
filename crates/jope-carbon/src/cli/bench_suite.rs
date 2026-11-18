@@ -638,6 +638,7 @@ pub fn compute_quick_run_comparators(
     seed: u64,
 ) -> Vec<CarbonComparatorScore> {
     if fit_x.len() < 12
+        || fit_x.len() > 25_000
         || holdout_x.len() < 3
         || fit_x.len() != fit_y.len()
         || holdout_x.len() != holdout_y.len()
@@ -645,21 +646,19 @@ pub fn compute_quick_run_comparators(
         return Vec::new();
     }
     let cols = fit_x[0].len();
-    if cols == 0 || fit_x.len() * cols > 500_000 {
+    if cols == 0 || fit_x.len() * cols > 1_500_000 {
         return Vec::new();
     }
-    evaluate_comparators_subset(
-        fit_x,
-        fit_y,
-        holdout_x,
-        holdout_y,
-        seed,
+    let subset: &[ComparatorId] = if fit_x.len() <= 3_500 && fit_x.len() * cols <= 500_000 {
         &[
             ComparatorId::RandomForest,
             ComparatorId::LightgbmStyle,
             ComparatorId::AutogluonStyle,
-        ],
-    )
+        ]
+    } else {
+        &[ComparatorId::LightgbmStyle]
+    };
+    evaluate_comparators_subset(fit_x, fit_y, holdout_x, holdout_y, seed, subset)
 }
 
 /// Fit `Ridge` + all 10 `ComparatorId::ALL` pure-Rust comparators on identical `(fit_x, fit_y)` -> `(holdout_x, holdout_y)`.
@@ -836,7 +835,7 @@ pub fn execute_scientific_benchmark_suite(
     show_stderr_progress: bool,
 ) -> Result<CarbonScientificBenchmarkReport, String> {
     let (mut base_client, probed) =
-        CarbonThinClient::connect_fastest_pinned(opts.endpoints.clone(), &opts.pinned_keks)?;
+        CarbonThinClient::connect_fastest_hedged(opts.endpoints.clone(), &opts.pinned_keks)?;
     let first_probe: CarbonProbedEndpoint = probed
         .into_iter()
         .next()

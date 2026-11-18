@@ -1617,7 +1617,7 @@ fn resolve_effective_eval_shards(planned: u32) -> u32 {
     let base = planned.max(2);
     match std::env::var("CARBON_MAX_EVAL_SHARDS") {
         Ok(raw) => match raw.trim().parse::<u32>() {
-            Ok(cap) if (1..=16).contains(&cap) => base.min(cap),
+            Ok(cap) if (1..=32).contains(&cap) => base.min(cap),
             _ => base,
         },
         Err(_) => base,

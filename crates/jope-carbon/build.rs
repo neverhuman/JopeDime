@@ -10,9 +10,9 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.3.0";
-const CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG: &str = "carbon-cli-v1.3.0";
-const CANONICAL_CARBON_SEMVER: &str = "1.3.0";
+const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.3.1";
+const CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG: &str = "carbon-cli-v1.3.1";
+const CANONICAL_CARBON_SEMVER: &str = "1.3.1";
 
 fn is_valid_hex_sha(candidate: &str) -> bool {
     let trimmed = candidate.trim();
