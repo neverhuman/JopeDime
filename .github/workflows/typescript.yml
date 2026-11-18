@@ -61,8 +61,52 @@ jobs:
           [[ -n "${GITHUB_OUTPUT:-}" ]] || refuse
           printf 'admitted=true\n' >> "$GITHUB_OUTPUT"
 
-  typescript-parity:
+  # GitHub-hosted ubuntu-24.04 (run 44406591239, job 135164001741, runner
+  # GitHub Actions 1000009542) timed out TLS to every Ubuntu mirror and the
+  # pinned snapshot. observatory-ui in that run succeeded on jope-ci
+  # (xbabe1-ci2). Fill the deb archives from that pool, using the trusted
+  # base checkout, and publish them with actions/cache. The hosted parity
+  # job only restores the cache.
+  browser-archive:
     needs: trust-admission
+    if: needs.trust-admission.outputs.admitted == 'true'
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, jope-ci]
+    timeout-minutes: 40
+    steps:
+      - name: Ensure persistent workspace is writable before checkout
+        run: |
+          if [ -d "$GITHUB_WORKSPACE" ] && [ ! -e "$GITHUB_WORKSPACE/.git/HEAD" ]; then
+            chmod -R u+rwX "$GITHUB_WORKSPACE" || true
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + || true
+          fi
+      - name: Checkout the trusted base lock
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: neverhuman/JopeDime
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+      - name: Restore pinned browser deb archives
+        id: archives
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: target/tool-cache/typescript-browser/archives
+          key: browser-deps-typescript-v1-${{ hashFiles('deploy/ci/typescript/browser-deps.lock.json') }}
+      - name: Fill archives missing from the tool cache
+        run: |
+          set -euo pipefail
+          python3 deploy/ci/browser-deps.py \
+            --lock deploy/ci/typescript/browser-deps.lock.json \
+            --cache target/tool-cache/typescript-browser \
+            --receipt "$RUNNER_TEMP/browser-dependencies.json"
+      - name: Save pinned browser deb archives
+        if: steps.archives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: target/tool-cache/typescript-browser/archives
+          key: browser-deps-typescript-v1-${{ hashFiles('deploy/ci/typescript/browser-deps.lock.json') }}
+
+  typescript-parity:
+    needs: [trust-admission, browser-archive]
     if: needs.trust-admission.outputs.admitted == 'true'
     # PR-controlled source runs only on an ephemeral, GitHub-hosted machine.
     runs-on: ubuntu-24.04
@@ -84,6 +128,13 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Restore pinned browser deb archives
+        if: matrix.node == '26.1.0'
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: target/tool-cache/typescript-browser/archives
+          key: browser-deps-typescript-v1-${{ hashFiles('deploy/ci/typescript/browser-deps.lock.json') }}
+          fail-on-cache-miss: true
       - name: Install the repository-pinned Rust toolchain
         env:
           RUSTUP_HOME: /opt/rust/rustup
@@ -126,6 +177,7 @@ jobs:
         if: matrix.node == '26.1.0'
         env:
           JOPE_TS_BROWSERS: chromium,firefox,webkit
+          JOPE_BROWSER_DEPS_OFFLINE: "1"
         run: bash ops/ci/typescript.sh browser
       - name: Require complete exact-source qualification evidence
         env:

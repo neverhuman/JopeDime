@@ -88,6 +88,22 @@ class BrowserDependencies(unittest.TestCase):
         self.assertEqual((runtime / self.payload).read_bytes(), b"bounded fixture library bytes")
         self.assertEqual(runtime, self.prepare("proof-reused.json"))
 
+    def test_offline_reuses_a_verified_archive_without_contacting_a_mirror(self):
+        def refuse(url, timeout):
+            raise AssertionError(url)
+        with mock.patch.object(MODULE.urllib.request, "urlopen", refuse), contextlib.redirect_stdout(io.StringIO()):
+            MODULE.prepare(self.cache, self.root / "offline.json", offline=True)
+        proof = json.loads((self.root / "offline.json").read_text())
+        self.assertEqual((Path(proof["runtime"]) / self.payload).read_bytes(), b"bounded fixture library bytes")
+
+    def test_offline_refuses_a_missing_archive_without_contacting_a_mirror(self):
+        self.cached.unlink()
+        def refuse(url, timeout):
+            raise AssertionError(url)
+        with mock.patch.object(MODULE.urllib.request, "urlopen", refuse):
+            with self.assertRaisesRegex(ValueError, "offline tool cache"):
+                MODULE.prepare(self.cache, self.root / "offline-missing.json", offline=True)
+
     def test_explicit_generic_lock_preserves_default_and_verifies_payload(self):
         explicit = self.root / "publication.json"
         data = json.loads(MODULE.LOCK.read_text())

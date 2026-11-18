@@ -619,6 +619,14 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertNotIn('runner.environment', parity)
         self.assertIn('CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo', parity)
         self.assertIn('repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}', parity)
+        self.assertIn('JOPE_BROWSER_DEPS_OFFLINE: "1"', parity)
+        self.assertIn('fail-on-cache-miss: true', parity)
+        archive = self.job(workflow, 'browser-archive')
+        self.assertIn('repository: neverhuman/JopeDime', archive)
+        self.assertIn('github.event.pull_request.base.sha || github.sha', archive)
+        self.assertNotIn('pull_request.head', archive)
+        self.assertIn('browser-deps-typescript-v1-${{ hashFiles(\'deploy/ci/typescript/browser-deps.lock.json\') }}', archive)
+        self.assertIn('browser-deps-typescript-v1-${{ hashFiles(\'deploy/ci/typescript/browser-deps.lock.json\') }}', parity)
 
     def test_fork_pull_request_hygiene_skips_privileged_runner(self):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()
