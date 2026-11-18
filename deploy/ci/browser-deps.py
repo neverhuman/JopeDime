@@ -26,15 +26,23 @@ LOCK = Path(__file__).with_name("browser-deps.lock.json")
 # The archive mirror occasionally drops a connection; a job fetches about a hundred packages.
 ATTEMPTS = 6
 BACKOFF_SECONDS = 2.0
-# Socket timeout for each attempt, applied to the connect and to every read. When one of the mirror's addresses
-# stops answering (91.189.91.83 on 2026-11-10), each fetch that resolves to it first waits this long before the
-# next address is tried. About a hundred fetches share the 25-minute observatory-ui budget, so keep it small.
-TIMEOUT_SECONDS = 10
+# Cap so a long streak of transport retries on one package cannot stall the job by itself.
+BACKOFF_CAP_SECONDS = 20.0
+# Socket timeout for each attempt, applied to the connect and to every read. A TLS handshake on a degraded
+# mirror exceeded 10s (observatory-ui job 135114099316, run 44392514985; the same class as typescript-parity
+# "Network is unreachable"). 30s lets that handshake finish. Package count must not multiply the wait: the
+# source that succeeds is cached and preferred for the rest of the process.
+TIMEOUT_SECONDS = 30
 
 # A connect to one address is bounded separately, and an address that fails to connect is tried last
 # for the rest of the process, so a dead mirror address costs one short wait, not one per package.
-CONNECT_SECONDS = 5
+CONNECT_SECONDS = 10
 UNREACHABLE = set()
+
+
+def backoff(attempt):
+    """Exponential pause between transport retries. attempt is 1-based and already counted."""
+    return min(BACKOFF_CAP_SECONDS, BACKOFF_SECONDS * (2 ** (attempt - 1)))
 
 
 def connect_skipping_unreachable(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None, *args, **kwargs):
@@ -142,18 +150,68 @@ def transient(error):
 # failures or slow fetches on one mirror in this process, the others are preferred for the remaining packages.
 MIRRORS = ("https://us.archive.ubuntu.com/ubuntu/", "https://mirrors.edge.kernel.org/ubuntu/")
 # A fetch slower than SLOW_SECONDS also counts against its mirror: a degraded mirror is usually slow, not down.
+# A handshake that needed most of TIMEOUT_SECONDS and then succeeded is still a healthy fetch.
 DEMOTE_AFTER = 3
-SLOW_SECONDS = 5
+SLOW_SECONDS = 15
 MIRROR_FAILURES = {}
+# Prefix from MIRRORS, or "snapshot" once the pinned snapshot is the source that actually served bytes.
+PREFERRED_MIRROR = None
 
 
 def sources(url):
-    """(mirror, url) choices for one locked URL: its own mirror first unless demoted, then the others."""
+    """(mirror, url) choices for one locked URL.
+
+    The cached working mirror leads. A demoted mirror is tried after the others. Otherwise the locked
+    mirror leads.
+    """
     for prefix in MIRRORS:
         if url.startswith(prefix):
-            ordered = sorted(MIRRORS, key=lambda mirror: (MIRROR_FAILURES.get(mirror, 0) >= DEMOTE_AFTER, mirror != prefix))
+            ordered = sorted(
+                MIRRORS,
+                key=lambda mirror: (
+                    mirror != PREFERRED_MIRROR,
+                    MIRROR_FAILURES.get(mirror, 0) >= DEMOTE_AFTER,
+                    mirror != prefix,
+                    mirror,
+                ),
+            )
             return [(mirror, mirror + url[len(prefix):]) for mirror in ordered]
     return [(None, url)]
+
+
+def load_preferred(cache):
+    """Reuse the mirror that served a verified package for an earlier run in this tool cache."""
+    global PREFERRED_MIRROR
+    marker = cache / "preferred-mirror"
+    if not marker.is_file() or marker.is_symlink():
+        return
+    text = marker.read_text().strip()
+    if text in MIRRORS or text == "snapshot":
+        PREFERRED_MIRROR = text
+
+
+def remember(archives, mirror):
+    """Record the source that just served verified bytes. Later packages in this process try it first."""
+    global PREFERRED_MIRROR
+    if mirror not in MIRRORS and mirror != "snapshot":
+        raise ValueError("refusing to cache an unofficial mirror")
+    PREFERRED_MIRROR = mirror
+    marker = archives.parent / "preferred-mirror"
+    temporary = marker.with_name("preferred-mirror.tmp")
+    temporary.write_text(mirror + "\n")
+    temporary.replace(marker)
+
+
+def next_choice(choices, last_url):
+    """The next source after last_url, or the first when last_url is absent from this list."""
+    if not choices:
+        raise ValueError("no download source")
+    if last_url is None:
+        return choices[0]
+    urls = [url for _, url in choices]
+    if last_url not in urls:
+        return choices[0]
+    return choices[(urls.index(last_url) + 1) % len(choices)]
 
 
 # Ubuntu deletes superseded noble-updates/noble-security debs from the archive pool, so a pinned URL can start
@@ -184,21 +242,46 @@ def snapshot_url(url):
 def download(package, path, archives):
     """Fetch one locked package. Transient failures are retried; a 404/410 moves on to the next source.
 
-    The order is the locked mirror, the other mirror, then the pinned snapshot, used only after every mirror
-    answered 404/410. A 404/410 is not a transport failure. It does not use an attempt, sleep, or count toward
-    DEMOTE_AFTER: the path is gone from that source, and the mirror itself is healthy. Any other 4xx and any
-    content mismatch still fail at once.
+    The order is the cached working mirror, the locked mirror, the other mirror, then the pinned snapshot.
+    The snapshot is used after every live mirror answered 404/410, and also once every live mirror has failed
+    transport for this package (handshake timeout, unreachable, dropped connection). Snapshot bytes still have
+    to match the locked size and sha256. A 404/410 is not a transport failure. It does not use an attempt,
+    sleep, or count toward DEMOTE_AFTER. Any other 4xx and any content mismatch still fail at once.
     """
+    global PREFERRED_MIRROR
     missing, last_gone, attempt = set(), None, 1
+    last_url = None
+    transport_failed = set()
+    snapshot_transport_tried = False
     while True:
-        choices = [choice for choice in sources(package["url"]) if choice[1] not in missing]
-        snapshot = not choices
-        if snapshot:
-            fallback = snapshot_url(package["url"])
-            if fallback is None or fallback in missing:
+        live = [choice for choice in sources(package["url"]) if choice[1] not in missing]
+        fallback = snapshot_url(package["url"])
+        snapshot_choice = (None, fallback) if fallback and fallback not in missing else None
+        mirrors_in_play = {mirror for mirror, _ in sources(package["url"]) if mirror}
+        cached_snapshot = (
+            PREFERRED_MIRROR == "snapshot"
+            and snapshot_choice is not None
+            and bool(mirrors_in_play)
+            and all(MIRROR_FAILURES.get(mirror, 0) >= DEMOTE_AFTER for mirror in mirrors_in_play)
+        )
+        if cached_snapshot:
+            choices = [snapshot_choice]
+            snapshot = True
+        elif (snapshot_choice is not None and not snapshot_transport_tried and mirrors_in_play
+              and transport_failed >= mirrors_in_play):
+            choices = [snapshot_choice]
+            snapshot = True
+            snapshot_transport_tried = True
+        elif not live:
+            if snapshot_choice is None:
                 raise last_gone
-            choices = [(None, fallback)]
-        mirror, url = choices[(attempt - 1) % len(choices)]
+            choices = [snapshot_choice]
+            snapshot = True
+        else:
+            choices = live
+            snapshot = False
+        mirror, url = next_choice(choices, last_url)
+        last_url = url
         # Exclusive temporary output is unpublished until size+hash verification.
         with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
             temporary = Path(output.name)
@@ -216,10 +299,22 @@ def download(package, path, archives):
                     raise ValueError("downloaded package differs from lock")
                 if mirror is not None and time.monotonic() - started > SLOW_SECONDS:
                     MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
-                if snapshot:
-                    name = package.get("filename") or PurePosixPath(urllib.parse.urlsplit(url).path).name
+                name = package.get("filename") or PurePosixPath(urllib.parse.urlsplit(url).path).name
+                if snapshot and transport_failed:
+                    for failed in transport_failed:
+                        MIRROR_FAILURES[failed] = max(MIRROR_FAILURES.get(failed, 0), DEMOTE_AFTER)
+                    remember(archives, "snapshot")
+                    print(f"browser-deps: pinned package {name} fetched from snapshot {SNAPSHOT_STAMP} "
+                          f"after mirror transport failure, sha256 verified ({url})", file=sys.stderr)
+                elif snapshot and cached_snapshot:
+                    remember(archives, "snapshot")
+                    print(f"browser-deps: pinned package {name} fetched from cached snapshot {SNAPSHOT_STAMP}, "
+                          f"sha256 verified ({url})", file=sys.stderr)
+                elif snapshot:
                     print(f"browser-deps: pinned package {name} gone from archive; served from snapshot "
                           f"{SNAPSHOT_STAMP}, sha256 verified ({url})", file=sys.stderr)
+                elif mirror is not None and MIRROR_FAILURES.get(mirror, 0) < DEMOTE_AFTER:
+                    remember(archives, mirror)
                 temporary.replace(path)
                 return
             except (Exception,) as error:
@@ -230,13 +325,19 @@ def download(package, path, archives):
                     continue
                 if mirror is not None and transient(error):
                     MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
+                    transport_failed.add(mirror)
+                    if PREFERRED_MIRROR == mirror:
+                        PREFERRED_MIRROR = None
+                elif snapshot and transient(error) and PREFERRED_MIRROR == "snapshot":
+                    # The cached snapshot missed. The next attempt may use a live mirror again.
+                    PREFERRED_MIRROR = None
                 if attempt == ATTEMPTS or not transient(error):
                     raise
                 print(f"browser-deps: attempt {attempt}/{ATTEMPTS} for {url} failed: {error!r}; retrying", file=sys.stderr)
             finally:
                 if temporary.exists():
                     temporary.unlink()
-        time.sleep(BACKOFF_SECONDS * attempt)
+        time.sleep(backoff(attempt))
         attempt += 1
 
 
@@ -284,6 +385,7 @@ def prepare(cache, receipt, lock_path=None):
     archives.mkdir(exist_ok=True)
     with (cache / "prepare.lock").open("a") as guard:
         fcntl.flock(guard, fcntl.LOCK_EX)
+        load_preferred(cache)
         paths = []
         for package in lock["packages"]:
             url = urllib.parse.urlsplit(package["url"])
