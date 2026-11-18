@@ -185,13 +185,19 @@ fn progressive_terminal_equals_full_and_publishes_supplied_fusion() {
             s.fusion.as_ref().unwrap().policy2048_copy().unwrap().dims(),
             [1, 2048]
         );
-        observed.push(s.receipt.conditioning_digest.clone());
+        if s.receipt.outcome.is_none() {
+            observed.push(s.receipt.conditioning_digest.clone());
+        }
         Ok(())
     })
     .unwrap();
     assert_eq!(progressive.outcome, SessionOutcome::Complete);
     assert!(observed.len() >= 2);
     assert!(observed.windows(2).all(|pair| pair[0] != pair[1]));
+    assert_eq!(
+        observed.last().unwrap(),
+        &progressive.final_snapshot.receipt.conditioning_digest
+    );
     let full_args = LandmarkArgs {
         landmark_mode: Some(LandmarkMode::Full),
         ..args
