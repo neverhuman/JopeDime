@@ -4,7 +4,7 @@
 [Architecture](docs/architecture.md) · [Regression results](#regression-performance) · [Performance review](docs/reviews/hpc-audit-20261021.md)
 
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
-encoders (Hyperion and companions), and emitters that lower a program to Python,
+encoders (Hyperion, `DOPE-MLC-v3` `Dope512`, and companions), and emitters that lower a program to Python,
 Rust, C++17, JavaScript, and [TypeScript/WebAssembly](docs/typescript.md). C++20 CI compiles the C++17 artifact; it is not a
 second numeric dialect.
 
@@ -26,7 +26,16 @@ Use that returned path for `predict`, or `jopedime model` to inspect, verify and
 The extensible JSON manifest retains complete fitted state across producer languages;
 CLI and MCP use the same validator.
 
-What changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+### Which JopeDime surface should I use?
+
+| Goal | Entrypoint | Where to start |
+| --- | --- | --- |
+| **Fit & score CSVs with custom business cost functions, output calibration, JSON-RPC or MCP** | `jopedime` (`jope-appliance`) | [Terminal workflow](#terminal-workflow) & [`docs/regression-objectives.md`](docs/regression-objectives.md) |
+| **Run reproducible dataset cuts, select a program, verify receipts & emit native code** | `jope` (`jope-cli`) | [Install and check](#install-and-check) & [`docs/pipeline.md`](docs/pipeline.md) |
+| **Deploy client-encrypted zero-knowledge regional AWS Lambda or VPC cells** | `carbon` / `carbon-edge` (`jope-carbon`) | [`crates/jope-carbon/README.md`](crates/jope-carbon/README.md) & [ADR-0007](docs/adr/ADR-0007-carbon-lambda-cells.md) |
+| **Call dependency-free Rust regressors or Candle dataset encoders directly from Rust** | `jope-automl` & `starforge` (`jope-encoders`) | [`crates/jope-automl/README.md`](crates/jope-automl/README.md) & [`docs/optional-landmarks.md`](docs/optional-landmarks.md) |
+
+What changed in `Unreleased` (`1.0.0` workspace, `kimik3p1_max-v1.0.0`, Carbon `v1.3.0`, `dope-core` `1.2.0`), 0.4.1, 0.4.0, 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
@@ -153,9 +162,12 @@ figures, [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md).
 The accepted step-60000 proposal policy, CLOVER-Learn v1 and the latest Dope
 rankers have separate model identities and evidence. A lower training loss is
 not a measured regression Elo. CLOVER v1 completed 17,773 updates; its final
-checkpoint has no matched end-to-end Elo ranking. The latest
+checkpoint has no matched end-to-end Elo ranking. The
 [H27 research publication](docs/research/studies/dope-neural-ranking-20261021/h27/nn-fixed400-study.md)
-reports no established incremental Dope-state or landmark routing lift.
+and subsequent adapter-only studies through `H468` (with opt-in `Dope512` progressive
+landmark encoding documented in [`docs/optional-landmarks.md`](docs/optional-landmarks.md))
+report no established held-out Elo lift beyond revealed-candidate history over frozen
+`DOPE-MLC-v3` `High` inputs.
 
 For post-inference comparisons, **fast / low / medium / high** mean **0 / 4 / 16 /
 64 subsequent search generations**. Those four modes have no matched measured Elo
@@ -457,7 +469,7 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
 | Workspace | 41 members: 34 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
+| Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings), opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | tracked in `docs/parity/test-inventory.json` across 39 packages; a listing, not a run <sup>5</sup> |
 | Python tests | tracked in `docs/parity/test-inventory.json` (static scan, not collected or run) <sup>5</sup> |
 | CI | 18 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (runs automatically on non-draft PR open/push/ready) (top-level declarations; 26 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
@@ -487,7 +499,7 @@ limits and client examples](docs/program-source-stream.md).
 | Targeted single-dataset search | `jope pipeline evolve` runs rounds of `run` on one dataset's fixed cuts, each seeded from the previous round's champion and runners-up, chained in a `lineage.json` that `jope pipeline lineage verify` re-derives; `--control` adds one unseeded run. `jope pipeline score --split test` scores a selected program on the sealed test split at most once per dataset and program in its registry (a local record, not access control), and lists every earlier look. High-water-mark ingest (`jope-learning hwm ingest --source pipeline`) and the append-only local champion bank (`jope-learning bank add`, `list`, `export`; an export seeds the next round) are separate steps. The rounds select on reused folds, so only the test split speaks to generalisation. |
 | W7 native loop | `jope-native-loop`, a `jope-engine` binary: host census, run plans, signed participant grants, authenticated cross-host transport with pinned certificates and an absolute deadline on every read and write, controller recovery, and SmartCluster dispatch of bounded ranks that prove their job before any work. It is qualified on source and fixtures only: a same-host fixture with hermetic host identities, and a local one-rank dry run. The three-host proof ([runbook](docs/runbooks/w7-three-host-cpu-proof.md)) has **not** run and needs its own admission; live cross-host checkpoint exchange and continuation routing are deferred. |
 | S3 | `jope datasets` and `jope models` read and write `s3://` stores through `object_store`, resolving `credential_process` profiles themselves; `jope-learning` mirrors its store and publishes W8 progress when `--store` or `JOPE_LEARNING_URL` names one. `champions --pull/--push` has no live route (issue #62). The CLOVER tools `jope_pools` and `jope_retention` read local files (frozen pools, a `GP_RESULTS_INDEX.json` built from the S3 results tree) and write local receipts; they fit offline shadow selectors and train no policy. No live S3 training run has been made, and the bound `jope-policy` checkpoint weights are **not** updated. |
-| Encoders and policy | CPU Hyperion on Candle (`hyperion-cpu`) is the default; a CUDA feature exists but is not the CI default. `jope-policy` needs the bound step-60000 checkpoint to propose. |
+| Encoders and policy | CPU Hyperion on Candle (`hyperion-cpu`) is the default; opt-in `DOPE-MLC-v3` `Dope512` (`d0b69603…`, [`docs/optional-landmarks.md`](docs/optional-landmarks.md)) and CUDA features exist outside the default CI feature set. `jope-policy` needs the bound step-60000 checkpoint to propose. |
 | Git datasets | Forty synthetic fixtures in `datasets/synthetic/`, which CI regenerates and compares (`jope generate-fixtures --check`) and verifies (`jope verify-inputs`), and the ten licensed test datasets (`test-10`) in `datasets/test/`. Real tables stay in S3. |
 | Release | A signed host release from `deploy/release/release.sh`, with no Python wheel; see [Releases](#releases). |
 
@@ -514,8 +526,11 @@ cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 # A requested target whose emitter does not cover the selected program is reported as not
 # emitted; the receipt lists the artifacts actually written (docs/emitters.md has the coverage).
+```
+
 For CUDA C++ output, use `jope emit --lang cuda`; see [the CUDA build, API and qualification contract](docs/cuda.md). Host recipe coverage matches Rust; device acceleration is explicitly limited to linear heads.
 
+```sh
 cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
@@ -534,8 +549,8 @@ two Go versions and two native Go platform jobs, and Fresh-Docker Carbon live qu
 `jope-ci` runners; the Go matrix uses hosted Linux/macOS/Windows workers. The manual-main
 export parity job uses an isolated hosted Ubuntu VM.
 Eight top-level jobs each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
-CUDA qualification runs locally with the commands in the [handoff guide](docs/cuda-handoff.md).
-(`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
+(`deploy/ci/aggregate.py`). CUDA qualification runs locally with the commands in the
+[handoff guide](docs/cuda-handoff.md). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout, the README's generated
 blocks, and `jope-records paper-trace`, which checks the white paper's printed numbers against its
 claim ledger and this README's version and "At a glance" counts against their files) and builds
@@ -583,7 +598,7 @@ sha256sum -c --strict "SHA256SUMS-$TAG.txt"
 
 ```text
 dataset cut
-  → encoders (Hyperion + foundation + target)
+  → encoders (Hyperion + DOPE-MLC-v3 Dope512 + foundation + target)
   → encodings context
   → policy that proposes / routes programs
   → typed program kernel (feat-math)
@@ -608,7 +623,7 @@ The 41 workspace members, by directory under `crates/`; the package name follows
 | Group | Crates | Role |
 | --- | --- | --- |
 | Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy`, `jope-narrator` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
-| Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
+| Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders (`DOPE-MLC-v3` `Dope512`, `dope-core` `1.2.0` research & `PacketFeaturesV1` views, and fusion components), Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
 | Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max`, `Gemini4_argon_high` and `kimik3p1_max`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md); six-entrant refit with `kimik3p1_max`: [`assets/automl-elo/v3`](assets/automl-elo/v3/SOURCES.md). |
 | Comparators | [`jope-comparators`](crates/jope-comparators/README.md) | Dependency-free pure-Rust comparator models re-homed from the `jain-model-zoo` strategy ports: random forest, extra trees, histogram gradient boosting, ridge and Caruana ensemble selection, plus a ten-entry roster (AutoGluon-, FLAML-, H2O- and MLJAR-style AutoML and XGBoost-, LightGBM- and CatBoost-style presets) at `medium`/`high`/`ultra` tiers, for same-rows comparison beside a run's champion. Library only; not yet wired into runs. |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
@@ -627,7 +642,7 @@ The 41 workspace members, by directory under `crates/`; the package name follows
 
 ## Further reading
 
-- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.4.1, 0.4.0, 0.3.0 and 0.2.0
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed in `Unreleased`, 0.4.1, 0.4.0, 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
 - [`docs/search-narration.md`](docs/search-narration.md) — retained commentary, evidence inspection, prediction traces and live monitoring
@@ -642,7 +657,7 @@ The 41 workspace members, by directory under `crates/`; the package name follows
 - [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them
 - [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
 - [`docs/quickstart.md`](docs/quickstart.md) — the ASM build and the feat-math quickstart (timings measured at `4235db6`, not this SHA)
-- [`docs/adr/`](docs/adr/) — architecture decision records 0001–0006
+- [`docs/adr/`](docs/adr/) — architecture decision records 0001–0007
 - [`docs/optional-landmarks.md`](docs/optional-landmarks.md) — opt-in GPU Dope512 encodings, progressive evidence and companion receipts
 - [`docs/archive/`](docs/archive/) — retired plans and the restore manifests of removed files
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
