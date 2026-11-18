@@ -1,0 +1,31 @@
+{
+  "wave": "H470",
+  "status": "RUNNING",
+  "label_note": "H470 in the overnight H-wave index = this gradient-noise wave; the unrelated local-only DOPE value probe (branch research/h470-dope-value-probe, run_h470_probe.py) should be indexed as H470-DVP or the next free H-number",
+  "script_sha256": "d596dbb25d6adcbe0911f0add13bb3bed5eae80db2ff3944fffc181b75884352",
+  "arms": ["pairnf_z40", "gn05_z40", "gn10_z40"],
+  "control": "pairnf_z40",
+  "gnoise": {"formula": "after clip_grad_norm_(1.0): g += N(0,(c*rms(g_tensor))^2)/(1+step)^0.55 per trainable tensor, own keyed generator", "gn05_z40": 0.5, "gn10_z40": 1.0},
+  "seeds": [1, 2, 3],
+  "partitions": ["h452a/", "h452b/"],
+  "folds": 5,
+  "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+  "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+  "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+  "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, clean red-team; otherwise NO_LIFT",
+  "redteam_prereg": ["floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift", "kept changes < 0.5x control => gate-starved (displacement confound)", "dose check: gn10 must differ from control at least as much as gn05, else noise inert", "noise uses training-batch gradients and its own keyed RNG only; no val labels"],
+  "smoke_h452a_fold0_seed1": {
+    "pairnf_z40": {"changed": 134, "kept": 15, "W": 10, "L": 4, "gain": 0.000629, "elo": 8.5, "equals_h469_cell": true, "adapter_sha_prefix": "8d5ac7934310"},
+    "gn05_z40": {"changed": 131, "kept": 13, "W": 8, "L": 4, "gain": 0.000485, "elo": 5.7},
+    "gn10_z40": {"changed": 131, "kept": 11, "W": 7, "L": 3, "gain": 0.000540, "elo": 5.7}
+  },
+  "probe": {"utc": "2026-11-18T20:48:39Z", "ok": true, "control_full_sha_equals_h469_probe": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439", "peak_rss_gb": 6.18, "min_memavail_gb": 45.1},
+  "launch_utc": "2026-11-18T21:04:57Z",
+  "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+  "incumbent_val_utility": 1.1389572403748425,
+  "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "host": "xbabe2",
+  "device": "cpu",
+  "sealed_or_holdout_reads": 0,
+  "verdict": null
+}
