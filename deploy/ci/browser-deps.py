@@ -370,7 +370,7 @@ def hermetic_fontconfig(runtime, fontcache):
     return config
 
 
-def prepare(cache, receipt, lock_path=None):
+def prepare(cache, receipt, lock_path=None, offline=False):
     urllib.request.install_opener(urllib.request.build_opener(SkippingHTTPSHandler()))
     if platform.machine() != "x86_64":
         raise ValueError("Ubuntu browser dependency lock is amd64 only")
@@ -409,6 +409,8 @@ def prepare(cache, receipt, lock_path=None):
             if path.is_symlink():
                 raise ValueError("package cache must not be a symlink")
             if not path.exists():
+                if offline:
+                    raise ValueError("pinned archive is not in the offline tool cache")
                 download(package, path, archives)
             if path.stat().st_size != package["size"] or digest(path) != sha:
                 raise ValueError("cached package differs from lock")
@@ -443,5 +445,6 @@ if __name__ == "__main__":
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--lock", type=Path, help="explicit pinned Ubuntu dependency lock; defaults to Chromium")
+    parser.add_argument("--offline", action="store_true", help="use deb archives already in the tool cache and do not contact a mirror")
     args = parser.parse_args()
-    prepare(args.cache, args.receipt, args.lock)
+    prepare(args.cache, args.receipt, args.lock, offline=args.offline)

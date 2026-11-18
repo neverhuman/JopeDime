@@ -4,7 +4,11 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 evidence="$repo/target/typescript-evidence"
 mkdir -p "$evidence" "$repo/target/tmp/typescript-browser/cache" "$repo/target/tmp/typescript-browser/home"
-runtime=$(python3 "$repo/deploy/ci/browser-deps.py" --lock "$repo/deploy/ci/typescript/browser-deps.lock.json" --cache "$repo/target/tool-cache/typescript-browser" --receipt "$evidence/browser-dependencies.json")
+offline=()
+if [ "${JOPE_BROWSER_DEPS_OFFLINE:-}" = 1 ]; then
+  offline=(--offline)
+fi
+runtime=$(python3 "$repo/deploy/ci/browser-deps.py" --lock "$repo/deploy/ci/typescript/browser-deps.lock.json" --cache "$repo/target/tool-cache/typescript-browser" --receipt "$evidence/browser-dependencies.json" "${offline[@]}")
 export JOPE_TS_NATIVE_RUNTIME="$runtime"
 export LD_LIBRARY_PATH="$runtime/usr/lib/x86_64-linux-gnu:$runtime/lib/x86_64-linux-gnu:$runtime/usr/lib:$runtime/lib:$runtime/usr/lib/x86_64-linux-gnu/blas:$runtime/usr/lib/x86_64-linux-gnu/lapack:$runtime/usr/lib/x86_64-linux-gnu/gstreamer-1.0"
 FONTCONFIG_FILE=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).fontconfig)' "$evidence/browser-dependencies.json")
