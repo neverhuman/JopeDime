@@ -1,35 +1,39 @@
 # DOPE value-probe contract
 
-Status: scored probe **NOT_RUN**.
+Status: contract active; scored execution in [`../h470_dope_value_probe/`](../h470_dope_value_probe/).
+Sealed and holdout cohorts remain strictly **NOT_RUN**.
 
-This directory records the 629 layout and the arm widths from the DOPE value
-specs. It does not load weights, fit a ranker, read val91 or sealed rows, or
-take an H id.
-
-Base at authoring: JopeDime `5ed0e108e6aece4d15460db3f55732448fbc668f`.
-`crates/jope-encoders`, the fused ranker, and the freeze guard are unchanged.
-H468's worktree is not used.
+This directory records the released 629 layout, the 196D `R_packet_v1` layout,
+the arm widths, contrasts `C0`–`C8`, and pure-Python deterministic paired
+family bootstrap and Holm–Bonferroni statistical helpers. This contract module
+keeps zero external imports so it remains completely off the product path.
+`crates/jope-encoders`, `crates/jope-service`, and `dope_freeze_guard.py` are
+unchanged.
 
 ## What is fixed here
 
 - Released `dope629` blocks, and the Dope512 prefix of the first 512 coordinates.
   Dope512 remains the separate product recipe
   `dope-mlcv3-high-f32-descriptor256-task128-dist128/v1`.
+- Scale-invariant, extrema-free `R_packet_v1` (`196D`): `14` router gates (with
+  `noise_scale` once) + `14` normalized task/count/residual globals (zero
+  `y_min`/`y_max`) + `16` copula/regime/`w_basis` norm shares + `96` `(mean,
+  std, max)` symmetric column-packet pool + `32` activity-weighted column pool +
+  `24` tree/pair/latent stats, alongside `R_packet_notarget` (`196D`) zeroing
+  target-bundle slots (`P-S2`).
 - Fine landmarks masked at level `high`: `gbdt`, `knn1`, `knn16`, `net`,
   `gbdt_quarter`.
-- Arm widths for `R_none`, `R_shape`, `R_desc`, `R_learned` (`dope629[256:]`,
-  373), `R_dope`, `R_hidden`, `R_tok`, `R_randrouter`, `R_shuffled`, and
-  `R_noise`.
-- `R_packet` is the global token `dope.packet-global/v0` only (24 values). It
-  is not the full pooled column, pair, and tree packet.
-- `R_desc_ultra` and `R_dope_ultra` use the same widths as `R_desc` and `R_dope`.
-- `profile_oracle` is a ceiling readout, not a feature width.
-- Contrasts C1–C5. The two C4 placebos must include 0. That check has not been run.
-
-## What this is not
-
-No scientific result. No new safetensors identity. No product recipe
-`dope629-ultra/v1`. No program grammar leaves JopeDime.
+- Arm widths for `R_none` (0), `R_shape` (3), `lm48_z` (48), `R_lm80` (80),
+  `R_desc` (290), `R_learned` (`dope629[256:]`, 373), `R_dope` (663),
+  `R_hidden` (256), `R_tok` (320), `R_randrouter` (663), `R_shuffled` (663),
+  `R_noise` (663), `R_desc_ultra` (290), `R_dope_ultra` (663), `R_packet` (24),
+  `R_packet_v1` (196), `R_packet_notarget` (196), `R_dope_plus_packet_v1` (859),
+  and `B03_svd96` (96).
+- Ceiling and zero-retraining upgrade arms: `profile_oracle`, `R_oracle64`,
+  `WP3_pred_reveal`, `B03_svd96`, `B03_ultra_packet`.
+- Contrasts `C0`–`C8`, deterministic 64-bit SplitMix64
+  `paired_family_bootstrap_ci` (`n_boot=10000`, `seed=20261118`), and step-down
+  `holm_bonferroni`.
 
 Run the contract with:
 
