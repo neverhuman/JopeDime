@@ -204,6 +204,8 @@ pub struct CarbonEmuConfig {
     pub apigw_timeout_ms: u64,
     pub auth_secret: [u8; 32],
     pub engine_kek_scalar: [u8; 32],
+    pub allow_public_free_mint: bool,
+    pub app_auth_pubkeys_csv: Option<String>,
 }
 
 impl std::fmt::Debug for CarbonEmuConfig {
@@ -219,6 +221,8 @@ impl std::fmt::Debug for CarbonEmuConfig {
             .field("real_worker_binaries", &self.real_worker_binaries)
             .field("simulate_apigw_v2", &self.simulate_apigw_v2)
             .field("apigw_timeout_ms", &self.apigw_timeout_ms)
+            .field("allow_public_free_mint", &self.allow_public_free_mint)
+            .field("has_app_auth_pubkeys", &self.app_auth_pubkeys_csv.is_some())
             .field("auth_secret", &"[REDACTED]")
             .field("engine_kek_scalar", &"[REDACTED]")
             .finish()
@@ -247,6 +251,8 @@ impl CarbonEmuConfig {
             apigw_timeout_ms: 30_000,
             auth_secret: [0x44u8; 32],
             engine_kek_scalar: [0x11u8; 32],
+            allow_public_free_mint: true,
+            app_auth_pubkeys_csv: None,
         }
     }
 
@@ -354,8 +360,8 @@ impl CarbonLocalLambdaEmulator {
             )?;
         } else {
             if let Some(bin_path) = &config.edge_binary_path {
-                let child = ProcessCommand::new(bin_path)
-                    .arg("--lambda-runtime")
+                let mut cmd = ProcessCommand::new(bin_path);
+                cmd.arg("--lambda-runtime")
                     .env("LAMBDA_RUNTIME_API", format!("{bound_addr}/runtime/edge"))
                     .env("CARBON_REGION", &config.region)
                     .env("CARBON_PUBLIC_BASE_URL", &base_url)
@@ -365,6 +371,18 @@ impl CarbonLocalLambdaEmulator {
                     .env("CARBON_PRESIGN_SECRET_HEX", hex::encode(presign_secret))
                     .env("CARBON_AUTH_SECRET_HEX", hex::encode(config.auth_secret))
                     .env("CARBON_ENGINE_KEK_PUBKEY_B64", &engine_kek_pubkey_b64)
+                    .env(
+                        "CARBON_ALLOW_PUBLIC_FREE_MINT",
+                        if config.allow_public_free_mint {
+                            "true"
+                        } else {
+                            "false"
+                        },
+                    );
+                if let Some(ref pubkeys_csv) = config.app_auth_pubkeys_csv {
+                    cmd.env("CARBON_APP_AUTH_PUBKEYS", pubkeys_csv);
+                }
+                let child = cmd
                     .stdin(Stdio::null())
                     .stdout(Stdio::null())
                     .stderr(Stdio::inherit())
@@ -383,14 +401,21 @@ impl CarbonLocalLambdaEmulator {
                         priority_rank: 1,
                     }],
                 };
+                let mut verifier = CarbonAuthVerifier::from_secret(config.auth_secret);
+                if let Some(ref pubkeys_csv) = config.app_auth_pubkeys_csv {
+                    verifier = verifier
+                        .with_app_issuer_pubkeys_csv(pubkeys_csv)
+                        .map_err(err_to_string)?;
+                }
                 let edge_router = Arc::new(CarbonEdgeRouter::new(
                     CarbonEdgeConfig {
                         region: config.region.clone(),
                         public_base_url: base_url.clone(),
                         enterprise_self_hosted: false,
+                        allow_public_free_mint: config.allow_public_free_mint,
                         catalog,
                         presigner: CarbonPresigner::from_secret(presign_secret),
-                        auth_verifier: Some(CarbonAuthVerifier::from_secret(config.auth_secret)),
+                        auth_verifier: Some(verifier),
                         engine_kek_pubkey_b64: Some(engine_kek_pubkey_b64.clone()),
                     },
                     edge_cas,

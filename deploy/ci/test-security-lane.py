@@ -37,7 +37,21 @@ class SecurityLane(unittest.TestCase):
         self.fake("syft", 'case "$*" in "version") echo "syft 1.40.0" ;; *"--output spdx-json="*) rc="${FAIL_SBOM:-0}"; [ "$rc" = 0 ] || exit "$rc"; output="${@: -1}"; output="${output#spdx-json=}"; printf %s "{\\"spdxVersion\\":\\"SPDX-2.3\\",\\"packages\\":[]}" > "$output" ;; *) exit 97 ;; esac')
         self.fake("actionlint", 'exit "${FAIL_ACTIONLINT:-0}"')
         self.fake("gitleaks", '[[ "$*" == *"--redact"* ]] || exit 93; if [[ "$*" == *"--no-git"* ]]; then [[ "$*" == *"--enable-rule=jope-env-files"* ]] || exit 93; exit "${FAIL_TREE:-0}"; fi; [[ "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
-        self.fake("npm", '[[ "$*" == "--prefix web/training-dashboard audit --package-lock-only --audit-level=high" ]] || exit 95; exit "${FAIL_NPM:-0}"')
+        self.fake(
+            "npm",
+            r'''
+case "$*" in
+  "--prefix web/training-dashboard audit --package-lock-only --audit-level=high")
+    exit "${FAIL_NPM:-0}" ;;
+  "--prefix web/training-dashboard audit --package-lock-only --audit-level=high --json")
+    if [ -n "${NPM_AUDIT_JSON:-}" ]; then
+      printf '%s\n' "$NPM_AUDIT_JSON"
+    fi
+    exit "${FAIL_NPM_JSON:-${FAIL_NPM:-0}}" ;;
+  *) exit 95 ;;
+esac
+'''.strip(),
+        )
         self.fake("cargo", r'''
 printf '%s\n' "$*" >> "$CARGO_CALL_TRACE"
 case "$*" in
@@ -158,6 +172,54 @@ esac
 
     def test_frontend_advisory_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_NPM="20").returncode, 20)
+
+    def test_frontend_reviewed_picomatch_advisory_scopes_fail_closed(self):
+        reviewed = json.dumps(
+            {
+                "auditReportVersion": 2,
+                "vulnerabilities": {
+                    "picomatch": {
+                        "name": "picomatch",
+                        "severity": "high",
+                        "via": [
+                            {
+                                "name": "picomatch",
+                                "url": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf",
+                                "severity": "high",
+                            }
+                        ],
+                    },
+                    "vite": {
+                        "name": "vite",
+                        "severity": "high",
+                        "via": ["picomatch"],
+                    },
+                },
+            }
+        )
+        ok = self.run_lane(FAIL_NPM="1", NPM_AUDIT_JSON=reviewed)
+        self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+
+        unreviewed = json.dumps(
+            {
+                "auditReportVersion": 2,
+                "vulnerabilities": {
+                    "picomatch": {
+                        "name": "picomatch",
+                        "severity": "high",
+                        "via": [
+                            {
+                                "name": "picomatch",
+                                "url": "https://github.com/advisories/GHSA-0000-0000-0000",
+                                "severity": "high",
+                            }
+                        ],
+                    }
+                },
+            }
+        )
+        bad = self.run_lane(FAIL_NPM="1", NPM_AUDIT_JSON=unreviewed)
+        self.assertEqual(bad.returncode, 1)
 
     def test_optional_dependency_canary_is_required(self):
         result = self.run_lane(OMIT_CANARY="1")

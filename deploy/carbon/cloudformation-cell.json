@@ -100,11 +100,28 @@
       "Default": -1,
       "MinValue": -1,
       "Description": "Optional reserved concurrency cap for carbon-eval (-1 uses regional pool)."
+    },
+    "AllowPublicFreeMint": {
+      "Type": "String",
+      "Default": "auto",
+      "AllowedValues": ["auto", "true", "false"],
+      "Description": "Whether unauthenticated callers may mint Free tokens on /v1/carbon/auth/anonymous and /v1/carbon/auth/register ('auto' resolves to 'false' on prod and 'true' on dev/staging)."
+    },
+    "AppAuthPubkeysB64": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Optional comma-separated Base64 uncompressed SEC1 P-256 public keys for asymmetric ctk2.* app-minted per-user tokens (ADR-0007)."
     }
   },
   "Conditions": {
     "IsProd": {
       "Fn::Equals": [{"Ref": "EnvironmentName"}, "prod"]
+    },
+    "AutoPublicFreeMint": {
+      "Fn::Equals": [{"Ref": "AllowPublicFreeMint"}, "auto"]
+    },
+    "HasAppAuthPubkeys": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "AppAuthPubkeysB64"}, ""]}]
     },
     "HasEdgeConcurrencyCap": {
       "Fn::Not": [{"Fn::Equals": [{"Ref": "EdgeReservedConcurrency"}, -1]}]
@@ -589,7 +606,21 @@
               ]
             },
             "CARBON_RELEASE_ID": {"Ref": "ReleaseId"},
-            "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"}
+            "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"},
+            "CARBON_ALLOW_PUBLIC_FREE_MINT": {
+              "Fn::If": [
+                "AutoPublicFreeMint",
+                {"Fn::If": ["IsProd", "false", "true"]},
+                {"Ref": "AllowPublicFreeMint"}
+              ]
+            },
+            "CARBON_APP_AUTH_PUBKEYS": {
+              "Fn::If": [
+                "HasAppAuthPubkeys",
+                {"Ref": "AppAuthPubkeysB64"},
+                {"Ref": "AWS::NoValue"}
+              ]
+            }
           }
         }
       }

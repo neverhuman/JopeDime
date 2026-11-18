@@ -1,0 +1,30 @@
+[package]
+name = "jope-envelope"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pure-Rust, WASM-ready zero-knowledge CUEN/CUDK client envelope crypto and ctk2 P-256 token helpers"
+
+[dependencies]
+aes = { version = "=0.9.3", default-features = false }
+base64 = "=0.23.1"
+cipher = { version = "=0.5.2", default-features = false }
+hex.workspace = true
+jope-prep = { path = "../jope-prep" }
+p256 = { version = "=0.14.0", default-features = false, features = ["ecdsa", "pem", "alloc"] }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+zeroize.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = "=0.3.4"
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

@@ -47,12 +47,20 @@ fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<()
     let s3_target = parse_s3_cas_url(&cas_url);
     let cas = open_remote_cas(&cas_url, &region, &internal_token)?;
     let engine = open_engine_invoker(&engine_url, &region);
+    let allow_public_free_mint = match env::var("CARBON_ALLOW_PUBLIC_FREE_MINT") {
+        Ok(raw) => !matches!(
+            raw.trim().to_ascii_lowercase().as_str(),
+            "0" | "false" | "no" | "off"
+        ),
+        Err(_) => true,
+    };
 
     let router = CarbonEdgeRouter::new(
         CarbonEdgeConfig {
             region,
             public_base_url,
             enterprise_self_hosted: false,
+            allow_public_free_mint,
             catalog,
             presigner,
             auth_verifier,

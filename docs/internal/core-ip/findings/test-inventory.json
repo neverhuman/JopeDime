@@ -2220,6 +2220,10 @@
       "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
       "role": "infrastructure"
     },
+    "python:research/flywheel_selfplay/dope_value_probe/test_dope_value_probe.py": {
+      "reason": "Unscored DOPE value-probe layout, arm-width, and family-mean delta contract checks (#2358); offline research outside the product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/golden/test_generate.py": {
       "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -6067,6 +6071,15 @@
         "evaluation"
       ]
     },
+    "target:jope-carbon/test/veox_integration_v130": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "fitting",
+        "export",
+        "storage"
+      ]
+    },
     "target:jope-ci/bin/jope-ci": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
@@ -6574,6 +6587,13 @@
       "role": "regression",
       "subsystems": [
         "export"
+      ]
+    },
+    "target:jope-envelope/lib/jope_envelope": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
       ]
     },
     "target:jope-learning/bin/jope-learning": {
@@ -7966,6 +7986,12 @@
         "preparation"
       ]
     },
+    "target:jope-prep/test/binary_target_prep": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
     "target:jope-prep/test/prep": {
       "role": "regression",
       "subsystems": [
@@ -8035,6 +8061,12 @@
       "subsystems": [
         "fitting",
         "preparation"
+      ]
+    },
+    "target:jope-runtime/test/fitted_js_cpp_gbm_parity": {
+      "role": "regression",
+      "subsystems": [
+        "export"
       ]
     },
     "target:jope-runtime/test/fitted_js_qualification": {

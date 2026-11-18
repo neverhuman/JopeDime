@@ -237,6 +237,10 @@ pub struct CarbonEdgeConfig {
     pub region: String,
     pub public_base_url: String,
     pub enterprise_self_hosted: bool,
+    /// Whether unauthenticated callers may mint Free capability tokens on
+    /// `POST /v1/carbon/auth/anonymous` and `POST /v1/carbon/auth/register`.
+    /// Enabled on `dev` / `emu` / `serve`; disabled (`false`) on `prod`.
+    pub allow_public_free_mint: bool,
     pub catalog: CarbonRegionCatalog,
     pub presigner: CarbonPresigner,
     pub auth_verifier: Option<CarbonAuthVerifier>,
@@ -855,10 +859,21 @@ impl CarbonEdgeRouter {
             return Ok((claims.tier, claims.admin));
         }
 
-        Ok((requested_tier.unwrap_or(CarbonTierWire::Free), false))
+        Err(CarbonGatewayResponse::error_json(
+            501,
+            "auth_not_configured",
+            "capability token authentication is not configured on this cloud gateway",
+        ))
     }
 
     fn handle_anonymous_auth(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        if !self.config.allow_public_free_mint {
+            return CarbonGatewayResponse::error_json(
+                403,
+                "anonymous_disabled",
+                "anonymous access is disabled on this production gateway; sign in via app.veox.ai or supply a capability token (`carbon login` / `CARBON_AUTH_TOKEN`)",
+            );
+        }
         let now_secs = now_epoch_ms() / 1_000;
         let caller = req.trusted_caller_ip("anon_global");
         if !self
@@ -887,6 +902,13 @@ impl CarbonEdgeRouter {
     }
 
     fn handle_register_free(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        if !self.config.allow_public_free_mint {
+            return CarbonGatewayResponse::error_json(
+                403,
+                "registration_disabled",
+                "self-service free registration is disabled on this production gateway; sign in via app.veox.ai or supply an issued capability token",
+            );
+        }
         let now_secs = now_epoch_ms() / 1_000;
         let caller = req.trusted_caller_ip("reg_global");
         if !self
@@ -2121,6 +2143,61 @@ impl CarbonEdgeRouter {
                                     if cur.as_slice() == uid.as_bytes() {
                                         let _ = self.cas.delete_state_object(&ptr_key);
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Also erase staged upload blobs when a run failed or aborted before `request.json` was
+        // committed (e.g., CLI auto-shred passing `upload_id`, `fit_sha256`, `holdout_sha256`).
+        let explicit_upload_id = req
+            .query
+            .get("upload_id")
+            .map(String::as_str)
+            .map(str::trim)
+            .filter(|s| !s.is_empty());
+        let explicit_scope = match explicit_upload_id {
+            Some(uid) => match canonical_blob_scope(tenant, uid) {
+                Ok(sc) => Some(sc),
+                Err(err) => {
+                    return CarbonGatewayResponse::error_json(400, "invalid_upload_id", &err);
+                }
+            },
+            None => None,
+        };
+        if let Some(ref sc) = explicit_scope {
+            for param in ["fit_sha256", "holdout_sha256"] {
+                if let Some(raw_sha) = req
+                    .query
+                    .get(param)
+                    .map(String::as_str)
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                {
+                    if !is_valid_sha256_hex(raw_sha) {
+                        return CarbonGatewayResponse::error_json(
+                            400,
+                            "invalid_sha256",
+                            "shred blob digest must be a 64-char hex SHA-256",
+                        );
+                    }
+                    let sha_lc = raw_sha.to_ascii_lowercase();
+                    if self
+                        .cas
+                        .delete_scoped_blob(Some(sc.as_str()), &sha_lc)
+                        .unwrap_or(false)
+                    {
+                        deleted += 1;
+                    }
+                    if let Some(uid) = explicit_upload_id {
+                        if let Ok(ptr_key) =
+                            canonical_run_state_key(tenant, "_uploads", &format!("{sha_lc}.uid"))
+                        {
+                            if let Ok(Some(cur)) = self.cas.get_state_object(&ptr_key) {
+                                if cur.as_slice() == uid.as_bytes() {
+                                    let _ = self.cas.delete_state_object(&ptr_key);
                                 }
                             }
                         }

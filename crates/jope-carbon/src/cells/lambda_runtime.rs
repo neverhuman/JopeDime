@@ -89,7 +89,24 @@ where
             deadline_epoch_ms,
             payload,
         };
+        const MAX_LAMBDA_RESPONSE_BYTES: usize = 5_900_000;
         match handler(invocation) {
+            Ok(response_bytes) if response_bytes.len() > MAX_LAMBDA_RESPONSE_BYTES => {
+                let err_url = format!("{base}/{request_id}/error");
+                let err_json = serde_json::json!({
+                    "errorMessage": format!(
+                        "Lambda response payload ({} bytes) exceeds {} byte Runtime API safety ceiling",
+                        response_bytes.len(),
+                        MAX_LAMBDA_RESPONSE_BYTES
+                    ),
+                    "errorType": "CarbonResponseOversizeError"
+                });
+                let body = crate::error::to_json_vec(&err_json)?;
+                let _ = agent
+                    .post(&err_url)
+                    .header("content-type", "application/json")
+                    .send(&body);
+            }
             Ok(response_bytes) => {
                 let resp_url = format!("{base}/{request_id}/response");
                 let post_resp = agent

@@ -107,6 +107,10 @@ impl CarbonSeededSpace {
             }
         }
 
+        if plan.effort == jope_api::Effort::Fast && lm.fit_row_count() > 1_500 {
+            candidate_pool = sanitize_fast_large_table_pool(candidate_pool);
+        }
+
         if let Some(admitted) = ranker {
             let mut learned = admitted.instantiate(DeviceRequest::Cpu, 1)?;
             learned.bind_client_landmarks(lm, plan)?;
@@ -134,6 +138,41 @@ impl CarbonSeededSpace {
         let ordered = keyed.into_iter().map(|(_, dsl)| dsl).collect();
         Ok((Self::from_starters(ordered)?, None, false))
     }
+}
+
+fn sanitize_fast_large_table_pool(pool: Vec<String>) -> Vec<String> {
+    let replacements = ["histgbm2", "histgbm", "ensemble", "ridge_gcv"];
+    let mut seen = BTreeSet::new();
+    let mut out = Vec::with_capacity(pool.len());
+    for (idx, dsl) in pool.into_iter().enumerate() {
+        let rewritten = match feat_math::GenomeIr::parse(&dsl) {
+            Ok(feat_math::GenomeIr::Portfolio(_)) => {
+                let head = replacements[idx % replacements.len()];
+                format!("(pipe X (standardize) ({head}))")
+            }
+            Ok(feat_math::GenomeIr::Pipeline(mut pipe)) => {
+                if let Some(last) = pipe.stages.last_mut() {
+                    if matches!(last.op.as_str(), "stack" | "portfolio" | "gpr" | "krr") {
+                        last.op = replacements[idx % replacements.len()].to_owned();
+                        last.params.clear();
+                    }
+                }
+                feat_math::GenomeIr::Pipeline(pipe).canonical()
+            }
+            _ => dsl,
+        };
+        if let Ok(canon) = NativeSpace.canonical(&rewritten) {
+            if seen.insert(canon.clone()) {
+                out.push(canon);
+            }
+        }
+    }
+    if out.is_empty() {
+        if let Ok(c) = NativeSpace.canonical("(pipe X (standardize) (histgbm2))") {
+            out.push(c);
+        }
+    }
+    out
 }
 
 impl SearchSpace for CarbonSeededSpace {
@@ -297,23 +336,130 @@ impl Executor for CarbonInProcessExecutor {
     }
 }
 
+mod wire_b64_opt_bytes {
+    use serde::{de::Error as _, Deserialize, Deserializer, Serializer};
+
+    const B64_ALPHABET: &[u8; 64] =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    fn encode_b64(bytes: &[u8]) -> String {
+        let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+        for chunk in bytes.chunks(3) {
+            let b0 = chunk[0];
+            let b1 = if chunk.len() > 1 { chunk[1] } else { 0 };
+            let b2 = if chunk.len() > 2 { chunk[2] } else { 0 };
+            let n = ((b0 as u32) << 16) | ((b1 as u32) << 8) | (b2 as u32);
+            out.push(B64_ALPHABET[((n >> 18) & 0x3f) as usize] as char);
+            out.push(B64_ALPHABET[((n >> 12) & 0x3f) as usize] as char);
+            out.push(if chunk.len() > 1 {
+                B64_ALPHABET[((n >> 6) & 0x3f) as usize] as char
+            } else {
+                '='
+            });
+            out.push(if chunk.len() > 2 {
+                B64_ALPHABET[(n & 0x3f) as usize] as char
+            } else {
+                '='
+            });
+        }
+        out
+    }
+
+    fn decode_b64(s: &str) -> Result<Vec<u8>, &'static str> {
+        let clean: Vec<u8> = s.bytes().filter(|b| !b.is_ascii_whitespace()).collect();
+        if clean.is_empty() {
+            return Ok(Vec::new());
+        }
+        if !clean.len().is_multiple_of(4) {
+            return Err("invalid base64 length");
+        }
+        let val = |c: u8| -> Result<u8, &'static str> {
+            match c {
+                b'A'..=b'Z' => Ok(c - b'A'),
+                b'a'..=b'z' => Ok(c - b'a' + 26),
+                b'0'..=b'9' => Ok(c - b'0' + 52),
+                b'+' | b'-' => Ok(62),
+                b'/' | b'_' => Ok(63),
+                _ => Err("invalid base64 character"),
+            }
+        };
+        let mut out = Vec::with_capacity((clean.len() / 4) * 3);
+        for chunk in clean.chunks_exact(4) {
+            let c0 = val(chunk[0])?;
+            let c1 = val(chunk[1])?;
+            let pad2 = chunk[2] == b'=';
+            let pad3 = chunk[3] == b'=';
+            if pad2 && !pad3 {
+                return Err("invalid base64 padding");
+            }
+            let c2 = if pad2 { 0 } else { val(chunk[2])? };
+            let c3 = if pad3 { 0 } else { val(chunk[3])? };
+            let n = ((c0 as u32) << 18) | ((c1 as u32) << 12) | ((c2 as u32) << 6) | (c3 as u32);
+            out.push(((n >> 16) & 0xff) as u8);
+            if !pad2 {
+                out.push(((n >> 8) & 0xff) as u8);
+            }
+            if !pad3 {
+                out.push((n & 0xff) as u8);
+            }
+        }
+        Ok(out)
+    }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum B64OrBytes {
+        B64(String),
+        Raw(Vec<u8>),
+    }
+
+    pub fn serialize<S: Serializer>(
+        val: &Option<Vec<u8>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        match val {
+            Some(bytes) => serializer.serialize_some(&encode_b64(bytes)),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<Vec<u8>>, D::Error> {
+        let opt = Option::<B64OrBytes>::deserialize(deserializer)?;
+        match opt {
+            None => Ok(None),
+            Some(B64OrBytes::Raw(v)) => Ok(Some(v)),
+            Some(B64OrBytes::B64(s)) => decode_b64(&s).map(Some).map_err(D::Error::custom),
+        }
+    }
+}
+
 /// `CarbonShardEvalOutcome` is a struct carrying one remote `eval` shard result (`Response` plus
-/// optional promoted champion bytes when `fit_champion` was requested).
+/// optional Base64-encoded promoted champion bytes when `fit_champion` was requested).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CarbonShardEvalOutcome {
     pub response: Response,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "wire_b64_opt_bytes"
+    )]
     pub fitted_model_bytes: Option<Vec<u8>>,
 }
 
+type LocalChampionRefitFn = Box<dyn Fn(&Request) -> Result<Vec<u8>> + Send + Sync>;
+
 /// `CarbonRemoteEvalExecutor` is a struct routing candidate evaluations to stateless `carbon eval`
-/// workers for `HybridFanOut` execution while preserving deterministic wave commits.
+/// workers for `HybridFanOut` execution while preserving deterministic wave commits and optional
+/// in-engine Rung-2 champion refits.
 pub struct CarbonRemoteEvalExecutor<F>
 where
     F: Fn(&Request, bool) -> Result<CarbonShardEvalOutcome> + Send + Sync,
 {
     dispatch_fn: F,
+    local_refit_fn: Option<LocalChampionRefitFn>,
 }
 
 impl<F> CarbonRemoteEvalExecutor<F>
@@ -321,7 +467,21 @@ where
     F: Fn(&Request, bool) -> Result<CarbonShardEvalOutcome> + Send + Sync,
 {
     pub fn new(dispatch_fn: F) -> Self {
-        Self { dispatch_fn }
+        Self {
+            dispatch_fn,
+            local_refit_fn: None,
+        }
+    }
+
+    /// Attach an in-engine `fitted_model` callback so promoted Rung-2 champions refit directly
+    /// inside `carbon-engine` (`3,008 MB`, `900 s` timeout) without crossing the 6 MB Lambda
+    /// Runtime API response boundary.
+    pub fn with_local_refit<R>(mut self, local_refit_fn: R) -> Self
+    where
+        R: Fn(&Request) -> Result<Vec<u8>> + Send + Sync + 'static,
+    {
+        self.local_refit_fn = Some(Box::new(local_refit_fn));
+        self
     }
 }
 
@@ -337,6 +497,18 @@ where
     }
 
     fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+        if let Some(local_refit) = &self.local_refit_fn {
+            let model_bytes = local_refit(request)?;
+            let _: super::native::NativeModel =
+                serde_json::from_slice(&model_bytes).map_err(|_| {
+                    RefitWorkerError(Response::failed(
+                        request.attempt.clone(),
+                        WorkerFailure::Protocol,
+                        0,
+                    ))
+                })?;
+            return Ok(model_bytes);
+        }
         let outcome = (self.dispatch_fn)(request, true)?;
         let checked = checked_response(request, outcome.response);
         if checked.failure.is_some() {
@@ -668,13 +840,46 @@ pub fn run_carbon_waves_with_calibration(
 
     let wave_index = u32::try_from(discovery.checkpoint.next_round).unwrap_or(u32::MAX);
     let candidates_evaluated = discovery.snapshot().budget_used.evaluations.0;
-    let best_cv_loss = discovery.champion().map(|c| c.loss);
-    let best_cv_metric = discovery.champion().map(|c| c.value);
+    let mut best_cv_loss = discovery.champion().map(|c| c.loss);
+    let mut best_cv_metric = discovery.champion().map(|c| c.value);
     let completed_reason = discovery.completed();
-    let champion_model_bytes = discovery
+    let mut champion_model_bytes = discovery
         .champion()
         .map(|champ| store.read_blob(&champ.model))
         .transpose()?;
+    if !paused && champion_model_bytes.is_none() {
+        let fallback_candidates: Vec<(f64, Candidate)> = discovery
+            .checkpoint
+            .elites
+            .by_objective()
+            .iter()
+            .take(4)
+            .filter_map(|elite| {
+                let dsl = discovery.checkpoint.programs.get(&elite.algorithm_id)?;
+                Some((
+                    elite.objective,
+                    Candidate {
+                        algorithm_id: elite.algorithm_id.clone(),
+                        dsl: dsl.clone(),
+                    },
+                ))
+            })
+            .collect();
+        for (idx, (obj_loss, cand)) in fallback_candidates.iter().enumerate() {
+            if let Ok(refit_req) = discovery.request(u64::from(wave_index), idx as u32, 2, cand) {
+                if let Ok(bytes) = adapted_executor.fitted_model(&refit_req) {
+                    if !bytes.is_empty() {
+                        champion_model_bytes = Some(bytes);
+                        best_cv_loss = Some(*obj_loss);
+                        if best_cv_metric.is_none() {
+                            best_cv_metric = Some(*obj_loss);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     drop(discovery);
     drop(store);
@@ -875,38 +1080,24 @@ pub fn export_champion_standalone_source(
         "corrupt NativeModel scaler metadata"
     );
     let genome = feat_math::GenomeIr::parse(&fitted.dsl)?;
-    match lang {
-        CarbonExportLangWire::C => {
-            let emitted =
-                feat_math::c17::emit(&genome, &feat_math::transpile::EmitOptions::default())?;
-            return Ok(serde_json::to_string_pretty(&serde_json::json!({
-                "schema": "carbon.c17_bundle.v1",
-                "artifact_kind": "gp_feature_basis",
-                "note": "C17 bundle emits the discovered GP feature-basis kernel; apply feature_min/feature_max/feature_fill scaling before calling and use --lang python, rust, rust-refittable, or js for full end-to-end fitted head + calibration export.",
-                "build": feat_math::c17::BUILD,
-                "target": target,
-                "features": fitted.features,
-                "feature_min": fitted.min,
-                "feature_max": fitted.max,
-                "feature_fill": fitted.fill,
-                "target_min": fitted.target_min,
-                "target_scale": fitted.target_scale,
-                "calibration": fitted.calibration,
-                "files": emitted.files,
-            }))?);
-        }
-        CarbonExportLangWire::Cpp => {
-            let mut cpp = feat_math::transpile::emit_cpp17(
-                &genome,
-                &feat_math::transpile::EmitOptions::default(),
-            )?;
-            cpp.insert_str(
-                0,
-                "// NOTE: C++17 export emits the discovered GP feature-basis kernel (normalized [0,1] inputs).\n// Use `--lang python`, `--lang rust`, `--lang rust-refittable`, or `--lang js` for full fitted head + output calibration.\n",
-            );
-            return Ok(cpp);
-        }
-        _ => {}
+    let fitted_fills = fitted.fill.clone();
+    if matches!(lang, CarbonExportLangWire::C) {
+        let emitted = feat_math::c17::emit(&genome, &feat_math::transpile::EmitOptions::default())?;
+        return Ok(serde_json::to_string_pretty(&serde_json::json!({
+            "schema": "carbon.c17_bundle.v1",
+            "artifact_kind": "gp_feature_basis",
+            "note": "C17 bundle emits the discovered GP feature-basis kernel; apply feature_min/feature_max/feature_fill scaling before calling and use --lang python, rust, rust-refittable, cpp, or js for full end-to-end fitted head + calibration export.",
+            "build": feat_math::c17::BUILD,
+            "target": target,
+            "features": fitted.features,
+            "feature_min": fitted.min,
+            "feature_max": fitted.max,
+            "feature_fill": fitted.fill,
+            "target_min": fitted.target_min,
+            "target_scale": fitted.target_scale,
+            "calibration": fitted.calibration,
+            "files": emitted.files,
+        }))?);
     }
 
     let (eff_min, eff_scale, lower_clamp) = match &fitted.calibration {
@@ -983,7 +1174,8 @@ pub fn export_champion_standalone_source(
             }
             Ok(src)
         }
-        CarbonExportLangWire::C | CarbonExportLangWire::Cpp => unreachable!(),
+        CarbonExportLangWire::Cpp => pipeline.export_cpp17(Some(&fitted_fills), lower_clamp),
+        CarbonExportLangWire::C => unreachable!(),
     }
 }
 

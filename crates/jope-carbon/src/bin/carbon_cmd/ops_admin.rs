@@ -64,6 +64,7 @@ pub(crate) fn dispatch_ops_admin(cmd: Command, global_quiet: bool) -> ExitCode {
             verify_local_lambda,
             dry_run,
             skip_redteam,
+            app_auth_pubkeys_b64,
             json_out,
         } => {
             if verify_local_lambda {
@@ -118,16 +119,19 @@ pub(crate) fn dispatch_ops_admin(cmd: Command, global_quiet: bool) -> ExitCode {
                 eprintln!("error: --manifest <PATH> is required unless --check-drift is passed");
                 return ExitCode::from(2);
             };
-            match execute_carbon_deploy(&CarbonDeployOptions {
-                manifest_path,
-                environment,
-                regions,
-                artifacts_bucket_override: artifacts_bucket,
-                bootstrap_secrets,
-                decommission_unstacked_prototype,
-                dry_run,
-                skip_redteam,
-            }) {
+            match jope_carbon::cli::deploy::execute_carbon_deploy_with_app_pubkeys(
+                &CarbonDeployOptions {
+                    manifest_path,
+                    environment,
+                    regions,
+                    artifacts_bucket_override: artifacts_bucket,
+                    bootstrap_secrets,
+                    decommission_unstacked_prototype,
+                    dry_run,
+                    skip_redteam,
+                },
+                app_auth_pubkeys_b64.as_deref(),
+            ) {
                 Ok(report) => {
                     let Ok(json_text) = serde_json::to_string_pretty(&report) else {
                         return ExitCode::from(1);
@@ -414,6 +418,9 @@ pub(crate) fn dispatch_ops_admin(cmd: Command, global_quiet: bool) -> ExitCode {
             admin,
             environment,
             region,
+            signing_key_file,
+            issuer,
+            kid,
         } => {
             if ttl_secs == 0 || ttl_secs > MAX_MINT_TOKEN_TTL_SECS {
                 eprintln!(
@@ -425,6 +432,59 @@ pub(crate) fn dispatch_ops_admin(cmd: Command, global_quiet: bool) -> ExitCode {
                 eprintln!("error: invalid --tier `{tier}`");
                 return ExitCode::from(2);
             };
+            if let Some(key_path) = signing_key_file {
+                if admin {
+                    eprintln!("error: asymmetric ctk2.* app-minted tokens cannot grant --admin");
+                    return ExitCode::from(2);
+                }
+                let app_tier = match tier_wire {
+                    CarbonTierWire::Free => jope_carbon::envelope::AppTokenTier::Free,
+                    CarbonTierWire::Pro => jope_carbon::envelope::AppTokenTier::Pro,
+                    CarbonTierWire::Enterprise => {
+                        eprintln!("error: asymmetric ctk2.* app-minted tokens support only `free` or `pro` tiers");
+                        return ExitCode::from(2);
+                    }
+                };
+                let raw_key = match fs::read_to_string(&key_path) {
+                    Ok(s) => zeroize::Zeroizing::new(s),
+                    Err(e) => {
+                        eprintln!("error: read signing key {}: {e}", key_path.display());
+                        return ExitCode::from(2);
+                    }
+                };
+                let trimmed_key = raw_key.trim();
+                let signing_key = if trimmed_key.starts_with("-----BEGIN ") {
+                    jope_carbon::envelope::AppSigningKey::from_pkcs8_pem(trimmed_key)
+                } else {
+                    jope_carbon::envelope::AppSigningKey::from_hex(trimmed_key)
+                };
+                let signing_key = match signing_key {
+                    Ok(k) => k,
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                };
+                let exp = (now_epoch_ms() / 1_000).saturating_add(ttl_secs);
+                let claims = jope_carbon::envelope::AppCapabilityClaims {
+                    tenant_id: tenant,
+                    tier: app_tier,
+                    exp_epoch_secs: exp,
+                    admin: false,
+                    iss: Some(issuer.unwrap_or_else(|| "app.veox.ai".to_owned())),
+                    kid,
+                };
+                return match signing_key.mint_token(&claims) {
+                    Ok(tok) => {
+                        let _ = write_stdout_line(&tok);
+                        ExitCode::SUCCESS
+                    }
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        ExitCode::from(2)
+                    }
+                };
+            }
             if let Some(env_name) = environment {
                 return match mint_vault_token_if_compiled(
                     &env_name, &region, &tenant, tier_wire, ttl_secs, admin,
@@ -799,6 +859,72 @@ pub(crate) fn dispatch_ops_admin(cmd: Command, global_quiet: bool) -> ExitCode {
             };
             run_eval_runtime(&runtime_api, scratch_dir)
         }
+        Command::TokenKeygen { out, kid } => {
+            let mut signing_key_opt = None;
+            for _ in 0..8 {
+                let seed = match jope_carbon::generate_random_u_dek() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("error: CSPRNG failure: {e}");
+                        return ExitCode::from(1);
+                    }
+                };
+                if let Ok(sk) = jope_carbon::envelope::AppSigningKey::from_scalar_bytes(&seed) {
+                    signing_key_opt = Some(sk);
+                    break;
+                }
+            }
+            let Some(signing_key) = signing_key_opt else {
+                eprintln!("error: failed to generate valid NIST P-256 signing key");
+                return ExitCode::from(1);
+            };
+            let pem = match signing_key.to_pkcs8_pem() {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("error: encode PKCS#8 PEM: {e}");
+                    return ExitCode::from(1);
+                }
+            };
+            if let Some(parent) = out.parent() {
+                if !parent.as_os_str().is_empty() {
+                    if let Err(e) = fs::create_dir_all(parent) {
+                        eprintln!("error: create {}: {e}", parent.display());
+                        return ExitCode::from(1);
+                    }
+                }
+            }
+            #[cfg(unix)]
+            let write_res = {
+                use std::os::unix::fs::OpenOptionsExt;
+                fs::OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .mode(0o600)
+                    .open(&out)
+                    .and_then(|mut f| f.write_all(pem.as_bytes()).and_then(|()| f.sync_all()))
+            };
+            #[cfg(not(unix))]
+            let write_res = fs::write(&out, pem.as_bytes());
+            if let Err(e) = write_res {
+                eprintln!("error: write private key {}: {e}", out.display());
+                return ExitCode::from(1);
+            }
+            let spki_pem = signing_key.pubkey_spki_pem().unwrap_or_default();
+            let pub_b64 = signing_key.pubkey_b64();
+            let receipt = serde_json::json!({
+                "algorithm": "ES256 (NIST P-256)",
+                "token_format": "ctk2.<claims_b64url>.<es256_sig_b64url>",
+                "private_key_path": out,
+                "public_key_sec1_b64": pub_b64,
+                "public_key_spki_pem": spki_pem.trim_end(),
+                "kid": kid,
+            });
+            if let Ok(text) = serde_json::to_string_pretty(&receipt) {
+                let _ = write_stdout_line(&text);
+            }
+            ExitCode::SUCCESS
+        }
         _ => unreachable!("handled by auth_doctor or model_ops"),
     }
 }
@@ -946,7 +1072,7 @@ fn run_foreground_emu(
 fn run_quickstart_command(
     emit_csv: Option<PathBuf>,
     csv_only: bool,
-    cloud: String,
+    cloud: Option<String>,
     clouds_manifest: Option<String>,
     mut endpoint: Vec<String>,
     local: bool,
@@ -1021,7 +1147,24 @@ fn run_quickstart_command(
     }
 
     let cloud_opt = if endpoint.is_empty() {
-        Some(cloud)
+        match cloud.map(|s| s.trim().to_owned()).filter(|s| !s.is_empty()) {
+            Some(explicit_cloud) => Some(explicit_cloud),
+            None => {
+                let has_env_tok = env::var("CARBON_AUTH_TOKEN")
+                    .or_else(|_| env::var("CARBON_TOKEN"))
+                    .map(|s| !s.trim().is_empty())
+                    .unwrap_or(false);
+                let has_prod_cred = jope_carbon::load_stored_cloud_token("prod")
+                    .ok()
+                    .flatten()
+                    .is_some();
+                if has_env_tok || has_prod_cred {
+                    Some("prod".to_owned())
+                } else {
+                    Some("dev".to_owned())
+                }
+            }
+        }
     } else {
         None
     };

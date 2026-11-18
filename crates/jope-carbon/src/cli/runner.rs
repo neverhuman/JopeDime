@@ -16,7 +16,7 @@ use jope_api::{
     Effort,
 };
 use jope_comparators::{rmse as comp_rmse, FeatureMatrix, RidgeModel, RidgeParams};
-use jope_prep::ObjectiveSpec;
+use jope_prep::{compute_binary_holdout_metrics, ObjectiveSpec};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -73,19 +73,91 @@ pub fn resolve_objective_argument(raw: &str) -> Result<(String, ObjectiveSpec), 
     Ok((wire_text, spec))
 }
 
+/// Canonical schema identifier for `carbon fit --format json` and `carbon run --format json` (`v1`).
+pub const CARBON_FIT_RECEIPT_SCHEMA: &str = "jope.carbon.fit_receipt.v1";
+/// Monotonic integer schema version for [`CarbonCliRunReceipt`].
+pub const CARBON_FIT_RECEIPT_SCHEMA_VERSION: u32 = 1;
+
+fn default_fit_receipt_schema() -> String {
+    CARBON_FIT_RECEIPT_SCHEMA.to_owned()
+}
+
+fn default_fit_receipt_schema_version() -> u32 {
+    CARBON_FIT_RECEIPT_SCHEMA_VERSION
+}
+
+fn default_split_mode_random() -> String {
+    "random".to_owned()
+}
+
+/// Compute a deterministic domain-separated SHA-256 hex digest over the ordered holdout rows
+/// (`0`-based original row index, IEEE-754 feature vector, and target scalar) shared by Carbon's
+/// `holdout.jmat` evaluation and same-split `comparator_baselines` (`baseline-protocol/v1`).
+pub fn compute_canonical_holdout_rows_sha256(
+    holdout_indices: &[usize],
+    holdout_x: &[Vec<f64>],
+    holdout_y: &[f64],
+) -> String {
+    use sha2::{Digest as _, Sha256};
+
+    const CANONICAL_NAN_BITS: u64 = 0x7ff8_0000_0000_0000;
+    let canon_f64 = |v: f64| -> [u8; 8] {
+        let bits = if v.is_nan() {
+            CANONICAL_NAN_BITS
+        } else if v == 0.0 {
+            0u64
+        } else {
+            v.to_bits()
+        };
+        bits.to_le_bytes()
+    };
+
+    let n = holdout_indices
+        .len()
+        .min(holdout_x.len())
+        .min(holdout_y.len());
+    let feat_count = holdout_x.first().map_or(0usize, Vec::len);
+    let mut h = Sha256::new();
+    h.update(b"jope.carbon.holdout_rows.v1\0");
+    h.update((n as u64).to_le_bytes());
+    h.update((feat_count as u64).to_le_bytes());
+    for i in 0..n {
+        h.update((holdout_indices[i] as u64).to_le_bytes());
+        for &xv in &holdout_x[i] {
+            h.update(canon_f64(xv));
+        }
+        h.update(canon_f64(holdout_y[i]));
+    }
+    hex::encode(h.finalize())
+}
+
 struct ShredOnDropGuard {
     client: CarbonThinClient,
     tenant_id: String,
     run_id: String,
+    upload_id: Option<String>,
+    fit_sha256: Option<String>,
+    holdout_sha256: Option<String>,
     active: bool,
 }
 
 impl ShredOnDropGuard {
-    fn new(client: CarbonThinClient, tenant_id: String, run_id: String, active: bool) -> Self {
+    fn new(
+        client: CarbonThinClient,
+        tenant_id: String,
+        run_id: String,
+        upload_id: Option<String>,
+        fit_sha256: Option<String>,
+        holdout_sha256: Option<String>,
+        active: bool,
+    ) -> Self {
         Self {
             client,
             tenant_id,
             run_id,
+            upload_id,
+            fit_sha256,
+            holdout_sha256,
             active,
         }
     }
@@ -98,7 +170,13 @@ impl ShredOnDropGuard {
 impl Drop for ShredOnDropGuard {
     fn drop(&mut self) {
         if self.active && !self.run_id.is_empty() {
-            let _ = self.client.shred_run(&self.tenant_id, &self.run_id);
+            let _ = self.client.shred_run_with_upload(
+                &self.tenant_id,
+                &self.run_id,
+                self.upload_id.as_deref(),
+                self.fit_sha256.as_deref(),
+                self.holdout_sha256.as_deref(),
+            );
         }
     }
 }
@@ -213,6 +291,12 @@ pub struct CarbonCliRunOptions {
 /// `r882` neural fusion guidance telemetry, scores, and sample predictions for `carbon run`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CarbonCliRunReceipt {
+    #[serde(default = "default_fit_receipt_schema")]
+    pub schema: String,
+    #[serde(default = "default_fit_receipt_schema_version")]
+    pub schema_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_id: Option<String>,
     pub selected_endpoint: String,
     pub selected_region: String,
     pub ping_rtt_ms: f64,
@@ -229,6 +313,14 @@ pub struct CarbonCliRunReceipt {
     pub fit_rows: u32,
     pub holdout_rows: u32,
     pub feature_count: usize,
+    #[serde(default = "default_split_mode_random")]
+    pub split_mode: String,
+    #[serde(default)]
+    pub seed: u64,
+    #[serde(default)]
+    pub holdout_rows_sha256: String,
+    #[serde(default)]
+    pub holdout_jmat_sha256: String,
     pub jlmb_wire_bytes: usize,
     pub fit_jmat_bytes: usize,
     pub holdout_jmat_bytes: usize,
@@ -283,9 +375,29 @@ pub struct CarbonCliRunReceipt {
     pub objective_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub objective_direction: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binary_target: Option<CarbonBinaryHoldoutSummary>,
     #[serde(default)]
     pub sample_targets: Vec<f64>,
     pub sample_predictions: Vec<f64>,
+}
+
+/// `CarbonBinaryHoldoutSummary` reports learned class labels and probability metrics when a
+/// 2-class categorical/boolean target was conditioned into `{0.0, 1.0}`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct CarbonBinaryHoldoutSummary {
+    pub negative_label: String,
+    pub positive_label: String,
+    pub positive_rate_fit: f64,
+    pub positive_rate_holdout: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holdout_brier: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holdout_logloss: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holdout_roc_auc: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holdout_accuracy: Option<f64>,
 }
 
 /// `CarbonBenchScenarioSummary` is a struct summarizing one scenario inside `carbon bench`.
@@ -871,6 +983,12 @@ fn prepare_from_options(
                     encoded.encoder.target_column
                 );
             }
+            if let Some(bm) = &encoded.encoder.target_binary_map {
+                eprintln!(
+                    "[carbon] Conditioned binary target '{}' ({:?} -> 0, {:?} -> 1)",
+                    encoded.encoder.target_column, bm.negative_label, bm.positive_label
+                );
+            }
             if !encoded.encoder.dropped_columns.is_empty() {
                 let summary: Vec<String> = encoded
                     .encoder
@@ -978,6 +1096,7 @@ fn prepare_from_options(
         had_header: true,
         extra_na_tokens: Vec::new(),
         inf_as_nan: false,
+        target_binary_map: None,
     };
     let prepared = CarbonThinClient::prepare_numeric_dataset_with_options(
         headers,
@@ -1260,6 +1379,16 @@ pub fn execute_carbon_cli_run_with_ux(
     );
     let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
     let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
+    let split_mode_applied = prepared
+        .split_mode
+        .clone()
+        .unwrap_or_else(|| "random".to_owned());
+    let holdout_rows_sha256 = compute_canonical_holdout_rows_sha256(
+        prepared.split_plan.holdout_rows(),
+        &holdout_x,
+        &holdout_y,
+    );
+    let holdout_jmat_sha256 = hex::encode(prepared.artifacts.holdout_sha256);
 
     if ux.dry_run {
         let ptier = match opts.tier {
@@ -1293,7 +1422,32 @@ pub fn execute_carbon_cli_run_with_ux(
             CarbonExecutionMode::SoloSingleLambda => CarbonExecutionModeWire::SoloSingleLambda,
             CarbonExecutionMode::HybridFanOut => CarbonExecutionModeWire::HybridFanOut,
         };
+        let dry_binary_target = encoder.target_binary_map.as_ref().map(|bm| {
+            let pr_fit = if fit_y.is_empty() {
+                0.0
+            } else {
+                fit_y.iter().copied().sum::<f64>() / (fit_y.len() as f64)
+            };
+            let pr_hold = if holdout_y.is_empty() {
+                0.0
+            } else {
+                holdout_y.iter().copied().sum::<f64>() / (holdout_y.len() as f64)
+            };
+            CarbonBinaryHoldoutSummary {
+                negative_label: bm.negative_label.clone(),
+                positive_label: bm.positive_label.clone(),
+                positive_rate_fit: pr_fit,
+                positive_rate_holdout: pr_hold,
+                holdout_brier: None,
+                holdout_logloss: None,
+                holdout_roc_auc: None,
+                holdout_accuracy: None,
+            }
+        });
         return Ok(CarbonCliRunReceipt {
+            schema: CARBON_FIT_RECEIPT_SCHEMA.to_owned(),
+            schema_version: CARBON_FIT_RECEIPT_SCHEMA_VERSION,
+            release_id: None,
             selected_endpoint: "dry-run://local-preflight".to_owned(),
             selected_region: "dry-run".to_owned(),
             ping_rtt_ms: 0.0,
@@ -1310,6 +1464,10 @@ pub fn execute_carbon_cli_run_with_ux(
             fit_rows: prepared.fit_rows,
             holdout_rows: prepared.holdout_rows,
             feature_count: prepared.feature_names.len(),
+            split_mode: split_mode_applied,
+            seed: opts.seed,
+            holdout_rows_sha256,
+            holdout_jmat_sha256,
             jlmb_wire_bytes: jlmb_bytes,
             fit_jmat_bytes: prepared.artifacts.fit_jmat.len(),
             holdout_jmat_bytes: prepared.artifacts.holdout_jmat.len(),
@@ -1346,6 +1504,7 @@ pub fn execute_carbon_cli_run_with_ux(
             saved_model_path: None,
             objective_name: objective_display_name,
             objective_direction: objective_direction_label,
+            binary_target: dry_binary_target,
             sample_targets: Vec::new(),
             sample_predictions: Vec::new(),
         });
@@ -1416,11 +1575,17 @@ pub fn execute_carbon_cli_run_with_ux(
         );
     }
 
+    // Arm `ShredOnDropGuard` unconditionally right after upload so any failed `start_run`,
+    // `resume_run`, `/predict`, or handle persistence automatically shreds the staged CAS blobs
+    // and run state instead of leaving ciphertext until S3 lifecycle expiry.
     let mut shred_guard = ShredOnDropGuard::new(
         client.clone(),
         effective_tenant.clone(),
         run_id_str.clone(),
-        opts.shred_after_run,
+        Some(prep_upload.upload_id.clone()),
+        Some(prep_upload.fit_target.sha256.clone()),
+        Some(prep_upload.holdout_target.sha256.clone()),
+        true,
     );
 
     let is_tty_progress = ux.show_stderr_progress && stderr_is_tty();
@@ -1564,19 +1729,30 @@ pub fn execute_carbon_cli_run_with_ux(
             objective_direction: objective_direction_label.clone(),
             feature_importances: feature_importances.clone(),
         };
-        persist_model_handle_with_options(&handle, ux.save_model_path.as_deref(), ux.embed_token)
-            .ok()
-            .map(|p| p.display().to_string())
+        persist_model_handle_with_options(
+            &handle,
+            ux.save_model_path.as_deref(),
+            ux.embed_token || minted_ephemeral_token,
+        )
+        .ok()
+        .map(|p| p.display().to_string())
     };
 
     if sigint_received() {
         tty_spinner.finish();
         if opts.shred_after_run {
-            let _ = client.shred_run(&effective_tenant, &run_id_str);
+            let _ = client.shred_run_with_upload(
+                &effective_tenant,
+                &run_id_str,
+                Some(&prep_upload.upload_id),
+                Some(&prep_upload.fit_target.sha256),
+                Some(&prep_upload.holdout_target.sha256),
+            );
             shred_guard.disarm();
             return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
         }
         if let Some(saved_p) = persist_interrupted_handle(&progress) {
+            shred_guard.disarm();
             return Err(format!(
                 "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
                 run_id_str
@@ -1627,11 +1803,18 @@ pub fn execute_carbon_cli_run_with_ux(
 
     if sigint_received() {
         if opts.shred_after_run {
-            let _ = client.shred_run(&effective_tenant, &run_id_str);
+            let _ = client.shred_run_with_upload(
+                &effective_tenant,
+                &run_id_str,
+                Some(&prep_upload.upload_id),
+                Some(&prep_upload.fit_target.sha256),
+                Some(&prep_upload.holdout_target.sha256),
+            );
             shred_guard.disarm();
             return Err("interrupted by SIGINT (Ctrl+C); zero-knowledge run shredded".to_owned());
         }
         if let Some(saved_p) = persist_interrupted_handle(&progress) {
+            shred_guard.disarm();
             return Err(format!(
                 "interrupted by SIGINT (Ctrl+C); paused run '{}' saved to {saved_p} (resume with `carbon resume --run {run_id_str}` or shred with `carbon shred --run {run_id_str}`)",
                 run_id_str
@@ -1658,7 +1841,13 @@ pub fn execute_carbon_cli_run_with_ux(
 
     let mut shredded_after_run = false;
     if opts.shred_after_run {
-        let shred = client.shred_run(&effective_tenant, &run_id_str)?;
+        let shred = client.shred_run_with_upload(
+            &effective_tenant,
+            &run_id_str,
+            Some(&prep_upload.upload_id),
+            Some(&prep_upload.fit_target.sha256),
+            Some(&prep_upload.holdout_target.sha256),
+        )?;
         shredded_after_run = shred.shredded;
         shred_guard.disarm();
     }
@@ -1729,6 +1918,38 @@ pub fn execute_carbon_cli_run_with_ux(
             None
         };
 
+    let binary_target = encoder.target_binary_map.as_ref().map(|bm| {
+        let pr_fit = if fit_y.is_empty() {
+            0.0
+        } else {
+            fit_y.iter().copied().sum::<f64>() / (fit_y.len() as f64)
+        };
+        let pr_hold = if holdout_y.is_empty() {
+            0.0
+        } else {
+            holdout_y.iter().copied().sum::<f64>() / (holdout_y.len() as f64)
+        };
+        let bin_metrics =
+            if eval_holdout_count > 0 && pred_resp.predictions.len() >= eval_holdout_count {
+                compute_binary_holdout_metrics(
+                    &predict_batch_y[..eval_holdout_count],
+                    &pred_resp.predictions[..eval_holdout_count],
+                )
+            } else {
+                None
+            };
+        CarbonBinaryHoldoutSummary {
+            negative_label: bm.negative_label.clone(),
+            positive_label: bm.positive_label.clone(),
+            positive_rate_fit: pr_fit,
+            positive_rate_holdout: pr_hold,
+            holdout_brier: bin_metrics.map(|m| m.brier),
+            holdout_logloss: bin_metrics.map(|m| m.logloss),
+            holdout_roc_auc: bin_metrics.and_then(|m| m.roc_auc),
+            holdout_accuracy: bin_metrics.map(|m| m.accuracy),
+        }
+    });
+
     let selected_region = if progress.region.is_empty() {
         best_probe.region.clone()
     } else {
@@ -1770,12 +1991,13 @@ pub fn execute_carbon_cli_run_with_ux(
             let persisted = persist_model_handle_with_options(
                 &handle,
                 ux.save_model_path.as_deref(),
-                ux.embed_token,
+                ux.embed_token || minted_ephemeral_token,
             )?;
             Some(persisted.display().to_string())
         } else {
             None
         };
+    shred_guard.disarm();
 
     let sample_targets: Vec<f64> = predict_batch_y.into_iter().take(sample_count).collect();
     let sample_predictions: Vec<f64> = pred_resp
@@ -1814,6 +2036,9 @@ pub fn execute_carbon_cli_run_with_ux(
     });
 
     let receipt = CarbonCliRunReceipt {
+        schema: CARBON_FIT_RECEIPT_SCHEMA.to_owned(),
+        schema_version: CARBON_FIT_RECEIPT_SCHEMA_VERSION,
+        release_id: client.active_release_id(),
         selected_endpoint: client.active_endpoint().to_owned(),
         selected_region,
         ping_rtt_ms: best_probe.rtt_ms,
@@ -1830,6 +2055,10 @@ pub fn execute_carbon_cli_run_with_ux(
         fit_rows: prepared.fit_rows,
         holdout_rows: prepared.holdout_rows,
         feature_count: prepared.feature_names.len(),
+        split_mode: split_mode_applied,
+        seed: opts.seed,
+        holdout_rows_sha256,
+        holdout_jmat_sha256,
         jlmb_wire_bytes: jlmb_bytes,
         fit_jmat_bytes: prepared.artifacts.fit_jmat.len(),
         holdout_jmat_bytes: prepared.artifacts.holdout_jmat.len(),
@@ -1869,6 +2098,7 @@ pub fn execute_carbon_cli_run_with_ux(
         saved_model_path,
         objective_name: objective_display_name,
         objective_direction: objective_direction_label,
+        binary_target,
         sample_targets,
         sample_predictions,
     };

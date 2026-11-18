@@ -10,7 +10,8 @@ use std::io::Read;
 use std::path::Path;
 
 use jope_prep::{
-    jmat_lite::split_and_encode_numeric_jmat_v1, FitLandmarkBundle, ObjectiveSpec, SplitPlan,
+    jmat_lite::split_and_encode_numeric_jmat_v1, BinaryTargetMapping, FitLandmarkBundle,
+    ObjectiveSpec, SplitPlan,
 };
 use serde::{Deserialize, Serialize};
 
@@ -86,6 +87,8 @@ pub struct CarbonTabularEncoder {
     pub extra_na_tokens: Vec<String>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub inf_as_nan: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_binary_map: Option<BinaryTargetMapping>,
 }
 
 /// `CarbonTrainingPrepOptions` configures split strategy, calibration, custom objectives, and hygiene checks.
@@ -1069,16 +1072,40 @@ pub fn prepare_encoded_training_set_with_options(
         }
     }
 
+    let present_targets: Vec<&str> = table
+        .rows
+        .iter()
+        .filter_map(|r| r[target_idx].as_deref())
+        .collect();
+    let num_target_count = present_targets
+        .iter()
+        .filter(|s| parse_flexible_numeric_f64(s).is_some())
+        .count();
+    let use_numeric_target = present_targets.is_empty()
+        || num_target_count == present_targets.len()
+        || (present_targets.len() >= 20 && num_target_count * 20 >= present_targets.len() * 19);
+    let target_binary_map: Option<BinaryTargetMapping> = if use_numeric_target {
+        None
+    } else {
+        Some(
+            BinaryTargetMapping::infer(&present_targets)
+                .map_err(|e| format!("target column '{target_col}': {e}"))?,
+        )
+    };
+
     let mut valid_rows: Vec<&Vec<Option<String>>> = Vec::with_capacity(table.rows.len());
     let mut valid_targets: Vec<f64> = Vec::with_capacity(table.rows.len());
     let mut valid_aux_rows: Vec<Vec<f64>> = Vec::with_capacity(table.rows.len());
     let mut dropped_target_rows = 0usize;
 
     for (r_idx, row) in table.rows.iter().enumerate() {
-        let Some(y) = row[target_idx]
-            .as_deref()
-            .and_then(parse_flexible_numeric_f64)
-        else {
+        let parsed_y = match &target_binary_map {
+            Some(bm) => row[target_idx].as_deref().and_then(|s| bm.encode_label(s)),
+            None => row[target_idx]
+                .as_deref()
+                .and_then(parse_flexible_numeric_f64),
+        };
+        let Some(y) = parsed_y else {
             dropped_target_rows += 1;
             continue;
         };
@@ -1105,8 +1132,13 @@ pub fn prepare_encoded_training_set_with_options(
     }
 
     if valid_rows.len() < 8 {
+        let kind_lbl = if target_binary_map.is_some() {
+            "binary"
+        } else {
+            "finite numeric"
+        };
         return Err(format!(
-            "need at least 8 rows with finite numeric target '{target_col}', got {} (dropped {dropped_target_rows} missing/non-numeric target rows)",
+            "need at least 8 rows with {kind_lbl} target '{target_col}', got {} (dropped {dropped_target_rows} missing/non-numeric target rows)",
             valid_rows.len()
         ));
     }
@@ -1115,6 +1147,10 @@ pub fn prepare_encoded_training_set_with_options(
     let split_plan = if normalized_split.as_deref() == Some("forward") {
         SplitPlan::chronological(total_rows, opts.seed, opts.holdout_fraction)
             .err_ctx("chronological split plan failed")?
+    } else if target_binary_map.is_some() {
+        let y_u8: Vec<u8> = valid_targets.iter().map(|&v| u8::from(v >= 0.5)).collect();
+        SplitPlan::stratified_binary(&y_u8, opts.seed, opts.holdout_fraction)
+            .err_ctx("stratified binary split plan failed")?
     } else {
         SplitPlan::deterministic(total_rows, opts.seed, opts.holdout_fraction)
             .err_ctx("split plan failed")?
@@ -1470,6 +1506,7 @@ pub fn prepare_encoded_training_set_with_options(
         had_header: table.had_header,
         extra_na_tokens: table.extra_na_tokens.clone(),
         inf_as_nan: table.inf_as_nan,
+        target_binary_map,
     };
 
     Ok(CarbonEncodedTrainingSet {
@@ -1702,20 +1739,22 @@ pub fn inspect_tabular_file_with_tier(
         None => match resolve_target_column(&table.headers, None, table.had_header) {
             Ok((_, col, _)) => Some(col),
             Err(orig_err) => {
-                let rightmost_numeric = (0..table.headers.len()).rev().find(|&c_idx| {
-                    let mut present = 0usize;
+                let rightmost_candidate = (0..table.headers.len()).rev().find(|&c_idx| {
+                    let mut present_cells = Vec::with_capacity(table.rows.len());
                     let mut numeric = 0usize;
                     for r in &table.rows {
                         if let Some(s) = r[c_idx].as_deref() {
-                            present += 1;
+                            present_cells.push(s);
                             if parse_flexible_numeric_f64(s).is_some() {
                                 numeric += 1;
                             }
                         }
                     }
-                    present > 0 && present == numeric
+                    !present_cells.is_empty()
+                        && (present_cells.len() == numeric
+                            || BinaryTargetMapping::infer(&present_cells).is_ok())
                 });
-                match rightmost_numeric {
+                match rightmost_candidate {
                     Some(idx) => {
                         let col = table.headers[idx].clone();
                         inferred_preview_target = Some(col.clone());
@@ -1735,15 +1774,22 @@ pub fn inspect_tabular_file_with_tier(
         table.had_header,
     )?;
 
-    let mut y_vals: Vec<f64> = table
-        .rows
-        .iter()
-        .filter_map(|r| {
-            r[target_idx]
-                .as_deref()
-                .and_then(parse_flexible_numeric_f64)
-        })
-        .collect();
+    let mut y_vals: Vec<f64> = match &encoded.encoder.target_binary_map {
+        Some(bm) => table
+            .rows
+            .iter()
+            .filter_map(|r| r[target_idx].as_deref().and_then(|s| bm.encode_label(s)))
+            .collect(),
+        None => table
+            .rows
+            .iter()
+            .filter_map(|r| {
+                r[target_idx]
+                    .as_deref()
+                    .and_then(parse_flexible_numeric_f64)
+            })
+            .collect(),
+    };
     let n_y = y_vals.len().max(1) as f64;
     let y_mean = y_vals.iter().sum::<f64>() / n_y;
     let y_var = y_vals
@@ -1792,6 +1838,7 @@ pub fn inspect_tabular_file_with_tier(
             && !all_num
             && present.iter().all(|s| parse_iso8601_date(s).is_some());
 
+        let is_binary_target = c_idx == target_idx && encoded.encoder.target_binary_map.is_some();
         let (num_min, num_med, num_mean, num_std, num_max, sample_cats) = if all_num {
             let mut v: Vec<f64> = present
                 .iter()
@@ -1808,6 +1855,20 @@ pub fn inspect_tabular_file_with_tier(
                 Some(sd),
                 v.last().copied(),
                 Vec::new(),
+            )
+        } else if let Some(bm) = encoded
+            .encoder
+            .target_binary_map
+            .as_ref()
+            .filter(|_| is_binary_target)
+        {
+            (
+                Some(y_min),
+                Some(y_med),
+                Some(y_mean),
+                Some(y_std),
+                Some(y_max),
+                vec![bm.negative_label.clone(), bm.positive_label.clone()],
             )
         } else {
             let samples: Vec<String> = distinct_set
@@ -1827,6 +1888,8 @@ pub fn inspect_tabular_file_with_tier(
         };
         let detected_type = if present.is_empty() {
             "empty".to_owned()
+        } else if is_binary_target {
+            "binary_categorical".to_owned()
         } else if all_num {
             "numeric".to_owned()
         } else if present.iter().all(|s| parse_boolean_token(s).is_some()) {
@@ -1854,6 +1917,14 @@ pub fn inspect_tabular_file_with_tier(
     }
 
     let mut warnings = Vec::new();
+    if let Some(bm) = &encoded.encoder.target_binary_map {
+        warnings.push(format!(
+            "Binary categorical target '{target_col}' conditioned as {{'{}' -> 0.0, '{}' -> 1.0}} (positive prevalence: {:.1}%).",
+            bm.negative_label,
+            bm.positive_label,
+            100.0 * y_mean
+        ));
+    }
     if let Some(inf_col) = inferred_preview_target {
         warnings.push(format!(
             "Auto-previewed rightmost numeric column '{inf_col}' as candidate target; pass `--target {inf_col}` when fitting."

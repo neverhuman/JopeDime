@@ -508,6 +508,7 @@ impl CarbonEnterpriseServer {
             region: config.region.clone(),
             public_base_url: base_url,
             enterprise_self_hosted: config.enterprise_self_hosted,
+            allow_public_free_mint: true,
             catalog,
             presigner: CarbonPresigner::from_secret(config.presign_secret),
             auth_verifier: config.auth_secret.map(CarbonAuthVerifier::from_secret),

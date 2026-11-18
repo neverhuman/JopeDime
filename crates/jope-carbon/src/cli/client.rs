@@ -176,6 +176,7 @@ pub struct CarbonThinClient {
     run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
     run_upload_keys: Arc<Mutex<BTreeMap<String, String>>>,
     cached_server_version: Arc<Mutex<Option<Option<CarbonVersionResponse>>>>,
+    last_release_id: Arc<Mutex<Option<String>>>,
     poll_requests: Arc<AtomicU32>,
     http_request_bytes: Arc<AtomicUsize>,
     http_response_bytes: Arc<AtomicUsize>,
@@ -367,6 +368,7 @@ impl CarbonThinClient {
                 run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
                 run_upload_keys: Arc::new(Mutex::new(BTreeMap::new())),
                 cached_server_version: Arc::new(Mutex::new(None)),
+                last_release_id: Arc::new(Mutex::new(None)),
                 poll_requests: Arc::new(AtomicU32::new(0)),
                 http_request_bytes: Arc::new(AtomicUsize::new(0)),
                 http_response_bytes: Arc::new(AtomicUsize::new(0)),
@@ -511,11 +513,25 @@ impl CarbonThinClient {
             .map(|raw| base64::engine::general_purpose::STANDARD.encode(raw))
     }
 
-    /// Return the currently attached `ctk1.*` capability token string on this client, if any.
+    /// Return the currently attached `ctk1.*` or `ctk2.*` capability token string on this client, if any.
     pub fn active_capability_token(&self) -> Option<String> {
         self.capability_token
             .as_ref()
             .map(|z| z.as_str().to_owned())
+    }
+
+    /// Return the most recent `x-carbon-release-id` header (or `/v1/carbon/version` `release_id`)
+    /// observed from the active Carbon cell, if advertised.
+    pub fn active_release_id(&self) -> Option<String> {
+        if let Ok(guard) = self.last_release_id.lock() {
+            if let Some(rel) = &*guard {
+                return Some(rel.clone());
+            }
+        }
+        self.cached_server_version.lock().ok().and_then(|g| {
+            g.as_ref()
+                .and_then(|opt| opt.as_ref().and_then(|v| v.release_id.clone()))
+        })
     }
 
     /// Export the 32-byte per-run zero-knowledge `u_dek` held in memory for `(tenant_id, run_id)`.
@@ -1445,7 +1461,32 @@ impl CarbonThinClient {
         tenant_id: &str,
         run_id: &str,
     ) -> Result<CarbonShredRunResponse, String> {
-        let path = format!("/v1/carbon/runs/{run_id}?tenant_id={tenant_id}");
+        self.shred_run_with_upload(tenant_id, run_id, None, None, None)
+    }
+
+    /// Cryptographically shred all CAS blobs and state objects for `run_id`, including explicit
+    /// staged `upload_id` / `fit_sha256` / `holdout_sha256` cleanup when a run failed before
+    /// `request.json` was committed on the gateway.
+    pub fn shred_run_with_upload(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        upload_id: Option<&str>,
+        fit_sha256: Option<&str>,
+        holdout_sha256: Option<&str>,
+    ) -> Result<CarbonShredRunResponse, String> {
+        let mut qs = url::form_urlencoded::Serializer::new(String::new());
+        qs.append_pair("tenant_id", tenant_id);
+        if let Some(uid) = upload_id.map(str::trim).filter(|s| !s.is_empty()) {
+            qs.append_pair("upload_id", uid);
+        }
+        if let Some(fsha) = fit_sha256.map(str::trim).filter(|s| !s.is_empty()) {
+            qs.append_pair("fit_sha256", fsha);
+        }
+        if let Some(hsha) = holdout_sha256.map(str::trim).filter(|s| !s.is_empty()) {
+            qs.append_pair("holdout_sha256", hsha);
+        }
+        let path = format!("/v1/carbon/runs/{run_id}?{}", qs.finish());
         let bytes = self.request_checked("DELETE", &path, Some(tenant_id), None, None)?;
         let run_key = format!("{tenant_id}:{run_id}");
         if let Ok(mut g) = self.run_udeks.lock() {
@@ -1633,6 +1674,15 @@ impl CarbonThinClient {
                 Ok((code, resp_headers, resp_body)) => {
                     self.http_response_bytes
                         .fetch_add(resp_body.len(), Ordering::Relaxed);
+                    if let Some(rel_hdr) = resp_headers
+                        .get("x-carbon-release-id")
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                    {
+                        if let Ok(mut guard) = self.last_release_id.lock() {
+                            *guard = Some(rel_hdr.to_owned());
+                        }
+                    }
                     if code < 300 {
                         if allow_region_failover && idx != start_idx {
                             self.active_idx.store(idx, Ordering::Relaxed);

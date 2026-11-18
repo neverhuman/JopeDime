@@ -91,13 +91,15 @@ cargo check -p jope-carbon --no-default-features --features edge --bin carbon-ed
 cargo check -p jope-carbon --no-default-features --features cli --bin carbon --locked
 cargo check -p jope-carbon --no-default-features --features eval --bin carbon-worker --locked
 if rustup target list --installed | grep -qx wasm32-unknown-unknown; then
-  cargo check -p jope-prep --target wasm32-unknown-unknown --locked
+  cargo check -p jope-prep -p jope-envelope --target wasm32-unknown-unknown --locked
 fi
 if rustup target list --installed | grep -qx x86_64-unknown-linux-musl; then
   cargo check -p jope-carbon --no-default-features --features cli --bin carbon --target x86_64-unknown-linux-musl --locked
 fi
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
+    # Universal binary categorical target conditioning & stratified split gate (Carbon v1.3.0)
+cargo test -p jope-prep --locked --test binary_target_prep
     # Workspace MSRV (decision 8: at most 1.97.1)
 set -euo pipefail
 cargo metadata --no-deps --locked --format-version 1 > "$EVIDENCE/metadata.json"

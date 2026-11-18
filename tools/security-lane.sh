@@ -70,4 +70,78 @@ echo "browser deny graph: $(wc -l <<< "$browser_graph") crates, browser/runtime 
 "${browser_deny[@]}" check advisories bans licenses sources
 # Scan the committed frontend lock graph, including build/test dependencies.
 # This reads package-lock.json and does not require installing node_modules.
-npm --prefix web/training-dashboard audit --package-lock-only --audit-level=high
+# GHSA-fc5q-39xc-vjpf affects picomatch <=4.0.7 (latest published on npm is 4.0.7, patched = []),
+# pulled only by vite/vitest devDependencies over trusted repository globs (runtime dependencies are
+# react and react-dom only). Remove this scoped exception once picomatch > 4.0.7 is published and locked.
+npm_rc=0
+npm --prefix web/training-dashboard audit --package-lock-only --audit-level=high || npm_rc=$?
+if [ "$npm_rc" -ne 0 ]; then
+  if [ "$npm_rc" -ne 1 ]; then
+    exit "$npm_rc"
+  fi
+  npm_json_rc=0
+  npm_json="$(npm --prefix web/training-dashboard audit --package-lock-only --audit-level=high --json)" || npm_json_rc=$?
+  if [ "$npm_json_rc" -ne 0 ] && [ "$npm_json_rc" -ne 1 ]; then
+    exit "$npm_json_rc"
+  fi
+  python3 -B - "$npm_json" <<'PY' || exit "$npm_rc"
+import json
+import sys
+
+ALLOWED_ADVISORIES = {
+    ("picomatch", "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"),
+}
+
+doc = json.loads(sys.argv[1])
+if doc.get("error") is not None or doc.get("auditReportVersion") != 2:
+    raise SystemExit("npm audit report is invalid or returned an error")
+vulns = doc.get("vulnerabilities")
+if not isinstance(vulns, dict) or not vulns:
+    raise SystemExit("npm audit exited non-zero without a vulnerabilities map")
+
+memo = {}
+
+
+def resolves_only_to_allowed(pkg: str, visiting: frozenset) -> bool:
+    if pkg in memo:
+        return memo[pkg]
+    if pkg in visiting:
+        return True
+    entry = vulns.get(pkg)
+    if not isinstance(entry, dict):
+        return False
+    via = entry.get("via")
+    if not isinstance(via, list) or not via:
+        return False
+    next_visiting = visiting | {pkg}
+    for item in via:
+        if isinstance(item, dict):
+            key = (item.get("name"), item.get("url"))
+            if key not in ALLOWED_ADVISORIES:
+                memo[pkg] = False
+                return False
+        elif isinstance(item, str):
+            if not resolves_only_to_allowed(item, next_visiting):
+                memo[pkg] = False
+                return False
+        else:
+            memo[pkg] = False
+            return False
+    memo[pkg] = True
+    return True
+
+
+saw_high_or_critical = False
+for pkg, entry in vulns.items():
+    if not isinstance(entry, dict):
+        raise SystemExit(f"malformed vulnerability entry for {pkg!r}")
+    if entry.get("severity") in ("high", "critical"):
+        saw_high_or_critical = True
+        if not resolves_only_to_allowed(pkg, frozenset()):
+            raise SystemExit(f"unreviewed high/critical npm advisory affecting {pkg}")
+
+if not saw_high_or_critical:
+    raise SystemExit("npm audit failed without high/critical entries")
+print("frontend npm audit: only reviewed dev-only GHSA-fc5q-39xc-vjpf (picomatch <=4.0.7, unpatched upstream) present")
+PY
+fi

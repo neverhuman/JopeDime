@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.; RNK-12 CPU arithmetic repair adds five model-free regressions in the existing jope-service library target; full fixture CPU proof is retained separately, CUDA M2 remains unqualified.; kimik3p1_max add-only targeted collection: cargo nextest list --locked -P main -p jope-automl -p jope-bench --message-format json (2026-11-07); four new IDs inserted (three jope-automl lib, one jope-bench lib), no ID removed, every other entry preserved verbatim. Collection is not execution.; agy_carbon add-only targeted collection: cargo nextest list --locked -P main -p jope-carbon -p jope-api -p jope-prep --message-format json (2026-11-15); 124 new IDs inserted, no ID removed, every other entry preserved verbatim.; agy_carbon Section 14 gap-closure additive collection: cargo test --locked -p jope-carbon --test carbon_redteam -- --list (2026-11-15); 8 new IDs inserted, no ID removed.",
-  "count": 6285,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.; RNK-12 CPU arithmetic repair adds five model-free regressions in the existing jope-service library target; full fixture CPU proof is retained separately, CUDA M2 remains unqualified.; kimik3p1_max add-only targeted collection: cargo nextest list --locked -P main -p jope-automl -p jope-bench --message-format json (2026-11-07); four new IDs inserted (three jope-automl lib, one jope-bench lib), no ID removed, every other entry preserved verbatim. Collection is not execution.; agy_carbon add-only targeted collection: cargo nextest list --locked -P main -p jope-carbon -p jope-api -p jope-prep --message-format json (2026-11-15); 124 new IDs inserted, no ID removed, every other entry preserved verbatim.; agy_carbon Section 14 gap-closure additive collection: cargo test --locked -p jope-carbon --test carbon_redteam -- --list (2026-11-15); 8 new IDs inserted, no ID removed.; agy_carbon v1.3.0 veox integration additive collection: cargo nextest list --locked -P main -p jope-envelope -p jope-runtime -p jope-carbon --message-format json (2026-11-17); 9 new IDs inserted, no ID removed.",
+  "count": 6311,
   "ignored": 84,
   "packages": {
    "battle-gpu": {
@@ -3104,14 +3104,15 @@
     }
    },
    "jope-carbon": {
-    "count": 78,
+    "count": 92,
     "ignored": 0,
     "binaries": {
      "jope-carbon": {
       "kind": "lib",
-      "count": 7,
+      "count": 8,
       "ignored": 0,
       "tests": [
+       "cells::edge_downloads::tests::installer_redirects_to_latest_by_default_and_honors_valid_pin_override",
        "cli::spec_live_ci_4tier_exec::tests::forbidden_markers_and_leaked_tokens_are_refused",
        "cli::spec_live_ci_4tier_exec::tests::framed_parser_and_option_b_validation_succeed",
        "home_path::tests::a_relative_home_does_not_name_a_carbon_tool",
@@ -3187,7 +3188,7 @@
      },
      "jope-carbon::carbon_redteam": {
       "kind": "test",
-      "count": 34,
+      "count": 43,
       "ignored": 0,
       "tests": [
        "coverage_closure::api_edge_emu_and_serve_gaps::edge_auth_resume_predict_prepare_predict_and_s3_presign_branches",
@@ -3210,14 +3211,23 @@
        "coverage_closure::deploy_vault_and_ci_clis::cli_ci_live_4tier_and_spec_report_verify_subprocesses",
        "coverage_closure::deploy_vault_and_ci_clis::cli_token_mint_deploy_dry_and_full_rollback_clouds_manifest_and_coverage_audit",
        "coverage_closure::deploy_vault_and_ci_clis::package_assembly_and_cli_fail_closed_plus_secrets_vault_role_isolation",
+       "coverage_closure::hardening_drift_installer_and_ux::cli_ux_upgrade_aliases_tarxz_uninstall_token_stdin_doctor_completions_keep_ephemeral_and_local",
+       "coverage_closure::hardening_drift_installer_and_ux::deploy_check_drift_clean_and_drifted_detection_and_cli_exit_codes",
+       "coverage_closure::hardening_drift_installer_and_ux::fs01_cas_atomic_create_new_and_fs02_credentials_concurrent_races",
+       "coverage_closure::hardening_drift_installer_and_ux::installer_offline_source_dir_and_openssl_less_ecdsa_verification",
        "coverage_closure::http_api_and_emu_matrix::edge_cors_downloads_spot_advisor_404_headers_and_429_rate_limits",
        "coverage_closure::http_api_and_emu_matrix::edge_explain_export_prepare_predict_cas_and_emu_internal_negative_branches",
+       "coverage_closure::real_lambda_and_aws_sigv4_services::real_os_subprocess_lambda_edge_engine_eval_e2e_and_lambda_transport",
+       "coverage_closure::real_lambda_and_aws_sigv4_services::sigv4_s3_secrets_manager_lambda_iam_isolation_and_apigw_504",
        "coverage_closure::runner_bench_and_model_store_gaps::model_store_tarzst_upgrade_predict_csv_modes_and_fallback_tokens",
        "coverage_closure::runner_bench_and_model_store_gaps::runner_ops_benchmark_free_pro_enterprise_and_ux_modes",
+       "coverage_closure::runner_bench_and_model_store_gaps::runner_scientific_csv_dir_and_enterprise_benchmark_modes",
+       "coverage_closure::runner_bench_and_model_store_gaps::runner_ux_progress_stop_resume_and_save_modes",
        "coverage_closure::sigv4_and_crypto_functions::sigv4_credentials_from_env_profile_cache_and_redacted_debug",
        "coverage_closure::sigv4_and_crypto_functions::sigv4_gateway_presigner_and_s3_presign_all_functions_and_errors",
        "coverage_closure::sigv4_and_crypto_functions::user_envelope_kek_rotation_spki_and_tamper_function_closure",
        "coverage_closure::spec_report_verify_and_cell_invokers::engine_invoker_and_eval_worker_all_error_and_cache_branches",
+       "coverage_closure::spec_report_verify_and_cell_invokers::spec_report_ci_quickstart_qualification_in_process",
        "coverage_closure::spec_report_verify_and_cell_invokers::spec_report_full_ci_qualification_and_spec_verify_bundle_roundtrip",
        "coverage_closure::tier_env_and_s3_serve::enterprise_serve_local_8_cells_and_streaming_precheck_413_parity",
        "coverage_closure::tier_env_and_s3_serve::loopback_sigv4_s3_cas_and_enterprise_serve_s3_all_8_tier_cells_and_shred",
@@ -3236,6 +3246,17 @@
        "full_stack::e2e_custom_fitness_aux_column_explain_export_predict_stdout_and_shred",
        "tabular_compressed_utf16_jsonl_currency_dates_inf_and_offline_dry_run",
        "thin_cli_observability_secret_redaction_fitness_and_error_json"
+      ]
+     },
+     "jope-carbon::veox_integration_v130": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "e2e_binary_categorical_targets_yes_no_true_false_inspect_fit_predict_export_and_shred",
+       "jope_envelope_and_aws_lc_rs_engine_kek_bidirectional_interop",
+       "large_table_airfoil_and_parkinsons_scale_hybrid_fanout_and_cli_save_export_shred",
+       "prod_anonymous_closed_ctk2_dual_key_rotation_and_auto_shred_on_failed_fit"
       ]
      }
     }
@@ -5182,6 +5203,24 @@
        "a_fitted_header_matches_its_schema",
        "a_packed_manifest_matches_its_schema",
        "the_committed_lock_matches_its_schema"
+      ]
+     }
+    }
+   },
+   "jope-envelope": {
+    "count": 5,
+    "ignored": 0,
+    "binaries": {
+     "jope-envelope": {
+      "kind": "lib",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "aead::tests::nist_sp800_38d_aes256_gcm_test_case_16_matches",
+       "aead::tests::rfc5869_hkdf_sha256_test_case_1_matches",
+       "tests::ctk2_mint_verify_and_dual_key_rotation_work",
+       "tests::cudk_and_cuen_roundtrip_and_reject_wrong_scope",
+       "token::tests::unauthorized_issuer_admin_escalation_and_invalid_tenant_id_fail_closed"
       ]
      }
     }
@@ -8787,12 +8826,12 @@
     }
    },
    "jope-prep": {
-    "count": 11,
+    "count": 17,
     "ignored": 0,
     "binaries": {
      "jope-prep": {
       "kind": "lib",
-      "count": 6,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "cuen::tests::cuen_and_cudk_framing_roundtrip_and_reject_slot_confusion",
@@ -8800,7 +8839,20 @@
        "landmarks::recipe::stats::q1_regression_tests::q1_near_endpoint_quantiles_stay_ordered_and_in_range",
        "landmarks::recipe::stats::q1_regression_tests::q1_plateau_quantiles_do_not_reverse_adjacent_bounds",
        "objective::tests::catalog_covers_all_53_builtin_entries_and_identities_match_golden",
-       "objective::tests::custom_auxiliary_column_spec_parses_validates_and_scores"
+       "objective::tests::custom_auxiliary_column_spec_parses_validates_and_scores",
+       "target::tests::infers_polarity_for_boolean_and_arbitrary_binary_targets",
+       "target::tests::refuses_constant_and_multiclass_targets_cleanly"
+      ]
+     },
+     "jope-prep::binary_target_prep": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "binary_holdout_metrics_compute_exact_brier_logloss_roc_auc_and_ties",
+       "binary_target_mapping_handles_boolean_semantic_and_arbitrary_string_labels",
+       "binary_target_refuses_empty_constant_and_multiclass_inputs_with_clear_errors",
+       "stratified_binary_split_preserves_rare_minority_class_and_builds_jlmb_and_jmat"
       ]
      },
      "jope-prep::prep": {
@@ -9142,7 +9194,7 @@
     }
    },
    "jope-runtime": {
-    "count": 86,
+    "count": 87,
     "ignored": 0,
     "binaries": {
      "jope-runtime": {
@@ -9213,6 +9265,14 @@
        "table::tests::objective_columns_are_numeric_never_features_and_ignored_at_prediction",
        "table::tests::prediction_columns_match_by_name_and_refuse_unknown_ones",
        "table::tests::tasks_and_class_order"
+      ]
+     },
+     "jope-runtime::fitted_js_cpp_gbm_parity": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "js_and_cpp17_emitters_match_rust_for_gbm_histgbm2_blend_and_kernels"
       ]
      },
      "jope-runtime::fitted_js_qualification": {
@@ -10013,7 +10073,7 @@
   }
  },
  "totals": {
-  "rust": 6251,
+  "rust": 6294,
   "python": 210
  }
 }

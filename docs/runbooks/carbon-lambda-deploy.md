@@ -1,6 +1,6 @@
 # Carbon AWS Lambda & Enterprise Deployment Runbook
 
-End-to-end operator manual for packaging, deploying, promoting across 17 global regions, rolling back, red-teaming, benchmarking, and operating the Carbon zero-knowledge serverless program-synthesis and inference plane ([ADR-0007](../adr/ADR-0007-carbon-lambda-cells.md), [`deploy/carbon/cloudformation-cell.json`](../../deploy/carbon/cloudformation-cell.json)).
+End-to-end operator manual for packaging, deploying, promoting across 17 global regions, rolling back, red-teaming, benchmarking, and operating the Carbon zero-knowledge serverless program-synthesis and inference plane ([ADR-0007](../adr/ADR-0007-carbon-lambda-cells.md), [`deploy/carbon/cloudformation-cell.json`](../../deploy/carbon/cloudformation-cell.json), [`docs/carbon/veox-integration-and-capacity.md`](../carbon/veox-integration-and-capacity.md)).
 
 ---
 

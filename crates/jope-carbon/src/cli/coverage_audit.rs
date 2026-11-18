@@ -29,7 +29,10 @@ use crate::{
         client::{
             send_raw_edge_http, send_raw_put_url, CarbonClientPreparedDataset, CarbonThinClient,
         },
-        redteam::{execute_carbon_redteam_suite, CarbonRedTeamSuiteReport},
+        redteam::{
+            execute_carbon_redteam_suite, execute_carbon_redteam_suite_with_tokens,
+            CarbonRedTeamSuiteReport,
+        },
         runner::generate_nonlinear_benchmark_rows,
     },
     security::user_envelope::{
@@ -68,6 +71,7 @@ pub struct CarbonCloudCoverageInput<'a> {
     pub pro_token_b: &'a str,
     pub expired_pro_token_a: &'a str,
     pub signing_pub_pem: &'a str,
+    pub pre_minted_free: Option<(&'a str, &'a str, &'a str, &'a str)>,
 }
 
 /// `CarbonCloudCoverageReceipt` is a struct capturing all product & adversarial checks for one cloud.
@@ -120,6 +124,7 @@ fn make_ids(tag: &str) -> Result<(RunId, DatasetId), String> {
 fn assert_clean_receipt_json(json_text: &str) -> Result<(), String> {
     for marker in [
         "ctk1.",
+        "ctk2.",
         "AKIA",
         "ASIA",
         "PRIVATE KEY",
@@ -407,7 +412,7 @@ fn run_api_and_signature_checks(
     let t = Instant::now();
     let mut expected_pins = BTreeMap::new();
     expected_pins.insert(base.to_owned(), inp.expected_kek_pubkey_b64.to_owned());
-    let (mut pinned_client, probed) =
+    let (pinned_client, probed) =
         CarbonThinClient::connect_fastest_pinned(vec![base.to_owned()], &expected_pins)?;
     let ping_kek_match = probed
         .first()
@@ -438,20 +443,60 @@ fn run_api_and_signature_checks(
         evidence: format!("HTTP {c_ver}, version_endpoint_deployed={ver_deployed}"),
     });
 
-    // API-LIVE-04: POST /v1/carbon/auth/register persistent 30-day Free account
+    // API-LIVE-04: POST /v1/carbon/auth/register (200/201 on open dev, 403 fail-closed on prod)
     let t = Instant::now();
-    let reg_free = pinned_client.register_free(Some("covmatrix"))?;
-    let free_ok =
-        reg_free.tenant_id.starts_with("free_covmatrix_") && reg_free.tier == CarbonTierWire::Free;
-    checks.push(CarbonCoverageCheckResult {
-        check_id: "API-LIVE-04".to_owned(),
-        domain: "API".to_owned(),
-        title: "POST /v1/carbon/auth/register persistent 30-day Free capability".to_owned(),
-        passed: free_ok,
-        observed_http_status: 200,
-        wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
-        evidence: format!("minted tenant={} (tier=Free)", reg_free.tenant_id),
-    });
+    let (c_reg_free, reg_free_body) = send_raw_edge_http(
+        base,
+        "POST",
+        "/v1/carbon/auth/register",
+        &[],
+        Some(b"{\"label\":\"covmatrix\"}"),
+    )?;
+    let (free_tenant_out, free_bearer_out) = if matches!(c_reg_free, 200 | 201) {
+        let reg_free: jope_api::carbon::CarbonRegisterFreeResponse =
+            serde_json::from_slice(&reg_free_body).map_err(crate::error::err_to_string)?;
+        let free_ok = reg_free.tenant_id.starts_with("free_covmatrix_")
+            && reg_free.tier == CarbonTierWire::Free;
+        checks.push(CarbonCoverageCheckResult {
+            check_id: "API-LIVE-04".to_owned(),
+            domain: "API".to_owned(),
+            title: "POST /v1/carbon/auth/register persistent 30-day Free capability".to_owned(),
+            passed: free_ok,
+            observed_http_status: c_reg_free,
+            wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
+            evidence: format!("minted tenant={} (tier=Free)", reg_free.tenant_id),
+        });
+        (
+            reg_free.tenant_id,
+            format!("Bearer {}", reg_free.capability_token),
+        )
+    } else if c_reg_free == 403 {
+        let Some((ft_a, fk_a, _, _)) = inp.pre_minted_free else {
+            return Err(
+                "POST /v1/carbon/auth/register returned 403 without pre_minted_free tokens"
+                    .to_owned(),
+            );
+        };
+        let (c_anon_probe, _) =
+            send_raw_edge_http(base, "POST", "/v1/carbon/auth/anonymous", &[], Some(b"{}"))?;
+        checks.push(CarbonCoverageCheckResult {
+            check_id: "API-LIVE-04".to_owned(),
+            domain: "API".to_owned(),
+            title: "POST /v1/carbon/auth/{anonymous,register} fail closed (403) when public mint disabled".to_owned(),
+            passed: c_anon_probe == 403,
+            observed_http_status: 403,
+            wall_ms: t.elapsed().as_secs_f64() * 1_000.0,
+            evidence: format!(
+                "register HTTP {c_reg_free}, anonymous HTTP {c_anon_probe} (public Free mint disabled)"
+            ),
+        });
+        (ft_a.to_owned(), format!("Bearer {fk_a}"))
+    } else {
+        return Err(format!(
+            "POST /v1/carbon/auth/register returned unexpected HTTP {c_reg_free}: {}",
+            String::from_utf8_lossy(&reg_free_body)
+        ));
+    };
 
     // API-LIVE-05: GET /v1/carbon/advisor/spot-hybrid authorized Pro 200 OK
     let t = Instant::now();
@@ -649,11 +694,7 @@ fn run_api_and_signature_checks(
         evidence: format!("verify_ecdsa_p256_spki_pem_signature forged_rejected={sig_refused}"),
     });
 
-    Ok((
-        ver_deployed,
-        reg_free.tenant_id,
-        format!("Bearer {}", reg_free.capability_token),
-    ))
+    Ok((ver_deployed, free_tenant_out, free_bearer_out))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1634,8 +1675,17 @@ pub fn execute_cloud_product_coverage_audit(
     let bearer_b = format!("Bearer {}", inp.pro_token_b);
     let expired_bearer_a = format!("Bearer {}", inp.expired_pro_token_a);
 
-    // Run 16-vector redteam first (also ensures any 1-second TTL expired token has elapsed > 1s).
-    let redteam = execute_carbon_redteam_suite(&base)?;
+    // Run 17-vector redteam first (also ensures any 1-second TTL expired token has elapsed > 1s).
+    let (anon_status, _) =
+        send_raw_edge_http(&base, "POST", "/v1/carbon/auth/anonymous", &[], Some(b"{}"))?;
+    let redteam = if anon_status == 403 && inp.pre_minted_free.is_some() {
+        let pair = inp
+            .pre_minted_free
+            .map(|(_, tok_a, _, tok_b)| (tok_a.to_owned(), tok_b.to_owned()));
+        execute_carbon_redteam_suite_with_tokens(&base, pair)?
+    } else {
+        execute_carbon_redteam_suite(&base)?
+    };
 
     let (h_small, r_small, tgt_small) = generate_nonlinear_benchmark_rows(80, 4, 314);
     let prepared_small =
@@ -1795,6 +1845,24 @@ pub fn execute_live_aws_product_coverage_audit(
         900,
         false,
     )?);
+    let prod_free_ten_a = format!("free_covprda_{short_id}");
+    let prod_free_ten_b = format!("free_covprdb_{short_id}");
+    let prod_free_tok_a = Zeroizing::new(mint_capability_token_from_vault(
+        "prod",
+        &prod_cell.region,
+        &prod_free_ten_a,
+        CarbonTierWire::Free,
+        900,
+        false,
+    )?);
+    let prod_free_tok_b = Zeroizing::new(mint_capability_token_from_vault(
+        "prod",
+        &prod_cell.region,
+        &prod_free_ten_b,
+        CarbonTierWire::Free,
+        900,
+        false,
+    )?);
 
     let (_, dev_probed) = CarbonThinClient::connect_fastest_pinned(
         dev_cell.candidate_endpoints(),
@@ -1833,6 +1901,7 @@ pub fn execute_live_aws_product_coverage_audit(
         pro_token_b: &dev_tok_b,
         expired_pro_token_a: &dev_exp,
         signing_pub_pem: &signing_pub_pem,
+        pre_minted_free: None,
     })?;
 
     let prod_receipt = execute_cloud_product_coverage_audit(&CarbonCloudCoverageInput {
@@ -1847,6 +1916,12 @@ pub fn execute_live_aws_product_coverage_audit(
         pro_token_b: &prod_tok_b,
         expired_pro_token_a: &prod_exp,
         signing_pub_pem: &signing_pub_pem,
+        pre_minted_free: Some((
+            &prod_free_ten_a,
+            &prod_free_tok_a,
+            &prod_free_ten_b,
+            &prod_free_tok_b,
+        )),
     })?;
 
     let mut clouds = BTreeMap::new();
