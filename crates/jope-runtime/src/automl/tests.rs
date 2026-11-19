@@ -387,4 +387,104 @@ mod fitness_tests {
         )
         .is_err());
     }
+
+    #[test]
+    fn binary_selection_scores_classification_objectives_and_cross_fits_platt() {
+        use crate::fitness_classification::ClassificationFitness;
+
+        let text = String::from("x1,x2,y\n")
+            + &(0..80)
+                .map(|i| {
+                    let x1 = (i as f64 * 0.29).sin() * 2.5;
+                    let x2 = ((i * 3) % 7) as f64 - 3.0;
+                    let score = x1 + 0.4 * x2;
+                    let label = if (score > 0.15) ^ (i % 9 == 0) {
+                        "yes"
+                    } else {
+                        "no"
+                    };
+                    format!("{x1:.6},{x2:.6},{label}\n")
+                })
+                .collect::<String>();
+        let limits = crate::limits::Limits::default();
+        let csv = crate::table::parse_csv(text.as_bytes(), &limits).unwrap();
+        let train = crate::table::training(
+            &csv,
+            "y",
+            crate::task::TaskChoice::Fixed(TaskKind::Binary),
+            &limits,
+        )
+        .unwrap();
+        let classes = [train.classes[0].clone(), train.classes[1].clone()];
+        let candidates = ["logit_ridge", "tab_boost", "extra_trees"]
+            .map(|s| crate::methods::resolve(TaskKind::Binary, s).unwrap());
+        let budget = Budget::new(None, 1);
+
+        let logloss = ClassificationFitness::from_shorthand("logloss", classes.clone()).unwrap();
+        let (selection, winner, platt) = select_binary_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &logloss,
+            Calibration::Auto,
+        )
+        .unwrap();
+        assert_eq!(selection.policy, SELECTION_POLICY_V2);
+        assert_eq!(selection.metric, "logloss");
+        assert_eq!(
+            selection.fitness_sha256.as_deref(),
+            Some(logloss.identity().unwrap().as_str())
+        );
+        let cal_record = selection.calibration.as_ref().unwrap();
+        assert_eq!(cal_record.family, Calibration::Platt);
+        assert_eq!(cal_record.method, crate::calibration_platt::SCHEMA);
+        for c in &selection.candidates {
+            assert_eq!(c.status, "scored");
+            let raw = c.uncalibrated_loss.unwrap();
+            let cal = c.calibrated_loss.unwrap();
+            assert_eq!(c.loss.unwrap(), raw.min(cal));
+            assert_eq!(c.calibrated, cal < raw);
+        }
+        let chosen = selection
+            .candidates
+            .iter()
+            .find(|c| c.id == winner.id)
+            .unwrap();
+        assert_eq!(platt.is_some(), chosen.calibrated);
+
+        // Maximizing binary objectives negate natural value into selection loss.
+        let auroc = ClassificationFitness::from_shorthand("roc_auc", classes).unwrap();
+        let (auc_sel, _, auc_platt) =
+            select_binary_with_fitness(&train, &candidates, 4, &budget, &auroc, Calibration::None)
+                .unwrap();
+        assert!(auc_platt.is_none());
+        assert!(auc_sel.calibration.is_none());
+        for c in &auc_sel.candidates {
+            assert_eq!(c.loss.unwrap(), -c.fitness_value.unwrap());
+            assert!(c.fitness_value.unwrap() > 0.5);
+        }
+
+        // Swapped class_order and regression calibration families on binary are refused.
+        let swapped =
+            ClassificationFitness::from_shorthand("logloss", ["yes".into(), "no".into()]).unwrap();
+        assert!(select_binary_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &swapped,
+            Calibration::None
+        )
+        .is_err());
+        assert!(select_binary_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &logloss,
+            Calibration::Affine
+        )
+        .is_err());
+    }
 }

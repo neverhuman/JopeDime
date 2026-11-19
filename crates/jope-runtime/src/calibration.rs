@@ -43,15 +43,17 @@ const INTERCEPT_BOUND: f64 = 50.0;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Calibration {
-    /// `affine` when an objective is given, otherwise `none`.
+    /// `affine` (regression) or `platt` (binary) when an objective is given, otherwise `none`.
     #[default]
     Auto,
     /// Raw native predictions.
     None,
-    /// Learn the intercept only.
+    /// Learn the intercept only (regression).
     Shift,
-    /// Learn the intercept and a positive slope.
+    /// Learn the intercept and a positive slope (regression).
     Affine,
+    /// Cross-fitted monotone Platt scaling of positive-class probability (binary).
+    Platt,
 }
 
 impl Calibration {
@@ -61,13 +63,22 @@ impl Calibration {
             "none" => Some(Self::None),
             "shift" => Some(Self::Shift),
             "affine" => Some(Self::Affine),
+            "platt" => Some(Self::Platt),
             _ => None,
         }
     }
-    /// The concrete family for a selection with or without an objective.
+    /// The concrete family for a regression selection with or without an objective.
     pub fn resolve(self, has_objective: bool) -> Self {
         match self {
             Self::Auto if has_objective => Self::Affine,
+            Self::Auto => Self::None,
+            other => other,
+        }
+    }
+    /// The concrete family for a binary classification selection with or without an objective.
+    pub fn resolve_binary(self, has_objective: bool) -> Self {
+        match self {
+            Self::Auto if has_objective => Self::Platt,
             Self::Auto => Self::None,
             other => other,
         }
@@ -320,7 +331,11 @@ pub fn fit_until(
         lower: domain_floor(prediction_domain(fitness), y),
         ..OutputTransform::IDENTITY
     };
-    if matches!(family, Calibration::None | Calibration::Auto) || y.len() < MIN_CALIBRATION_ROWS {
+    if matches!(
+        family,
+        Calibration::None | Calibration::Auto | Calibration::Platt
+    ) || y.len() < MIN_CALIBRATION_ROWS
+    {
         return Ok(base);
     }
     let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len() as f64;

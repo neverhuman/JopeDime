@@ -17,19 +17,26 @@ pub(crate) fn summary_line(command: &str, receipt: &Receipt) {
     let objective = receipt
         .selection
         .as_ref()
-        .filter(|s| s.fitness.is_some())
+        .filter(|s| s.fitness.is_some() || s.binary_fitness.is_some())
         .map(|s| {
-            let calibrated = s
+            let calibrated = if s
                 .calibration
                 .as_ref()
-                .and_then(|c| c.output_transform)
-                .map_or("", |t| {
-                    if t.intercept == 0.0 && t.slope == 1.0 {
-                        " floored"
-                    } else {
-                        " calibrated"
-                    }
-                });
+                .is_some_and(|c| c.platt_calibration.is_some())
+            {
+                " calibrated"
+            } else {
+                s.calibration
+                    .as_ref()
+                    .and_then(|c| c.output_transform)
+                    .map_or("", |t| {
+                        if t.intercept == 0.0 && t.slope == 1.0 {
+                            " floored"
+                        } else {
+                            " calibrated"
+                        }
+                    })
+            };
             format!(" objective={}{calibrated}", s.metric)
         })
         .unwrap_or_default();
@@ -65,15 +72,24 @@ pub(crate) fn run_fit(
         }
         landmarks::refuse_aliasing(train, common, &[output.unwrap_or(model_root)])?;
         let b = run.prepare(train.landmarks.enabled())?;
-        let fitted = run.fit(train, &b)?;
+        let (fitted, platt_calibration) = run.fit(train, &b)?;
         let started = Instant::now();
         if let Some(output) = output {
+            if platt_calibration.is_some() {
+                return Err(Failure::input(
+                    "Platt-calibrated binary models require a model-object directory (omit --output to save under --model-root, or pass --calibration none)",
+                ));
+            }
             let bytes = fitted.to_bytes()?;
             run.receipt
                 .outputs
                 .push(io::write_atomic("model", output, &bytes)?);
         } else {
-            let object = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?;
+            let base = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?;
+            let object = match platt_calibration {
+                Some(platt) => base.with_platt_calibration(platt)?,
+                None => base,
+            };
             let path = object.save(model_root, Limits::default().max_model_bytes)?;
             run.receipt.outputs.push(FileRecord {
                 role: "model",
@@ -365,8 +381,14 @@ pub(crate) fn run_fit_predict(
         run.refuse_aliasing(output, &protected)?;
         landmarks::refuse_aliasing(train, common, &[input, output])?;
         let b = run.prepare(train.landmarks.enabled())?;
-        let fitted = run.fit(train, &b)?;
-        run.predict(&fitted, input, output, &b)?;
+        let (fitted, platt_calibration) = run.fit(train, &b)?;
+        if let Some(platt) = platt_calibration {
+            let object = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?
+                .with_platt_calibration(platt)?;
+            run.predict_in_memory_object(&object, input, output, &b)?;
+        } else {
+            run.predict(&fitted, input, output, &b)?;
+        }
         Ok(())
     })();
     run.finish(result)
@@ -384,18 +406,22 @@ pub(crate) fn report(result: anyhow::Result<()>) -> ExitCode {
     }
 }
 
-pub(crate) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
-    let value = if let Some(path) = text.strip_prefix('@') {
+pub(crate) fn load_fitness_text(text: &str) -> anyhow::Result<String> {
+    if let Some(path) = text.strip_prefix('@') {
         let mut file = std::fs::File::open(path)?;
         use std::io::Read;
         let mut bytes = Vec::new();
         file.by_ref()
             .take((jope_runtime::fitness::MAX_SPEC_BYTES + 1) as u64)
             .read_to_end(&mut bytes)?;
-        String::from_utf8(bytes)?
+        Ok(String::from_utf8(bytes)?)
     } else {
-        text.to_owned()
-    };
+        Ok(text.to_owned())
+    }
+}
+
+pub(crate) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+    let value = load_fitness_text(text)?;
     jope_runtime::fitness::Fitness::parse(&value)
 }
 

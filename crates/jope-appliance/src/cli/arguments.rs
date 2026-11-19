@@ -109,13 +109,14 @@ pub struct TrainArgs {
     /// With `--method auto`: cross-validation folds (reduced for small tables).
     #[arg(long, default_value_t = 5)]
     pub folds: usize,
-    /// Regression objective for selection and calibration: a catalog name (`mae`), a name with
-    /// numeric overrides (`pinball:quantile=0.9`), inline JSON, or @path.json.
+    /// Objective for selection and calibration: a regression or binary catalog name (`mae`,
+    /// `roc_auc`, `logloss`), parameterized shorthand (`pinball:quantile=0.9`,
+    /// `f1:threshold=0.35`), inline JSON, or @path.json.
     #[arg(long)]
     pub fitness: Option<String>,
-    /// Objective-aware output calibration learned on out-of-fold predictions: auto (affine with
-    /// --fitness, otherwise none), none, shift or affine.
-    #[arg(long, default_value = "auto", value_parser = ["auto", "none", "shift", "affine"])]
+    /// Objective-aware output calibration learned on out-of-fold predictions: auto (affine for
+    /// regression or platt for binary with --fitness, otherwise none), none, shift, affine or platt.
+    #[arg(long, default_value = "auto", value_parser = ["auto", "none", "shift", "affine", "platt"])]
     pub calibration: String,
     /// iid or forward (chronological expanding-window validation).
     #[arg(long, default_value = "iid", value_parser = ["iid", "forward"])]
