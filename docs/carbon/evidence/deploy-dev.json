@@ -1,31 +1,31 @@
 {
-  "timestamp_epoch_ms": 1795026614337,
+  "timestamp_epoch_ms": 1795056019830,
   "environment": "dev",
-  "release_id": "89074ac061c2cdcb",
-  "git_sha": "89074ac0703121509de367b872e73ae078d95465",
+  "release_id": "46cb11da99fefd9a",
+  "git_sha": "46cb11da8381850d10f2a4d66de24256819304b5",
   "dry_run": false,
   "regions": [
     {
       "region": "us-east-2",
       "stack_name": "jopedime-carbon-dev",
       "environment": "dev",
-      "release_id": "89074ac061c2cdcb",
+      "release_id": "46cb11da99fefd9a",
       "dry_run": false,
       "change_set_action_count": 14,
       "change_set_summary": [
         "Modify EdgeFunctionUrl (AWS::Lambda::Url)",
         "Modify EdgeFunction (AWS::Lambda::Function)",
         "Modify EdgeLiveAlias (AWS::Lambda::Alias)",
-        "Remove EdgeVersion1b9f6396cb3ff81bebac5ecf (AWS::Lambda::Version)",
-        "Add EdgeVersion89074ac061c2cdcbebac5ecf (AWS::Lambda::Version)",
+        "Add EdgeVersion46cb11da99fefd9aebac5ecf (AWS::Lambda::Version)",
+        "Remove EdgeVersion89074ac061c2cdcbebac5ecf (AWS::Lambda::Version)",
         "Modify EngineFunction (AWS::Lambda::Function)",
         "Modify EngineLiveAlias (AWS::Lambda::Alias)",
-        "Remove EngineVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
-        "Add EngineVersion89074ac061c2cdcb (AWS::Lambda::Version)",
+        "Add EngineVersion46cb11da99fefd9a (AWS::Lambda::Version)",
+        "Remove EngineVersion89074ac061c2cdcb (AWS::Lambda::Version)",
         "Modify EvalFunction (AWS::Lambda::Function)",
         "Modify EvalLiveAlias (AWS::Lambda::Alias)",
-        "Remove EvalVersion1b9f6396cb3ff81b (AWS::Lambda::Version)",
-        "Add EvalVersion89074ac061c2cdcb (AWS::Lambda::Version)",
+        "Add EvalVersion46cb11da99fefd9a (AWS::Lambda::Version)",
+        "Remove EvalVersion89074ac061c2cdcb (AWS::Lambda::Version)",
         "Modify R882ModelLayer (AWS::Lambda::LayerVersion)"
       ],
       "artifacts_bucket": "jopedime-carbon-artifacts-714044927654-us-east-2",
@@ -34,19 +34,19 @@
       "public_edge_endpoint_url": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
       "engine_kek_pubkey_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
       "live_versions": {
+        "edge_version": "12",
+        "engine_version": "11",
+        "eval_version": "11"
+      },
+      "previous_versions": {
         "edge_version": "11",
         "engine_version": "10",
         "eval_version": "10"
       },
-      "previous_versions": {
-        "edge_version": "10",
-        "engine_version": "9",
-        "eval_version": "9"
-      },
-      "r882_layer_version_arn": "arn:aws:lambda:us-east-2:714044927654:layer:jopedime-carbon-dev-r882:10",
+      "r882_layer_version_arn": "arn:aws:lambda:us-east-2:714044927654:layer:jopedime-carbon-dev-r882:11",
       "redteam_passed_vectors": 17,
       "redteam_total_vectors": 17,
-      "wall_ms": 131347.57311300002
+      "wall_ms": 124457.676501
     }
   ]
 }

@@ -22,7 +22,7 @@ pub const CARBON_BUILD_TARGET: &str = env!("CARBON_BUILD_TARGET");
 pub const CARBON_BUILD_PROFILE: &str = env!("CARBON_BUILD_PROFILE");
 /// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.3.2`).
 pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
-/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.3.1`).
+/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.3.2`).
 pub const CARBON_PUBLISHED_INSTALLER_TAG: &str = env!("CARBON_PUBLISHED_INSTALLER_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
