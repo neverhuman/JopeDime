@@ -1,0 +1,46 @@
+{
+  "schema": "jope.h470.verdict/v1",
+  "wave": "H470-DVP",
+  "smoke_mode": false,
+  "overall_verdict": "INSTRUMENT_VERIFIED_PLATEAU_DIAGNOSED",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dvp_config_sha256": "b3e5a0d56726e5e1a3d88ecddfd08c852f0b7b2f5cbecd3e0cdbb0260e5387bf",
+  "criteria": {
+    "WP01_cache_auth": {
+      "status": "PASS",
+      "evidence": "7-field SHA-256 manifests verified; uncovered 0.0939 median token drift in unauthenticated h452..h469 tokens_cache.pt vs H58/H256."
+    },
+    "DVP-S1_placebo_clean": {
+      "status": "PASS",
+      "evidence": "C4a R_shuffled-R_none CI=[-0.02416, +0.01470]; C4b R_noise-R_none CI=[-0.04160, +0.00306]."
+    },
+    "DVP-S2_dope_freeze_and_h58_parity": {
+      "status": "PASS",
+      "evidence": "dope_before == dope_after == c51a56d031a4af40..., H58 parity max diff = 0.0."
+    },
+    "DVP-S4_power_mde": {
+      "status": "PASS",
+      "evidence": "80%-power MDE (205 families, alpha=0.05) = 0.06019 utility."
+    },
+    "G0_O-S2_outcome_ceiling": {
+      "status": "FAIL",
+      "evidence": "profile_oracle-R_none CI=[-0.00914, +0.02118]; R_oracle64-R_dope CI=[-0.00010, +0.02035]."
+    },
+    "U-S1_U-S2_U-S3_ultra_view": {
+      "status": "NO_LIFT",
+      "evidence": "T4 fine-landmark R\u00b2 from R_dope = 0.4611; C6a R_dope_ultra-R_dope T1 CI=[-0.00441, +0.02631]; fine-5 median latency = 389.6ms (1T)."
+    },
+    "P-S1_P-S2_P-S3_packet_v1": {
+      "status": "NO_LIFT",
+      "evidence": "C7b (R_dope+R_packet_v1)-R_dope T1 CI=[-0.01215, +0.01406], T2 neg-logloss CI=[-0.04296, +0.07400]; P-S2 target-bundle delta = -0.00766."
+    },
+    "V-S1_V-S2_V-S3_wp3_predicted_reveals": {
+      "status": "NO_LIFT",
+      "evidence": "V-S1 lam=0 diff=0.0; WP3_fixed_lowvar-incumbent_0rev \u0394=+0.15883 CI=[+0.04333, +0.31439] (40.1% of 4-rev gain, harm=42.9%)."
+    },
+    "B03_stage1b_svd_and_residual_adapter": {
+      "status": "NO_LIFT",
+      "evidence": "B03_svd96-pairnf_z40 \u0394=-0.000012 CI=[-0.000188, +0.000156]; B03_ultra_packet-pairnf_z40 \u0394=+0.000000 CI=[-0.000001, +0.000001]."
+    }
+  }
+}

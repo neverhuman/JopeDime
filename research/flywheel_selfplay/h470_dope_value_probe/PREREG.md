@@ -1,8 +1,8 @@
-# H470 Pre-Registration: DOPE Value Probe (`WP0`–`WP4`) & Zero-Retraining Accuracy Harvester (`WP3` & `B03`)
+# H470-DVP Pre-Registration: DOPE Value Probe (`WP0`–`WP4`) & Zero-Retraining Accuracy Harvester (`WP3` & `B03`)
 
-- **Wave ID**: `H470`
+- **Wave ID**: `H470-DVP`
 - **Branch**: `research/h470-dope-value-probe` (base `7655570db6`, `origin/main`)
-- **Scratch & Bulk Cache Root**: `/home/ubuntu/jope-data/hwave-h470/` (no `.pt`, `.npz`, or raw logs committed to Git)
+- **Scratch & Bulk Cache Root**: `$JOPE_DATA_ROOT/hwave-h470/` (default `~/jope-data/hwave-h470/`; no `.pt`, `.npz`, or raw logs committed to Git)
 - **Frozen DOPE Pins**:
   - Standalone weights SHA-256: `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`
   - Fused serving composite SHA-256 (`dope_freeze_guard`): `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`
@@ -41,7 +41,7 @@ Adapter-only optimizer waves `H451`–`H468` plateaued near `+4.7` to `+5.7` OOF
 2. **Partitions**: Exact `H452`–`H469` floor-stratified family-grouped 5-fold CV partitions (`salts = ["h452a/", "h452b/"]`, fold sizes `[244, 244, 244, 244, 243]`, incumbent gate failures `[4, 4, 4, 3, 4]` per fold), evaluated across `3` seeds (`1, 2, 3`).
 3. **Fold-Safety & Cache Authentication (`WP01`)**:
    - Every feature standardizer, PCA basis, anchor basket, ridge hyperparameter, LightGBM ranker, `WP3` outcome/variance head, and `B03` adapter step is fitted **strictly on the 4 training folds** of each `(partition, fold)` cell.
-   - All cached representations in `/home/ubuntu/jope-data/hwave-h470/cache/` are guarded by `cache_auth.py` (`SHA-256` over `(dope_weights_sha256, stage1a_mode_and_bridge_sha256, prep_recipe, context_sha256, fit_rows_sha256, conditioning_level, stage1b_sha256)`), refusing any mismatched digest.
+   - All cached representations in `$JOPE_DATA_ROOT/hwave-h470/cache/` are guarded by `cache_auth.py` (`SHA-256` over `(dope_weights_sha256, stage1a_mode_and_bridge_sha256, prep_recipe, context_sha256, fit_rows_sha256, conditioning_level, stage1b_sha256)`), refusing any mismatched digest.
 4. **Strict Zero `val91` Peeking**:
    - `DL-Val91` (`91` contexts, `19` families) is **never** read during Part A diagnostics, Part B probe matrix development, basket selection, or Part C model selection.
    - Pre-registered `REGCHECK` rule: after all `DL-Train` OOF results are frozen, `val91` is evaluated **at most once** on (i) the incumbent parity check, (ii) the CV-selected Part C neural arm per seed (using H452–H469's exact selection rule: max mean partition non-floor OOF Elo), and (iii) the CV-selected `WP3` 0-reveal arm vs 0-reveal incumbent.
