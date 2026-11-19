@@ -117,13 +117,14 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     --dev-regions us-east-2 \
     --prod-regions "$PROD_REGIONS" \
     --out "$OUT_DIR/carbon-clouds-dev-stage.json"
-  python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
+  CARBON_E2E_TMPDIR="$OUT_DIR/.e2e-tmp" python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
     --env dev \
     --regions us-east-2 \
     --carbon-bin "$OUT_DIR/carbon-linux-x86_64-musl" \
+    --operator-bin "$REPO_ROOT/target/release/carbon" \
     --clouds-manifest "$OUT_DIR/carbon-clouds-dev-stage.json" \
     --json-out "$OUT_DIR/e2e-dev-receipt.json" >/dev/null
-  rm -f "$OUT_DIR/carbon-clouds-dev-stage.json"
+  rm -rf "$OUT_DIR/carbon-clouds-dev-stage.json" "$OUT_DIR/.e2e-tmp"
 
   say "Step 3/5: Promoting and red-teaming prod cells ($PROD_REGIONS)..."
   cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
@@ -153,12 +154,14 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     --json-out "$OUT_DIR/drift-prod-receipt.json" >/dev/null
 
   say "Step 4b/5: Running post-promotion live prod E2E qualification gate ($PROD_REGIONS)..."
-  python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
+  CARBON_E2E_TMPDIR="$OUT_DIR/.e2e-tmp" python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
     --env prod \
     --regions "$PROD_REGIONS" \
     --carbon-bin "$OUT_DIR/carbon-linux-x86_64-musl" \
+    --operator-bin "$REPO_ROOT/target/release/carbon" \
     --clouds-manifest "$OUT_DIR/carbon-clouds.json" \
     --json-out "$OUT_DIR/e2e-prod-receipt.json" >/dev/null
+  rm -rf "$OUT_DIR/.e2e-tmp"
 fi
 
 cp deploy/carbon/install.sh "$OUT_DIR/install.sh"

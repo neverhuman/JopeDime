@@ -143,8 +143,12 @@ def build_tricky_binary_csv() -> tuple[str, str]:
     return fit_buf.getvalue(), score_buf.getvalue()
 
 
-def verify_model_object_b64(b64_text: str) -> dict[str, Any]:
-    raw_zip = base64.b64decode(b64_text.strip(), validate=True)
+def verify_model_object_payload(payload_bytes: bytes) -> dict[str, Any]:
+    raw_zip = (
+        payload_bytes
+        if payload_bytes.startswith(b"PK\x03\x04")
+        else base64.b64decode(payload_bytes.strip(), validate=True)
+    )
     if not raw_zip.startswith(b"PK\x03\x04"):
         raise GateFailure("exported model-object is not a valid ZIP archive")
     with zipfile.ZipFile(io.BytesIO(raw_zip), "r") as zf:
@@ -283,6 +287,7 @@ def execute_live_gate(
     clouds_manifest: Path | None,
     skip_cloudwatch: bool,
     aws_bin: str = "aws",
+    operator_bin: Path | None = None,
 ) -> dict[str, Any]:
     if not carbon_bin.is_file():
         raise GateFailure(f"missing carbon binary at {carbon_bin}")
@@ -290,11 +295,21 @@ def execute_live_gate(
     started_utc = dt.datetime.now(dt.timezone.utc)
     t0 = time.monotonic()
 
-    with tempfile.TemporaryDirectory(prefix=f"carbon-e2e-{env_name}-") as tmp_str:
+    tmp_base = os.environ.get("CARBON_E2E_TMPDIR") or None
+    if tmp_base:
+        Path(tmp_base).mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory(prefix=f"carbon-e2e-{env_name}-", dir=tmp_base) as tmp_str:
         tmp = Path(tmp_str)
+        exec_carbon = carbon_bin
+        if not os.access(carbon_bin, os.X_OK):
+            exec_carbon = tmp / "carbon"
+            shutil.copyfile(carbon_bin, exec_carbon)
+            exec_carbon.chmod(0o755)
+
         home_dir = tmp / "home"
         home_dir.mkdir(mode=0o700)
-        cli_env = dict(os.environ)
+        cli_env = {k: v for k, v in os.environ.items() if not k.startswith("AWS_")}
         cli_env["HOME"] = str(home_dir)
         cli_env["NO_COLOR"] = "1"
 
@@ -302,30 +317,75 @@ def execute_live_gate(
         if clouds_manifest is not None:
             manifest_args = ["--clouds-manifest", str(clouds_manifest.resolve())]
 
-        # 1. Doctor & account registration on target cloud
+        # 1. Ping & authenticate on target cloud
         run_checked(
-            [str(carbon_bin), "ping", "--cloud", env_name, *manifest_args],
+            [str(exec_carbon), "ping", "--cloud", env_name, *manifest_args],
             env=cli_env,
             timeout_secs=45,
         )
-        run_checked(
-            [str(carbon_bin), "register", "--free", "--cloud", env_name, "--label", f"gate_{env_name}", *manifest_args],
+        reg_proc = run_checked(
+            [str(exec_carbon), "register", "--free", "--cloud", env_name, "--label", f"gate_{env_name}", *manifest_args],
             env=cli_env,
             timeout_secs=45,
+            expect_ok=False,
         )
+        auth_mode = "register_free"
+        if reg_proc.returncode != 0:
+            reg_err = f"{reg_proc.stderr}\n{reg_proc.stdout}"
+            if env_name == "prod" and "registration_disabled" in reg_err:
+                op_bin = operator_bin
+                if op_bin is None or not op_bin.is_file():
+                    repo_guess = Path(__file__).resolve().parents[2] / "target" / "release" / "carbon"
+                    op_bin = repo_guess if repo_guess.is_file() else exec_carbon
+                mint_proc = run_checked(
+                    [
+                        str(op_bin),
+                        "token-mint",
+                        "--tenant",
+                        f"gate_prod_{int(time.time())}",
+                        "--tier",
+                        "free",
+                        "--ttl-secs",
+                        "900",
+                        "--env",
+                        env_name,
+                        "--region",
+                        regions[0],
+                    ],
+                    env=dict(os.environ),
+                    timeout_secs=45,
+                )
+                minted_token = mint_proc.stdout.strip()
+                if not minted_token.startswith("ctk"):
+                    raise GateFailure("operator token-mint did not emit a valid capability token")
+                login_proc = subprocess.run(
+                    [str(exec_carbon), "login", "--cloud", env_name, "--token-stdin", *manifest_args],
+                    input=f"{minted_token}\n",
+                    env=cli_env,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+                if login_proc.returncode != 0:
+                    raise GateFailure(f"carbon login --token-stdin failed: {login_proc.stderr[-300:].strip()}")
+                auth_mode = "prod_registration_disabled_verified_and_operator_minted"
+            else:
+                raise GateFailure(f"carbon register failed (rc={reg_proc.returncode}): {reg_err[-600:].strip()}")
 
         # 2. Regression E2E with `free_stream_velocity` (`"elo"` substring) + all 5 exports
         reg_csv_text, reg_score_text, probe_rows = build_tricky_regression_csv()
         reg_csv = tmp / "tricky_regression.csv"
         reg_score_csv = tmp / "tricky_score.csv"
         reg_handle = tmp / "reg.carbon.json"
+        reg_handle_probe = tmp / "reg_post_shred_probe.carbon.json"
         reg_preds_out = tmp / "reg_preds.csv"
         reg_csv.write_text(reg_csv_text, encoding="utf-8")
         reg_score_csv.write_text(reg_score_text, encoding="utf-8")
 
         fit_proc = run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "fit",
                 str(reg_csv),
                 "--target",
@@ -345,10 +405,11 @@ def execute_live_gate(
         reg_run_id = str(reg_fit_json.get("run_id") or "")
         if not reg_run_id:
             raise GateFailure("regression fit JSON omitted run_id")
+        shutil.copyfile(reg_handle, reg_handle_probe)
 
         run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "predict",
                 str(reg_score_csv),
                 "--model",
@@ -365,12 +426,13 @@ def execute_live_gate(
             raise GateFailure(f"expected {len(probe_rows)} regression predictions, got {len(pred_rows)}")
 
         explain_proc = run_checked(
-            [str(carbon_bin), "explain", "--model", str(reg_handle), "--json", *manifest_args],
+            [str(exec_carbon), "explain", "--model", str(reg_handle), "--json", *manifest_args],
             env=cli_env,
             timeout_secs=90,
         )
         explain_json = json.loads(explain_proc.stdout)
-        if not explain_json.get("importances"):
+        importances = explain_json.get("feature_importances") or explain_json.get("importances")
+        if not importances:
             raise GateFailure("explain returned empty feature importances")
 
         export_sizes: dict[str, int] = {}
@@ -380,12 +442,12 @@ def execute_live_gate(
             ("rust", "rs"),
             ("cpp", "hpp"),
             ("js", "js"),
-            ("model-object", "b64"),
+            ("model-object", "zip"),
         ):
             out_file = tmp / f"champion_reg.{ext}"
             run_checked(
                 [
-                    str(carbon_bin),
+                    str(exec_carbon),
                     "export",
                     "--model",
                     str(reg_handle),
@@ -406,14 +468,14 @@ def execute_live_gate(
 
         py_preds = run_standalone_python_check(export_files["python"], probe_rows)
         js_verified = run_standalone_js_check(export_files["js"], probe_rows, py_preds)
-        mo_meta = verify_model_object_b64(export_files["model-object"].read_text(encoding="utf-8"))
+        mo_meta = verify_model_object_payload(export_files["model-object"].read_bytes())
 
         # Deliberate domain refusal check: mismatched column name must fail cleanly (no FunctionError)
         bad_score = tmp / "bad_columns.csv"
         bad_score.write_text("wrong_col_a,wrong_col_b\n1.0,2.0\n", encoding="utf-8")
         bad_proc = run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "predict",
                 str(bad_score),
                 "--model",
@@ -430,29 +492,29 @@ def execute_live_gate(
             raise GateFailure("mismatched column predict unexpectedly succeeded")
 
         shred_reg_proc = run_checked(
-            [str(carbon_bin), "shred", "--model", str(reg_handle), "--json", *manifest_args],
+            [str(exec_carbon), "shred", "--model", str(reg_handle), "--json", *manifest_args],
             env=cli_env,
             timeout_secs=60,
         )
-        if not json.loads(shred_reg_proc.stdout).get("shredded"):
-            raise GateFailure("regression carbon shred did not report shredded=true")
+        shred_reg_json = json.loads(shred_reg_proc.stdout)
+        if not (shred_reg_json.get("remote_shredded") or shred_reg_json.get("shredded")):
+            raise GateFailure("regression carbon shred did not report remote_shredded=true")
 
         post_shred = run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "status",
-                "--run",
-                reg_run_id,
-                "--cloud",
-                env_name,
+                "--model",
+                str(reg_handle_probe),
                 *manifest_args,
             ],
             env=cli_env,
             timeout_secs=30,
             expect_ok=False,
         )
-        if post_shred.returncode == 0:
-            raise GateFailure("status after carbon shred unexpectedly succeeded")
+        post_shred_out = f"{post_shred.stderr}\n{post_shred.stdout}"
+        if post_shred.returncode == 0 or ("404" not in post_shred_out and "not found" not in post_shred_out.lower()):
+            raise GateFailure(f"status after carbon shred did not return remote 404: {post_shred_out[-300:]}")
 
         # 3. Binary classification E2E with `"below"` / `"above"` labels (`"elo"` substring)
         bin_csv_text, bin_score_text = build_tricky_binary_csv()
@@ -465,7 +527,7 @@ def execute_live_gate(
 
         bin_fit_proc = run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "fit",
                 str(bin_csv),
                 "--target",
@@ -488,7 +550,7 @@ def execute_live_gate(
 
         run_checked(
             [
-                str(carbon_bin),
+                str(exec_carbon),
                 "predict",
                 str(bin_score_csv),
                 "--model",
@@ -509,7 +571,7 @@ def execute_live_gate(
             out_file = tmp / f"champion_bin.{ext}"
             run_checked(
                 [
-                    str(carbon_bin),
+                    str(exec_carbon),
                     "export",
                     "--model",
                     str(bin_handle),
@@ -525,11 +587,11 @@ def execute_live_gate(
             bin_export_sizes[lang] = len(out_file.read_bytes())
 
         run_checked(
-            [str(carbon_bin), "shred", "--model", str(bin_handle), "--json", *manifest_args],
+            [str(exec_carbon), "shred", "--model", str(bin_handle), "--json", *manifest_args],
             env=cli_env,
             timeout_secs=60,
         )
-        run_checked([str(carbon_bin), "logout", "--all"], env=cli_env, timeout_secs=15)
+        run_checked([str(exec_carbon), "logout", "--all"], env=cli_env, timeout_secs=15)
 
     cw_stats: dict[str, Any] = {}
     if not skip_cloudwatch:
@@ -548,6 +610,7 @@ def execute_live_gate(
         "schema": "jopedime.carbon.live-cell-e2e-gate/v1",
         "environment": env_name,
         "regions": regions,
+        "auth_mode": auth_mode,
         "all_passed": True,
         "wall_secs": round(time.monotonic() - t0, 3),
         "regression_gate": {
@@ -581,18 +644,25 @@ def run_self_test() -> int:
     with tempfile.TemporaryDirectory(prefix="carbon-verify-selftest-") as td_str:
         td = Path(td_str)
         fake_carbon = td / "fake-carbon"
+        fake_op = td / "fake-operator-carbon"
         fake_aws = td / "fake-aws"
 
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             zf.writestr("abc123/manifest.json", json.dumps({"schema": "jope.model-object/v1"}))
-        mo_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        mo_zip_hex = buf.getvalue().hex()
 
         fake_carbon.write_text(
             "#!/usr/bin/env python3\n"
             "import json, pathlib, sys\n"
             "args = sys.argv[1:]\n"
             "cmd = args[0] if args else ''\n"
+            "if cmd == 'register' and 'prod' in args:\n"
+            "    sys.stderr.write('HTTP 403: {\"error\":\"registration_disabled\"}\\n'); raise SystemExit(1)\n"
+            "if cmd == 'login':\n"
+            "    tok = sys.stdin.read().strip()\n"
+            "    assert tok.startswith('ctk1.'), f'bad token {tok}'\n"
+            "    print('{}'); raise SystemExit(0)\n"
             "if cmd in ('ping', 'register', 'logout'):\n"
             "    print('{}'); raise SystemExit(0)\n"
             "if cmd == 'fit':\n"
@@ -610,7 +680,7 @@ def run_self_test() -> int:
             "    out.write_text('prediction\\n' + ''.join(f'{10.5 + i}\\n' for i in range(n)))\n"
             "    raise SystemExit(0)\n"
             "if cmd == 'explain':\n"
-            "    print(json.dumps({'importances': [{'feature': 'free_stream_velocity', 'importance': 0.7}]}))\n"
+            "    print(json.dumps({'feature_importances': [{'feature': 'free_stream_velocity', 'importance': 0.7}]}))\n"
             "    raise SystemExit(0)\n"
             "if cmd == 'export':\n"
             "    lang = args[args.index('--lang') + 1]\n"
@@ -620,18 +690,31 @@ def run_self_test() -> int:
             "    elif lang == 'js':\n"
             "        out.write_text('// ' + ('x'*80) + '\\nfunction predictRows(rows){ return rows.map(r => r.reduce((a,b)=>a+b, 0)); }\\n')\n"
             "    elif lang == 'model-object':\n"
-            f"        out.write_text({mo_b64!r})\n"
+            f"        out.write_bytes(bytes.fromhex({mo_zip_hex!r}))\n"
             "    else:\n"
             "        out.write_text('// standalone source ' + ('y' * 80) + '\\n')\n"
             "    raise SystemExit(0)\n"
             "if cmd == 'shred':\n"
-            "    print(json.dumps({'shredded': True, 'objects_deleted': 5})); raise SystemExit(0)\n"
+            "    m = pathlib.Path(args[args.index('--model') + 1])\n"
+            "    if m.exists(): m.unlink()\n"
+            "    print(json.dumps({'remote_shredded': True, 'remote_objects_deleted': 5, 'local_key_handle_shredded': True}))\n"
+            "    raise SystemExit(0)\n"
             "if cmd == 'status':\n"
             "    sys.stderr.write('HTTP 404: run not found\\n'); raise SystemExit(1)\n"
             "raise SystemExit(2)\n",
             encoding="utf-8",
         )
-        fake_carbon.chmod(0o755)
+        # Intentionally 0o644 to verify automatic executable staging in `execute_live_gate`!
+        fake_carbon.chmod(0o644)
+
+        fake_op.write_text(
+            "#!/usr/bin/env python3\n"
+            "import sys\n"
+            "assert sys.argv[1] == 'token-mint'\n"
+            "print('ctk1.selftest_ephemeral_token')\n",
+            encoding="utf-8",
+        )
+        fake_op.chmod(0o755)
 
         fake_aws.write_text(
             "#!/usr/bin/env python3\n"
@@ -644,7 +727,7 @@ def run_self_test() -> int:
         )
         fake_aws.chmod(0o755)
 
-        # 1. Clean run succeeds
+        # 1a. Clean dev run succeeds (even when `--carbon-bin` is a mode-0644 packaged binary!)
         receipt = execute_live_gate(
             carbon_bin=fake_carbon,
             env_name="dev",
@@ -654,7 +737,21 @@ def run_self_test() -> int:
             aws_bin=str(fake_aws),
         )
         assert receipt["all_passed"] is True
+        assert receipt["auth_mode"] == "register_free"
         assert receipt["regression_gate"]["model_object"]["schema"] == "jope.model-object/v1"
+
+        # 1b. Clean prod run verifies registration_disabled 403 + operator token-mint + login --token-stdin!
+        prod_receipt = execute_live_gate(
+            carbon_bin=fake_carbon,
+            env_name="prod",
+            regions=["us-east-2"],
+            clouds_manifest=None,
+            skip_cloudwatch=True,
+            aws_bin=str(fake_aws),
+            operator_bin=fake_op,
+        )
+        assert prod_receipt["all_passed"] is True
+        assert prod_receipt["auth_mode"] == "prod_registration_disabled_verified_and_operator_minted"
 
         # 2. Non-zero CloudWatch Errors must fail closed!
         now = dt.datetime.now(dt.timezone.utc)
@@ -680,6 +777,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--env", choices=["dev", "prod"], default="dev", help="Target Carbon cloud")
     parser.add_argument("--regions", default="us-east-2", help="Comma-separated AWS regions or 'wave1'")
     parser.add_argument("--carbon-bin", default="carbon", help="Path to built carbon CLI binary")
+    parser.add_argument("--operator-bin", default="", help="Optional path to operator carbon binary for prod token-mint")
     parser.add_argument("--clouds-manifest", default="", help="Optional path to carbon-clouds.json")
     parser.add_argument("--skip-cloudwatch", action="store_true", help="Skip AWS CloudWatch metric check")
     parser.add_argument("--json-out", default="", help="Optional path to write JSON E2E receipt")
@@ -689,6 +787,7 @@ def main(argv: list[str] | None = None) -> int:
         return run_self_test()
 
     carbon_path = Path(shutil.which(args.carbon_bin) or args.carbon_bin).resolve()
+    op_path = Path(args.operator_bin).resolve() if args.operator_bin else None
     manifest_path = Path(args.clouds_manifest).resolve() if args.clouds_manifest else None
     regions = expand_regions(args.regions, args.env)
 
@@ -698,6 +797,7 @@ def main(argv: list[str] | None = None) -> int:
         regions=regions,
         clouds_manifest=manifest_path,
         skip_cloudwatch=args.skip_cloudwatch,
+        operator_bin=op_path,
     )
     rendered = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
     if args.json_out:

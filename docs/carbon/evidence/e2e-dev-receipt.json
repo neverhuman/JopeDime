@@ -1,0 +1,68 @@
+{
+  "all_passed": true,
+  "binary_gate": {
+    "export_bytes": {
+      "cpp": 1369016,
+      "js": 748950,
+      "python": 851770,
+      "rust": 1957925
+    },
+    "run_id": "run_01M7TWK70R3XFEDJBB9DDMB7NZ",
+    "shred_verified": true,
+    "tricky_labels_verified": [
+      "below",
+      "above"
+    ]
+  },
+  "cloudwatch": {
+    "us-east-2": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 17,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 9,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    }
+  },
+  "environment": "dev",
+  "regions": [
+    "us-east-2"
+  ],
+  "regression_gate": {
+    "domain_refusal_422_ok": true,
+    "export_bytes": {
+      "cpp": 57142,
+      "js": 70622,
+      "model-object": 6864,
+      "python": 81340,
+      "rust": 90792
+    },
+    "js_parity_verified": true,
+    "model_object": {
+      "entry_count": 3,
+      "schema": "jope.model-object/v1",
+      "zip_bytes": 6864
+    },
+    "python_self_check_and_predict_ok": true,
+    "run_id": "run_01M7TWJRHD5AY3GZDTJ0H35N5Y",
+    "shred_verified_404": true,
+    "tricky_columns_verified": [
+      "free_stream_velocity",
+      "power_generation",
+      "household_population",
+      "island_code",
+      "candidate_score"
+    ]
+  },
+  "schema": "jopedime.carbon.live-cell-e2e-gate/v1",
+  "wall_secs": 46.485
+}

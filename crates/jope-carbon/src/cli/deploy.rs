@@ -969,7 +969,14 @@ fn emit_cli_binary_and_archives(
     raw_bin: &[u8],
     sum_lines: &mut Vec<String>,
 ) -> Result<(), String> {
-    fs::write(out_dir.join(base_name), raw_bin).map_err(|e| format!("write {base_name}: {e}"))?;
+    let bin_out_path = out_dir.join(base_name);
+    fs::write(&bin_out_path, raw_bin).map_err(|e| format!("write {base_name}: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        fs::set_permissions(&bin_out_path, fs::Permissions::from_mode(0o755))
+            .map_err(|e| format!("chmod 0755 {base_name}: {e}"))?;
+    }
     sum_lines.push(format!("{}  {base_name}", sha256_lower_hex(raw_bin)));
 
     let tar_bytes = build_deterministic_single_bin_tar("carbon", raw_bin)?;
