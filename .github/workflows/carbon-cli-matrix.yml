@@ -2,45 +2,36 @@ name: carbon-cli-matrix
 
 on:
   workflow_dispatch:
+    inputs:
+      stage_release_tag:
+        description: "Optional ephemeral draft GitHub Release tag to stage Darwin/Windows CLI slices for release-and-promote.sh"
+        required: false
+        default: ""
+        type: string
+      targets:
+        description: "Matrix slice filter ('darwin-windows' or 'all')"
+        required: false
+        default: "darwin-windows"
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: carbon-cli-matrix-${{ github.sha }}
+  group: carbon-cli-matrix-${{ github.sha }}-${{ inputs.stage_release_tag }}
   cancel-in-progress: false
 
 jobs:
   build:
-    if: vars.CARBON_HOSTED_MATRIX_RUNNER == 'true'
+    if: github.event_name == 'workflow_dispatch' || vars.CARBON_HOSTED_MATRIX_RUNNER == 'true'
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            label: linux-x86_64
-            target: x86_64-unknown-linux-musl
-            asset: carbon-linux-x86_64-musl
-          - os: ubuntu-24.04-arm
-            label: linux-aarch64
-            target: aarch64-unknown-linux-musl
-            asset: carbon-linux-aarch64-musl
-          - os: macos-15
-            label: darwin-universal
-            target: aarch64-apple-darwin
-            asset: carbon-darwin-universal
-          - os: windows-2025
-            label: windows-x86_64
-            target: x86_64-pc-windows-msvc
-            asset: carbon-windows-x86_64-msvc.exe
-          - os: windows-2025
-            label: windows-arm64
-            target: aarch64-pc-windows-msvc
-            asset: carbon-windows-aarch64-msvc.exe
+        include: ${{ fromJSON(inputs.targets == 'all' && '[{"os":"ubuntu-24.04","label":"linux-x86_64","target":"x86_64-unknown-linux-musl","asset":"carbon-linux-x86_64-musl"},{"os":"macos-15","label":"darwin-universal","target":"aarch64-apple-darwin","asset":"carbon-darwin-universal"},{"os":"windows-2025","label":"windows-x86_64","target":"x86_64-pc-windows-msvc","asset":"carbon-windows-x86_64-msvc.exe"},{"os":"windows-2025","label":"windows-arm64","target":"aarch64-pc-windows-msvc","asset":"carbon-windows-aarch64-msvc.exe"}]' || '[{"os":"macos-15","label":"darwin-universal","target":"aarch64-apple-darwin","asset":"carbon-darwin-universal"},{"os":"windows-2025","label":"windows-x86_64","target":"x86_64-pc-windows-msvc","asset":"carbon-windows-x86_64-msvc.exe"},{"os":"windows-2025","label":"windows-arm64","target":"aarch64-pc-windows-msvc","asset":"carbon-windows-aarch64-msvc.exe"}]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     permissions:
-      contents: read
+      contents: write
     env:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
@@ -55,6 +46,46 @@ jobs:
       - name: Build stripped thin carbon CLI
         shell: bash
         run: bash ops/ci/carbon-cli-matrix.sh "${{ matrix.label }}" "${{ matrix.target }}" "${{ matrix.asset }}"
+
+      - name: Upload source-bound CLI slice to ephemeral draft release staging
+        if: inputs.stage_release_tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STAGE_TAG: ${{ inputs.stage_release_tag }}
+          EXPECTED_SHA: ${{ github.sha }}
+          SLICE_LABEL: ${{ matrix.label }}
+        run: |
+          set -euo pipefail
+          case "$STAGE_TAG" in
+            carbon-matrix-stage-*) ;;
+            *)
+              echo "refusing non-staging tag '$STAGE_TAG' (must start with carbon-matrix-stage-)" >&2
+              exit 2
+              ;;
+          esac
+          actual_sha="$(git rev-parse HEAD)"
+          [[ "$actual_sha" == "$EXPECTED_SHA" ]] || {
+            echo "HEAD SHA mismatch: $actual_sha != $EXPECTED_SHA" >&2
+            exit 2
+          }
+          for attempt in 1 2 3 4; do
+            if gh release view "$STAGE_TAG" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+              break
+            fi
+            if gh release create "$STAGE_TAG" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --draft \
+              --prerelease \
+              --target "$EXPECTED_SHA" \
+              --title "Ephemeral Carbon CLI Matrix Stage ($STAGE_TAG)" \
+              --notes "Temporary source-bound CLI build staging for commit \`$EXPECTED_SHA\`."; then
+              break
+            fi
+            sleep "$attempt"
+          done
+          gh release upload "$STAGE_TAG" target/carbon-matrix/* --repo "${GITHUB_REPOSITORY}" --clobber
+          echo "staged $SLICE_LABEL assets to draft release $STAGE_TAG for $EXPECTED_SHA"
 
       - name: Save source-bound CLI matrix cache bundle
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

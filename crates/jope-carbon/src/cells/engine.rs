@@ -68,6 +68,7 @@ use crate::{
 
 const DEADLINE_DRAIN_MARGIN_MS: u64 = 20_000;
 const MAX_INLINE_PREDICT_CUEN_BYTES: usize = 1_572_864;
+const LEGACY_UNCOMPRESSED_EXPORT_CEILING_BYTES: usize = 3_600_000;
 const CHAMPION_CACHE_MAX_ENTRIES: usize = 8;
 const CHAMPION_CACHE_MAX_BYTES: usize = 128 * 1024 * 1024;
 const CHAMPION_CACHE_TTL_SECS: u64 = 60;
@@ -584,7 +585,7 @@ impl CarbonEngineWorker {
             effort: create.effort,
             evaluations: total_evals.max(16),
             wall_seconds: u64::from(effort.lease_ceiling_secs()).max(60),
-            evaluation_wall_ms: 30_000,
+            evaluation_wall_ms: 75_000,
             evaluation_rss_bytes: (decision.eval_class.memory_mb() as u64) * 1_048_576,
             groups: None,
             times,
@@ -1067,13 +1068,36 @@ impl CarbonEngineWorker {
         let source_sha256 = sha256_lower_hex(source_code.as_bytes());
 
         if stored_create.encrypted_cuen {
+            let payload_to_seal = if export_req.accept_compressed
+                || source_code.len() > LEGACY_UNCOMPRESSED_EXPORT_CEILING_BYTES
+            {
+                crate::export_codec::maybe_compress_export_payload(source_code.as_bytes())?
+            } else {
+                Zeroizing::new(source_code.as_bytes().to_vec())
+            };
             let (resp_cuen, resp_cudk_b64) = Self::seal_response_cuen_to_client(
                 &export_req.tenant_id,
                 run_id_str,
                 export_req.client_response_pubkey_b64.as_deref(),
                 CuenPayloadKind::ExportArtifact,
-                source_code.as_bytes(),
+                &payload_to_seal,
             )?;
+            if export_req.prefer_cas_output || resp_cuen.len() > MAX_INLINE_PREDICT_CUEN_BYTES {
+                let out_sha = sha256_lower_hex(&resp_cuen);
+                let out_scope = Some(canonical_blob_scope(&export_req.tenant_id, run_id_str)?);
+                self.cas
+                    .put_scoped_blob_verified(out_scope.as_deref(), &out_sha, &resp_cuen)?;
+                return Ok(CarbonExportResponse {
+                    run_id,
+                    lang: export_req.lang,
+                    source_code: None,
+                    source_sha256,
+                    encrypted_export_cuen_b64: None,
+                    encrypted_export_cas_url: None,
+                    encrypted_export_cas_sha256: Some(out_sha),
+                    response_cudk_b64: Some(resp_cudk_b64),
+                });
+            }
             return Ok(CarbonExportResponse {
                 run_id,
                 lang: export_req.lang,
@@ -1082,6 +1106,8 @@ impl CarbonEngineWorker {
                 encrypted_export_cuen_b64: Some(
                     base64::engine::general_purpose::STANDARD.encode(resp_cuen),
                 ),
+                encrypted_export_cas_url: None,
+                encrypted_export_cas_sha256: None,
                 response_cudk_b64: Some(resp_cudk_b64),
             });
         }
@@ -1092,6 +1118,8 @@ impl CarbonEngineWorker {
             source_code: Some(source_code.as_str().to_owned()),
             source_sha256,
             encrypted_export_cuen_b64: None,
+            encrypted_export_cas_url: None,
+            encrypted_export_cas_sha256: None,
             response_cudk_b64: None,
         })
     }

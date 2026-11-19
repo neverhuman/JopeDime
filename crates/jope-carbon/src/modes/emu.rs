@@ -477,7 +477,10 @@ impl CarbonLocalLambdaEmulator {
                         .name(format!("carbon-emu-eval-{idx}"))
                         .spawn(move || {
                             let _ = run_lambda_custom_runtime_loop(&eval_rt_api, None, |inv| {
-                                eval_worker.handle_wire_bytes(&inv.payload)
+                                eval_worker.handle_wire_bytes_with_deadline(
+                                    &inv.payload,
+                                    inv.deadline_epoch_ms,
+                                )
                             });
                         })
                         .err_ctx("spawn eval runtime thread")?,

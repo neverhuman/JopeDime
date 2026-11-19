@@ -636,7 +636,7 @@ pub(crate) enum Command {
         /// Saved `run_id` (or `latest`) from `$HOME/.config/jopedime/runs/` when `--model` is omitted.
         #[arg(long, visible_alias = "run-id", conflicts_with = "model")]
         run: Option<String>,
-        /// Target standalone language (`python`, `rust`, `rust-refittable`, `js`, `c`, or `cpp`).
+        /// Target standalone language (`python`, `rust`, `rust-refittable`, `js`, `c`, `cpp`, or `model-object`).
         #[arg(long, default_value = "python")]
         lang: String,
         /// Optional output file path (or `-` to write source code to stdout).

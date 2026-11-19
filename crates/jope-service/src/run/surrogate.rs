@@ -31,6 +31,15 @@ struct Fold {
     validation: Vec<usize>,
 }
 
+#[derive(Debug)]
+struct SurrogateWallClockTimeout;
+impl std::fmt::Display for SurrogateWallClockTimeout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("surrogate evaluation exceeded configured wall-clock budget")
+    }
+}
+impl std::error::Error for SurrogateWallClockTimeout {}
+
 pub(crate) fn native<B: AsRef<[u8]> + Sync>(
     request: &Request,
     matrix: &Matrix<B>,
@@ -40,7 +49,13 @@ pub(crate) fn native<B: AsRef<[u8]> + Sync>(
             feat_math::portable_math::frozen_s1::with_frozen_s1_math(|| evaluate(request, matrix))
         })
         .map_err(|_| WorkerFailure::Unavailable)?
-        .map_err(|_| WorkerFailure::InvalidRequest)
+        .map_err(|err| {
+            if err.is::<SurrogateWallClockTimeout>() {
+                WorkerFailure::Timeout
+            } else {
+                WorkerFailure::InvalidRequest
+            }
+        })
 }
 
 fn surrogate_numeric_rows<B: AsRef<[u8]>>(
@@ -139,7 +154,14 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
     let mut predicted = Sha256::new();
     let mut validation_seen = BTreeSet::new();
     let mut wins = 0;
-    for fold in spec.folds {
+    let eval_started = std::time::Instant::now();
+    for (fold_idx, fold) in spec.folds.into_iter().enumerate() {
+        if fold_idx > 0
+            && request.limits.wall_ms > 0
+            && eval_started.elapsed().as_millis() >= u128::from(request.limits.wall_ms)
+        {
+            return Err(SurrogateWallClockTimeout.into());
+        }
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
             fold.repeat == 0

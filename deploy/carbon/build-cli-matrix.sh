@@ -7,12 +7,18 @@ MATRIX_LABEL="${1:?matrix label required}"
 MATRIX_TARGET="${2:?matrix target required}"
 MATRIX_ASSET="${3:?matrix asset required}"
 
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+fi
+
 mkdir -p target/carbon-matrix
 
 emit_posix_tarballs() {
   local asset_name="$1"
   local bin_src="$2"
   local stage_dir="target/carbon-matrix/.stage-${asset_name}"
+  command -v xz >/dev/null 2>&1 || { echo "missing required compressor: xz" >&2; exit 2; }
+  command -v zstd >/dev/null 2>&1 || { echo "missing required compressor: zstd" >&2; exit 2; }
   rm -rf "$stage_dir"
   mkdir -p "$stage_dir"
   cp "$bin_src" "$stage_dir/carbon"
@@ -24,12 +30,8 @@ emit_posix_tarballs() {
     tar_flags=(--format=ustar --owner=0 --group=0 --numeric-owner --mtime='@0')
   fi
   COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -czf "target/carbon-matrix/${asset_name}.tar.gz" carbon
-  if command -v xz >/dev/null 2>&1; then
-    COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | xz -c > "target/carbon-matrix/${asset_name}.tar.xz"
-  fi
-  if command -v zstd >/dev/null 2>&1; then
-    COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | zstd -q -19 -o "target/carbon-matrix/${asset_name}.tar.zst"
-  fi
+  COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | xz -c > "target/carbon-matrix/${asset_name}.tar.xz"
+  COPYFILE_DISABLE=1 tar "${tar_flags[@]}" -C "$stage_dir" -cf - carbon | zstd -q -19 -o "target/carbon-matrix/${asset_name}.tar.zst"
   rm -rf "$stage_dir"
 }
 
@@ -74,6 +76,7 @@ elif [[ "$MATRIX_LABEL" == "windows-x86_64" || "$MATRIX_LABEL" == "windows-arm64
     if ! command -v nasm >/dev/null 2>&1; then
       export AWS_LC_SYS_NO_ASM=1
     fi
+    export CMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded"
     export CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS="${CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS:+$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS }-C target-feature=+crt-static"
     export CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS="${CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS:+$CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS }-C target-feature=+crt-static"
   fi

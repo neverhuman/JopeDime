@@ -340,7 +340,8 @@ pub struct CarbonExplainResponse {
     pub response_cudk_b64: Option<String>,
 }
 
-/// `CarbonExportLangWire` enumerates standalone zero-dependency predictor export languages.
+/// `CarbonExportLangWire` enumerates standalone zero-dependency predictor export languages
+/// plus deterministic `jope.model-object/v1` portable archive export (`model-object`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum CarbonExportLangWire {
@@ -350,6 +351,7 @@ pub enum CarbonExportLangWire {
     Js,
     C,
     Cpp,
+    ModelObject,
 }
 
 impl CarbonExportLangWire {
@@ -361,6 +363,7 @@ impl CarbonExportLangWire {
             Self::Js => "js",
             Self::C => "c",
             Self::Cpp => "cpp",
+            Self::ModelObject => "model-object",
         }
     }
 }
@@ -372,6 +375,10 @@ impl CarbonExportLangWire {
 pub struct CarbonExportRequest {
     pub tenant_id: String,
     pub lang: CarbonExportLangWire,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub accept_compressed: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub prefer_cas_output: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_response_pubkey_b64: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -379,8 +386,8 @@ pub struct CarbonExportRequest {
 }
 
 /// `CarbonExportResponse` returns the standalone predictor source (cleartext in local VPC mode or
-/// sealed inside `CUEN\x01(ExportArtifact)` under `response_cudk_b64` so `carbon-edge` never sees
-/// the fitted equation).
+/// sealed inside `CUEN\x01(ExportArtifact)` inline or via presigned S3 CAS `GET` under
+/// `response_cudk_b64` so `carbon-edge` never sees the fitted equation).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CarbonExportResponse {
     pub run_id: RunId,
@@ -390,6 +397,10 @@ pub struct CarbonExportResponse {
     pub source_sha256: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encrypted_export_cuen_b64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_export_cas_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_export_cas_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_cudk_b64: Option<String>,
 }

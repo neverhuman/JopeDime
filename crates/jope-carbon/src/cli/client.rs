@@ -1508,6 +1508,18 @@ impl CarbonThinClient {
         run_id: &str,
         lang: CarbonExportLangWire,
     ) -> Result<CarbonExportResponse, String> {
+        self.export_run_with_options(tenant_id, run_id, lang, false)
+    }
+
+    /// Export a run's winning champion with explicit CAS spill preference (`prefer_cas_output`)
+    /// and `CZIP\x01` transparent compression inside `CUEN\x01(ExportArtifact)`.
+    pub fn export_run_with_options(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        lang: CarbonExportLangWire,
+        prefer_cas_output: bool,
+    ) -> Result<CarbonExportResponse, String> {
         let path = format!("/v1/carbon/runs/{run_id}/export");
         let u_dek_opt = self
             .run_udeks
@@ -1522,6 +1534,8 @@ impl CarbonThinClient {
             let req = CarbonExportRequest {
                 tenant_id: tenant_id.to_owned(),
                 lang,
+                accept_compressed: true,
+                prefer_cas_output,
                 client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
                 wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_req)),
             };
@@ -1534,18 +1548,27 @@ impl CarbonThinClient {
                 .response_cudk_b64
                 .as_deref()
                 .ok_or_else(|| "missing response_cudk_b64 on encrypted export".to_owned())?;
-            let cuen_b64 = resp.encrypted_export_cuen_b64.as_deref().ok_or_else(|| {
-                "missing encrypted_export_cuen_b64 on encrypted export".to_owned()
-            })?;
             let cudk_raw = base64::engine::general_purpose::STANDARD
                 .decode(cudk_b64)
                 .err_ctx("decode response_cudk_b64")?;
-            let cuen_raw = base64::engine::general_purpose::STANDARD
-                .decode(cuen_b64)
-                .err_ctx("decode encrypted_export_cuen_b64")?;
+            let cuen_raw = if let Some(cas_url) = resp
+                .encrypted_export_cas_url
+                .as_deref()
+                .filter(|u| !u.is_empty())
+            {
+                let exp_sha = resp.encrypted_export_cas_sha256.as_deref().unwrap_or("");
+                self.get_presigned_bytes(cas_url, exp_sha)?
+            } else {
+                let cuen_b64 = resp.encrypted_export_cuen_b64.as_deref().ok_or_else(|| {
+                    "missing encrypted_export_cuen_b64 on encrypted export".to_owned()
+                })?;
+                base64::engine::general_purpose::STANDARD
+                    .decode(cuen_b64)
+                    .err_ctx("decode encrypted_export_cuen_b64")?
+            };
             let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
                 .map_err(crate::error::err_to_string)?;
-            let pt = decrypt_cuen_payload(
+            let raw_pt = decrypt_cuen_payload(
                 &r_dek,
                 CuenPayloadKind::ExportArtifact,
                 tenant_id,
@@ -1553,6 +1576,7 @@ impl CarbonThinClient {
                 &cuen_raw,
             )
             .map_err(crate::error::err_to_string)?;
+            let pt = crate::export_codec::decompress_export_payload_bounded(&raw_pt)?;
             if sha256_lower_hex(&pt) != resp.source_sha256 {
                 return Err("decrypted export source SHA-256 mismatch".to_owned());
             }
@@ -1565,6 +1589,8 @@ impl CarbonThinClient {
         let req = CarbonExportRequest {
             tenant_id: tenant_id.to_owned(),
             lang,
+            accept_compressed: true,
+            prefer_cas_output,
             client_response_pubkey_b64: None,
             wrapped_u_dek_b64: None,
         };

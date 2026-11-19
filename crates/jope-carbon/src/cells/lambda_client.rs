@@ -66,7 +66,7 @@ impl CarbonLambdaRpcClient {
             region: region.into(),
             function_name: function_name.into(),
             role_label,
-            agent: crate::tls::carbon_https_agent().clone(),
+            agent: crate::tls::carbon_lambda_rpc_https_agent().clone(),
         }
     }
 
@@ -113,14 +113,16 @@ impl CarbonLambdaRpcClient {
             for (k, v) in &headers {
                 req = req.header(k, v);
             }
+            let call_started_ms = now_epoch_ms();
             let mut resp = match req.send(payload) {
                 Ok(r) => r,
                 Err(e) => {
+                    let elapsed_ms = now_epoch_ms().saturating_sub(call_started_ms);
                     last_err = format!(
                         "AWS Lambda {} invoke '{}' failed: {e}",
                         self.role_label, self.function_name
                     );
-                    if attempt + 1 < attempts {
+                    if attempt + 1 < attempts && (async_event || elapsed_ms < 15_000) {
                         continue;
                     }
                     return Err(last_err);

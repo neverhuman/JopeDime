@@ -4,13 +4,13 @@
 #
 # Usage:
 #   AWS_PROFILE=veox-jepson-prod bash deploy/carbon/release-and-promote.sh \
-#     --tag carbon-cli-v1.3.1 \
+#     --tag carbon-cli-v1.3.2 \
 #     --r882-dir target/lambda-pkgs/layer-root/jope-models/r882 \
-#     --out-dir target/carbon-release-v1.3.1
+#     --out-dir target/carbon-release-v1.3.2
 
 set -euo pipefail
 
-TAG="carbon-cli-v1.3.1"
+TAG="carbon-cli-v1.3.2"
 R882_DIR="target/lambda-pkgs/layer-root/jope-models/r882"
 OUT_DIR=""
 PROD_REGIONS="wave1"
@@ -18,6 +18,7 @@ SIGNING_KEY="/etc/jope-release/signing.key"
 COSIGN_BIN="${COSIGN_BIN:-$(command -v cosign || printf '%s/.local/bin/cosign' "${HOME:-}")}"
 COSIGN_SHA256="caaad125acef1cb81d58dcdc454a1e429d09a750d1e9e2b3ed1aed8964454708"
 EXTRA_ASSETS_DIR=""
+STAGE_RELEASE_TAG=""
 DEV_APP_PUBKEYS_B64=""
 PROD_APP_PUBKEYS_B64=""
 SKIP_DEPLOY=0
@@ -41,6 +42,7 @@ while [[ $# -gt 0 ]]; do
     --prod-regions) PROD_REGIONS="$2"; shift 2 ;;
     --signing-key) SIGNING_KEY="$2"; shift 2 ;;
     --extra-assets-dir) EXTRA_ASSETS_DIR="$2"; shift 2 ;;
+    --stage-release-tag) STAGE_RELEASE_TAG="$2"; shift 2 ;;
     --dev-app-pubkeys-b64) DEV_APP_PUBKEYS_B64="$2"; shift 2 ;;
     --prod-app-pubkeys-b64) PROD_APP_PUBKEYS_B64="$2"; shift 2 ;;
     --skip-deploy) SKIP_DEPLOY=1; shift 1 ;;
@@ -156,6 +158,49 @@ with open(ps1_path, "w", encoding="utf-8") as fh:
     fh.write(ps1)
 PY
 
+if [[ "$ALLOW_PARTIAL_MATRIX" -ne 0 && "$TAG" == carbon-cli-v* && "$SKIP_GH_RELEASE" -eq 0 ]]; then
+  die "--allow-partial-matrix is forbidden when publishing a production '$TAG' GitHub Release"
+fi
+
+if [[ -z "$STAGE_RELEASE_TAG" && -z "$EXTRA_ASSETS_DIR" && "$SKIP_GH_RELEASE" -eq 0 ]]; then
+  STAGE_RELEASE_TAG="carbon-matrix-stage-${SOURCE_SHA:0:12}"
+fi
+
+GH_ROLE_CMD="${GH_ROLE_BIN:-$(command -v gh-role || printf '%s/.local/bin/gh-role' "$HOME")}"
+if [[ -n "$STAGE_RELEASE_TAG" ]]; then
+  STAGE_DL_DIR="$OUT_DIR/.hosted-matrix-stage"
+  rm -rf "$STAGE_DL_DIR"
+  mkdir -p "$STAGE_DL_DIR"
+  say "Fetching source-bound Darwin & Windows CLI assets from draft release '$STAGE_RELEASE_TAG'..."
+  "$GH_ROLE_CMD" writer release download "$STAGE_RELEASE_TAG" \
+    --repo neverhuman/JopeDime \
+    --dir "$STAGE_DL_DIR" \
+    --clobber
+  (
+    cd "$STAGE_DL_DIR"
+    for sum_file in SHA256SUMS-darwin-universal.txt SHA256SUMS-windows-x86_64.txt SHA256SUMS-windows-arm64.txt; do
+      [[ -s "$sum_file" ]] || die "missing $sum_file in staged release '$STAGE_RELEASE_TAG'"
+      sha256sum -c "$sum_file" >/dev/null || die "checksum verification failed for $sum_file"
+    done
+    for raw_bin in \
+      carbon-darwin-arm64 \
+      carbon-darwin-x86_64 \
+      carbon-darwin-universal \
+      carbon-windows-x86_64-msvc.exe \
+      carbon-windows-aarch64-msvc.exe
+    do
+      [[ -s "$raw_bin" ]] || die "missing staged binary '$raw_bin'"
+      grep -a -q -F "$SOURCE_SHA" "$raw_bin" || die "staged binary '$raw_bin' does not embed expected commit SHA $SOURCE_SHA"
+      grep -a -q -F "$TAG" "$raw_bin" || die "staged binary '$raw_bin' does not embed expected release tag $TAG"
+    done
+    shopt -s nullglob
+    for asset in carbon-darwin-* carbon-windows-*; do
+      cp -f "$asset" "$OUT_DIR/$asset"
+    done
+  )
+  rm -rf "$STAGE_DL_DIR"
+fi
+
 if [[ -n "$EXTRA_ASSETS_DIR" ]]; then
   [[ -d "$EXTRA_ASSETS_DIR" ]] || die "missing --extra-assets-dir '$EXTRA_ASSETS_DIR'"
   (
@@ -266,6 +311,10 @@ ROOT
         --title "Carbon Zero-Knowledge Serverless CLI ($TAG)" \
         --notes "Source SHA: \`$SOURCE_SHA\`. Verify with \`carbon self-verify\` or \`openssl dgst -sha256 -verify docs/release/signing.pub\`." \
         "${rel_assets[@]}"
+      if [[ -n "$STAGE_RELEASE_TAG" ]]; then
+        say "Cleaning up temporary draft staging release '$STAGE_RELEASE_TAG'..."
+        "$GH_ROLE_CMD" writer release delete "$STAGE_RELEASE_TAG" --repo neverhuman/JopeDime --yes --cleanup-tag || true
+      fi
     )
   fi
 fi

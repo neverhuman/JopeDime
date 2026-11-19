@@ -657,7 +657,22 @@ pub(crate) fn dispatch_model_ops(
                                 let _ = fs::create_dir_all(parent);
                             }
                         }
-                        if let Err(e) = fs::write(out_path, src_code.as_bytes()) {
+                        let out_bytes: Vec<u8> = if lang_wire == CarbonExportLangWire::ModelObject {
+                            use base64::Engine as _;
+                            match base64::engine::general_purpose::STANDARD.decode(src_code.trim())
+                            {
+                                Ok(raw) => raw,
+                                Err(e) => {
+                                    return emit_cli_error(
+                                        json,
+                                        &format!("decode model-object ZIP base64: {e}"),
+                                    );
+                                }
+                            }
+                        } else {
+                            src_code.as_bytes().to_vec()
+                        };
+                        if let Err(e) = fs::write(out_path, &out_bytes) {
                             return emit_cli_error(
                                 json,
                                 &format!("write export source {}: {e}", out_path.display()),
@@ -674,8 +689,9 @@ pub(crate) fn dispatch_model_ops(
                                     "lang": resp.lang,
                                     "output_path": out_path,
                                     "source_sha256": resp.source_sha256,
-                                    "bytes": src_code.len(),
-                                    "encrypted_cuen": resp.encrypted_export_cuen_b64.is_some(),
+                                    "bytes": out_bytes.len(),
+                                    "encrypted_cuen": resp.encrypted_export_cuen_b64.is_some()
+                                        || resp.encrypted_export_cas_url.is_some(),
                                 }))
                                 .unwrap_or_default(),
                             );
@@ -1129,8 +1145,9 @@ fn parse_export_lang(raw: &str) -> Result<CarbonExportLangWire, String> {
         "js" | "javascript" | "ts" => Ok(CarbonExportLangWire::Js),
         "c" => Ok(CarbonExportLangWire::C),
         "cpp" | "c++" | "cxx" => Ok(CarbonExportLangWire::Cpp),
+        "model-object" | "model_object" => Ok(CarbonExportLangWire::ModelObject),
         other => Err(format!(
-            "unsupported --lang `{other}` (expected `python`, `rust`, `rust-refittable`, `js`, `c`, or `cpp`)"
+            "unsupported --lang `{other}` (expected `python`, `rust`, `rust-refittable`, `js`, `c`, `cpp`, or `model-object`)"
         )),
     }
 }
