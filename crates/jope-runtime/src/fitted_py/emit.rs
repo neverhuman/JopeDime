@@ -79,13 +79,15 @@ pub fn emit_with_checks_and_platt(
 ) -> Result<String> {
     let mut source =
         emit_calibrated_with_checks(genome, model, width, calibration.output.as_ref(), checks)?;
+    lint(&source)?;
     if let Some(platt) = &calibration.platt {
         platt
             .validate()
             .map_err(|e| Failure::integrity(format!("invalid Platt calibration: {e:#}")))?;
         let sigmoid = &platt.sigmoid;
-        source.push_str(&format!(
-            r#"
+        let render_platt = |class_order_json: &str| {
+            format!(
+                r#"
 PLATT_CLASS_ORDER = {}
 def fitted_platt(score):
     import math
@@ -99,16 +101,19 @@ def fitted_platt(score):
         p = e / (1 + e)
     return [1 - p, p]
 "#,
-            serde_json::to_string(&platt.class_order)?,
-            py_number(sigmoid.intercept),
-            py_number(sigmoid.slope),
-            py_number(sigmoid.intercept),
-            py_number(sigmoid.slope),
-            py_number(sigmoid.scale),
-            py_number(sigmoid.center),
-        ));
+                class_order_json,
+                py_number(sigmoid.intercept),
+                py_number(sigmoid.slope),
+                py_number(sigmoid.intercept),
+                py_number(sigmoid.slope),
+                py_number(sigmoid.scale),
+                py_number(sigmoid.center),
+            )
+        };
+        // Class labels are user data (e.g. "below"/"above"), not generated vocabulary.
+        lint(&render_platt("[\"\", \"\"]"))?;
+        source.push_str(&render_platt(&serde_json::to_string(&platt.class_order)?));
     }
-    lint(&source)?;
     Ok(source)
 }
 
@@ -387,6 +392,13 @@ pub fn emit_math_pipeline_with_options(
             .map(|c| Py::Str(c.name.clone()))
             .collect(),
     );
+    let placeholder_columns = Py::Tuple(
+        input
+            .columns
+            .iter()
+            .map(|_| Py::Str(String::new()))
+            .collect(),
+    );
     let scalers = Py::Tuple(
         input
             .columns
@@ -396,16 +408,22 @@ pub fn emit_math_pipeline_with_options(
     );
     let selected = Py::Tuple(input.selected.iter().map(|&j| Py::I(j)).collect());
     let target = Py::Tuple(vec![Py::F(input.target.min), Py::F(input.target.scale)]);
+    let scalers_py = render(&scalers)?;
+    let selected_py = render(&selected)?;
+    let target_py = render(&target)?;
+    // Input column names are user data (e.g. `free_stream_velocity`), not generated vocabulary.
+    let lint_block = format!(
+        "\n\n\n# Input contract prediction_version=2: f64 arithmetic, finite results required.\n\
+         MODEL_COLUMNS = {}\nINPUT_SCALERS = {scalers_py}\nINPUT_SELECTED = {selected_py}\nTARGET_SCALE = {target_py}\n{PY_CONTRACT_F64}",
+        render(&placeholder_columns)?,
+    );
+    lint(&lint_block)?;
     let block = format!(
         "\n\n\n# Input contract prediction_version=2: f64 arithmetic, finite results required.\n\
-         MODEL_COLUMNS = {}\nINPUT_SCALERS = {}\nINPUT_SELECTED = {}\nTARGET_SCALE = {}\n{PY_CONTRACT_F64}",
+         MODEL_COLUMNS = {}\nINPUT_SCALERS = {scalers_py}\nINPUT_SELECTED = {selected_py}\nTARGET_SCALE = {target_py}\n{PY_CONTRACT_F64}",
         render(&columns)?,
-        render(&scalers)?,
-        render(&selected)?,
-        render(&target)?,
     );
     source.insert_str(at, &block);
-    lint(&source)?;
     Ok(source.into_bytes())
 }
 

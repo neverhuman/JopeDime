@@ -300,24 +300,29 @@ impl MathPipeline {
         } else {
             ("\n// Input contract prediction_version=2: f64 arithmetic, finite results required.\n", JS_CONTRACT_F64)
         };
-        source.push_str(&format!(
-            "{header}const MODEL_COLUMNS=Object.freeze({});\n\
-             const INPUT_SCALERS=Object.freeze({});\n\
-             const INPUT_SELECTED=Object.freeze({});\n\
-             const TARGET_SCALE=Object.freeze({{min:{},scale:{}}});\n{contract}",
-            serde_json::to_string(&columns)?,
-            serde_json::to_string(&scalers)?,
-            serde_json::to_string(&self.input.selected)?,
-            serde_json::to_string(&self.input.target.min)?,
-            serde_json::to_string(&self.input.target.scale)?,
-        ));
-        let hits = feat_math::transpile::lint_shipped_text(&source);
+        let render_tail = |cols_json: &str| -> Result<String> {
+            Ok(format!(
+                "{header}const MODEL_COLUMNS=Object.freeze({cols_json});\n\
+                 const INPUT_SCALERS=Object.freeze({});\n\
+                 const INPUT_SELECTED=Object.freeze({});\n\
+                 const TARGET_SCALE=Object.freeze({{min:{},scale:{}}});\n{contract}",
+                serde_json::to_string(&scalers)?,
+                serde_json::to_string(&self.input.selected)?,
+                serde_json::to_string(&self.input.target.min)?,
+                serde_json::to_string(&self.input.target.scale)?,
+            ))
+        };
+        // Input column names are user data (e.g. `free_stream_velocity`), not generated vocabulary.
+        let placeholder_columns = vec![""; self.input.columns.len()];
+        let lint_tail = render_tail(&serde_json::to_string(&placeholder_columns)?)?;
+        let hits = feat_math::transpile::lint_shipped_text(&lint_tail);
         if !hits.is_empty() {
             return Err(Failure::integrity(format!(
                 "banned vocabulary in JavaScript artifact: {}",
                 hits.join(", ")
             )));
         }
+        source.push_str(&render_tail(&serde_json::to_string(&columns)?)?);
         Ok(source.into_bytes())
     }
 
@@ -363,5 +368,87 @@ mod tests {
                 .unwrap()
                 .contains("prediction_version")
         );
+    }
+
+    #[test]
+    fn user_column_names_and_binary_class_labels_with_banned_substrings_export_cleanly() {
+        use crate::fitted_js::ExportCalibration;
+        use crate::model_object::calibration_platt::{Calibration, Sigmoid, SCHEMA};
+
+        let input = include_bytes!("../tests/fixtures/math-pipeline/input.json");
+        let state = include_bytes!("../tests/fixtures/math-pipeline/pipeline.json");
+        let mut input_val: serde_json::Value = serde_json::from_slice(input).unwrap();
+        input_val["prediction_version"] = serde_json::json!(F64_PREDICTION_VERSION);
+        let tricky_names = [
+            "free_stream_velocity",
+            "power_generation",
+            "household_population",
+            "island_code",
+            "candidate_score",
+        ];
+        if let Some(cols) = input_val["columns"].as_array_mut() {
+            for (idx, col) in cols.iter_mut().enumerate() {
+                col["name"] =
+                    serde_json::json!(format!("{}_{idx}", tricky_names[idx % tricky_names.len()]));
+            }
+        }
+        let parts = BTreeMap::from([
+            (INPUT_PART.into(), serde_json::to_vec(&input_val).unwrap()),
+            (PIPELINE_PART.into(), state.to_vec()),
+        ]);
+        let pipeline = MathPipeline::decode(&parts, PIPELINE_PART).unwrap();
+
+        let py_src = String::from_utf8(crate::fitted_py::emit_math_pipeline(&pipeline).unwrap())
+            .expect("utf8 py");
+        let rs_src = crate::fitted_rs::emit_pipeline(&pipeline).expect("rs pipeline");
+        let cpp_src = pipeline.export_cpp17(None, None).expect("cpp17 pipeline");
+        let js_src =
+            String::from_utf8(pipeline.export_javascript().expect("js pipeline")).expect("utf8 js");
+
+        for src in [&py_src, &rs_src, &cpp_src, &js_src] {
+            assert!(src.contains("free_stream_velocity"));
+        }
+
+        let platt_cal = ExportCalibration {
+            output: None,
+            platt: Some(Calibration {
+                schema: SCHEMA.to_owned(),
+                score_kind: "native-positive-probability/v1".to_owned(),
+                class_order: ["below".to_owned(), "above".to_owned()],
+                fitting_rows: 120,
+                cross_fit_folds: 5,
+                sigmoid: Sigmoid {
+                    slope: 1.25,
+                    intercept: -0.1,
+                    center: 0.5,
+                    scale: 0.25,
+                },
+            }),
+        };
+        let width = pipeline.input.selected.len();
+        let py_platt = crate::fitted_py::emit_with_platt(
+            &pipeline.genome,
+            &pipeline.state.model,
+            width,
+            &platt_cal,
+        )
+        .expect("py platt with below/above");
+        let rs_platt = crate::fitted_rs::emit_with_platt(
+            &pipeline.genome,
+            &pipeline.state.model,
+            width,
+            &platt_cal,
+        )
+        .expect("rs platt with below/above");
+        let js_platt = crate::fitted_js::emit_with_platt(
+            &pipeline.genome,
+            &pipeline.state.model,
+            width,
+            &platt_cal,
+        )
+        .expect("js platt with below/above");
+        assert!(py_platt.contains("\"below\""));
+        assert!(rs_platt.contains("\"below\""));
+        assert!(js_platt.contains("\"below\""));
     }
 }

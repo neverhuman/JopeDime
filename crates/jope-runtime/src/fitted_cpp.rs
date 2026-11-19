@@ -795,10 +795,11 @@ pub fn emit_math_pipeline_cpp17(
         None => "value".to_owned(),
     };
 
-    let mut full = base_cpp;
-    let _ = write!(
-        full,
-        r#"
+    let render_tail = |cols_joined: &str| -> Result<String> {
+        let mut tail = String::new();
+        let _ = write!(
+            tail,
+            r#"
 // Standalone fitted predictor state (inference only; zero external dependencies).
 {head_cpp}
 
@@ -879,24 +880,32 @@ inline double predict_row(const std::vector<double>& row) {{
     return out[0];
 }}
 "#,
-        cols_joined = cols_cpp.join(","),
-        col_min = cpp_vec_f64(&mins)?,
-        col_max = cpp_vec_f64(&maxs)?,
-        col_fill = cpp_vec_f64(&fills_vec)?,
-        col_const = consts.join(","),
-        selected = cpp_vec_usize(&pipeline.input.selected),
-        has_fills = if has_fills { "true" } else { "false" },
-        t_min = cpp_f64(pipeline.input.target.min)?,
-        t_scale = cpp_f64(pipeline.input.target.scale)?,
-    );
+            col_min = cpp_vec_f64(&mins)?,
+            col_max = cpp_vec_f64(&maxs)?,
+            col_fill = cpp_vec_f64(&fills_vec)?,
+            col_const = consts.join(","),
+            selected = cpp_vec_usize(&pipeline.input.selected),
+            has_fills = if has_fills { "true" } else { "false" },
+            t_min = cpp_f64(pipeline.input.target.min)?,
+            t_scale = cpp_f64(pipeline.input.target.scale)?,
+        );
+        Ok(tail)
+    };
 
-    let hits = lint_shipped_text(&full);
+    // Input column names are user data (e.g. `free_stream_velocity`), not generated vocabulary.
+    let placeholder_cols = vec!["\"\""; pipeline.input.columns.len()].join(",");
+    let mut lint_full = base_cpp.clone();
+    lint_full.push_str(&render_tail(&placeholder_cols)?);
+    let hits = lint_shipped_text(&lint_full);
     if !hits.is_empty() {
         return Err(Failure::integrity(format!(
             "banned vocabulary in fitted C++17 artifact: {}",
             hits.join(", ")
         )));
     }
+
+    let mut full = base_cpp;
+    full.push_str(&render_tail(&cols_cpp.join(","))?);
     Ok(full)
 }
 

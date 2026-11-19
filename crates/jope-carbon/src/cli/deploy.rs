@@ -2476,6 +2476,31 @@ fn deploy_single_region(
             .unwrap_or_default(),
     });
 
+    // Reconcile `:live` aliases when a previous emergency rollback mutated Lambda aliases
+    // out-of-band without changing CloudFormation's stack model (`!has_changes`).
+    if !has_changes {
+        if let Some(ref expected_live) = live_versions {
+            if !expected_live.edge_version.is_empty()
+                && !expected_live.engine_version.is_empty()
+                && !expected_live.eval_version.is_empty()
+            {
+                let actual_live = read_current_live_aliases(region, &stack_name);
+                let drifted = actual_live.as_ref().is_some_and(|cur| {
+                    cur.edge_version != expected_live.edge_version
+                        || cur.engine_version != expected_live.engine_version
+                        || cur.eval_version != expected_live.eval_version
+                });
+                if drifted {
+                    let _ = execute_carbon_rollback(&CarbonRollbackOptions {
+                        environment: opts.environment.clone(),
+                        region: region.to_owned(),
+                        target_versions: Some(expected_live.clone()),
+                    })?;
+                }
+            }
+        }
+    }
+
     // 5. Mandatory post-deploy live verification (/ping + 16-vector red-team suite on BOTH IAM & Public doors) + auto-rollback!
     let verify_outcome: Result<(Option<usize>, Option<usize>), String> = (|| {
         let mut gate_urls = vec![("iam_fn_url", edge_url.as_str())];

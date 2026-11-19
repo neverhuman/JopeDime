@@ -54,6 +54,75 @@ pub enum CarbonEngineWireCommand {
     },
 }
 
+/// Structured application-level failure returned inside an HTTP `200` Lambda Runtime API response
+/// (`POST /runtime/invocation/{id}/response`) so domain, schema, export, and client cryptographic
+/// rejections do not register as unhandled AWS Lambda `FunctionError`s or trigger RPC retry storms.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonEngineFailureEnvelope {
+    pub carbon_engine_failure: String,
+    pub status_code: u16,
+}
+
+/// Classify a caught `CarbonEngineWorker` error into HTTP `422` (caller domain/schema/export refusal)
+/// vs HTTP `502` (cryptographic/KEK/seal/tamper/infrastructure rejection).
+pub fn classify_engine_domain_status(cmd: &CarbonEngineWireCommand, err: &str) -> u16 {
+    if matches!(
+        cmd,
+        CarbonEngineWireCommand::StartRun { .. } | CarbonEngineWireCommand::ResumeRun { .. }
+    ) {
+        return 502;
+    }
+    let lc = err.to_ascii_lowercase();
+    let is_crypto_or_infra = lc.contains("cudk")
+        || lc.contains("cuen")
+        || lc.contains("decrypt")
+        || lc.contains("unwrap")
+        || lc.contains("kek")
+        || lc.contains("seal")
+        || lc.contains("tamper")
+        || lc.contains("authentic")
+        || lc.contains("s3 ")
+        || lc.contains("secrets")
+        || lc.contains("cas ")
+        || lc.contains("missing request.json")
+        || lc.contains("missing sealed_champion")
+        || lc.contains("corrupt")
+        || lc.contains("timeout")
+        || lc.contains("aws lambda")
+        || lc.contains("http 5");
+    if is_crypto_or_infra {
+        502
+    } else {
+        422
+    }
+}
+
+/// Unpack a synchronous `invoke_engine` byte payload, surfacing structured
+/// [`CarbonEngineFailureEnvelope`] payloads or direct `Err` returns with their classified HTTP status.
+pub fn unwrap_engine_rpc_bytes(
+    cmd: &CarbonEngineWireCommand,
+    rpc_res: Result<Vec<u8>, String>,
+) -> Result<Vec<u8>, (u16, String)> {
+    match rpc_res {
+        Ok(bytes) => {
+            if let Ok(env) = serde_json::from_slice::<CarbonEngineFailureEnvelope>(&bytes) {
+                let code = if matches!(env.status_code, 400..=599) {
+                    env.status_code
+                } else {
+                    classify_engine_domain_status(cmd, &env.carbon_engine_failure)
+                };
+                return Err((code, env.carbon_engine_failure));
+            }
+            Ok(bytes)
+        }
+        Err(err) => {
+            let code = classify_engine_domain_status(cmd, &err);
+            Err((code, err))
+        }
+    }
+}
+
 /// `CarbonEngineInvoker` is a trait abstracting synchronous and asynchronous `Event` dispatch from
 /// `edge` to the sealed `engine` cell.
 pub trait CarbonEngineInvoker: Send + Sync {

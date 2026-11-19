@@ -2832,3 +2832,123 @@ fn carbon_v132_cas_overflow_export_model_object_and_eval_deadline_guard_e2e() {
         Some(jope_service::worker::WorkerFailure::Timeout)
     );
 }
+
+#[test]
+fn v133_tricky_vocabulary_all_5_exports_domain_422_and_live_cell_verifier_self_test() {
+    use jope_api::carbon::{CarbonExportLangWire, CarbonRunStateWire, CarbonTierWire};
+    use jope_carbon::{
+        modes::emu::{CarbonEmuConfig, CarbonLocalLambdaEmulator},
+        CarbonThinClient,
+    };
+
+    // 1. Run `deploy/carbon/verify-live-cell.py --self-test` in CI!
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let script = repo_root.join("deploy/carbon/verify-live-cell.py");
+    let py_out = std::process::Command::new("python3")
+        .arg(&script)
+        .arg("--self-test")
+        .output()
+        .expect("spawn python3 verify-live-cell.py --self-test");
+    assert!(
+        py_out.status.success(),
+        "verify-live-cell.py --self-test failed: stdout={} stderr={}",
+        String::from_utf8_lossy(&py_out.stdout),
+        String::from_utf8_lossy(&py_out.stderr)
+    );
+
+    // 2. End-to-end Carbon emulator test with `free_stream_velocity` (`"elo"` substring):
+    //    - All 5 exports (`python`, `rust`, `cpp`, `js`, `model-object`) succeed.
+    //    - Domain refusal (`predict` with mismatched column header) returns HTTP 422
+    //      (`predict_refused`) without unhandled Lambda `FunctionError` or 502 retries.
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let mut cfg = CarbonEmuConfig::for_dir(tmp.path().join("emu"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 2;
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emu");
+
+    let tok = emu
+        .mint_capability_token("tenant_v133", CarbonTierWire::Pro, false)
+        .expect("mint token");
+    let (raw_client, _) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("connect");
+    let authed = raw_client.with_capability_token(tok);
+
+    let mut rows = Vec::new();
+    for i in 0..80 {
+        let v = 31.3 + (i % 15) as f64 * 2.5;
+        let g = 10.0 + ((i * 5) % 19) as f64 * 1.4;
+        let p = 120.0 + ((i * 7) % 23) as f64 * 5.0;
+        let y = 130.0 - 0.4 * v + 0.7 * g + 0.02 * p;
+        rows.push(vec![v, g, p, y]);
+    }
+    let prep = CarbonThinClient::prepare_numeric_dataset(
+        vec![
+            "free_stream_velocity".to_owned(),
+            "power_generation".to_owned(),
+            "household_population".to_owned(),
+            "sound_db".to_owned(),
+        ],
+        &rows,
+        "sound_db",
+        20261119,
+        0.20,
+    )
+    .expect("prepare tricky dataset");
+    let _up = authed
+        .upload_prepared("tenant_v133", CarbonTierWire::Pro, &prep)
+        .expect("upload prepared");
+    let run_id: jope_api::ids::RunId = "run_01JCCARB0NV133E2E000000001".parse().expect("run_id");
+    let ds_id: jope_api::ids::DatasetId = "ds_555555555555555555555560".parse().expect("ds_id");
+    let prog = authed
+        .start_run(
+            run_id.clone(),
+            ds_id,
+            "tenant_v133",
+            CarbonTierWire::Pro,
+            Effort::Fast,
+            "rmse",
+            20261119,
+            &prep,
+        )
+        .expect("start tricky run");
+    assert_eq!(prog.state, CarbonRunStateWire::Completed);
+    let run_id_str = run_id.to_string();
+
+    for lang in [
+        CarbonExportLangWire::Python,
+        CarbonExportLangWire::Rust,
+        CarbonExportLangWire::Cpp,
+        CarbonExportLangWire::Js,
+        CarbonExportLangWire::ModelObject,
+    ] {
+        let exported = authed
+            .export_run("tenant_v133", &run_id_str, lang)
+            .unwrap_or_else(|e| panic!("export {lang:?} failed on free_stream_velocity: {e}"));
+        let src = exported.source_code.expect("source_code");
+        if lang != CarbonExportLangWire::ModelObject {
+            assert!(
+                src.contains("free_stream_velocity"),
+                "{lang:?} export missing free_stream_velocity"
+            );
+        }
+    }
+
+    // Domain refusal check: mismatched feature column predict returns HTTP 422 (`predict_refused`), NOT 502!
+    let bad_err = authed
+        .predict(
+            "tenant_v133",
+            &run_id_str,
+            vec!["nonexistent_feature".to_owned()],
+            vec![vec![Some(1.0)]],
+        )
+        .expect_err("mismatched feature predict must fail");
+    assert!(
+        bad_err.contains("HTTP 422"),
+        "expected HTTP 422 domain refusal without FunctionError/502 retries, got: {bad_err}"
+    );
+
+    let shred = authed
+        .shred_run("tenant_v133", &run_id_str)
+        .expect("shred run");
+    assert!(shred.shredded);
+    emu.shutdown();
+}

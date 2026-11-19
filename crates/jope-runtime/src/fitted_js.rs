@@ -73,29 +73,33 @@ pub fn emit_with_checks_and_platt(
             .validate()
             .map_err(|e| Failure::integrity(format!("invalid Platt calibration: {e:#}")))?;
         let sigmoid = &platt.sigmoid;
-        source.push_str(&format!(
-            "\nconst PLATT_CLASS_ORDER=Object.freeze({});\n\
-             function fittedPlatt(score) {{\n\
-               if(!Number.isFinite(score) || score<0 || score>1) throw new Error(\"invalid Platt score\");\n\
-               const z={}===0 ? {} : {} + {}*(score/{} - {});\n\
-               let p; if(z>=0) p=1/(1+Math.exp(-z)); else {{const e=Math.exp(z); p=e/(1+e);}}\n\
-               return [1-p,p];\n\
-             }}\n",
-            serde_json::to_string(&platt.class_order)?,
-            js_number(sigmoid.slope),
-            js_number(sigmoid.intercept),
-            js_number(sigmoid.intercept),
-            js_number(sigmoid.slope),
-            js_number(sigmoid.scale),
-            js_number(sigmoid.center),
-        ));
-    }
-    let hits = lint_shipped_text(&source);
-    if !hits.is_empty() {
-        return Err(Failure::integrity(format!(
-            "banned vocabulary in JavaScript artifact: {}",
-            hits.join(", ")
-        )));
+        let render_platt = |class_order_json: &str| {
+            format!(
+                "\nconst PLATT_CLASS_ORDER=Object.freeze({});\n\
+                 function fittedPlatt(score) {{\n\
+                   if(!Number.isFinite(score) || score<0 || score>1) throw new Error(\"invalid Platt score\");\n\
+                   const z={}===0 ? {} : {} + {}*(score/{} - {});\n\
+                   let p; if(z>=0) p=1/(1+Math.exp(-z)); else {{const e=Math.exp(z); p=e/(1+e);}}\n\
+                   return [1-p,p];\n\
+                 }}\n",
+                class_order_json,
+                js_number(sigmoid.slope),
+                js_number(sigmoid.intercept),
+                js_number(sigmoid.intercept),
+                js_number(sigmoid.slope),
+                js_number(sigmoid.scale),
+                js_number(sigmoid.center),
+            )
+        };
+        // Class labels are user data (e.g. "below"/"above"), not generated vocabulary.
+        let hits = lint_shipped_text(&render_platt("[\"\",\"\"]"));
+        if !hits.is_empty() {
+            return Err(Failure::integrity(format!(
+                "banned vocabulary in JavaScript artifact: {}",
+                hits.join(", ")
+            )));
+        }
+        source.push_str(&render_platt(&serde_json::to_string(&platt.class_order)?));
     }
     Ok(source)
 }
