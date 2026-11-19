@@ -32,8 +32,12 @@ class CacheAuthenticationError(RuntimeError):
     """Raised when a cached representation fails WP01 provenance or digest checks."""
 
 
-def sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
+def sha256_bytes(payload: bytes | bytearray | memoryview) -> str:
+    if not isinstance(payload, (bytes, bytearray, memoryview)):
+        raise CacheAuthenticationError("sha256_bytes requires a bytes-like buffer")
+    hasher = hashlib.sha256()
+    hasher.update(memoryview(payload))
+    return hasher.hexdigest()
 
 
 def sha256_file(path: str | Path) -> str:
