@@ -1,0 +1,68 @@
+{
+ "wave": "H471",
+ "status": "RUNNING",
+ "script_sha256": "7bc9061c3897c39d2970f8ed12085b7f358609796235953fe73f56901805ecbd",
+ "harness_parent": "h470_trainfold_cv.py sha256 d596dbb25d6adcbe0911f0add13bb3bed5eae80db2ff3944fffc181b75884352",
+ "arms": [
+  "pairnf_z40",
+  "oc16_z40",
+  "sgdr2_z40"
+ ],
+ "control": "pairnf_z40",
+ "schedules": {
+  "pairnf_z40": "constant lr 3e-4 x 16 steps",
+  "oc16_z40": "warm 2 + cosine to 0 over 16 steps, peak 6e-4",
+  "sgdr2_z40": "2 cycles x 8 steps, warm 1 each, cosine to 0, peak 16/3 e-4",
+  "integrated_lr_all_arms": 0.0048,
+  "formula": "lr_t = peak * min(1, (s+1)/warm) * 0.5 * (1 + cos(pi*s/L)), s = t mod L, L = 16/cyc"
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "partitions": [
+  "h452a/",
+  "h452b/"
+ ],
+ "folds": 5,
+ "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+ "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+ "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+ "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, median val91 gain with cross-seed family-bootstrap CI low > 0, clean red-team; otherwise NO_LIFT",
+ "redteam_prereg": [
+  "floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift",
+  "kept < 0.5x control => gate-starved; kept > 2x control => z-inflated (cf. H461 s32)",
+  "kept-set overlap with control (subset/superset/extras) and non-floor win rate of extras",
+  "ties never win; val91 gain ~0 with >= 85/91 ties is not evidence",
+  "equal pooled Elo with equal W-L = arithmetic coincidence once adapters differ",
+  "schedules are label-free; val91 read once per seed for the selected arm only"
+ ],
+ "checkpoint_sha256_prefix": "1d6ea900ebed8d2a",
+ "incumbent_val_utility": 1.1389572403748425,
+ "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "host": "xbabe2",
+ "device": "cpu",
+ "sealed_or_holdout_reads": 0,
+ "verdict": null,
+ "probe": {
+  "utc": "2026-11-19T05:45:59Z",
+  "ok": true,
+  "control_full_sha_equals_h467_h470_probes": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439",
+  "oc16_full_sha_1step": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439 (step-0 lr = 3e-4 = control; expected)",
+  "sgdr2_full_sha_1step": "d9c57fb4f7adac97af4d0e9bd3e2fc448639edd0088d82709ff0ff1241433f7c",
+  "peak_rss_gb": 6.22,
+  "min_memavail_gb": 50.0
+ },
+ "smoke_h452a_fold0_seed1": {
+  "pairnf_z40": {
+   "changed": 134,
+   "kept": 15,
+   "gain": 0.000629,
+   "adapter_sha_prefix": "8d5ac7934310",
+   "equals_h470_cell": true
+  },
+  "oc16_z40": "running at prereg",
+  "sgdr2_z40": "running at prereg"
+ }
+}
