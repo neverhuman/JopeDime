@@ -103,6 +103,25 @@ fn validate_reports_identity_columns_and_temporal_requirements() {
     let sortino = describe(&Fitness::parse("sortino").unwrap()).unwrap();
     assert_eq!(sortino["requires_chronological_validation"], true);
     assert_eq!(sortino["direction"], "maximize");
+    let binary = crate::fitness_classification::ClassificationFitness::from_shorthand(
+        "auroc",
+        ["neg".to_owned(), "pos".to_owned()],
+    )
+    .unwrap();
+    let binary_desc = describe_classification(&binary).unwrap();
+    assert_eq!(
+        binary_desc["schema"],
+        crate::fitness_classification::FITNESS_VERSION
+    );
+    assert_eq!(binary_desc["task"], "binary");
+    assert_eq!(binary_desc["name"], "roc_auc");
+    assert_eq!(binary_desc["direction"], "maximize");
+    assert_eq!(binary_desc["class_order"], json!(["neg", "pos"]));
+    assert_eq!(binary_desc["requires_chronological_validation"], false);
+    assert_eq!(
+        binary_desc["fitness_sha256"],
+        json!(binary.identity().unwrap())
+    );
 }
 #[test]
 fn fit_predict_transport_runs_the_custom_objective_and_binds_it_to_the_model() {

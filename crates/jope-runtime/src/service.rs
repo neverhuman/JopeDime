@@ -80,6 +80,22 @@ pub fn describe(fitness: &Fitness) -> Result<Value> {
     }))
 }
 
+/// Describe a validated binary classification objective specification and its identity.
+pub fn describe_classification(
+    fitness: &crate::fitness_classification::ClassificationFitness,
+) -> Result<Value> {
+    Ok(json!({
+        "schema": crate::fitness_classification::FITNESS_VERSION,
+        "task": "binary",
+        "name": fitness.name(),
+        "direction": fitness.direction(),
+        "fitness_sha256": fitness.identity()?,
+        "class_order": fitness.class_order,
+        "requires_chronological_validation": false,
+        "specification": fitness,
+    }))
+}
+
 pub fn catalog() -> Value {
     use crate::fitness::ResourceVar;
     json!({"schema": crate::fitness::FITNESS_VERSION,

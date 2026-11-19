@@ -1,7 +1,32 @@
 use super::*;
 
 impl Metric {
-    pub(super) fn direction(self) -> Direction {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Logloss => "logloss",
+            Self::Brier => "brier",
+            Self::RocAuc => "roc_auc",
+            Self::PrAuc => "pr_auc",
+            Self::F1 => "f1",
+            Self::BalancedAccuracy => "balanced_accuracy",
+            Self::CostMatrixLoss => "cost_matrix_loss",
+        }
+    }
+
+    pub fn from_shorthand_name(name: &str) -> Option<Self> {
+        match name {
+            "logloss" | "log_loss" => Some(Self::Logloss),
+            "brier" => Some(Self::Brier),
+            "roc_auc" | "auroc" => Some(Self::RocAuc),
+            "pr_auc" | "average_precision" => Some(Self::PrAuc),
+            "f1" => Some(Self::F1),
+            "balanced_accuracy" => Some(Self::BalancedAccuracy),
+            "cost_matrix_loss" => Some(Self::CostMatrixLoss),
+            _ => None,
+        }
+    }
+
+    pub fn direction(self) -> Direction {
         match self {
             Self::RocAuc | Self::PrAuc | Self::F1 | Self::BalancedAccuracy => Direction::Maximize,
             Self::Logloss | Self::Brier | Self::CostMatrixLoss => Direction::Minimize,

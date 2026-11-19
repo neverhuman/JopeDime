@@ -93,6 +93,128 @@ impl ClassificationFitness {
         Ok(spec)
     }
 
+    /// Resolve a built-in binary metric shorthand (`roc_auc`/`auroc`, `logloss`/`log_loss`,
+    /// `brier`, `pr_auc`/`average_precision`, `balanced_accuracy`, `f1`, `f1:threshold=0.35`,
+    /// `logloss:aggregation=sum`, `brier:aggregation=sum`) against an explicit `class_order`.
+    pub fn from_shorthand(text: &str, class_order: [String; 2]) -> Result<Self> {
+        if text.len() > MAX_SPEC_BYTES {
+            return Err(FitnessError::InvalidSpecification(
+                "specification exceeds 32 KiB".into(),
+            ));
+        }
+        let trimmed = text.trim();
+        if trimmed.is_empty() {
+            return Err(FitnessError::InvalidSpecification(
+                "empty classification fitness specification".into(),
+            ));
+        }
+        let (raw_name, overrides) = match trimmed.split_once(':') {
+            Some((name, rest)) => (name.trim(), Some(rest)),
+            None => (trimmed, None),
+        };
+        let metric = Metric::from_shorthand_name(raw_name).ok_or_else(|| {
+            FitnessError::InvalidSpecification(format!(
+                "unknown classification fitness {raw_name:?}"
+            ))
+        })?;
+        if metric == Metric::CostMatrixLoss {
+            return Err(FitnessError::InvalidSpecification(
+                "cost_matrix_loss requires a JSON specification with cost_matrix".into(),
+            ));
+        }
+        let mut aggregation = Aggregation::Mean {};
+        let mut threshold = None;
+        if let Some(overrides) = overrides {
+            if overrides.trim().is_empty() {
+                return Err(FitnessError::InvalidSpecification(
+                    "empty parameter list after `:`".into(),
+                ));
+            }
+            for raw_pair in overrides.split(',') {
+                let pair = raw_pair.trim();
+                if pair.is_empty() {
+                    return Err(FitnessError::InvalidSpecification(
+                        "empty parameter entry in shorthand".into(),
+                    ));
+                }
+                let (raw_key, raw_value) = pair.split_once('=').ok_or_else(|| {
+                    FitnessError::InvalidSpecification(format!(
+                        "override {pair:?} must be key=value"
+                    ))
+                })?;
+                let key = raw_key.trim();
+                let value = raw_value.trim();
+                match (metric, key) {
+                    (_, "aggregation") => {
+                        aggregation = match value {
+                            "mean" => Aggregation::Mean {},
+                            "sum" => Aggregation::Sum {},
+                            other => {
+                                return Err(FitnessError::InvalidSpecification(format!(
+                                    "unsupported classification aggregation `{other}`"
+                                )));
+                            }
+                        };
+                    }
+                    (Metric::F1, "threshold") => {
+                        let parsed = value.parse::<f64>().map_err(|_| {
+                            FitnessError::InvalidSpecification(format!(
+                                "parameter threshold requires a finite number, got {value:?}"
+                            ))
+                        })?;
+                        threshold = Some(parsed);
+                    }
+                    (_, other_key) => {
+                        return Err(FitnessError::InvalidSpecification(format!(
+                            "{} has no shorthand parameter {other_key:?}",
+                            metric.name()
+                        )));
+                    }
+                }
+            }
+        }
+        let spec = Self {
+            schema: FITNESS_VERSION.to_owned(),
+            metric,
+            class_order,
+            aggregation,
+            undefined: UndefinedPolicy::FailCandidate,
+            threshold,
+            cost_matrix: None,
+        };
+        spec.validate()?;
+        Ok(spec)
+    }
+
+    /// Parse either an inline `jope.classification-fitness/v1` JSON object (verifying that its
+    /// `class_order` matches `class_order`) or a built-in shorthand bound to `class_order`.
+    pub fn parse_for_classes(text: &str, class_order: [String; 2]) -> Result<Self> {
+        if text.len() > MAX_SPEC_BYTES {
+            return Err(FitnessError::InvalidSpecification(
+                "specification exceeds 32 KiB".into(),
+            ));
+        }
+        if text.trim_start().starts_with('{') {
+            let parsed = Self::parse(text)?;
+            if parsed.class_order != class_order {
+                return Err(FitnessError::InvalidSpecification(format!(
+                    "specification class_order {:?} does not match dataset classes {:?}",
+                    parsed.class_order, class_order
+                )));
+            }
+            return Ok(parsed);
+        }
+        Self::from_shorthand(text, class_order)
+    }
+
+    pub fn name(&self) -> &'static str {
+        self.metric.name()
+    }
+
+    pub fn direction(&self) -> Direction {
+        self.metric.direction()
+    }
+
     pub fn validate(&self) -> Result<()> {
         if self.schema != FITNESS_VERSION {
             return Err(FitnessError::InvalidSpecification(
