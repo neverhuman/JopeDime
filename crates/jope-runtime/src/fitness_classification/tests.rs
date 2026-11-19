@@ -375,3 +375,78 @@ fn documented_input_example_has_the_golden_scores() {
         assert!((score.value - expected).abs() <= 1e-12);
     }
 }
+
+#[test]
+fn shorthand_aliases_and_parameters_match_canonical_json_identity() {
+    let classes = ["no".to_owned(), "yes".to_owned()];
+    for (shorthand, json_metric, aggregation) in [
+        ("logloss", "logloss", "mean"),
+        ("log_loss", "logloss", "mean"),
+        ("logloss:aggregation=sum", "logloss", "sum"),
+        ("brier", "brier", "mean"),
+        ("brier:aggregation=sum", "brier", "sum"),
+        ("roc_auc", "roc_auc", "mean"),
+        ("auroc", "roc_auc", "mean"),
+        ("pr_auc", "pr_auc", "mean"),
+        ("average_precision", "pr_auc", "mean"),
+        ("balanced_accuracy", "balanced_accuracy", "mean"),
+        ("f1", "f1", "mean"),
+    ] {
+        let parsed = ClassificationFitness::parse_for_classes(shorthand, classes.clone()).unwrap();
+        let canonical = spec(json_metric, aggregation);
+        assert_eq!(parsed.name(), json_metric);
+        assert_eq!(parsed.direction(), canonical.direction());
+        assert_eq!(parsed.identity().unwrap(), canonical.identity().unwrap());
+    }
+
+    let custom_f1 =
+        ClassificationFitness::parse_for_classes("f1:threshold=0.35", classes.clone()).unwrap();
+    let expected_f1 = spec_with_options("f1", "mean", Some(0.35), None);
+    assert_eq!(
+        custom_f1.identity().unwrap(),
+        expected_f1.identity().unwrap()
+    );
+    assert_ne!(
+        custom_f1.identity().unwrap(),
+        spec("f1", "mean").identity().unwrap()
+    );
+}
+
+#[test]
+fn parse_for_classes_enforces_class_order_and_rejects_bad_shorthands() {
+    let classes = ["no".to_owned(), "yes".to_owned()];
+    let valid_json = serde_json::to_string(&spec("roc_auc", "mean")).unwrap();
+    assert_eq!(
+        ClassificationFitness::parse_for_classes(&valid_json, classes.clone())
+            .unwrap()
+            .identity()
+            .unwrap(),
+        spec("roc_auc", "mean").identity().unwrap()
+    );
+    assert!(matches!(
+        ClassificationFitness::parse_for_classes(&valid_json, ["yes".to_owned(), "no".to_owned()]),
+        Err(FitnessError::InvalidSpecification(_))
+    ));
+    for invalid in [
+        "",
+        "unknown_binary_metric",
+        "cost_matrix_loss",
+        "f1:",
+        "f1:threshold=",
+        "f1:threshold=abc",
+        "f1:threshold=1.5",
+        "f1:threshold=-0.1",
+        "f1:threshold=0.5,",
+        "roc_auc:threshold=0.5",
+        "roc_auc:aggregation=sum",
+        "brier:aggregation=median",
+    ] {
+        assert!(
+            matches!(
+                ClassificationFitness::parse_for_classes(invalid, classes.clone()),
+                Err(FitnessError::InvalidSpecification(_))
+            ),
+            "expected invalid specification for {invalid:?}"
+        );
+    }
+}

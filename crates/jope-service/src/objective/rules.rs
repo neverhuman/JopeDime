@@ -4,7 +4,7 @@
 //! on `feat-math`; the plan owner converts a selected implementation head to a
 //! `HeadKind` before disclosing its fitting behavior.
 
-/// Plan-facing head kinds mirrored from `feat_math::heads::FittedHead`.
+/// Plan-facing head kinds mirrored from `feat_math::heads::FittedHead` and the binary roster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HeadKind {
     Ridge,
@@ -18,12 +18,17 @@ pub enum HeadKind {
     Ksmooth,
     Stack,
     Portfolio,
+    LogitRidge,
+    TabBoost,
+    ExtraTrees,
+    GamBoost,
 }
 
 impl HeadKind {
     /// Parse a plan head name or its supported operator alias.
     pub fn from_name(name: &str) -> Option<Self> {
-        match name {
+        let stripped = name.strip_prefix("rust.").unwrap_or(name);
+        match stripped {
             "Ridge" | "ridge" | "logistic" | "ridge_regression" => Some(Self::Ridge),
             "RidgeGcv" | "ridge_gcv" | "gcv_ridge_regression" => Some(Self::RidgeGcv),
             "ElasticNet" | "elasticnet" | "elastic_net" => Some(Self::ElasticNet),
@@ -33,12 +38,17 @@ impl HeadKind {
             }
             "Krr" | "krr" | "kernel_ridge_regression" => Some(Self::Krr),
             "Gpr" | "gpr" | "gaussian_process_ard_regression" => Some(Self::Gpr),
-            "GprKernel" | "gpr_kernel" | "gaussian_process_composite_kernel_regression" => {
-                Some(Self::GprKernel)
-            }
+            "GprKernel"
+            | "gpr_kernel"
+            | "gpr.rbf_linear"
+            | "gaussian_process_composite_kernel_regression" => Some(Self::GprKernel),
             "Ksmooth" | "ksmooth" | "nadaraya_watson_regression" => Some(Self::Ksmooth),
             "Stack" | "stack" | "greedy_ensemble_selection" => Some(Self::Stack),
             "Portfolio" | "portfolio" | "internally_validated_ensemble" => Some(Self::Portfolio),
+            "LogitRidge" | "logit_ridge" | "logistic_ridge" => Some(Self::LogitRidge),
+            "TabBoost" | "tab_boost" => Some(Self::TabBoost),
+            "ExtraTrees" | "extra_trees" => Some(Self::ExtraTrees),
+            "GamBoost" | "gam_boost" => Some(Self::GamBoost),
             _ => None,
         }
     }
@@ -83,6 +93,10 @@ pub fn fitting_for(head: HeadKind) -> Fitting {
         HeadKind::Ksmooth => Fitting::SelectionOnly,
         HeadKind::Stack => Fitting::SelectionOnly,
         HeadKind::Portfolio => Fitting::SelectionOnly,
+        HeadKind::LogitRidge => Fitting::SelectionOnly,
+        HeadKind::TabBoost => Fitting::SelectionOnly,
+        HeadKind::ExtraTrees => Fitting::SelectionOnly,
+        HeadKind::GamBoost => Fitting::SelectionOnly,
     }
 }
 
@@ -90,7 +104,7 @@ pub fn fitting_for(head: HeadKind) -> Fitting {
 mod tests {
     use super::{fitting_for, validate_order, Fitting, HeadKind, OBJECTIVE_REQUIRES_ORDER};
 
-    const HEADS: [HeadKind; 11] = [
+    const HEADS: [HeadKind; 15] = [
         HeadKind::Ridge,
         HeadKind::RidgeGcv,
         HeadKind::ElasticNet,
@@ -102,6 +116,10 @@ mod tests {
         HeadKind::Ksmooth,
         HeadKind::Stack,
         HeadKind::Portfolio,
+        HeadKind::LogitRidge,
+        HeadKind::TabBoost,
+        HeadKind::ExtraTrees,
+        HeadKind::GamBoost,
     ];
 
     #[test]
@@ -131,6 +149,8 @@ mod tests {
     #[test]
     fn ordinary_objectives_do_not_require_time_column() {
         assert_eq!(validate_order("rmse", None), Ok(()));
+        assert_eq!(validate_order("roc_auc", None), Ok(()));
+        assert_eq!(validate_order("f1:threshold=0.35", None), Ok(()));
     }
 
     #[test]
@@ -147,6 +167,15 @@ mod tests {
             ("ksmooth", HeadKind::Ksmooth),
             ("stack", HeadKind::Stack),
             ("portfolio", HeadKind::Portfolio),
+            ("rust.portfolio", HeadKind::Portfolio),
+            ("logit_ridge", HeadKind::LogitRidge),
+            ("rust.logit_ridge", HeadKind::LogitRidge),
+            ("tab_boost", HeadKind::TabBoost),
+            ("rust.tab_boost", HeadKind::TabBoost),
+            ("extra_trees", HeadKind::ExtraTrees),
+            ("rust.extra_trees", HeadKind::ExtraTrees),
+            ("gam_boost", HeadKind::GamBoost),
+            ("rust.gam_boost", HeadKind::GamBoost),
         ];
         for (name, expected) in cases {
             assert_eq!(HeadKind::from_name(name), Some(expected), "{name}");
