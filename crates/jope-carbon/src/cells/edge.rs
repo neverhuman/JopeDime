@@ -1500,7 +1500,10 @@ impl CarbonEdgeRouter {
                 Err(err) => CarbonGatewayResponse::error_json(502, "engine_async_failed", &err),
             }
         } else {
-            match self.engine.invoke_engine(&cmd) {
+            match crate::cells::engine_invoker::unwrap_engine_rpc_bytes(
+                &cmd,
+                self.engine.invoke_engine(&cmd),
+            ) {
                 Ok(resp_bytes) => {
                     if let Ok(progress) =
                         serde_json::from_slice::<CarbonPublicWaveProgress>(&resp_bytes)
@@ -1510,7 +1513,9 @@ impl CarbonEdgeRouter {
                         Self::progress_json_for_client(201, req, initial_progress)
                     }
                 }
-                Err(err) => CarbonGatewayResponse::error_json(502, "engine_invoke_failed", &err),
+                Err((status, err)) => {
+                    CarbonGatewayResponse::error_json(status, "engine_invoke_failed", &err)
+                }
             }
         }
     }
@@ -1740,7 +1745,10 @@ impl CarbonEdgeRouter {
             }
         }
 
-        match self.engine.invoke_engine(&cmd) {
+        match crate::cells::engine_invoker::unwrap_engine_rpc_bytes(
+            &cmd,
+            self.engine.invoke_engine(&cmd),
+        ) {
             Ok(bytes) => match serde_json::from_slice::<CarbonPublicWaveProgress>(&bytes) {
                 Ok(progress) => Self::progress_json_for_client(200, req, progress),
                 Err(_) => CarbonGatewayResponse::error_json(
@@ -1749,7 +1757,9 @@ impl CarbonEdgeRouter {
                     "malformed resume progress",
                 ),
             },
-            Err(err) => CarbonGatewayResponse::error_json(502, "engine_resume_failed", &err),
+            Err((status, err)) => {
+                CarbonGatewayResponse::error_json(status, "engine_resume_failed", &err)
+            }
         }
     }
 
@@ -1933,7 +1943,10 @@ impl CarbonEdgeRouter {
             run_id: run_id.to_owned(),
             predict: pred_req,
         };
-        match self.engine.invoke_engine(&cmd) {
+        match crate::cells::engine_invoker::unwrap_engine_rpc_bytes(
+            &cmd,
+            self.engine.invoke_engine(&cmd),
+        ) {
             Ok(bytes) => match serde_json::from_slice::<CarbonPredictResponse>(&bytes) {
                 Ok(mut resp) => {
                     if let Some(ref out_sha) = resp.encrypted_predictions_cas_sha256 {
@@ -1962,11 +1975,16 @@ impl CarbonEdgeRouter {
                     )
                 }
             },
-            Err(err) => {
+            Err((status, err)) => {
                 if let Some(ref sk) = reserved_slot_key {
                     let _ = self.cas.delete_state_object(sk);
                 }
-                CarbonGatewayResponse::error_json(502, "engine_predict_failed", &err)
+                let code_str = if status == 422 {
+                    "predict_refused"
+                } else {
+                    "engine_predict_failed"
+                };
+                CarbonGatewayResponse::error_json(status, code_str, &err)
             }
         }
     }
@@ -2381,7 +2399,10 @@ impl CarbonEdgeRouter {
             run_id: run_id.to_owned(),
             explain: explain_req,
         };
-        match self.engine.invoke_engine(&cmd) {
+        match crate::cells::engine_invoker::unwrap_engine_rpc_bytes(
+            &cmd,
+            self.engine.invoke_engine(&cmd),
+        ) {
             Ok(bytes) => match serde_json::from_slice::<CarbonExplainResponse>(&bytes) {
                 Ok(resp) => CarbonGatewayResponse::json_ok(200, &resp),
                 Err(_) => CarbonGatewayResponse::error_json(
@@ -2390,7 +2411,14 @@ impl CarbonEdgeRouter {
                     "malformed explain response",
                 ),
             },
-            Err(err) => CarbonGatewayResponse::error_json(502, "engine_explain_failed", &err),
+            Err((status, err)) => {
+                let code_str = if status == 422 {
+                    "explain_refused"
+                } else {
+                    "engine_explain_failed"
+                };
+                CarbonGatewayResponse::error_json(status, code_str, &err)
+            }
         }
     }
 
@@ -2432,7 +2460,10 @@ impl CarbonEdgeRouter {
             run_id: run_id.to_owned(),
             export: export_req,
         };
-        match self.engine.invoke_engine(&cmd) {
+        match crate::cells::engine_invoker::unwrap_engine_rpc_bytes(
+            &cmd,
+            self.engine.invoke_engine(&cmd),
+        ) {
             Ok(bytes) => match serde_json::from_slice::<CarbonExportResponse>(&bytes) {
                 Ok(mut resp) => {
                     if let Some(ref out_sha) = resp.encrypted_export_cas_sha256 {
@@ -2456,7 +2487,14 @@ impl CarbonEdgeRouter {
                     "malformed export response",
                 ),
             },
-            Err(err) => CarbonGatewayResponse::error_json(502, "engine_export_failed", &err),
+            Err((status, err)) => {
+                let code_str = if status == 422 {
+                    "export_refused"
+                } else {
+                    "engine_export_failed"
+                };
+                CarbonGatewayResponse::error_json(status, code_str, &err)
+            }
         }
     }
 

@@ -4,13 +4,13 @@
 #
 # Usage:
 #   AWS_PROFILE=veox-jepson-prod bash deploy/carbon/release-and-promote.sh \
-#     --tag carbon-cli-v1.3.2 \
+#     --tag carbon-cli-v1.3.3 \
 #     --r882-dir target/lambda-pkgs/layer-root/jope-models/r882 \
-#     --out-dir target/carbon-release-v1.3.2
+#     --out-dir target/carbon-release-v1.3.3
 
 set -euo pipefail
 
-TAG="carbon-cli-v1.3.2"
+TAG="carbon-cli-v1.3.3"
 R882_DIR="target/lambda-pkgs/layer-root/jope-models/r882"
 OUT_DIR=""
 PROD_REGIONS="wave1"
@@ -112,6 +112,19 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     "${DEV_PUBKEY_ARGS[@]}" \
     --json-out "$OUT_DIR/deploy-dev-receipt.json"
 
+  say "Step 2b/5: Running mandatory live dev E2E qualification gate BEFORE prod promotion..."
+  cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- clouds-manifest \
+    --dev-regions us-east-2 \
+    --prod-regions "$PROD_REGIONS" \
+    --out "$OUT_DIR/carbon-clouds-dev-stage.json"
+  python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
+    --env dev \
+    --regions us-east-2 \
+    --carbon-bin "$OUT_DIR/carbon-linux-x86_64-musl" \
+    --clouds-manifest "$OUT_DIR/carbon-clouds-dev-stage.json" \
+    --json-out "$OUT_DIR/e2e-dev-receipt.json" >/dev/null
+  rm -f "$OUT_DIR/carbon-clouds-dev-stage.json"
+
   say "Step 3/5: Promoting and red-teaming prod cells ($PROD_REGIONS)..."
   cargo run --release --locked -j "$CARGO_BUILD_JOBS" -p jope-carbon --bin carbon -- deploy \
     --manifest "$OUT_DIR/release-manifest.json" \
@@ -138,6 +151,14 @@ if [[ "$SKIP_DEPLOY" -eq 0 ]]; then
     --check-drift \
     --clouds-manifest "$OUT_DIR/carbon-clouds.json" \
     --json-out "$OUT_DIR/drift-prod-receipt.json" >/dev/null
+
+  say "Step 4b/5: Running post-promotion live prod E2E qualification gate ($PROD_REGIONS)..."
+  python3 "$REPO_ROOT/deploy/carbon/verify-live-cell.py" \
+    --env prod \
+    --regions "$PROD_REGIONS" \
+    --carbon-bin "$OUT_DIR/carbon-linux-x86_64-musl" \
+    --clouds-manifest "$OUT_DIR/carbon-clouds.json" \
+    --json-out "$OUT_DIR/e2e-prod-receipt.json" >/dev/null
 fi
 
 cp deploy/carbon/install.sh "$OUT_DIR/install.sh"

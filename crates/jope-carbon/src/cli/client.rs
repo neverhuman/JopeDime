@@ -1839,7 +1839,9 @@ impl CarbonThinClient {
                     let crypto_rejected = lc.contains("cudk")
                         || lc.contains("cuen")
                         || lc.contains("decrypt")
-                        || lc.contains("unwrap");
+                        || lc.contains("unwrap")
+                        || lc.contains("seal")
+                        || lc.contains("tamper");
                     let permanent_quota = lc.contains("predict_quota_exceeded");
                     let retriable_status = !permanent_quota
                         && (code == 408

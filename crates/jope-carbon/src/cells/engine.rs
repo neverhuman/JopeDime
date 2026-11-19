@@ -256,7 +256,17 @@ impl CarbonEngineWorker {
     ) -> Result<Vec<u8>, String> {
         let cmd: CarbonEngineWireCommand =
             serde_json::from_slice(payload).err_ctx("decode engine command")?;
-        self.execute_command(&cmd, deadline_epoch_ms)
+        match self.execute_command(&cmd, deadline_epoch_ms) {
+            Ok(bytes) => Ok(bytes),
+            Err(err) => {
+                let status_code =
+                    crate::cells::engine_invoker::classify_engine_domain_status(&cmd, &err);
+                to_json_vec(&crate::cells::engine_invoker::CarbonEngineFailureEnvelope {
+                    carbon_engine_failure: err,
+                    status_code,
+                })
+            }
+        }
     }
 
     pub fn execute_command(

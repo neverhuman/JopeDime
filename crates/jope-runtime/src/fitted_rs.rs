@@ -61,28 +61,33 @@ pub fn emit_with_checks_and_platt(
 ) -> Result<String> {
     let mut source =
         emit_calibrated_with_checks(genome, model, width, calibration.output.as_ref(), checks)?;
+    lint(&source)?;
     if let Some(platt) = &calibration.platt {
         platt.validate().context("invalid Platt calibration")?;
         let sigmoid = &platt.sigmoid;
-        source.push_str(&format!(
-            "\npub const PLATT_CLASS_ORDER: [&str; 2] = [{:?}, {:?}];\n\
-             pub fn fitted_platt(score: f64) -> Result<[f64; 2], String> {{\n\
-                 if !score.is_finite() || !(0.0..=1.0).contains(&score) {{ return Err(\"invalid Platt score\".into()); }}\n\
-                 let z = if {} == 0.0 {{ {} }} else {{ {} + {} * (score / {} - {}) }};\n\
-                 let p = if z >= 0.0 {{ 1.0 / (1.0 + (-z).exp()) }} else {{ let e = z.exp(); e / (1.0 + e) }};\n\
-                 Ok([1.0 - p, p])\n\
-             }}\n",
-            platt.class_order[0],
-            platt.class_order[1],
-            rs_number(sigmoid.slope),
-            rs_number(sigmoid.intercept),
-            rs_number(sigmoid.intercept),
-            rs_number(sigmoid.slope),
-            rs_number(sigmoid.scale),
-            rs_number(sigmoid.center),
-        ));
+        let render_platt = |c0: &str, c1: &str| {
+            format!(
+                "\npub const PLATT_CLASS_ORDER: [&str; 2] = [{:?}, {:?}];\n\
+                 pub fn fitted_platt(score: f64) -> Result<[f64; 2], String> {{\n\
+                     if !score.is_finite() || !(0.0..=1.0).contains(&score) {{ return Err(\"invalid Platt score\".into()); }}\n\
+                     let z = if {} == 0.0 {{ {} }} else {{ {} + {} * (score / {} - {}) }};\n\
+                     let p = if z >= 0.0 {{ 1.0 / (1.0 + (-z).exp()) }} else {{ let e = z.exp(); e / (1.0 + e) }};\n\
+                     Ok([1.0 - p, p])\n\
+                 }}\n",
+                c0,
+                c1,
+                rs_number(sigmoid.slope),
+                rs_number(sigmoid.intercept),
+                rs_number(sigmoid.intercept),
+                rs_number(sigmoid.slope),
+                rs_number(sigmoid.scale),
+                rs_number(sigmoid.center),
+            )
+        };
+        // Class labels are user data (e.g. "below"/"above"), not generated vocabulary.
+        lint(&render_platt("", ""))?;
+        source.push_str(&render_platt(&platt.class_order[0], &platt.class_order[1]));
     }
-    lint(&source)?;
     Ok(source)
 }
 
