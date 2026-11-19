@@ -161,11 +161,13 @@ impl Finalizer {
                 "invalid prepared partition"
             );
         }
-        let fitness = jope_runtime::fitness::Fitness::parse(&plan.objective)?;
-        ensure!(
-            fitness.columns().is_empty() && !fitness.requires_order(),
-            "M1 finalization requires a column-free, order-independent regression objective"
-        );
+        if crate::objective::binary::BinaryObjective::parse_json(&plan.objective).is_err() {
+            let fitness = jope_runtime::fitness::Fitness::parse(&plan.objective)?;
+            ensure!(
+                fitness.columns().is_empty() && !fitness.requires_order(),
+                "M1 finalization requires a column-free, order-independent regression objective"
+            );
+        }
         let mut audit = RowAudit::new(
             ids(&request.fit),
             ids(&request.holdout),
@@ -292,7 +294,13 @@ impl Finalizer {
         let scratch = tempfile::Builder::new()
             .prefix("finalize-")
             .tempdir_in(&request.scratch_root)?;
-        let objective = RegressionObjective::parse(&plan.objective)?;
+        let binary_objective =
+            crate::objective::binary::BinaryObjective::parse_json(&plan.objective).ok();
+        let regression_objective = if binary_objective.is_none() {
+            Some(RegressionObjective::parse(&plan.objective)?)
+        } else {
+            None
+        };
         let (fit_table, fit_object) = audit.with_rows(
             RowAuditPhase::FinalizationFit,
             &ids(&request.fit),
@@ -319,7 +327,16 @@ impl Finalizer {
             &ids(&request.holdout),
             |_| -> Result<_> {
                 let table = load(&request.holdout, plan, request.max_input_bytes)?;
-                let score = score(&fit_object, &table, &plan.target, &objective)?;
+                let score = if let Some(binary) = &binary_objective {
+                    super::model::score_binary(&fit_object, &table, &plan.target, binary)?
+                } else {
+                    score(
+                        &fit_object,
+                        &table,
+                        &plan.target,
+                        regression_objective.as_ref().expect("regression objective"),
+                    )?
+                };
                 Ok((table, score))
             },
         )??;
@@ -327,11 +344,12 @@ impl Finalizer {
         let comparisons = request
             .comparators
             .as_ref()
-            .map(|stage| {
+            .zip(regression_objective.as_ref())
+            .map(|(stage, objective)| {
                 super::comparators::run_stage(
                     stage,
                     plan,
-                    &objective,
+                    objective,
                     audit,
                     &ids(&request.fit),
                     &ids(&request.holdout),
@@ -391,7 +409,16 @@ impl Finalizer {
             .map(|part| {
                 audit.with_rows(RowAuditPhase::TestScore, &ids(part), |_| -> Result<_> {
                     let table = load(part, plan, request.max_input_bytes)?;
-                    score(exported, &table, &plan.target, &objective)
+                    if let Some(binary) = &binary_objective {
+                        super::model::score_binary(exported, &table, &plan.target, binary)
+                    } else {
+                        score(
+                            exported,
+                            &table,
+                            &plan.target,
+                            regression_objective.as_ref().expect("regression objective"),
+                        )
+                    }
                 })
             })
             .transpose()?

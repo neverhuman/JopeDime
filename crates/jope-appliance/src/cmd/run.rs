@@ -502,8 +502,10 @@ fn apply_profile_defaults(
 /// Name the flag that fixes a refused run start, when the refusal says which one (#2145).
 fn explain_start(error: jope_client::transport::TransportError) -> anyhow::Error {
     let text = error.to_string();
-    let hint = if text.contains("requires task=regression") {
-        Some("this engine runs regression only: pass `--task regression` with a numeric `--target` column")
+    let hint = if text.contains("supports regression and binary")
+        || text.contains("requires task=regression")
+    {
+        Some("this engine supports regression and binary classification: pass `--task regression` or `--task binary`")
     } else if text.contains("random FIT") || text.contains("random holdout") {
         Some("this engine supports random splits only; leave group_column and time_column null")
     } else if text.contains("not numeric")

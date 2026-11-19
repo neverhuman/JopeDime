@@ -131,7 +131,7 @@ impl crate::discover::r#loop::Executor for InlineQ1Native {
     fn fitted_model(&self, request: &crate::worker::Request) -> anyhow::Result<Vec<u8>> {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/q1-native");
         std::fs::create_dir_all(&root)?;
-        let directory = tempfile::tempdir_in(root)?;
+        let directory = tempfile::tempdir_in(std::fs::canonicalize(&root)?)?;
         let output = directory.path().join("model.json");
         let mut request = request.clone();
         request.fold_spec["refit_output"] = json!(output);

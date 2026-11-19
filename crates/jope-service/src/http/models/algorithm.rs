@@ -24,9 +24,14 @@ pub(super) fn algorithm(
     let name = language_name(language);
     let source = String::from_utf8(model.export_source(name).map_err(|_| unavailable())?)
         .map_err(|_| integrity())?;
+    let summary = if model.manifest().format == jope_runtime::model_object::MATH_PIPELINE {
+        "Frozen completed CPU regression model"
+    } else {
+        "Frozen completed CPU binary classification model"
+    };
     let result = Algorithm {
         algorithm_id: best.algorithm_id.clone(),
-        summary: "Frozen completed CPU regression model".into(),
+        summary: summary.into(),
         metric: best.metric.clone(),
         cv_value: best.cv_value,
         model_artifact: best.model_artifact.clone(),

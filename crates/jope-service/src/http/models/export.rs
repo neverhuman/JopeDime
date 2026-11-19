@@ -102,8 +102,12 @@ pub(super) fn export(
         if let Some((_, _, bytes)) = &measured {
             entries.insert("parity_receipt.json".into(), bytes.clone());
         }
-        let pipeline = model.math_pipeline().map_err(|_| unavailable())?;
-        let retains = bundle::retains_training_data(&pipeline.state.model);
+        let retains = if model.manifest().format == jope_runtime::model_object::MATH_PIPELINE {
+            let pipeline = model.math_pipeline().map_err(|_| unavailable())?;
+            bundle::retains_training_data(&pipeline.state.model)
+        } else {
+            false
+        };
         for language in &languages {
             let LanguageExport::Exported { language, .. } = language else {
                 continue;
@@ -269,21 +273,53 @@ pub(super) fn predict(
             .map_err(|_| integrity())?;
         let table =
             jope_runtime::table::parse_csv(&bytes, &Default::default()).map_err(|_| bad())?;
-        let (values, _) = jope_runtime::budget::Budget::new(None, 1)
-            .install(|| model.math_pipeline()?.predict_table(&table))
-            .map_err(|_| unavailable())?
-            .map_err(|_| bad())?;
-        if values.len() != table.rows.len() || values.iter().any(|v| !v.is_finite()) {
-            return Err(error(
-                ErrorCode::NumericalFailure,
-                "Frozen model produced invalid predictions.",
-            ));
-        }
-        let mut out = String::from("prediction\n");
-        for value in values {
-            out.push_str(&value.to_string());
-            out.push('\n');
-        }
+        let out = if model.manifest().format == jope_runtime::model_object::MATH_PIPELINE {
+            let (values, _) = jope_runtime::budget::Budget::new(None, 1)
+                .install(|| model.math_pipeline()?.predict_table(&table))
+                .map_err(|_| unavailable())?
+                .map_err(|_| bad())?;
+            if values.len() != table.rows.len() || values.iter().any(|v| !v.is_finite()) {
+                return Err(error(
+                    ErrorCode::NumericalFailure,
+                    "Frozen model produced invalid predictions.",
+                ));
+            }
+            let mut out = String::from("prediction\n");
+            for value in values {
+                out.push_str(&value.to_string());
+                out.push('\n');
+            }
+            out
+        } else {
+            let raw =
+                if let Some(calibrated) = model.calibrated_input().map_err(|_| unavailable())? {
+                    calibrated.table(&table).map_err(|_| bad())?.0
+                } else {
+                    let fitted = model.fitted().map_err(|_| unavailable())?;
+                    jope_runtime::table::prediction_ignoring(
+                        &table,
+                        fitted.schema(),
+                        &fitted.header.target,
+                        &fitted.header.auxiliary_columns,
+                    )
+                    .map_err(|_| bad())?
+                    .0
+                };
+            let predictions = jope_runtime::api::predict_object(
+                &model,
+                &raw,
+                &jope_runtime::budget::Budget::new(None, 1),
+            )
+            .map_err(|_| {
+                error(
+                    ErrorCode::NumericalFailure,
+                    "Frozen model produced invalid predictions.",
+                )
+            })?;
+            let csv_bytes =
+                jope_runtime::api::predictions_csv(&predictions).map_err(|_| integrity())?;
+            String::from_utf8(csv_bytes).map_err(|_| integrity())?
+        };
         if out.len() as u64 > MODEL_BYTES {
             return Err(bad());
         }

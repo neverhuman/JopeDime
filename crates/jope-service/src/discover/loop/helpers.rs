@@ -51,6 +51,9 @@ pub(super) fn projector(plan: &Plan) -> Result<project::Projector> {
 }
 
 pub(super) fn public_metric(plan: &Plan) -> Result<String> {
+    if let Ok(binary) = crate::objective::binary::BinaryObjective::parse_json(&plan.objective) {
+        return Ok(binary.fitness().name().to_owned());
+    }
     let name = jope_runtime::fitness::Fitness::parse(&plan.objective)?.name();
     Ok(
         if jope_runtime::fitness::Fitness::catalog()

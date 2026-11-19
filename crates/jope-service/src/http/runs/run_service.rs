@@ -99,9 +99,13 @@ impl RunService {
         if let Err(error) = persisted {
             return response(&io(error));
         }
+        let is_binary =
+            crate::objective::binary::BinaryObjective::parse_json(&prepared.search.objective)
+                .is_ok();
         let sender = match self.worker_sender(
             _pub06_values,
             false,
+            is_binary,
             prepared.backend,
             context.backend.spec.languages.clone(),
         ) {
@@ -133,19 +137,29 @@ impl RunService {
         self: &Arc<Self>,
         _pub06_values: Pub06Injection,
         explicit_continue: bool,
+        is_binary: bool,
         backend: BackendPlan,
         languages: Vec<Language>,
     ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
         let allowed = run_language_filter(&languages)?;
+        let binary_roster = if is_binary {
+            Some(binary_run_roster(&languages)?)
+        } else {
+            None
+        };
         #[cfg(all(feature = "failpoints", debug_assertions))]
         let run_space = CpuRunSpace {
             allowed,
+            binary_roster,
             pub06_values: _pub06_values,
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
-        let run_space = CpuRunSpace { allowed };
+        let run_space = CpuRunSpace {
+            allowed,
+            binary_roster,
+        };
         let learned = backend.learned();
         let admission = backend.admission;
         let run_space = BackendSpace {
@@ -253,9 +267,13 @@ impl RunService {
             let injection = None;
             #[cfg(not(all(feature = "failpoints", debug_assertions)))]
             let injection = ();
+            let is_binary =
+                crate::objective::binary::BinaryObjective::parse_json(&context.search.objective)
+                    .is_ok();
             let sender = self.worker_sender(
                 injection,
                 true,
+                is_binary,
                 backend,
                 context.backend.spec.languages.clone(),
             )?;

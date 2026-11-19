@@ -49,11 +49,33 @@ pub(crate) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTab
         })
         .collect::<Result<Vec<_>>>()?;
     let mut rows = Vec::with_capacity(matrix.rows());
-    for row in 0..matrix.rows() {
-        rows.push(columns.iter().map(|&column| match matrix.cell(row, column) {
-            Some(JmatCell::Numeric(v)) if v.is_finite() => Ok(Some(v.to_string())),
-            _ => bail!("M1 finalization requires complete finite numeric features and target; frozen math-pipeline cannot preserve mean-imputed missing values"),
-        }).collect::<Result<Vec<_>>>()?);
+    if let Ok(binary) = crate::objective::binary::BinaryObjective::parse_json(&plan.objective) {
+        let feature_cols = &columns[..plan.features.len()];
+        let target_col = columns[plan.features.len()];
+        for row in 0..matrix.rows() {
+            let mut parsed_row = Vec::with_capacity(columns.len());
+            for &column in feature_cols {
+                parsed_row.push(match matrix.cell(row, column) {
+                    Some(JmatCell::Missing) => None,
+                    Some(JmatCell::Numeric(v)) if v.is_finite() => Some(v.to_string()),
+                    Some(JmatCell::Categorical(s)) => Some(s.to_owned()),
+                    _ => bail!("binary finalization requires valid feature cells"),
+                });
+            }
+            let cls = crate::discover::r#loop::binary_cell_class(
+                matrix.cell(row, target_col),
+                binary.class_order(),
+            )?;
+            parsed_row.push(Some(binary.class_order()[cls].to_owned()));
+            rows.push(parsed_row);
+        }
+    } else {
+        for row in 0..matrix.rows() {
+            rows.push(columns.iter().map(|&column| match matrix.cell(row, column) {
+                Some(JmatCell::Numeric(v)) if v.is_finite() => Ok(Some(v.to_string())),
+                _ => bail!("M1 finalization requires complete finite numeric features and target; frozen math-pipeline cannot preserve mean-imputed missing values"),
+            }).collect::<Result<Vec<_>>>()?);
+        }
     }
     let headers = plan
         .features
@@ -157,6 +179,57 @@ pub(crate) fn refit(
             && digest(envelope.model_json.as_bytes()) == envelope.model_digest,
         "private fit fence or digest mismatch"
     );
+    if let Ok(binary) = crate::objective::binary::BinaryObjective::parse_json(&plan.objective) {
+        let state: crate::discover::r#loop::BinaryRefitState =
+            serde_json::from_str(&envelope.model_json)?;
+        ensure!(state.version == 1, "unsupported binary refit state version");
+        let fitted = jope_runtime::fitted::FittedModel::from_bytes(&state.fitted_bytes)?;
+        let fitted_features: Vec<String> = fitted
+            .header
+            .input_schema
+            .iter()
+            .map(|col| col.name.clone())
+            .collect();
+        let expected_classes = [
+            binary.class_order()[0].to_owned(),
+            binary.class_order()[1].to_owned(),
+        ];
+        ensure!(
+            fitted_features == plan.features
+                && fitted.header.target == plan.target
+                && fitted.header.class_order.as_slice() == expected_classes.as_slice()
+                && fitted.header.method.recipe == champion.candidate.dsl,
+            "private binary model contract mismatch"
+        );
+        let mut object = ModelObject::from_fitted_bytes(state.fitted_bytes)?;
+        if let Some(platt) = state.platt {
+            object = object.with_platt_calibration(platt)?;
+        }
+        object.manifest().validate(max_model)?;
+        object.verify_executable()?;
+        let predictions = predict_binary(&object, table)?;
+        let target_idx = table
+            .headers
+            .iter()
+            .position(|c| c == &plan.target)
+            .context("target missing")?;
+        let mut measured = Vec::with_capacity(predictions.len() * 16);
+        for (row, probs) in table.rows.iter().zip(predictions) {
+            let label = row[target_idx].as_deref().context("target missing")?;
+            let cls = binary
+                .class_order()
+                .iter()
+                .position(|&c| c == label)
+                .context("binary target outside class order")? as f64;
+            measured.extend(cls.to_le_bytes());
+            measured.extend(probs[1].to_le_bytes());
+        }
+        ensure!(
+            digest(&measured) == response.predictions_digest,
+            "frozen binary model object cannot exactly represent this native fit"
+        );
+        return Ok(object);
+    }
     let native: NativeFit = serde_json::from_str(&envelope.model_json)?;
     ensure!(
         native.version == 1
@@ -264,6 +337,61 @@ pub(crate) fn score(
         })
         .collect::<Result<Vec<_>>>()?;
     Ok(objective.evaluate(&labels, &predictions)?.value)
+}
+
+pub(crate) fn predict_binary(object: &ModelObject, table: &CsvTable) -> Result<Vec<[f64; 2]>> {
+    use jope_runtime::methods::native::Predictions;
+    let raw = if let Some(calibrated) = object.calibrated_input()? {
+        calibrated.table(table)?.0
+    } else {
+        let fitted = object.fitted()?;
+        jope_runtime::table::prediction_ignoring(
+            table,
+            fitted.schema(),
+            &fitted.header.target,
+            &fitted.header.auxiliary_columns,
+        )?
+        .0
+    };
+    let predicted = jope_runtime::api::predict_object(
+        object,
+        &raw,
+        &jope_runtime::budget::Budget::new(None, 1),
+    )?;
+    let Predictions::Probabilities { values, .. } = predicted else {
+        bail!("binary model object did not produce probability predictions");
+    };
+    ensure!(
+        values.len() == table.rows.len(),
+        "binary prediction row count mismatch"
+    );
+    values
+        .into_iter()
+        .map(|row| {
+            ensure!(row.len() == 2, "binary probability width mismatch");
+            Ok([row[0], row[1]])
+        })
+        .collect()
+}
+
+pub(crate) fn score_binary(
+    object: &ModelObject,
+    table: &CsvTable,
+    target: &str,
+    objective: &crate::objective::binary::BinaryObjective,
+) -> Result<f64> {
+    let probabilities = predict_binary(object, table)?;
+    let column = table
+        .headers
+        .iter()
+        .position(|c| c == target)
+        .context("target missing")?;
+    let labels: Vec<&str> = table
+        .rows
+        .iter()
+        .map(|r| r[column].as_deref().context("target missing"))
+        .collect::<Result<_>>()?;
+    Ok(objective.evaluate(&labels, &probabilities)?.value)
 }
 pub(crate) fn publish(store: &Store, object: &ModelObject) -> Result<Vec<BlobRef>> {
     std::iter::once(object.manifest_bytes())

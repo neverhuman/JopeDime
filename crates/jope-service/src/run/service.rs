@@ -62,6 +62,41 @@ pub(crate) fn run_objective(
     ))
 }
 
+/// Resolve a binary classification objective against the dataset's deterministic 2-class order
+/// and emit its canonical `jope.classification-fitness/v1` JSON string for worker and finalizer
+/// binding.
+pub(crate) fn run_binary_objective(
+    spec: &jope_api::ObjectiveSpec,
+    class_order: [String; 2],
+) -> Result<(String, jope_api::ResolvedObjective)> {
+    use jope_runtime::fitness::Direction;
+    use jope_runtime::fitness_classification::{
+        Metric as BinaryMetric, DEFAULT_CLASSIFICATION_THRESHOLD,
+    };
+    let text = match spec {
+        jope_api::ObjectiveSpec::Name(name) => name.clone(),
+        jope_api::ObjectiveSpec::Specification(value) => serde_json::to_string(value)?,
+    };
+    let objective = crate::objective::binary::BinaryObjective::parse(&text, class_order)?;
+    let mut canonical = objective.fitness().clone();
+    if canonical.metric == BinaryMetric::F1 && canonical.threshold.is_none() {
+        canonical.threshold = Some(DEFAULT_CLASSIFICATION_THRESHOLD);
+    }
+    let serialized = serde_json::to_string(&canonical)?;
+    Ok((
+        serialized,
+        jope_api::ResolvedObjective {
+            name: objective.fitness().name().to_owned(),
+            digest: objective.identity()?,
+            direction: match objective.fitness().direction() {
+                Direction::Minimize => jope_api::Direction::Minimize,
+                Direction::Maximize => jope_api::Direction::Maximize,
+            },
+            fitting: "selection_only".into(),
+        },
+    ))
+}
+
 pub(crate) enum RunAdmission {
     Heuristic,
     Learned(Box<LearnedAdmission>),
@@ -227,9 +262,13 @@ impl BackendPlan {
             RunAdmission::Learned(admission) => {
                 self.landmark_rows = admission.bind_fit(fit, plan)?;
             }
-            RunAdmission::Heuristic if self.landmark_mode == LandmarkMode::Full => {
+            RunAdmission::Heuristic
+                if self.landmark_mode == LandmarkMode::Full
+                    && crate::objective::binary::BinaryObjective::parse_json(&plan.objective)
+                        .is_err() =>
+            {
                 // Full requests still compute the real CPU recipe when Auto has
-                // resolved to heuristic. This does not enable a learned ranker.
+                // resolved to heuristic on regression runs.
                 let measured = FullFitLandmarks::extract(fit, plan)?;
                 self.landmark_rows = measured.sampled_fit_rows.len();
                 self.full_fit_landmarks = Some(measured);

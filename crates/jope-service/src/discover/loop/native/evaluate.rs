@@ -102,6 +102,11 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
         .objective
         .as_str()
         .context("objective must be a specification string")?;
+    if let Ok(binary_objective) =
+        crate::objective::binary::BinaryObjective::parse_json(objective_raw)
+    {
+        return binary_native_scores(request, matrix, spec, &binary_objective);
+    }
     let objective = RegressionObjective::parse(objective_raw)?;
     let calibration_family =
         resolve_calibration_family(spec.calibration_mode.as_deref(), objective_raw)?;
@@ -340,4 +345,281 @@ pub(crate) struct NativeModel {
     pub(crate) model: feat_math::Model,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) calibration: Option<jope_runtime::calibration::OutputTransform>,
+}
+
+pub(in crate::discover::r#loop) struct BinaryMatrixData {
+    pub(super) schema: feat_math::advanced_v3::DataSchema,
+    pub(super) table: feat_math::advanced_v3::RawTable,
+    pub(super) targets: Vec<f64>,
+    pub(super) labels: Vec<String>,
+    pub(super) classes: Vec<String>,
+}
+
+pub(in crate::discover::r#loop) fn resolve_binary_method(
+    dsl: &str,
+) -> Result<jope_runtime::methods::registry::RustMethod> {
+    let canonical = feat_math::GenomeIr::parse(dsl)?.canonical();
+    jope_runtime::methods::registry::rust_methods(jope_runtime::task::TaskKind::Binary)?
+        .into_iter()
+        .find(|m| m.dsl == canonical)
+        .context("unsupported binary candidate pipeline")
+}
+
+pub(in crate::discover::r#loop) fn subset_raw_table(
+    table: &feat_math::advanced_v3::RawTable,
+    rows: &[usize],
+) -> Result<feat_math::advanced_v3::RawTable> {
+    feat_math::advanced_v3::RawTable::new(
+        table.headers.clone(),
+        rows.iter()
+            .map(|&r| table.rows.get(r).cloned().context("row outside FIT matrix"))
+            .collect::<Result<Vec<_>>>()?,
+    )
+}
+
+pub(in crate::discover::r#loop) fn binary_matrix_data<B: AsRef<[u8]>>(
+    matrix: &Matrix<B>,
+    target: &str,
+    features: &[String],
+    class_order: [&str; 2],
+) -> Result<BinaryMatrixData> {
+    ensure!(
+        !features.is_empty()
+            && features.iter().collect::<BTreeSet<_>>().len() == features.len()
+            && !features.iter().any(|f| f == target),
+        "invalid native features"
+    );
+    let find = |name: &str| {
+        matrix
+            .columns()
+            .iter()
+            .position(|c| c.name == name)
+            .context("unknown native column")
+    };
+    let target_col = find(target)?;
+    let feature_cols: Vec<usize> = features.iter().map(|s| find(s)).collect::<Result<_>>()?;
+    let schema_cols: Vec<feat_math::advanced_v3::ColumnSpec> = features
+        .iter()
+        .zip(&feature_cols)
+        .map(|(name, &col_idx)| match matrix.columns()[col_idx].kind {
+            crate::dataset::jmat::ColumnKind::Numeric => {
+                feat_math::advanced_v3::ColumnSpec::numeric(name)
+            }
+            crate::dataset::jmat::ColumnKind::Categorical => {
+                feat_math::advanced_v3::ColumnSpec::categorical(name)
+            }
+        })
+        .collect();
+    let schema = jope_runtime::table::iid_schema(schema_cols)?;
+    let mut values = Vec::with_capacity(matrix.rows());
+    let mut targets = Vec::with_capacity(matrix.rows());
+    let mut labels = Vec::with_capacity(matrix.rows());
+    for row in 0..matrix.rows() {
+        let cls =
+            crate::discover::r#loop::binary_cell_class(matrix.cell(row, target_col), class_order)?;
+        targets.push(cls as f64);
+        labels.push(class_order[cls].to_owned());
+        let feature_row = feature_cols
+            .iter()
+            .map(|&col| match matrix.cell(row, col) {
+                Some(JmatCell::Missing) => Ok(None),
+                Some(JmatCell::Numeric(v)) if v.is_finite() => Ok(Some(v.to_string())),
+                Some(JmatCell::Categorical(s)) => Ok(Some(s.to_owned())),
+                _ => bail!("invalid feature cell in binary FIT matrix"),
+            })
+            .collect::<Result<Vec<_>>>()?;
+        values.push(feature_row);
+    }
+    let table = jope_runtime::table::raw_table(&schema, &values)?;
+    Ok(BinaryMatrixData {
+        schema,
+        table,
+        targets,
+        labels,
+        classes: vec![class_order[0].to_owned(), class_order[1].to_owned()],
+    })
+}
+
+fn binary_native_scores<B: AsRef<[u8]>>(
+    request: &Request,
+    matrix: &Matrix<B>,
+    spec: NativeFolds,
+    objective: &crate::objective::binary::BinaryObjective,
+) -> Result<worker::Scores> {
+    use jope_runtime::calibration::Calibration;
+    use jope_runtime::methods::native::{fit_native, predict_bound, Predictions};
+    use jope_runtime::task::TaskKind;
+
+    let method = resolve_binary_method(&request.dsl)?;
+    let cal_family = match spec.calibration_mode.as_deref() {
+        Some("none") => Calibration::None,
+        Some("platt") => Calibration::Platt,
+        None | Some("auto") => {
+            let probability_sensitive = !matches!(
+                objective.fitness().metric,
+                jope_runtime::fitness_classification::Metric::RocAuc
+                    | jope_runtime::fitness_classification::Metric::PrAuc
+            );
+            Calibration::resolve_binary(Calibration::Auto, probability_sensitive)
+        }
+        Some(other) => {
+            bail!("unsupported binary calibration_mode '{other}'; expected none, auto, or platt")
+        }
+    };
+    match (&spec.refit_output, spec.refit_max_bytes) {
+        (Some(path), Some(maximum)) => {
+            return super::model::binary_native_refit(
+                request, matrix, &spec, &method, objective, cal_family, path, maximum,
+            )
+        }
+        (None, None) => {}
+        _ => bail!("incomplete private refit handoff"),
+    }
+
+    let data = binary_matrix_data(
+        matrix,
+        &spec.target,
+        &spec.features,
+        objective.class_order(),
+    )?;
+    let mut validation_rows = BTreeSet::new();
+    let mut surrogate = Vec::with_capacity(spec.folds.len());
+    let mut fold_scores = Vec::with_capacity(spec.folds.len());
+
+    struct RepeatOof<'a> {
+        labels: Vec<&'a str>,
+        targets: Vec<f64>,
+        raw_p1: Vec<f64>,
+        fold_ids: Vec<usize>,
+    }
+    let mut by_repeat: BTreeMap<u8, RepeatOof<'_>> = BTreeMap::new();
+    let eval_started = std::time::Instant::now();
+
+    for (fold_idx, fold) in spec.folds.into_iter().enumerate() {
+        if fold_idx > 0
+            && request.limits.wall_ms > 0
+            && eval_started.elapsed().as_millis() >= u128::from(request.limits.wall_ms)
+        {
+            return Err(EvalWallClockTimeout.into());
+        }
+        let train: BTreeSet<_> = fold.train.iter().copied().collect();
+        ensure!(
+            !train.is_empty() && train.len() == fold.train.len() && !fold.validation.is_empty(),
+            "empty or duplicated fold"
+        );
+        ensure!(
+            fold.validation
+                .iter()
+                .all(|r| !train.contains(r) && validation_rows.insert((fold.repeat, *r))),
+            "overlapping fold rows"
+        );
+        let train_table = subset_raw_table(&data.table, &fold.train)?;
+        let train_targets: Vec<f64> = fold.train.iter().map(|&r| data.targets[r]).collect();
+        let bound = fit_native(
+            &method,
+            TaskKind::Binary,
+            &data.schema,
+            &data.classes,
+            &train_table,
+            &train_targets,
+        )
+        .map_err(|_| UndefinedFitness)?;
+        let val_table = subset_raw_table(&data.table, &fold.validation)?;
+        let Predictions::Probabilities { values, .. } =
+            predict_bound(&bound, &val_table, &data.classes).map_err(|_| UndefinedFitness)?
+        else {
+            return Err(UndefinedFitness.into());
+        };
+        let mut brier_sum = 0.0;
+        let oof = by_repeat.entry(fold.repeat).or_insert_with(|| RepeatOof {
+            labels: Vec::new(),
+            targets: Vec::new(),
+            raw_p1: Vec::new(),
+            fold_ids: Vec::new(),
+        });
+        for (&r, probs) in fold.validation.iter().zip(values) {
+            let p1 = probs[1];
+            ensure!(
+                p1.is_finite() && (0.0..=1.0).contains(&p1),
+                "non-finite binary probability"
+            );
+            brier_sum += (p1 - data.targets[r]).powi(2);
+            oof.labels.push(data.labels[r].as_str());
+            oof.targets.push(data.targets[r]);
+            oof.raw_p1.push(p1);
+            oof.fold_ids.push(fold_idx);
+        }
+        let brier = brier_sum / fold.validation.len() as f64;
+        surrogate.push(brier);
+        fold_scores.push(brier);
+    }
+
+    let mut raw_losses = Vec::with_capacity(by_repeat.len());
+    let mut raw_values = Vec::with_capacity(by_repeat.len());
+    let mut raw_ok = true;
+    let mut cal_losses = Vec::with_capacity(by_repeat.len());
+    let mut cal_values = Vec::with_capacity(by_repeat.len());
+    let mut cal_probs_by_repeat: Vec<Vec<[f64; 2]>> = Vec::with_capacity(by_repeat.len());
+    let mut cal_ok = cal_family == Calibration::Platt;
+
+    for oof in by_repeat.values() {
+        let raw_pairs: Vec<[f64; 2]> = oof.raw_p1.iter().map(|&p| [1.0 - p, p]).collect();
+        match objective.evaluate(&oof.labels, &raw_pairs) {
+            Ok(score) => {
+                raw_losses.push(score.loss);
+                raw_values.push(score.value);
+            }
+            Err(_) => raw_ok = false,
+        }
+        if cal_ok {
+            match jope_runtime::calibration_platt::cross_fit(
+                &oof.raw_p1,
+                &oof.labels,
+                objective.class_order(),
+                &oof.fold_ids,
+            )
+            .and_then(|cf| {
+                let score = objective.evaluate(&oof.labels, &cf.probabilities)?;
+                Ok((score, cf.probabilities))
+            }) {
+                Ok((score, probs)) => {
+                    cal_losses.push(score.loss);
+                    cal_values.push(score.value);
+                    cal_probs_by_repeat.push(probs);
+                }
+                Err(_) => cal_ok = false,
+            }
+        }
+    }
+
+    let mean = |v: &[f64]| v.iter().map(|x| x / v.len() as f64).sum::<f64>();
+    let use_cal = cal_ok && (!raw_ok || mean(&cal_losses) < mean(&raw_losses));
+    let (chosen_loss, chosen_value) = if use_cal {
+        (mean(&cal_losses), mean(&cal_values))
+    } else if raw_ok {
+        (mean(&raw_losses), mean(&raw_values))
+    } else {
+        return Err(UndefinedFitness.into());
+    };
+    let scores = vec![mean(&surrogate), chosen_loss, chosen_value];
+    ensure!(scores.iter().all(|x| x.is_finite()), "non-finite CV score");
+
+    let mut bytes = Vec::new();
+    for (rep_idx, oof) in by_repeat.values().enumerate() {
+        for (i, &y) in oof.targets.iter().enumerate() {
+            let p1 = if use_cal {
+                cal_probs_by_repeat[rep_idx][i][1]
+            } else {
+                oof.raw_p1[i]
+            };
+            ensure!(p1.is_finite(), "non-finite binary prediction");
+            bytes.extend(y.to_le_bytes());
+            bytes.extend(p1.to_le_bytes());
+        }
+    }
+    Ok(worker::Scores {
+        values: scores,
+        fold_scores,
+        predictions_digest: digest(&bytes),
+    })
 }

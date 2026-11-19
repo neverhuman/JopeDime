@@ -66,6 +66,47 @@ fn digest(bytes: &[u8]) -> String {
     crate::digest::sha256_hex(bytes)
 }
 
+pub(crate) fn binary_cell_class(
+    cell: Option<JmatCell<'_>>,
+    class_order: [&str; 2],
+) -> Result<usize> {
+    match cell {
+        Some(JmatCell::Categorical(label)) => {
+            if label == class_order[0] {
+                Ok(0)
+            } else if label == class_order[1] {
+                Ok(1)
+            } else {
+                bail!("binary target label outside declared class order")
+            }
+        }
+        Some(JmatCell::Numeric(value)) if value.is_finite() => {
+            let text = value.to_string();
+            if text == class_order[0] {
+                return Ok(0);
+            }
+            if text == class_order[1] {
+                return Ok(1);
+            }
+            if let (Ok(c0), Ok(c1)) = (
+                class_order[0].trim().parse::<f64>(),
+                class_order[1].trim().parse::<f64>(),
+            ) {
+                if c0.is_finite() && c1.is_finite() && c0 != c1 {
+                    if value == c0 {
+                        return Ok(0);
+                    }
+                    if value == c1 {
+                        return Ok(1);
+                    }
+                }
+            }
+            bail!("numeric binary target outside declared class order")
+        }
+        _ => bail!("missing or non-finite binary target"),
+    }
+}
+
 /// Internal M1 plan, not a new public API or worker wire schema. `matrix_path`
 /// names an immutable FIT-only matrix: no HOLDOUT/TEST rows enter the worker.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -155,6 +196,36 @@ impl Plan {
             !self.features.contains(&self.target),
             "target cannot be a feature"
         );
+        if let Ok(binary) = crate::objective::binary::BinaryObjective::parse_json(&self.objective) {
+            ensure!(
+                self.groups.is_none() && self.times.is_none() && self.gap_rows == 0,
+                "binary discovery supports random IID splits only"
+            );
+            for name in &self.features {
+                matrix
+                    .columns()
+                    .iter()
+                    .find(|c| &c.name == name)
+                    .context("unknown column")?;
+            }
+            let target_col = matrix
+                .columns()
+                .iter()
+                .position(|c| c.name == self.target)
+                .context("unknown target column")?;
+            let mut counts = [0usize; 2];
+            for row in 0..matrix.rows() {
+                let cls = binary_cell_class(matrix.cell(row, target_col), binary.class_order())?;
+                counts[cls] += 1;
+            }
+            ensure!(
+                counts[0] >= 2 && counts[1] >= 2,
+                "binary FIT matrix needs at least two rows per class"
+            );
+            self.fold_spec(0)?;
+            self.fold_spec(1)?;
+            return Ok(());
+        }
         for name in self.features.iter().chain(std::iter::once(&self.target)) {
             let column = matrix
                 .columns()
@@ -198,6 +269,88 @@ impl Plan {
 
     fn fold_spec(&self, rung: u8) -> Result<Value> {
         let matrix = Matrix::open(fs::read(&self.matrix_path)?)?;
+        if let Ok(binary) = crate::objective::binary::BinaryObjective::parse_json(&self.objective) {
+            let target_col = matrix
+                .columns()
+                .iter()
+                .position(|c| c.name == self.target)
+                .context("unknown target column")?;
+            let labels: Vec<usize> = (0..matrix.rows())
+                .map(|row| binary_cell_class(matrix.cell(row, target_col), binary.class_order()))
+                .collect::<Result<_>>()?;
+            let cap = if rung == 0 { 20_000 } else { 100_000 };
+            let phase_label = if rung == 0 { "rung0" } else { "rung1" };
+            let repeats = if rung == 0 {
+                1
+            } else {
+                self.limits().promotion_repeats
+            };
+            let mut folds = vec![];
+            for repeat in 0..repeats {
+                let seed = if repeat == 0 {
+                    self.seed
+                } else {
+                    evaluation_seed(self.seed, 0, u32::from(repeat), 255)
+                };
+                let selected = if labels.len() <= cap {
+                    (0..labels.len()).collect::<Vec<_>>()
+                } else {
+                    super::splits::stratified_split(
+                        &labels,
+                        cap,
+                        seed,
+                        &format!("dsc03/{phase_label}/rows"),
+                    )?
+                    .0
+                };
+                let sub_labels: Vec<usize> = selected.iter().map(|&r| labels[r]).collect();
+                let c0 = sub_labels.iter().filter(|&&c| c == 0).count();
+                let min_class = c0.min(sub_labels.len() - c0);
+                ensure!(
+                    min_class >= 2,
+                    "binary CV requires at least 2 rows per class"
+                );
+                let k = if rung == 0 {
+                    2
+                } else {
+                    (self.limits().rung1_folds as usize).min(min_class).max(2)
+                };
+                let val_partitions = super::splits::stratified_k_fold(
+                    &sub_labels,
+                    k,
+                    seed,
+                    &format!("dsc03/{phase_label}/folds"),
+                )?;
+                for val_positions in val_partitions {
+                    let val_set: BTreeSet<usize> =
+                        val_positions.into_iter().map(|pos| selected[pos]).collect();
+                    let train: Vec<u64> = selected
+                        .iter()
+                        .copied()
+                        .filter(|r| !val_set.contains(r))
+                        .map(|r| r as u64)
+                        .collect();
+                    let validation: Vec<u64> = selected
+                        .iter()
+                        .copied()
+                        .filter(|r| val_set.contains(r))
+                        .map(|r| r as u64)
+                        .collect();
+                    folds.push(json!({
+                        "repeat": repeat,
+                        "train": train,
+                        "validation": validation
+                    }));
+                }
+            }
+            return Ok(json!({
+                "version": NATIVE_FOLDS_VERSION,
+                "matrix_sha256": self.matrix_sha256,
+                "target": self.target,
+                "features": self.features,
+                "folds": folds
+            }));
+        }
         let rows: Vec<_> = (0..matrix.rows())
             .map(|row| AuditRowId {
                 dataset: self.dataset_id.clone(),
@@ -285,6 +438,7 @@ use helpers::{
     accepted_summary, checkpoint_blobs, evaluation_ordinal, experiment, hex_blob,
     projected_summary, public_metric, round_rng, rung0_budget_limit, rung0_budget_used,
 };
+pub(crate) use native::BinaryRefitState;
 pub use native::{evaluate_native, run_m1, NativeSpace};
 use planning::plan_wave;
 #[cfg(feature = "research")]
