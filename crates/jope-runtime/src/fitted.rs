@@ -312,6 +312,14 @@ impl FittedModel {
                 return Err(fail("selection metric differs from header"));
             }
             if let Some(spec) = selection.get("fitness").filter(|v| !v.is_null()) {
+                if selection
+                    .get("binary_fitness")
+                    .is_some_and(|v| !v.is_null())
+                {
+                    return Err(fail(
+                        "selection cannot carry both regression and binary fitness",
+                    ));
+                }
                 let fitness: crate::fitness::Fitness = serde_json::from_value(spec.clone())
                     .map_err(|e| fail(&format!("invalid fitness: {e}")))?;
                 if kind != TaskKind::Regression
@@ -324,6 +332,23 @@ impl FittedModel {
                     ) != selection.get("fitness_sha256").and_then(|v| v.as_str())
                 {
                     return Err(fail("fitness identity differs from selection record"));
+                }
+            } else if let Some(spec) = selection.get("binary_fitness").filter(|v| !v.is_null()) {
+                let bf: crate::fitness_classification::ClassificationFitness =
+                    serde_json::from_value(spec.clone())
+                        .map_err(|e| fail(&format!("invalid binary fitness: {e}")))?;
+                if kind != TaskKind::Binary
+                    || bf.class_order.as_slice() != h.class_order.as_slice()
+                    || bf.name() != h.metric
+                    || Some(
+                        bf.identity()
+                            .map_err(|e| fail(&format!("invalid binary fitness: {e}")))?
+                            .as_str(),
+                    ) != selection.get("fitness_sha256").and_then(|v| v.as_str())
+                {
+                    return Err(fail(
+                        "binary fitness identity differs from selection record",
+                    ));
                 }
             } else if h.metric != task::metric(kind)
                 || selection

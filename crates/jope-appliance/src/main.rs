@@ -223,7 +223,10 @@ use info::{doctor, licenses, methods_value, verify_self, version_value};
 use run::Run;
 
 mod commands;
-use commands::{load_fitness, report, run_fit, run_fit_predict, run_predict, serve, summary_line};
+use commands::{
+    load_fitness, load_fitness_text, report, run_fit, run_fit_predict, run_predict, serve,
+    summary_line,
+};
 
 fn main() -> ExitCode {
     #[allow(unused_mut)]

@@ -17,10 +17,16 @@ pub struct FitOptions {
     /// For `auto`: restrict the candidates (ids, families or aliases); empty means the roster.
     pub candidates: Vec<String>,
     pub folds: usize,
-    /// Regression-only objective used on held-out predictions, never on a final test set.
+    /// Regression objective used on held-out predictions, never on a final test set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fitness: Option<crate::fitness::Fitness>,
+    /// Binary classification objective (`jope.classification-fitness/v1`) used on held-out
+    /// probability predictions, never on a final test set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binary_fitness: Option<crate::fitness_classification::ClassificationFitness>,
     pub validation: automl::Validation,
-    /// Objective-aware output calibration; `auto` is `affine` with an objective, else `none`.
+    /// Objective-aware output calibration; `auto` is `affine` (regression) or `platt` (binary)
+    /// when an objective is given, else `none`.
     pub calibration: crate::calibration::Calibration,
 }
 
@@ -31,18 +37,35 @@ impl Default for FitOptions {
             candidates: Vec::new(),
             folds: automl::DEFAULT_FOLDS,
             fitness: None,
+            binary_fitness: None,
             validation: automl::Validation::default(),
             calibration: crate::calibration::Calibration::Auto,
         }
     }
 }
 
+#[derive(Debug)]
 pub struct FitOutcome {
     pub fitted: FittedModel,
+    /// Cross-fitted monotone Platt calibration learned on the selected binary winner's OOF
+    /// probabilities (`Some` when binary Platt calibration improved held-out loss).
+    pub platt_calibration: Option<crate::calibration_platt::Calibration>,
     pub method: RustMethod,
     pub selection: Option<Selection>,
     pub select_seconds: f64,
     pub fit_seconds: f64,
+}
+
+impl FitOutcome {
+    /// Wrap `fitted` in a [`crate::model_object::ModelObject`], attaching `platt_calibration`
+    /// when present so persisted binary models preserve their calibrated probability map.
+    pub fn into_model_object(&self) -> Result<crate::model_object::ModelObject> {
+        let object = crate::model_object::ModelObject::from_fitted(&self.fitted)?;
+        match &self.platt_calibration {
+            Some(platt) => object.with_platt_calibration(platt.clone()),
+            None => Ok(object),
+        }
+    }
 }
 
 /// Choose the method (by name, or by bounded selection), refit it on every training row, and
@@ -64,13 +87,18 @@ fn fit_inner(
     training_file_sha256: &str,
     created_by: CreatedBy,
 ) -> Result<FitOutcome> {
+    if options.fitness.is_some() && options.binary_fitness.is_some() {
+        return Err(Failure::input(
+            "cannot supply both regression fitness and binary_fitness",
+        ));
+    }
     if let Some(fitness) = &options.fitness {
         fitness
             .validate()
             .map_err(|e| Failure::input(format!("{e:#}")))?;
         if training.kind != crate::task::TaskKind::Regression || options.method != AUTO {
             return Err(Failure::input(
-                "fitness applies only to regression with --method auto",
+                "regression fitness applies only to regression with --method auto",
             ));
         }
         if fitness.requires_order()
@@ -81,6 +109,38 @@ fn fit_inner(
             ));
         }
     }
+    let effective_binary_fitness = if let Some(bf) = &options.binary_fitness {
+        bf.validate()
+            .map_err(|e| Failure::input(format!("{e:#}")))?;
+        if training.kind != crate::task::TaskKind::Binary || options.method != AUTO {
+            return Err(Failure::input(
+                "binary fitness applies only to binary classification with --method auto",
+            ));
+        }
+        if bf.class_order.as_slice() != training.classes.as_slice() {
+            return Err(Failure::input(format!(
+                "binary fitness class_order {:?} differs from dataset class order {:?}",
+                bf.class_order, training.classes
+            )));
+        }
+        Some(bf.clone())
+    } else if options.calibration == crate::calibration::Calibration::Platt {
+        if training.kind != crate::task::TaskKind::Binary || options.method != AUTO {
+            return Err(Failure::input(
+                "Platt calibration applies only to binary classification with --method auto",
+            ));
+        }
+        let class_order = [training.classes[0].clone(), training.classes[1].clone()];
+        Some(
+            crate::fitness_classification::ClassificationFitness::from_shorthand(
+                "logloss",
+                class_order,
+            )
+            .map_err(|e| Failure::input(format!("{e:#}")))?,
+        )
+    } else {
+        None
+    };
     if !matches!(options.validation, automl::Validation::Iid {})
         && (options.method != AUTO || training.kind != crate::task::TaskKind::Regression)
     {
@@ -88,13 +148,50 @@ fn fit_inner(
             "forward validation applies only to regression with --method auto",
         ));
     }
-    if options.calibration.resolve(options.fitness.is_some())
-        != crate::calibration::Calibration::None
-        && options.fitness.is_none()
+    match training.kind {
+        crate::task::TaskKind::Regression => {
+            if options.calibration == crate::calibration::Calibration::Platt {
+                return Err(Failure::input(
+                    "Platt calibration applies only to binary classification",
+                ));
+            }
+            if options.calibration.resolve(options.fitness.is_some())
+                != crate::calibration::Calibration::None
+                && options.fitness.is_none()
+            {
+                return Err(Failure::input(
+                    "output calibration needs a regression objective (--fitness)",
+                ));
+            }
+        }
+        crate::task::TaskKind::Binary => {
+            if matches!(
+                options.calibration,
+                crate::calibration::Calibration::Shift | crate::calibration::Calibration::Affine
+            ) {
+                return Err(Failure::input(
+                    "shift and affine calibration apply only to regression; use platt, auto, or none for binary",
+                ));
+            }
+        }
+        _ => {
+            if !matches!(
+                options.calibration,
+                crate::calibration::Calibration::Auto | crate::calibration::Calibration::None
+            ) {
+                return Err(Failure::input(
+                    "output calibration applies only to regression or binary classification with --method auto",
+                ));
+            }
+        }
+    }
+    if options.method != AUTO
+        && !matches!(
+            options.calibration,
+            crate::calibration::Calibration::Auto | crate::calibration::Calibration::None
+        )
     {
-        return Err(Failure::input(
-            "output calibration needs a regression objective (--fitness)",
-        ));
+        return Err(Failure::input("output calibration requires --method auto"));
     }
     let wanted = options
         .fitness
@@ -115,7 +212,7 @@ fn fit_inner(
         )));
     }
     let started = Instant::now();
-    let (method, selection) = if options.method == AUTO {
+    let (method, selection, platt_calibration) = if options.method == AUTO {
         let candidates = if options.candidates.is_empty() {
             methods::rust_methods(training.kind)?
         } else {
@@ -128,22 +225,38 @@ fn fit_inner(
             }
             chosen
         };
-        let (selection, method) = automl::select_with_fitness(
-            training,
-            &candidates,
-            options.folds,
-            budget,
-            options.fitness.as_ref(),
-            &options.validation,
-            options.calibration,
-        )?;
-        (method, Some(selection))
+        if let Some(binary_fitness) = effective_binary_fitness.as_ref() {
+            let (selection, method, platt) = automl::select_binary_with_fitness(
+                training,
+                &candidates,
+                options.folds,
+                budget,
+                binary_fitness,
+                options.calibration,
+            )?;
+            (method, Some(selection), platt)
+        } else {
+            let (selection, method) = automl::select_with_fitness(
+                training,
+                &candidates,
+                options.folds,
+                budget,
+                options.fitness.as_ref(),
+                &options.validation,
+                options.calibration,
+            )?;
+            (method, Some(selection), None)
+        }
     } else {
         if !options.candidates.is_empty() {
             return Err(Failure::input("--candidates applies only to --method auto"));
         }
         budget.check("fitting")?;
-        (methods::resolve(training.kind, &options.method)?, None)
+        (
+            methods::resolve(training.kind, &options.method)?,
+            None,
+            None,
+        )
     };
     let select_seconds = started.elapsed().as_secs_f64();
     let started = Instant::now();
@@ -176,6 +289,7 @@ fn fit_inner(
     })?;
     Ok(FitOutcome {
         fitted,
+        platt_calibration,
         method,
         selection,
         select_seconds,

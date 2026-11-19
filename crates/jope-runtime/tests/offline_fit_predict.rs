@@ -428,3 +428,99 @@ fn calibrated_object_round_trip_preserves_predictions_and_refuses_lossy_lowering
     }
     assert!(object.bound().is_err(), "bound JSON dropped calibration");
 }
+
+#[test]
+fn binary_objective_and_platt_calibration_roundtrip_through_model_object() {
+    use jope_runtime::api::predict_object;
+    use jope_runtime::calibration::Calibration;
+    use jope_runtime::fitness_classification::ClassificationFitness;
+    use jope_runtime::model_object::{load_fitted, ModelObject};
+
+    // Overconfident / noisy binary table where cross-fitted Platt scaling improves logloss.
+    let mut text = String::from("x1,x2,y\n");
+    for i in 0..96 {
+        let x1 = (i as f64 * 0.23).sin() * 3.0;
+        let x2 = (i as f64 * 0.41).cos() * 2.0;
+        let noisy_pos = (x1 - 0.5 * x2 > 0.0) ^ (i % 5 == 0);
+        text.push_str(&format!(
+            "{x1:.6},{x2:.6},{}\n",
+            if noisy_pos { "pos" } else { "neg" }
+        ));
+    }
+    let limits = Limits::default();
+    let table = parse_csv(text.as_bytes(), &limits).unwrap();
+    let train = training(&table, "y", TaskChoice::Fixed(TaskKind::Binary), &limits).unwrap();
+    let classes = [train.classes[0].clone(), train.classes[1].clone()];
+    let bf = ClassificationFitness::from_shorthand("logloss", classes.clone()).unwrap();
+    let budget = Budget::new(None, 1);
+
+    let outcome = fit(
+        &train,
+        &FitOptions {
+            candidates: vec!["extra_trees".into(), "tab_boost".into()],
+            folds: 4,
+            binary_fitness: Some(bf),
+            calibration: Calibration::Platt,
+            ..FitOptions::default()
+        },
+        &budget,
+        &table.sha256,
+        CreatedBy::default(),
+    )
+    .unwrap();
+
+    let selection = outcome.selection.as_ref().unwrap();
+    assert_eq!(selection.policy, "jope.runtime-select/v2");
+    assert_eq!(selection.metric, "logloss");
+    assert!(
+        outcome.platt_calibration.is_some(),
+        "expected Platt calibration on noisy tree probabilities"
+    );
+
+    let object = outcome.into_model_object().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let saved = object.save(dir.path(), limits.max_model_bytes).unwrap();
+    // Uncalibrated fitted loader must refuse a Platt-calibrated object so calibration is never dropped.
+    assert!(load_fitted(&saved, limits.max_model_bytes).is_err());
+
+    let reloaded = ModelObject::read(&saved, limits.max_model_bytes).unwrap();
+    assert!(reloaded.platt_calibration().unwrap().is_some());
+    let query_csv = parse_csv(b"x2,x1\n0.5,-1.2\n-0.8,1.7\n0.0,0.0\n", &limits).unwrap();
+    let (rows, _) = reloaded
+        .calibrated_input()
+        .unwrap()
+        .unwrap()
+        .table(&query_csv)
+        .unwrap();
+    let preds = predict_object(&reloaded, &rows, &budget).unwrap();
+    let Predictions::Probabilities {
+        classes: pred_classes,
+        values,
+    } = &preds
+    else {
+        panic!("expected binary probability predictions");
+    };
+    assert_eq!(pred_classes, &classes);
+    assert_eq!(values.len(), 3);
+    for row in values {
+        assert_eq!(row.len(), 2);
+        assert!(row.iter().all(|p| p.is_finite() && (0.0..=1.0).contains(p)));
+        assert!((row[0] + row[1] - 1.0).abs() <= 1e-12);
+    }
+    let csv_bytes = predictions_csv(&preds).unwrap();
+    let csv_str = std::str::from_utf8(&csv_bytes).unwrap();
+    assert!(csv_str.starts_with("prediction,p_neg,p_pos\n"), "{csv_str}");
+
+    // Incompatible combinations fail cleanly with Input error kind.
+    let bad_reg_cal = fit(
+        &train,
+        &FitOptions {
+            calibration: Calibration::Affine,
+            ..FitOptions::default()
+        },
+        &budget,
+        &table.sha256,
+        CreatedBy::default(),
+    );
+    assert_eq!(kind_of(&bad_reg_cal.unwrap_err()), FailureKind::Input);
+}

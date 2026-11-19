@@ -86,6 +86,10 @@ pub fn select_with_fitness(
     calibration: Calibration,
 ) -> Result<(Selection, RustMethod)> {
     let family = calibration.resolve(fitness.is_some());
+    anyhow::ensure!(
+        family != Calibration::Platt,
+        "Platt calibration applies only to binary classification"
+    );
     if let Some(fitness) = fitness {
         fitness.validate()?;
         anyhow::ensure!(
@@ -292,6 +296,7 @@ pub fn select_with_fitness(
                 family,
                 method: calibration::CALIBRATION_METHOD,
                 output_transform,
+                platt_calibration: None,
             })
         }
         _ => None,
@@ -316,6 +321,7 @@ pub fn select_with_fitness(
             loss_name(training.kind).into()
         },
         fitness: fitness.cloned(),
+        binary_fitness: None,
         fitness_sha256: fitness.map(Fitness::identity).transpose()?,
         validation: v2.then(|| validation.clone()),
         scored_rows: v2.then_some(n - warmup_rows),
@@ -325,4 +331,222 @@ pub fn select_with_fitness(
         candidates: outcomes,
     };
     Ok((selection, candidates[winner].clone()))
+}
+
+struct BinaryScored {
+    platt: Option<crate::calibration_platt::Calibration>,
+}
+
+/// Binary candidate selection scored by a `jope.classification-fitness/v1` objective, with
+/// optional cross-fitted monotone Platt probability calibration (`jope.platt-calibration/v1`).
+pub fn select_binary_with_fitness(
+    training: &Training,
+    candidates: &[RustMethod],
+    requested_folds: usize,
+    budget: &Budget,
+    fitness: &crate::fitness_classification::ClassificationFitness,
+    calibration: Calibration,
+) -> Result<(
+    Selection,
+    RustMethod,
+    Option<crate::calibration_platt::Calibration>,
+)> {
+    use crate::fitness_classification::Inputs;
+
+    fitness
+        .validate()
+        .map_err(|e| Failure::input(format!("{e:#}")))?;
+    if training.kind != TaskKind::Binary || training.classes.len() != 2 {
+        return Err(Failure::input(
+            "binary classification fitness requires a two-class binary target",
+        ));
+    }
+    if fitness.class_order.as_slice() != training.classes.as_slice() {
+        return Err(Failure::input(format!(
+            "binary fitness class_order {:?} differs from dataset class order {:?}",
+            fitness.class_order, training.classes
+        )));
+    }
+    let family = calibration.resolve_binary(true);
+    if matches!(family, Calibration::Shift | Calibration::Affine) {
+        return Err(Failure::input(
+            "shift and affine calibration apply only to regression; use platt, auto, or none for binary",
+        ));
+    }
+
+    let k = effective_folds(training, requested_folds)?;
+    let n = training.targets.len();
+    let assignment = folds(TaskKind::Binary, &training.targets, k);
+    let class_order = [training.classes[0].as_str(), training.classes[1].as_str()];
+    let labels: Vec<&str> = training
+        .targets
+        .iter()
+        .map(|&t| training.classes[t as usize].as_str())
+        .collect();
+
+    let mut outcomes = Vec::with_capacity(candidates.len());
+    let mut best: Option<(f64, usize)> = None;
+    let mut evidence: Vec<Option<BinaryScored>> = Vec::with_capacity(candidates.len());
+
+    for (index, method) in candidates.iter().enumerate() {
+        let started = Instant::now();
+        let mut outcome = CandidateOutcome {
+            id: method.id.clone(),
+            status: "skipped",
+            loss: None,
+            fitness_value: None,
+            uncalibrated_loss: None,
+            calibrated_loss: None,
+            calibrated: false,
+            folds_completed: 0,
+            reason: None,
+            seconds: 0.0,
+        };
+        evidence.push(None);
+        if budget.exhausted() {
+            outcome.reason = Some("time limit reached".into());
+            outcomes.push(outcome);
+            continue;
+        }
+        let mut completed = 0;
+        let result = crate::error::contain(&method.id, || {
+            out_of_fold(
+                method,
+                training,
+                &assignment,
+                k,
+                budget,
+                &mut completed,
+                &Validation::Iid {},
+            )
+        })
+        .and_then(|(p, scored, _telemetry)| {
+            anyhow::ensure!(scored.len() == n, "scored rows differ from binary table");
+            let Predictions::Probabilities { values, .. } = p else {
+                anyhow::bail!("binary selection requires class probability predictions");
+            };
+            let pairs: Vec<[f64; 2]> = values
+                .into_iter()
+                .map(|row| {
+                    anyhow::ensure!(row.len() == 2, "expected 2-class probability row");
+                    Ok([row[0], row[1]])
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let raw_eval = fitness
+                .evaluate(Inputs {
+                    class_order,
+                    labels: &labels,
+                    probabilities: &pairs,
+                })
+                .map(|s| s.loss);
+            if family == Calibration::None {
+                let loss = raw_eval?;
+                return Ok((loss, Some(loss), None, false, None));
+            }
+            budget.check("Platt calibration")?;
+            let pos_scores: Vec<f64> = pairs.iter().map(|row| row[1]).collect();
+            let crossed =
+                crate::calibration_platt::cross_fit(&pos_scores, &labels, class_order, &assignment);
+            let cal_eval = match &crossed {
+                Ok(cf) => fitness
+                    .evaluate(Inputs {
+                        class_order,
+                        labels: &labels,
+                        probabilities: &cf.probabilities,
+                    })
+                    .map(|s| s.loss)
+                    .map_err(anyhow::Error::from),
+                Err(err) => Err(anyhow::anyhow!("{err:#}")),
+            };
+            match (raw_eval, cal_eval) {
+                (Err(raw_err), Err(_)) => Err(anyhow::Error::from(raw_err)),
+                (raw_res, cal_res) => {
+                    let raw_opt = raw_res.ok();
+                    let cal_opt = cal_res.ok();
+                    let use_calibrated = match (raw_opt, cal_opt) {
+                        (Some(r), Some(c)) => c < r,
+                        (None, Some(_)) => true,
+                        _ => false,
+                    };
+                    let chosen =
+                        if use_calibrated { cal_opt } else { raw_opt }.expect("one score exists");
+                    let chosen_platt = if use_calibrated {
+                        crossed.ok().map(|cf| cf.calibration)
+                    } else {
+                        None
+                    };
+                    Ok((chosen, raw_opt, cal_opt, use_calibrated, chosen_platt))
+                }
+            }
+        });
+        outcome.seconds = started.elapsed().as_secs_f64();
+        outcome.folds_completed = completed;
+        match result {
+            Ok((value, raw, calibrated, use_calibrated, chosen_platt)) => {
+                if best.is_none_or(|(b, _)| value < b) {
+                    best = Some((value, index));
+                }
+                let natural = match fitness.direction() {
+                    Direction::Maximize => -value,
+                    Direction::Minimize => value,
+                };
+                outcome.status = "scored";
+                outcome.loss = Some(value);
+                outcome.fitness_value = Some(natural);
+                if family != Calibration::None {
+                    outcome.uncalibrated_loss = raw;
+                    outcome.calibrated_loss = calibrated;
+                    outcome.calibrated = use_calibrated;
+                }
+                evidence[index] = Some(BinaryScored {
+                    platt: chosen_platt,
+                });
+            }
+            Err(error) => {
+                let skipped = crate::error::kind_of(&error) == crate::FailureKind::Budget;
+                outcome.status = if skipped { "skipped" } else { "failed" };
+                outcome.reason = Some(format!("{error:#}"));
+            }
+        }
+        outcomes.push(outcome);
+    }
+
+    let Some((_, winner)) = best else {
+        let budget_ran_out = outcomes.iter().any(|o| o.status == "skipped");
+        let detail: Vec<String> = outcomes
+            .iter()
+            .map(|o| format!("{}: {}", o.id, o.reason.as_deref().unwrap_or(o.status)))
+            .collect();
+        let message = format!("no candidate completed selection ({})", detail.join("; "));
+        return Err(if budget_ran_out {
+            Failure::budget(message)
+        } else {
+            anyhow::anyhow!(message)
+        });
+    };
+
+    let selected_platt = evidence[winner].as_ref().and_then(|ev| ev.platt.clone());
+    let calibration_record = (family != Calibration::None).then(|| CalibrationRecord {
+        family,
+        method: crate::calibration_platt::SCHEMA,
+        output_transform: None,
+        platt_calibration: selected_platt.clone(),
+    });
+    let selection = Selection {
+        policy: SELECTION_POLICY_V2,
+        fold_policy: FOLD_POLICY,
+        folds: k,
+        metric: fitness.name().to_owned(),
+        loss: "direction_normalized_fitness".into(),
+        fitness: None,
+        binary_fitness: Some(fitness.clone()),
+        fitness_sha256: Some(fitness.identity()?),
+        validation: Some(Validation::Iid {}),
+        scored_rows: Some(n),
+        warmup_rows: Some(0),
+        calibration: calibration_record,
+        selected: candidates[winner].id.clone(),
+        candidates: outcomes,
+    };
+    Ok((selection, candidates[winner].clone(), selected_platt))
 }

@@ -157,13 +157,16 @@ impl Run {
         &mut self,
         train: &TrainArgs,
         budget: &Budget,
-    ) -> anyhow::Result<FittedModel> {
+    ) -> anyhow::Result<(
+        FittedModel,
+        Option<jope_runtime::calibration_platt::Calibration>,
+    )> {
         let choice = TaskChoice::parse(&train.task)
             .ok_or_else(|| Failure::input(format!("unknown task {:?}", train.task)))?;
-        let fitness = train
+        let raw_fitness = train
             .fitness
             .as_deref()
-            .map(load_fitness)
+            .map(load_fitness_text)
             .transpose()
             .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
         let calibration = jope_runtime::calibration::Calibration::parse(&train.calibration)
@@ -171,7 +174,13 @@ impl Run {
                 Failure::input(format!("unknown calibration {:?}", train.calibration))
             })?;
         let csv = self.read_csv("train", &train.train)?;
-        let auxiliary = fitness
+        let tentative_reg_fitness = match (&raw_fitness, choice) {
+            (Some(raw), TaskChoice::Auto | TaskChoice::Fixed(task::TaskKind::Regression)) => {
+                jope_runtime::fitness::Fitness::parse(raw).ok()
+            }
+            _ => None,
+        };
+        let auxiliary = tentative_reg_fitness
             .as_ref()
             .map(jope_runtime::fitness::Fitness::columns)
             .unwrap_or_default();
@@ -182,6 +191,37 @@ impl Run {
             &self.limits(),
             &auxiliary,
         )?;
+        let (fitness, binary_fitness) = match (&raw_fitness, training.kind) {
+            (None, _) => (None, None),
+            (Some(raw), task::TaskKind::Regression) => {
+                let parsed = match tentative_reg_fitness {
+                    Some(reg) => reg,
+                    None => jope_runtime::fitness::Fitness::parse(raw)
+                        .map_err(|e| Failure::input(format!("fitness: {e:#}")))?,
+                };
+                (Some(parsed), None)
+            }
+            (Some(raw), task::TaskKind::Binary) => {
+                if !training.auxiliary.is_empty() {
+                    return Err(Failure::input(
+                        "binary classification objectives do not read auxiliary columns",
+                    ));
+                }
+                let class_order = [training.classes[0].clone(), training.classes[1].clone()];
+                let parsed =
+                    jope_runtime::fitness_classification::ClassificationFitness::parse_for_classes(
+                        raw,
+                        class_order,
+                    )
+                    .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
+                (None, Some(parsed))
+            }
+            (Some(_), _) => {
+                return Err(Failure::input(
+                    "fitness applies only to regression or binary classification with --method auto",
+                ));
+            }
+        };
         self.receipt.task = Some(TaskRecord {
             task: task::name(training.kind).to_owned(),
             reason: training.task_reason.clone(),
@@ -195,6 +235,7 @@ impl Run {
             candidates: train.candidates.clone(),
             folds: train.folds,
             fitness,
+            binary_fitness,
             calibration,
             validation: if train.validation == "forward" {
                 jope_runtime::automl::Validation::Forward { gap: train.gap }
@@ -237,7 +278,32 @@ impl Run {
             recipe_sha256: outcome.fitted.header.recipe_sha256.clone(),
         });
         self.receipt.selection = outcome.selection;
-        Ok(outcome.fitted)
+        Ok((outcome.fitted, outcome.platt_calibration))
+    }
+
+    pub(super) fn predict_in_memory_object(
+        &mut self,
+        object: &jope_runtime::model_object::ModelObject,
+        input: &Path,
+        output: &Path,
+        budget: &Budget,
+    ) -> anyhow::Result<()> {
+        let contract = object
+            .calibrated_input()?
+            .ok_or_else(|| Failure::integrity("model object has no Platt calibration"))?;
+        let csv = self.read_csv("input", input)?;
+        let started = Instant::now();
+        let (rows, ignored) = contract.table(&csv)?;
+        self.receipt.ignored_columns = ignored;
+        let predictions = api::predict_object(object, &rows, budget)?;
+        self.receipt.timings.predict_seconds = started.elapsed().as_secs_f64();
+        let started = Instant::now();
+        let bytes = api::predictions_csv(&predictions)?;
+        self.receipt
+            .outputs
+            .push(io::write_atomic("predictions", output, &bytes)?);
+        self.receipt.timings.write_seconds += started.elapsed().as_secs_f64();
+        Ok(())
     }
 
     pub(super) fn predict(
