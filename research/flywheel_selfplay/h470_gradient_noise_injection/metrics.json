@@ -1,31 +1,938 @@
 {
-  "wave": "H470",
-  "status": "RUNNING",
-  "label_note": "H470 in the overnight H-wave index = this gradient-noise wave; the unrelated local-only DOPE value probe (branch research/h470-dope-value-probe, run_h470_probe.py) should be indexed as H470-DVP or the next free H-number",
-  "script_sha256": "d596dbb25d6adcbe0911f0add13bb3bed5eae80db2ff3944fffc181b75884352",
-  "arms": ["pairnf_z40", "gn05_z40", "gn10_z40"],
-  "control": "pairnf_z40",
-  "gnoise": {"formula": "after clip_grad_norm_(1.0): g += N(0,(c*rms(g_tensor))^2)/(1+step)^0.55 per trainable tensor, own keyed generator", "gn05_z40": 0.5, "gn10_z40": 1.0},
-  "seeds": [1, 2, 3],
-  "partitions": ["h452a/", "h452b/"],
-  "folds": 5,
-  "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
-  "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
-  "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
-  "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, clean red-team; otherwise NO_LIFT",
-  "redteam_prereg": ["floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift", "kept changes < 0.5x control => gate-starved (displacement confound)", "dose check: gn10 must differ from control at least as much as gn05, else noise inert", "noise uses training-batch gradients and its own keyed RNG only; no val labels"],
-  "smoke_h452a_fold0_seed1": {
-    "pairnf_z40": {"changed": 134, "kept": 15, "W": 10, "L": 4, "gain": 0.000629, "elo": 8.5, "equals_h469_cell": true, "adapter_sha_prefix": "8d5ac7934310"},
-    "gn05_z40": {"changed": 131, "kept": 13, "W": 8, "L": 4, "gain": 0.000485, "elo": 5.7},
-    "gn10_z40": {"changed": 131, "kept": 11, "W": 7, "L": 3, "gain": 0.000540, "elo": 5.7}
+ "wave": "H470",
+ "status": "COMPLETE",
+ "label_note": "H470 in the overnight H-wave index = this gradient-noise wave; the unrelated local-only DOPE value probe (branch research/h470-dope-value-probe, run_h470_probe.py) should be indexed as H470-DVP or the next free H-number",
+ "script_sha256": "d596dbb25d6adcbe0911f0add13bb3bed5eae80db2ff3944fffc181b75884352",
+ "arms": [
+  "pairnf_z40",
+  "gn05_z40",
+  "gn10_z40"
+ ],
+ "control": "pairnf_z40",
+ "gnoise": {
+  "formula": "after clip_grad_norm_(1.0): g += N(0,(c*rms(g_tensor))^2)/(1+step)^0.55 per trainable tensor, own keyed generator",
+  "gn05_z40": 0.5,
+  "gn10_z40": 1.0
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "partitions": [
+  "h452a/",
+  "h452b/"
+ ],
+ "folds": 5,
+ "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+ "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+ "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+ "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, clean red-team; otherwise NO_LIFT",
+ "redteam_prereg": [
+  "floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift",
+  "kept changes < 0.5x control => gate-starved (displacement confound)",
+  "dose check: gn10 must differ from control at least as much as gn05, else noise inert",
+  "noise uses training-batch gradients and its own keyed RNG only; no val labels"
+ ],
+ "smoke_h452a_fold0_seed1": {
+  "pairnf_z40": {
+   "changed": 134,
+   "kept": 15,
+   "W": 10,
+   "L": 4,
+   "gain": 0.000629,
+   "elo": 8.5,
+   "equals_h469_cell": true,
+   "adapter_sha_prefix": "8d5ac7934310"
   },
-  "probe": {"utc": "2026-11-18T20:48:39Z", "ok": true, "control_full_sha_equals_h469_probe": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439", "peak_rss_gb": 6.18, "min_memavail_gb": 45.1},
-  "launch_utc": "2026-11-18T21:04:57Z",
-  "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
-  "incumbent_val_utility": 1.1389572403748425,
-  "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
-  "host": "xbabe2",
-  "device": "cpu",
-  "sealed_or_holdout_reads": 0,
-  "verdict": null
+  "gn05_z40": {
+   "changed": 131,
+   "kept": 13,
+   "W": 8,
+   "L": 4,
+   "gain": 0.000485,
+   "elo": 5.7
+  },
+  "gn10_z40": {
+   "changed": 131,
+   "kept": 11,
+   "W": 7,
+   "L": 3,
+   "gain": 0.00054,
+   "elo": 5.7
+  }
+ },
+ "probe": {
+  "utc": "2026-11-18T20:48:39Z",
+  "ok": true,
+  "control_full_sha_equals_h469_probe": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439",
+  "peak_rss_gb": 6.18,
+  "min_memavail_gb": 45.1
+ },
+ "launch_utc": {
+  "1": "2026-11-18T21:04:57Z",
+  "2": "2026-11-18T21:25:07Z",
+  "3": "2026-11-18T21:45:17Z"
+ },
+ "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+ "incumbent_val_utility": 1.1389572403748425,
+ "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "host": "xbabe2",
+ "device": "cpu",
+ "sealed_or_holdout_reads": 0,
+ "verdict": "NO_LIFT",
+ "median_oof_gain": {
+  "pairnf_z40": 0.005586076517114837,
+  "gn05_z40": 0.004423653770504482,
+  "gn10_z40": 0.002390395208907917
+ },
+ "median_elo": {
+  "pairnf_z40": 4.703065876891549,
+  "gn05_z40": 5.2732172850241055,
+  "gn10_z40": 4.417999862760916
+ },
+ "median_elo_ci95_per_seed": {
+  "pairnf_z40": [
+   [
+    -1.2948612763935556,
+    10.619668837705056
+   ],
+   [
+    0.7384569299057113,
+    12.344303884293337
+   ],
+   [
+    -1.7540866720074344,
+    9.38178244532326
+   ]
+  ],
+  "gn05_z40": [
+   [
+    0.0,
+    11.001311846231438
+   ],
+   [
+    0.0,
+    10.313371085044684
+   ],
+   [
+    -1.0195833722373224,
+    9.043679385309005
+   ]
+  ],
+  "gn10_z40": [
+   [
+    0.27971935691801136,
+    8.689088272904662
+   ],
+   [
+    0.27410213986178716,
+    9.662825601301009
+   ],
+   [
+    -1.1976373565779765,
+    7.613901519834981
+   ]
+  ]
+ },
+ "median_nonfloor_elo": {
+  "pairnf_z40": 4.343171035283314,
+  "gn05_z40": 4.922333440853857,
+  "gn10_z40": 4.343171035283314
+ },
+ "seeds_passing_strict": {
+  "pairnf_z40": 1,
+  "gn05_z40": 0,
+  "gn10_z40": 0
+ },
+ "seeds_passing_utility_strict": {
+  "pairnf_z40": 3,
+  "gn05_z40": 2,
+  "gn10_z40": 0
+ },
+ "beats_control_all_seeds": {
+  "pairnf_z40": false,
+  "gn05_z40": false,
+  "gn10_z40": false
+ },
+ "paired_vs_control_gain_ci95_per_seed": {
+  "gn05_z40": {
+   "1": [
+    -0.0010223332093185044,
+    [
+     -0.0032837337202124696,
+     0.00028427298310885183
+    ]
+   ],
+   "2": [
+    -0.0022921764903971985,
+    [
+     -0.005452584870441975,
+     -0.00010405491586786811
+    ]
+   ],
+   "3": [
+    -0.0011624227466103545,
+    [
+     -0.003386604125959755,
+     0.0002885095506984005
+    ]
+   ]
+  },
+  "gn10_z40": {
+   "1": [
+    -0.0023907386261326374,
+    [
+     -0.0054429898727628954,
+     -8.133150192678832e-05
+    ]
+   ],
+   "2": [
+    -0.004082192813384403,
+    [
+     -0.009433628107771418,
+     -0.0005145926106153582
+    ]
+   ],
+   "3": [
+    -0.0032446754797933837,
+    [
+     -0.006901016478875883,
+     -0.0004280964855504529
+    ]
+   ]
+  }
+ },
+ "cross_seed_family_boot": {
+  "pairnf_z40": {
+   "oof_vs_incumbent": {
+    "gain_seedmean": 0.005742797686611578,
+    "gain_ci95": [
+     0.0013104046256056563,
+     0.011419572835830163
+    ],
+    "elo_pooled": 5.035650923208225,
+    "elo_ci95": [
+     -0.6984514231494375,
+     10.506164391240246
+    ],
+    "W_T_L_pooled": [
+     365,
+     6690,
+     259
+    ]
+   }
+  },
+  "gn05_z40": {
+   "oof_vs_incumbent": {
+    "gain_seedmean": 0.00425048687116956,
+    "gain_ci95": [
+     0.00040984375221471566,
+     0.00962794852684452
+    ],
+    "elo_pooled": 4.940625709264949,
+    "elo_ci95": [
+     -0.37684847423702533,
+     9.846192762840422
+    ],
+    "W_T_L_pooled": [
+     320,
+     6778,
+     216
+    ]
+   },
+   "oof_vs_control": {
+    "gain_seedmean": -0.001492310815442019,
+    "gain_ci95": [
+     -0.0035833245377844417,
+     -2.18096210243267e-05
+    ],
+    "elo_pooled": -0.4275255466141982,
+    "elo_ci95": [
+     -1.6342014603867343,
+     0.7954307671077264
+    ],
+    "W_T_L_pooled": [
+     52,
+     7201,
+     61
+    ]
+   }
+  },
+  "gn10_z40": {
+   "oof_vs_incumbent": {
+    "gain_seedmean": 0.002503595380174771,
+    "gain_ci95": [
+     -0.00030984441432018063,
+     0.005744099463152267
+    ],
+    "elo_pooled": 4.18044941083582,
+    "elo_ci95": [
+     -0.24289404511002766,
+     8.334711290626126
+    ],
+    "W_T_L_pooled": [
+     253,
+     6896,
+     165
+    ]
+   },
+   "oof_vs_control": {
+    "gain_seedmean": -0.0032392023064368083,
+    "gain_ci95": [
+     -0.006762664446049216,
+     -0.0005006584316906744
+    ],
+    "elo_pooled": -1.1400716407818126,
+    "elo_ci95": [
+     -3.547764336548788,
+     1.4064921353730129
+    ],
+    "W_T_L_pooled": [
+     111,
+     7068,
+     135
+    ]
+   }
+  }
+ },
+ "selected_per_seed": {
+  "1": "gn05_z40",
+  "2": "pairnf_z40",
+  "3": "gn05_z40"
+ },
+ "val91_per_seed": {
+  "1": {
+   "arm": "gn05_z40",
+   "val_gain": -1.9717261209953226e-07,
+   "val_gain_ci95_family_boot": [
+    -0.0009056119717643311,
+    0.0007703785720093769
+   ],
+   "wins": 3.0,
+   "ties": 86.0,
+   "losses": 2.0,
+   "elo_vs_incumbent_val": 3.8181271624921442,
+   "not_worse": false,
+   "new_gatefails": 0
+  },
+  "2": {
+   "arm": "pairnf_z40",
+   "val_gain": 0.0010696931380389048,
+   "val_gain_ci95_family_boot": [
+    -0.0004964539516611287,
+    0.0028419072993820637
+   ],
+   "wins": 4.0,
+   "ties": 86.0,
+   "losses": 1.0,
+   "elo_vs_incumbent_val": 11.45807257981204,
+   "not_worse": true,
+   "new_gatefails": 0
+  },
+  "3": {
+   "arm": "gn05_z40",
+   "val_gain": 0.0004873051618563465,
+   "val_gain_ci95_family_boot": [
+    -0.0007719036330293487,
+    0.0019993316923187887
+   ],
+   "wins": 3.0,
+   "ties": 87.0,
+   "losses": 1.0,
+   "elo_vs_incumbent_val": 7.637176763608913,
+   "not_worse": true,
+   "new_gatefails": 0
+  }
+ },
+ "val91_median_gain": 0.0004873051618563465,
+ "val91_median_elo": 7.637176763608913,
+ "val91_cross_seed": {
+  "gain_seedmean": 0.0005189337090943841,
+  "gain_ci95": [
+   -0.0007188178845916454,
+   0.0017875159692503349
+  ],
+  "elo_pooled": 7.637176763608913,
+  "elo_ci95": [
+   -7.9884323722480195,
+   25.49883967131661
+  ],
+  "W_T_L_pooled": [
+   10,
+   259,
+   4
+  ],
+  "median_val_gain": 0.0004873051618563465,
+  "per_seed": {
+   "1": [
+    "gn05_z40",
+    -1.9717261209953226e-07,
+    [
+     -0.0009056119717643311,
+     0.0007703785720093769
+    ]
+   ],
+   "2": [
+    "pairnf_z40",
+    0.0010696931380389048,
+    [
+     -0.0004964539516611287,
+     0.0028419072993820637
+    ]
+   ],
+   "3": [
+    "gn05_z40",
+    0.0004873051618563465,
+    [
+     -0.0007719036330293487,
+     0.0019993316923187887
+    ]
+   ]
+  },
+  "median_beyond_ci": false,
+  "median_ci_low_gt_0": false
+ },
+ "task_verdict_rule": "LIFT only if the median val91 gain is beyond its cross-seed family-bootstrap CI (CI low > 0) and the pre-registered LIFT rule holds",
+ "done_utc": {
+  "1": "2026-11-19T04:30:26Z",
+  "2": "2026-11-19T04:49:33Z",
+  "3": "2026-11-19T05:10:35Z"
+ },
+ "relaunches": {
+  "1": 0,
+  "2": 0,
+  "3": 0
+ },
+ "guard_aborts": {
+  "1": 0,
+  "2": 0,
+  "3": 0
+ },
+ "oom_kills": 0,
+ "peak": {
+  "1": {
+   "min_memavail_gb": 34.056819915771484,
+   "max_rss_gb": 6.209808349609375
+  },
+  "2": {
+   "min_memavail_gb": 35.067989349365234,
+   "max_rss_gb": 6.210784912109375
+  },
+  "3": {
+   "min_memavail_gb": 34.23106384277344,
+   "max_rss_gb": 6.209087371826172
+  }
+ },
+ "dope_after_all_seeds": {
+  "1": "c51a56d0",
+  "2": "c51a56d0",
+  "3": "c51a56d0"
+ },
+ "script_sha256_reverified_after_run": true,
+ "control_parity_vs_h469_cells": "30/30 (adapter sha and OOF identical)",
+ "kept_over_control_kept": {
+  "gn05_z40": [
+   0.869,
+   0.844,
+   0.868
+  ],
+  "gn10_z40": [
+   0.643,
+   0.703,
+   0.673
+  ]
+ },
+ "noise_kept_subset_of_control": "every gn kept decision is also a control kept decision (both_changed == arm_changed, arm-only gain 0 in all 12 seed x partition cells); noise only drops control changes, and the dropped ones are net positive",
+ "dose_check": {
+  "s1": {
+   "pairnf_z40": {
+    "changed": 1427,
+    "kept": 213,
+    "median_abs_z_changed": 0.17572,
+    "share_z_ge_040": 0.14926419060967064,
+    "changed_set_symdiff_vs_ctrl": 0,
+    "oof_decisions_differ_vs_ctrl": 0
+   },
+   "gn05_z40": {
+    "changed": 1410,
+    "kept": 185,
+    "median_abs_z_changed": 0.16762,
+    "share_z_ge_040": 0.13120567375886524,
+    "changed_set_symdiff_vs_ctrl": 25,
+    "oof_decisions_differ_vs_ctrl": 34
+   },
+   "gn10_z40": {
+    "changed": 1374,
+    "kept": 137,
+    "median_abs_z_changed": 0.157885,
+    "share_z_ge_040": 0.09970887918486172,
+    "changed_set_symdiff_vs_ctrl": 63,
+    "oof_decisions_differ_vs_ctrl": 84
+   },
+   "gn10_at_least_as_different_as_gn05": true
+  },
+  "s2": {
+   "pairnf_z40": {
+    "changed": 1420,
+    "kept": 212,
+    "median_abs_z_changed": 0.17728,
+    "share_z_ge_040": 0.14929577464788732,
+    "changed_set_symdiff_vs_ctrl": 0,
+    "oof_decisions_differ_vs_ctrl": 0
+   },
+   "gn05_z40": {
+    "changed": 1400,
+    "kept": 179,
+    "median_abs_z_changed": 0.16915,
+    "share_z_ge_040": 0.12785714285714286,
+    "changed_set_symdiff_vs_ctrl": 36,
+    "oof_decisions_differ_vs_ctrl": 43
+   },
+   "gn10_z40": {
+    "changed": 1371,
+    "kept": 149,
+    "median_abs_z_changed": 0.16105,
+    "share_z_ge_040": 0.10867979576951131,
+    "changed_set_symdiff_vs_ctrl": 71,
+    "oof_decisions_differ_vs_ctrl": 77
+   },
+   "gn10_at_least_as_different_as_gn05": true
+  },
+  "s3": {
+   "pairnf_z40": {
+    "changed": 1419,
+    "kept": 205,
+    "median_abs_z_changed": 0.17938,
+    "share_z_ge_040": 0.14446793516560957,
+    "changed_set_symdiff_vs_ctrl": 0,
+    "oof_decisions_differ_vs_ctrl": 0
+   },
+   "gn05_z40": {
+    "changed": 1401,
+    "kept": 178,
+    "median_abs_z_changed": 0.17382,
+    "share_z_ge_040": 0.1270521056388294,
+    "changed_set_symdiff_vs_ctrl": 34,
+    "oof_decisions_differ_vs_ctrl": 36
+   },
+   "gn10_z40": {
+    "changed": 1373,
+    "kept": 138,
+    "median_abs_z_changed": 0.16067,
+    "share_z_ge_040": 0.10050983248361253,
+    "changed_set_symdiff_vs_ctrl": 70,
+    "oof_decisions_differ_vs_ctrl": 85
+   },
+   "gn10_at_least_as_different_as_gn05": true
+  }
+ },
+ "equal_value_coincidences": [
+  "seed 1 non-floor Elo +4.343 for control and gn10: both W-L = +30 over N = 2,400 (119/2192/89 vs 82/2266/52); Elo depends only on (W + T/2)/N, adapters differ 30/30, 84 OOF decisions differ",
+  "seed 2 non-floor Elo +4.922 for gn05 and gn10: both W-L = +34 (104/2226/70 vs 90/2254/56)",
+  "seeds 1-2 gn05 pooled Elo CI lower bound exactly 0.0: the 2.5th-percentile bootstrap resample has W = L"
+ ],
+ "selection_bootstrap": {
+  "s1": {
+   "selected": "gn05_z40",
+   "nonfloor_elo": {
+    "pairnf_z40": 4.343174052162043,
+    "gn05_z40": 5.3567983807691775,
+    "gn10_z40": 4.343198187342511
+   },
+   "p_selected_is_argmax": 0.682,
+   "p_max_arm_nonfloor_elo_gt_0": 0.977,
+   "max_arm_nonfloor_elo_ci95": [
+    0.13,
+    11.01
+   ]
+  },
+  "s2": {
+   "selected": "pairnf_z40",
+   "nonfloor_elo": {
+    "pairnf_z40": 5.935944692063943,
+    "gn05_z40": 4.92234711861509,
+    "gn10_z40": 4.92234711861509
+   },
+   "p_selected_is_argmax": 0.718,
+   "p_max_arm_nonfloor_elo_gt_0": 0.988,
+   "max_arm_nonfloor_elo_ci95": [
+    0.73,
+    11.78
+   ]
+  },
+  "s3": {
+   "selected": "gn05_z40",
+   "nonfloor_elo": {
+    "pairnf_z40": 3.3297074177978763,
+    "gn05_z40": 3.6192572470711406,
+    "gn10_z40": 3.0401817197980856
+   },
+   "p_selected_is_argmax": 0.411,
+   "p_max_arm_nonfloor_elo_gt_0": 0.946,
+   "max_arm_nonfloor_elo_ci95": [
+    -1.06,
+    9.0
+   ]
+  }
+ },
+ "dvp_note": "H470-DVP (separately owned DOPE value probe, run_h470_probe.py, logs in ~/jope-data/hwave-h470/logs/) is excluded from every H470 aggregate; the aggregator reads only results/seed*/summary.json and results/fold_sig/",
+ "aggregate": {
+  "verdict": "NO_LIFT",
+  "seed_independence": {
+   "pairnf_z40:1v2": true,
+   "pairnf_z40:1v3": true,
+   "pairnf_z40:2v3": true,
+   "gn05_z40:1v2": true,
+   "gn05_z40:1v3": true,
+   "gn05_z40:2v3": true,
+   "gn10_z40:1v2": true,
+   "gn10_z40:1v3": true,
+   "gn10_z40:2v3": true
+  },
+  "degenerate_all_zero_arms": [],
+  "regcheck_adapter_sha": {
+   "1": "d2b0871989cacd601e2101f501348b4ba35632abad36d67356d8a63c5142dd90",
+   "2": "be56fa29d0f4761363501b90e28a3c4f63473d9bc11b1b00af387d525202f875",
+   "3": "6fdd4e0049d04a1caf63b2989a575110f83ce3c5c2fd0d23b56d7c33af26f43e"
+  },
+  "val91_all_ci_low_gt_0": false
+ },
+ "redteam": {
+  "inc_gatefails_train": 19,
+  "seed_disagreement": {
+   "pairnf_z40:1v2": [
+    26,
+    30
+   ],
+   "pairnf_z40:1v3": [
+    32,
+    27
+   ],
+   "pairnf_z40:2v3": [
+    25,
+    29
+   ],
+   "gn05_z40:1v2": [
+    25,
+    23
+   ],
+   "gn05_z40:1v3": [
+    21,
+    28
+   ],
+   "gn05_z40:2v3": [
+    22,
+    23
+   ],
+   "gn10_z40:1v2": [
+    22,
+    18
+   ],
+   "gn10_z40:1v3": [
+    23,
+    20
+   ],
+   "gn10_z40:2v3": [
+    22,
+    19
+   ]
+  },
+  "partition_agreement": {
+   "pairnf_z40:s1": {
+    "changed_either": 124,
+    "changed_both": 87,
+    "same_sign_both": 83
+   },
+   "pairnf_z40:s2": {
+    "changed_either": 122,
+    "changed_both": 88,
+    "same_sign_both": 84
+   },
+   "pairnf_z40:s3": {
+    "changed_either": 116,
+    "changed_both": 87,
+    "same_sign_both": 81
+   },
+   "gn05_z40:s1": {
+    "changed_either": 109,
+    "changed_both": 74,
+    "same_sign_both": 72
+   },
+   "gn05_z40:s2": {
+    "changed_either": 105,
+    "changed_both": 72,
+    "same_sign_both": 69
+   },
+   "gn05_z40:s3": {
+    "changed_either": 103,
+    "changed_both": 73,
+    "same_sign_both": 70
+   },
+   "gn10_z40:s1": {
+    "changed_either": 82,
+    "changed_both": 53,
+    "same_sign_both": 50
+   },
+   "gn10_z40:s2": {
+    "changed_either": 87,
+    "changed_both": 60,
+    "same_sign_both": 59
+   },
+   "gn10_z40:s3": {
+    "changed_either": 81,
+    "changed_both": 55,
+    "same_sign_both": 54
+   }
+  },
+  "vs_control_decisions": {
+   "gn05_z40:s1": [
+    {
+     "arm_changed": 93,
+     "ctrl_changed": 103,
+     "both_changed": 93,
+     "identical_oof": 1206,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 0.3426255652928176
+    },
+    {
+     "arm_changed": 90,
+     "ctrl_changed": 108,
+     "both_changed": 90,
+     "identical_oof": 1198,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 2.5330964242391256
+    }
+   ],
+   "gn05_z40:s2": [
+    {
+     "arm_changed": 89,
+     "ctrl_changed": 105,
+     "both_changed": 89,
+     "identical_oof": 1199,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 0.3800526693473784
+    },
+    {
+     "arm_changed": 88,
+     "ctrl_changed": 105,
+     "both_changed": 88,
+     "identical_oof": 1196,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 5.227394934029162
+    }
+   ],
+   "gn05_z40:s3": [
+    {
+     "arm_changed": 91,
+     "ctrl_changed": 104,
+     "both_changed": 91,
+     "identical_oof": 1201,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 0.03966323106052533
+    },
+    {
+     "arm_changed": 85,
+     "ctrl_changed": 99,
+     "both_changed": 85,
+     "identical_oof": 1201,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 2.4488923358941412
+    }
+   ],
+   "gn10_z40:s1": [
+    {
+     "arm_changed": 68,
+     "ctrl_changed": 103,
+     "both_changed": 68,
+     "identical_oof": 1183,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 3.132758208990799
+    },
+    {
+     "arm_changed": 67,
+     "ctrl_changed": 108,
+     "both_changed": 67,
+     "identical_oof": 1171,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 2.6099716647248186
+    }
+   ],
+   "gn10_z40:s2": [
+    {
+     "arm_changed": 77,
+     "ctrl_changed": 105,
+     "both_changed": 77,
+     "identical_oof": 1183,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 4.93178726170942
+    },
+    {
+     "arm_changed": 70,
+     "ctrl_changed": 105,
+     "both_changed": 70,
+     "identical_oof": 1178,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 4.9259639978331125
+    }
+   ],
+   "gn10_z40:s3": [
+    {
+     "arm_changed": 71,
+     "ctrl_changed": 104,
+     "both_changed": 71,
+     "identical_oof": 1177,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 2.5323265823484884
+    },
+    {
+     "arm_changed": 65,
+     "ctrl_changed": 99,
+     "both_changed": 65,
+     "identical_oof": 1176,
+     "arm_only_gain_sum": 0.0,
+     "ctrl_only_gain_sum": 5.134563739878105
+    }
+   ]
+  },
+  "val91": {
+   "s1": {
+    "arm": "gn05_z40",
+    "nonzero_idx": [
+     25,
+     50,
+     64,
+     69,
+     84
+    ],
+    "wins": 3,
+    "losses": 2,
+    "sum_gain": -1.7942707701057437e-05,
+    "max_abs": 0.05334686106817893
+   },
+   "s2": {
+    "arm": "pairnf_z40",
+    "nonzero_idx": [
+     49,
+     50,
+     64,
+     69,
+     84
+    ],
+    "wins": 4,
+    "losses": 1,
+    "sum_gain": 0.09734207556154034,
+    "max_abs": 0.05334686106817893
+   },
+   "s3": {
+    "arm": "gn05_z40",
+    "nonzero_idx": [
+     50,
+     64,
+     69,
+     84
+    ],
+    "wins": 3,
+    "losses": 1,
+    "sum_gain": 0.044344769728927536,
+    "max_abs": 0.05334686106817893
+   },
+   "1v2": {
+    "differ": 3,
+    "both_changed": 4
+   },
+   "1v3": {
+    "differ": 1,
+    "both_changed": 4
+   },
+   "2v3": {
+    "differ": 2,
+    "both_changed": 4
+   }
+  },
+  "identical_fold_oof": [
+   {
+    "cell": "p1cv1",
+    "a": "pairnf_z40:s1",
+    "b": "pairnf_z40:s3",
+    "gain": 0.009546526520940297,
+    "same_adapter_sha": false,
+    "n_kept": 23,
+    "changed_sets_equal": false,
+    "max_abs_z_diff_on_common_changed": 0.12866000000000002
+   },
+   {
+    "cell": "p1cv4",
+    "a": "pairnf_z40:s3",
+    "b": "gn05_z40:s3",
+    "gain": 0.0033519703453214734,
+    "same_adapter_sha": false,
+    "n_kept": 11,
+    "changed_sets_equal": false,
+    "max_abs_z_diff_on_common_changed": 0.05009999999999998
+   }
+  ],
+  "equal_elo_coincidence": {
+   "s1": {
+    "wtl": {
+     "pairnf_z40": [
+      122,
+      2227,
+      89
+     ],
+     "gn05_z40": [
+      111,
+      2255,
+      72
+     ],
+     "gn10_z40": [
+      83,
+      2303,
+      52
+     ]
+    },
+    "equal_net_pairs": []
+   },
+   "s2": {
+    "wtl": {
+     "pairnf_z40": [
+      128,
+      2228,
+      82
+     ],
+     "gn05_z40": [
+      107,
+      2261,
+      70
+     ],
+     "gn10_z40": [
+      91,
+      2291,
+      56
+     ]
+    },
+    "equal_net_pairs": []
+   },
+   "s3": {
+    "wtl": {
+     "pairnf_z40": [
+      115,
+      2235,
+      88
+     ],
+     "gn05_z40": [
+      102,
+      2262,
+      74
+     ],
+     "gn10_z40": [
+      79,
+      2302,
+      57
+     ]
+    },
+    "equal_net_pairs": []
+   }
+  }
+ }
 }
