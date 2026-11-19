@@ -7,5 +7,6 @@ mod space;
 
 pub use evaluate::evaluate_native;
 pub(super) use evaluate::{aux_columns_for_rows, numeric_rows, NativeModel};
+pub(crate) use model::BinaryRefitState;
 pub use run::run_m1;
 pub use space::NativeSpace;

@@ -39,6 +39,36 @@ pub async fn get() -> Json<SystemInfo> {
     Json(snapshot(&StubCapabilities))
 }
 
+pub(crate) struct LiveCapabilities {
+    pub learned_guidance: bool,
+}
+
+impl CapabilityProvider for LiveCapabilities {
+    fn capabilities(&self) -> Capabilities {
+        Capabilities {
+            tasks: vec![jope_api::Task::Regression, jope_api::Task::Binary],
+            languages: vec![
+                jope_api::Language::Rust,
+                jope_api::Language::Python,
+                jope_api::Language::Javascript,
+            ],
+            devices: vec!["cpu".to_owned()],
+            learned_guidance: self.learned_guidance,
+        }
+    }
+}
+
+/// Return the live bounded CPU engine capability snapshot when `RunService` is mounted.
+pub(in crate::http) async fn get_live(
+    axum::extract::Extension(runs): axum::extract::Extension<
+        std::sync::Arc<super::runs::RunService>,
+    >,
+) -> Json<SystemInfo> {
+    Json(snapshot(&LiveCapabilities {
+        learned_guidance: runs.has_admitted_ranker(),
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

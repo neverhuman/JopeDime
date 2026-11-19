@@ -71,7 +71,11 @@ fn build_router(
         };
         for path in operation.paths {
             app = if operation.name == "system_info" {
-                app.route(path, get(system::get))
+                if journal.is_some() {
+                    app.route(path, get(system::get_live))
+                } else {
+                    app.route(path, get(system::get))
+                }
             } else if operation.name == "dataset_register" && dataset_enabled {
                 app.route(
                     path,
