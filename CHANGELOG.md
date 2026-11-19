@@ -11,6 +11,7 @@ the commit areas (crate or lane) named in each subject line.
 
 ### Encoders
 
+- encoders: add opt-in pure-Rust `DopeResearchEncoding629` (`High` / `Ultra` 629-D + `col_landmarks34`), extrema-free `DopePacketV1Summary` (`196-D` `PacketFeaturesV1` + `28-D` `PacketGlobalV1`), and `DopeUltraPacket859` (`[629 + 34 + 196 = 859]`) APIs in `crates/jope-encoders/src/dope_encoder/research_upgrade.rs`, matching the `H470-DVP` representation bridge (`#2381`) while keeping serving `Dope512`, `DOPE512_RECIPE`, `d0b69603…`, and ADR-0004 (`aa3dcb31…`) unchanged, and register `test_h470_probe.py` in `docs/internal/core-ip/findings/test-inventory.json`.
 - encoders: pin `dope-core` to the signed, tagged `dope-engine-v1.2.0` commit (`5fc96f2819a97ed313658c336a9a46e637299352`, tag object `4f2d21f3`, Sigstore OIDC run `44389327320`), replacing the intermediate untagged `e6dba52` source pin. `dope-core` (`1.2.0`) and `dope-norm` (`0.1.0`) match `#358` at `71dfa6b9` (Rust research view and 196-D packet, plus `#360` `dope-cli` wire task display fix); `PREPARATION_SOURCE` follows the signed tag revision, and the MLC-v3 weight digest stays `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`. Also filter terminal completion callbacks (`s.receipt.outcome.is_none()`) in `dope_encoding::progressive_terminal_equals_full_and_publishes_supplied_fusion` so all 15 non-ignored `dope_encoding` tests pass. This is an engine tag pin, not a weight release and not a scientific accuracy claim.
 
 ### Native AutoML regressors
