@@ -510,6 +510,11 @@ fn binary_objective_and_platt_calibration_roundtrip_through_model_object() {
     let csv_bytes = predictions_csv(&preds).unwrap();
     let csv_str = std::str::from_utf8(&csv_bytes).unwrap();
     assert!(csv_str.starts_with("prediction,p_neg,p_pos\n"), "{csv_str}");
+    for lang in ["python", "rust"] {
+        let exported = String::from_utf8(reloaded.export_source(lang).unwrap()).unwrap();
+        assert!(exported.contains("PLATT_CLASS_ORDER"), "{lang}");
+        assert!(exported.contains("fitted_platt"), "{lang}");
+    }
 
     // Incompatible combinations fail cleanly with Input error kind.
     let bad_reg_cal = fit(
