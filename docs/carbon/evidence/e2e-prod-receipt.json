@@ -1,0 +1,141 @@
+{
+  "all_passed": true,
+  "auth_mode": "prod_registration_disabled_verified_and_operator_minted",
+  "binary_gate": {
+    "export_bytes": {
+      "cpp": 1369016,
+      "js": 748950,
+      "python": 851770,
+      "rust": 1957925
+    },
+    "run_id": "run_01M7TX8G94VRJEMRMKXM59276H",
+    "shred_verified": true,
+    "tricky_labels_verified": [
+      "below",
+      "above"
+    ]
+  },
+  "cloudwatch": {
+    "eu-central-1": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 13,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    },
+    "eu-west-1": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 14,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    },
+    "us-east-1": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 14,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    },
+    "us-east-2": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 14,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    },
+    "us-west-2": {
+      "edge": {
+        "Errors": 0,
+        "Invocations": 60,
+        "Throttles": 0
+      },
+      "engine": {
+        "Errors": 0,
+        "Invocations": 16,
+        "Throttles": 0
+      },
+      "eval": {
+        "Errors": 0,
+        "Invocations": 0,
+        "Throttles": 0
+      }
+    }
+  },
+  "environment": "prod",
+  "regions": [
+    "us-east-2",
+    "us-east-1",
+    "us-west-2",
+    "eu-central-1",
+    "eu-west-1"
+  ],
+  "regression_gate": {
+    "domain_refusal_422_ok": true,
+    "export_bytes": {
+      "cpp": 57142,
+      "js": 70622,
+      "model-object": 6864,
+      "python": 81340,
+      "rust": 90792
+    },
+    "js_parity_verified": true,
+    "model_object": {
+      "entry_count": 3,
+      "schema": "jope.model-object/v1",
+      "zip_bytes": 6864
+    },
+    "python_self_check_and_predict_ok": true,
+    "run_id": "run_01M7TX7XK958AWJNMF516K4K0Y",
+    "shred_verified_404": true,
+    "tricky_columns_verified": [
+      "free_stream_velocity",
+      "power_generation",
+      "household_population",
+      "island_code",
+      "candidate_score"
+    ]
+  },
+  "schema": "jopedime.carbon.live-cell-e2e-gate/v1",
+  "wall_secs": 96.401
+}
