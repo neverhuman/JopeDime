@@ -342,7 +342,7 @@ mod wire_b64_opt_bytes {
     const B64_ALPHABET: &[u8; 64] =
         b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    fn encode_b64(bytes: &[u8]) -> String {
+    pub(super) fn encode_b64(bytes: &[u8]) -> String {
         let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
         for chunk in bytes.chunks(3) {
             let b0 = chunk[0];
@@ -1175,6 +1175,54 @@ pub fn export_champion_standalone_source(
             Ok(src)
         }
         CarbonExportLangWire::Cpp => pipeline.export_cpp17(Some(&fitted_fills), lower_clamp),
+        CarbonExportLangWire::ModelObject => {
+            ensure!(
+                lower_clamp.is_none(),
+                "model-object export requires unclamped linear target scaling"
+            );
+            let manifest = jope_runtime::model_object::Manifest {
+                schema: jope_runtime::model_object::SCHEMA.to_owned(),
+                minimum_reader_version: 1,
+                format: jope_runtime::model_object::MATH_PIPELINE.to_owned(),
+                producer: jope_runtime::model_object::Producer {
+                    name: "carbon".to_owned(),
+                    version: env!("CARGO_PKG_VERSION").to_owned(),
+                    language: "rust".to_owned(),
+                },
+                primary: PIPELINE_PART.to_owned(),
+                required_capabilities: Vec::new(),
+                files: parts
+                    .iter()
+                    .map(|(path, bytes)| {
+                        jope_runtime::model_object::Part::new(path, "application/json", bytes)
+                    })
+                    .collect(),
+                metadata: serde_json::json!({
+                    "target": target,
+                    "source": "carbon",
+                }),
+            };
+            let obj = jope_runtime::model_object::ModelObject::new(
+                manifest,
+                parts,
+                jope_runtime::limits::Limits::default().max_model_bytes,
+            )?;
+            let id = obj.id().to_owned();
+            let mut zip_writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+            let opts = zip::write::SimpleFileOptions::default()
+                .compression_method(zip::CompressionMethod::Deflated)
+                .last_modified_time(zip::DateTime::default());
+            for (name, bytes) in
+                std::iter::once((jope_runtime::model_object::MANIFEST, obj.manifest_bytes()))
+                    .chain(obj.parts().iter().map(|(n, b)| (n.as_str(), b.as_slice())))
+            {
+                zip_writer.start_file(format!("{id}/{name}"), opts)?;
+                use std::io::Write as _;
+                zip_writer.write_all(bytes)?;
+            }
+            let zip_bytes = zip_writer.finish()?.into_inner();
+            Ok(wire_b64_opt_bytes::encode_b64(&zip_bytes))
+        }
         CarbonExportLangWire::C => unreachable!(),
     }
 }
@@ -2001,5 +2049,69 @@ mod tests {
                 "exported python pred {a} != native {b}"
             );
         }
+
+        // Portable `jope.model-object/v1` ZIP export refuses lower-clamped deviance calibration
+        // and succeeds deterministically on linear/affine-calibrated champions.
+        let mut clamped_val: serde_json::Value =
+            serde_json::from_slice(champ_uncal).expect("parse champ_uncal");
+        clamped_val["calibration"] = serde_json::json!({
+            "intercept": 0.0,
+            "slope": 1.0,
+            "lower": 0.0,
+        });
+        assert!(export_champion_standalone_source(
+            &serde_json::to_vec(&clamped_val).unwrap(),
+            "y",
+            jope_api::carbon::CarbonExportLangWire::ModelObject,
+        )
+        .is_err());
+        let mo_cal_b64 = export_champion_standalone_source(
+            champ_cal,
+            "y",
+            jope_api::carbon::CarbonExportLangWire::ModelObject,
+        )
+        .expect("affine-calibrated model-object export");
+        assert!(!mo_cal_b64.is_empty());
+        let mo_b64_a = export_champion_standalone_source(
+            champ_uncal,
+            "y",
+            jope_api::carbon::CarbonExportLangWire::ModelObject,
+        )
+        .expect("model-object export");
+        let mo_b64_b = export_champion_standalone_source(
+            champ_uncal,
+            "y",
+            jope_api::carbon::CarbonExportLangWire::ModelObject,
+        )
+        .expect("model-object deterministic export");
+        assert_eq!(mo_b64_a, mo_b64_b);
+        let mo_zip = serde_json::from_value::<Option<Vec<u8>>>(serde_json::Value::String(mo_b64_a))
+            .ok()
+            .flatten();
+        let _ = mo_zip;
+        let mut archive = zip::ZipArchive::new(std::io::Cursor::new({
+            #[derive(Deserialize)]
+            struct Wrap {
+                #[serde(with = "wire_b64_opt_bytes")]
+                b: Option<Vec<u8>>,
+            }
+            let w: Wrap =
+                serde_json::from_value(serde_json::json!({ "b": mo_b64_b })).expect("decode b64");
+            w.b.expect("bytes")
+        }))
+        .expect("open model-object zip");
+        assert_eq!(archive.len(), 3);
+        let mut has_manifest = false;
+        let mut has_input = false;
+        let mut has_pipeline = false;
+        for idx in 0..archive.len() {
+            let entry = archive.by_index(idx).expect("zip entry");
+            let name = entry.name().expect("utf8 zip entry name");
+            assert!(name.starts_with("sha256-"), "unexpected zip entry {name}");
+            has_manifest |= name.ends_with("/manifest.json");
+            has_input |= name.ends_with("/input.json");
+            has_pipeline |= name.ends_with("/pipeline.json");
+        }
+        assert!(has_manifest && has_input && has_pipeline);
     }
 }

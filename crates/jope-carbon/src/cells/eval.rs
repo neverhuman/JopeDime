@@ -15,7 +15,7 @@ use jope_service::{
     discover::r#loop::carbon::{
         evaluate_carbon_eval_shard_with_executor, CarbonInProcessExecutor, CarbonShardEvalOutcome,
     },
-    worker::Request,
+    worker::{Request, Response, WorkerFailure},
 };
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, Zeroizing};
@@ -268,8 +268,16 @@ impl CarbonEvalWorker {
     }
 
     pub fn handle_wire_bytes(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
+        self.handle_wire_bytes_with_deadline(payload, None)
+    }
+
+    pub fn handle_wire_bytes_with_deadline(
+        &self,
+        payload: &[u8],
+        deadline_epoch_ms: Option<u64>,
+    ) -> Result<Vec<u8>, String> {
         let wire: CarbonEvalWireRequest = serde_json::from_slice(payload).map_err(err_to_string)?;
-        let outcome = self.evaluate_shard(&wire)?;
+        let outcome = self.evaluate_shard_with_deadline(&wire, deadline_epoch_ms)?;
         to_json_vec(&outcome)
     }
 
@@ -277,12 +285,37 @@ impl CarbonEvalWorker {
         &self,
         wire: &CarbonEvalWireRequest,
     ) -> Result<CarbonShardEvalOutcome, String> {
+        self.evaluate_shard_with_deadline(wire, None)
+    }
+
+    pub fn evaluate_shard_with_deadline(
+        &self,
+        wire: &CarbonEvalWireRequest,
+        deadline_epoch_ms: Option<u64>,
+    ) -> Result<CarbonShardEvalOutcome, String> {
+        const EVAL_DEADLINE_SAFETY_MARGIN_MS: u64 = 8_000;
+        let mut bounded_req = wire.request.clone();
+        if let Some(deadline_ms) = deadline_epoch_ms {
+            let now_ms = now_epoch_ms();
+            if now_ms.saturating_add(EVAL_DEADLINE_SAFETY_MARGIN_MS) >= deadline_ms {
+                return Ok(CarbonShardEvalOutcome {
+                    response: Response::failed(bounded_req.attempt, WorkerFailure::Timeout, 0),
+                    fitted_model_bytes: None,
+                });
+            }
+            let remaining_ms = deadline_ms
+                .saturating_sub(now_ms)
+                .saturating_sub(EVAL_DEADLINE_SAFETY_MARGIN_MS);
+            if bounded_req.limits.wall_ms == 0 || bounded_req.limits.wall_ms > remaining_ms {
+                bounded_req.limits.wall_ms = remaining_ms.max(1);
+            }
+        }
         let exec = self.load_fit_executor_in_ram(
             &wire.fit_jmat_sha256,
             wire.blob_scope.as_deref(),
             wire.decryption_grant.as_ref(),
         )?;
-        evaluate_carbon_eval_shard_with_executor(&exec, &wire.request, wire.fit_champion)
+        evaluate_carbon_eval_shard_with_executor(&exec, &bounded_req, wire.fit_champion)
             .err_ctx("eval shard execution error")
     }
 }

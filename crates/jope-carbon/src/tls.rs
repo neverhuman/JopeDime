@@ -139,8 +139,31 @@ pub fn carbon_https_agent() -> &'static ureq::Agent {
             .timeout_connect(Some(Duration::from_secs(5)))
             .timeout_send_request(Some(Duration::from_secs(15)))
             .timeout_send_body(Some(Duration::from_secs(180)))
-            .timeout_recv_response(Some(Duration::from_secs(90)))
+            .timeout_recv_response(Some(Duration::from_secs(150)))
             .timeout_recv_body(Some(Duration::from_secs(180)))
+            .build()
+            .new_agent()
+    })
+}
+
+/// Return a process-shared `ureq::Agent` dedicated to internal AWS Lambda `/invocations` RPC calls
+/// (`edge -> engine` and `engine -> eval`), with `315 s` response/body read ceilings strictly above
+/// `EvalFunction` (`300 s`) and `EdgeFunction` (`60 s`) so long-running shards return cleanly
+/// without premature socket disconnects or retry amplification.
+#[cfg(feature = "edge")]
+pub fn carbon_lambda_rpc_https_agent() -> &'static ureq::Agent {
+    static RPC_AGENT: OnceLock<ureq::Agent> = OnceLock::new();
+    RPC_AGENT.get_or_init(|| {
+        ureq::Agent::config_builder()
+            .tls_config(build_tls_config())
+            .max_redirects(0)
+            .user_agent(crate::carbon_user_agent())
+            .timeout_resolve(Some(Duration::from_secs(5)))
+            .timeout_connect(Some(Duration::from_secs(5)))
+            .timeout_send_request(Some(Duration::from_secs(15)))
+            .timeout_send_body(Some(Duration::from_secs(60)))
+            .timeout_recv_response(Some(Duration::from_secs(315)))
+            .timeout_recv_body(Some(Duration::from_secs(315)))
             .build()
             .new_agent()
     })

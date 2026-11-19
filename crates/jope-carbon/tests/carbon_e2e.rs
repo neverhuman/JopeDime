@@ -2692,3 +2692,143 @@ fn scientific_benchmark_suite_smoke_all_11_comparators_and_wilcoxon_e2e() {
     assert!(md_text.contains("Aggregate Leaderboard"));
     assert!(md_text.contains("piecewise_axis_step"));
 }
+
+#[test]
+fn carbon_v132_cas_overflow_export_model_object_and_eval_deadline_guard_e2e() {
+    use base64::Engine as _;
+    use jope_api::carbon::CarbonExportLangWire;
+    use jope_carbon::{
+        modes::emu::{CarbonEmuConfig, CarbonLocalLambdaEmulator},
+        storage::cas::CarbonFsCas,
+        CarbonEvalWireRequest, CarbonEvalWorker, CarbonThinClient,
+    };
+
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let mut cfg = CarbonEmuConfig::for_dir(tmp.path().join("emu"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 2;
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emu");
+
+    let tok = emu
+        .mint_capability_token("tenant_v132", CarbonTierWire::Pro, false)
+        .expect("mint token");
+    let (raw_client, _) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("connect");
+    let authed = raw_client.with_capability_token(tok);
+
+    let rows = build_synthetic_rows(72);
+    let prep = CarbonThinClient::prepare_numeric_dataset(
+        vec!["x1".to_owned(), "x2".to_owned(), "y".to_owned()],
+        &rows,
+        "y",
+        20261119,
+        0.20,
+    )
+    .expect("prepare dataset");
+    let _up = authed
+        .upload_prepared("tenant_v132", CarbonTierWire::Pro, &prep)
+        .expect("upload prepared");
+    let run_id: jope_api::ids::RunId = "run_01JCCARB0NV132E2E000000001".parse().expect("run_id");
+    let ds_id: jope_api::ids::DatasetId = "ds_555555555555555555555559".parse().expect("ds_id");
+    let prog = authed
+        .start_run(
+            run_id.clone(),
+            ds_id,
+            "tenant_v132",
+            CarbonTierWire::Pro,
+            Effort::Fast,
+            "rmse",
+            20261119,
+            &prep,
+        )
+        .expect("start run");
+    assert_eq!(prog.state, CarbonRunStateWire::Completed);
+
+    // 1. Verify CAS-spilled encrypted Python export (`prefer_cas_output = true`) + ModelObject ZIP export!
+    let py_cas = authed
+        .export_run_with_options(
+            "tenant_v132",
+            &run_id.to_string(),
+            CarbonExportLangWire::Python,
+            true,
+        )
+        .expect("export python via CAS overflow");
+    assert!(
+        py_cas.encrypted_export_cas_url.is_some(),
+        "prefer_cas_output must return presigned encrypted_export_cas_url"
+    );
+    assert!(py_cas.encrypted_export_cuen_b64.is_none());
+    let cas_sha = py_cas
+        .encrypted_export_cas_sha256
+        .clone()
+        .expect("cas sha256");
+    let py_text = py_cas.source_code.expect("decrypted python source");
+    assert!(py_text.contains("def predict_rows("));
+
+    let mo_resp = authed
+        .export_run(
+            "tenant_v132",
+            &run_id.to_string(),
+            CarbonExportLangWire::ModelObject,
+        )
+        .expect("export model-object");
+    let mo_zip = base64::engine::general_purpose::STANDARD
+        .decode(mo_resp.source_code.expect("mo b64").trim())
+        .expect("decode mo zip");
+    assert!(mo_zip.starts_with(b"PK\x03\x04"));
+
+    // 2. Shred the run and verify the CAS-spilled export ciphertext blob is destroyed (`0` residual)!
+    let cas_scope_file = emu
+        .cas_root()
+        .join("blobs/tenant_v132")
+        .join(run_id.to_string())
+        .join(&cas_sha);
+    assert!(
+        cas_scope_file.is_file(),
+        "CAS overflow export blob must exist prior to shred at {}",
+        cas_scope_file.display()
+    );
+    let shred = authed
+        .shred_run("tenant_v132", &run_id.to_string())
+        .expect("shred run");
+    assert!(shred.shredded);
+    assert!(
+        !cas_scope_file.exists(),
+        "shred_run must destroy CAS overflow export blob"
+    );
+    emu.shutdown();
+
+    // 3. Verify CarbonEvalWorker soft deadline guard returns structured WorkerFailure::Timeout (`Ok`)
+    //    instead of hitting a hard Lambda runtime timeout when deadline is within safety margin.
+    let eval_cas = std::sync::Arc::new(CarbonFsCas::open(tmp.path().join("eval_cas")).unwrap());
+    let eval_worker = CarbonEvalWorker::new(eval_cas, tmp.path().join("eval_scratch")).unwrap();
+    let dummy_wire = CarbonEvalWireRequest {
+        fit_jmat_sha256: "0".repeat(64),
+        blob_scope: None,
+        request: jope_service::worker::Request {
+            attempt: jope_service::worker::Attempt {
+                run: run_id,
+                round: 1,
+                slot: 0,
+                attempt: 1,
+            },
+            matrix_path: std::path::PathBuf::from("/nonexistent/fit.jmat"),
+            fold_spec: serde_json::json!({}),
+            dsl: "(pipe X (ridge))".to_owned(),
+            objective: serde_json::json!("rmse"),
+            seed: 1,
+            limits: jope_service::worker::Limits {
+                wall_ms: 75_000,
+                rss_bytes: 256 * 1_048_576,
+            },
+        },
+        fit_champion: false,
+        decryption_grant: None,
+    };
+    let expired_outcome = eval_worker
+        .evaluate_shard_with_deadline(&dummy_wire, Some(1_000))
+        .expect("soft deadline must return structured Ok outcome, not Err");
+    assert_eq!(
+        expired_outcome.response.failure,
+        Some(jope_service::worker::WorkerFailure::Timeout)
+    );
+}

@@ -1937,22 +1937,12 @@ impl CarbonEdgeRouter {
             Ok(bytes) => match serde_json::from_slice::<CarbonPredictResponse>(&bytes) {
                 Ok(mut resp) => {
                     if let Some(ref out_sha) = resp.encrypted_predictions_cas_sha256 {
-                        let out_scope = match pred_upload_id.as_deref() {
-                            Some(puid) => canonical_blob_scope(&pred_tenant_id, puid).ok(),
-                            None => canonical_blob_scope(&pred_tenant_id, run_id).ok(),
-                        };
-                        self.record_predict_output_blob(
+                        let dl_url = match self.record_and_presign_cas_output(
+                            req,
                             &pred_tenant_id,
                             run_id,
-                            out_scope.as_deref(),
-                            &out_sha.to_ascii_lowercase(),
-                        );
-                        let dl_now = now_epoch_ms() / 1_000;
-                        let dl_url = match self.presign_scoped_get_url(
-                            req,
-                            out_scope.as_deref(),
-                            &out_sha.to_ascii_lowercase(),
-                            dl_now,
+                            pred_upload_id.as_deref(),
+                            out_sha,
                         ) {
                             Ok(u) => u,
                             Err(err_resp) => return err_resp,
@@ -2063,12 +2053,30 @@ impl CarbonEdgeRouter {
             .flatten()
             .and_then(|b| serde_json::from_slice(&b).ok())
             .unwrap_or_default();
-        if entries.len() < 128 {
+        if entries.len() < 512 {
             entries.push((scope.map(str::to_owned), sha_lc.to_owned()));
             if let Ok(bytes) = to_json_vec(&entries) {
                 let _ = self.cas.put_state_object(&list_key, &bytes);
             }
         }
+    }
+
+    fn record_and_presign_cas_output(
+        &self,
+        req: &CarbonGatewayRequest,
+        tenant_id: &str,
+        run_id: &str,
+        upload_override: Option<&str>,
+        out_sha: &str,
+    ) -> Result<String, CarbonGatewayResponse> {
+        let out_scope = match upload_override {
+            Some(puid) => canonical_blob_scope(tenant_id, puid).ok(),
+            None => canonical_blob_scope(tenant_id, run_id).ok(),
+        };
+        let sha_lc = out_sha.to_ascii_lowercase();
+        self.record_predict_output_blob(tenant_id, run_id, out_scope.as_deref(), &sha_lc);
+        let dl_now = now_epoch_ms() / 1_000;
+        self.presign_scoped_get_url(req, out_scope.as_deref(), &sha_lc, dl_now)
     }
 
     fn handle_shred_run(&self, run_id: &str, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
@@ -2419,13 +2427,29 @@ impl CarbonEdgeRouter {
             );
         }
 
+        let export_tenant_id = export_req.tenant_id.clone();
         let cmd = CarbonEngineWireCommand::Export {
             run_id: run_id.to_owned(),
             export: export_req,
         };
         match self.engine.invoke_engine(&cmd) {
             Ok(bytes) => match serde_json::from_slice::<CarbonExportResponse>(&bytes) {
-                Ok(resp) => CarbonGatewayResponse::json_ok(200, &resp),
+                Ok(mut resp) => {
+                    if let Some(ref out_sha) = resp.encrypted_export_cas_sha256 {
+                        let dl_url = match self.record_and_presign_cas_output(
+                            req,
+                            &export_tenant_id,
+                            run_id,
+                            None,
+                            out_sha,
+                        ) {
+                            Ok(u) => u,
+                            Err(err_resp) => return err_resp,
+                        };
+                        resp.encrypted_export_cas_url = Some(dl_url);
+                    }
+                    CarbonGatewayResponse::json_ok(200, &resp)
+                }
                 Err(_) => CarbonGatewayResponse::error_json(
                     500,
                     "invalid_engine_response",

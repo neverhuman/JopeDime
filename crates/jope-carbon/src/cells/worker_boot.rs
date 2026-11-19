@@ -105,7 +105,7 @@ pub fn run_eval_lambda_runtime_from_env(
         CarbonEvalWorker::new(cas, scratch_root).map_err(CarbonWorkerBootError::Runtime)?;
 
     run_lambda_custom_runtime_loop(runtime_api, None, |inv| {
-        worker.handle_wire_bytes(&inv.payload)
+        worker.handle_wire_bytes_with_deadline(&inv.payload, inv.deadline_epoch_ms)
     })
     .map_err(CarbonWorkerBootError::Runtime)
 }

@@ -34,13 +34,24 @@ pub fn evaluate_native<B: AsRef<[u8]> + Sync>(
         .install(|| native_scores(request, matrix))
         .map_err(|_| WorkerFailure::Unavailable)?;
     result.map_err(|error| {
-        if error.is::<UndefinedFitness>() {
+        if error.is::<EvalWallClockTimeout>() {
+            WorkerFailure::Timeout
+        } else if error.is::<UndefinedFitness>() {
             WorkerFailure::NonFinite
         } else {
             WorkerFailure::InvalidRequest
         }
     })
 }
+
+#[derive(Debug)]
+struct EvalWallClockTimeout;
+impl std::fmt::Display for EvalWallClockTimeout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("candidate evaluation exceeded configured wall-clock budget")
+    }
+}
+impl std::error::Error for EvalWallClockTimeout {}
 
 #[derive(Default)]
 struct SerializedByteCounter(u64);
@@ -125,7 +136,14 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     let mut values = vec![];
     let mut surrogate = vec![];
     let mut fold_scores = vec![];
-    for fold in spec.folds {
+    let eval_started = std::time::Instant::now();
+    for (fold_idx, fold) in spec.folds.into_iter().enumerate() {
+        if fold_idx > 0
+            && request.limits.wall_ms > 0
+            && eval_started.elapsed().as_millis() >= u128::from(request.limits.wall_ms)
+        {
+            return Err(EvalWallClockTimeout.into());
+        }
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
             !train.is_empty() && train.len() == fold.train.len() && !fold.validation.is_empty(),

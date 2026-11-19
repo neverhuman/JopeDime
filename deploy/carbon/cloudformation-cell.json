@@ -458,7 +458,7 @@
         "Architectures": ["arm64"],
         "Handler": "bootstrap",
         "MemorySize": 3538,
-        "Timeout": 120,
+        "Timeout": 300,
         "EphemeralStorage": {"Size": 512},
         "ReservedConcurrentExecutions": {
           "Fn::If": [

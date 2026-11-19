@@ -537,6 +537,8 @@ fn edge_explain_export_prepare_predict_cas_and_emu_internal_negative_branches() 
     let bad_export = serde_json::to_vec(&CarbonExportRequest {
         tenant_id: "tenant_alpha".to_owned(),
         lang: CarbonExportLangWire::Python,
+        accept_compressed: false,
+        prefer_cas_output: false,
         client_response_pubkey_b64: Some(client_resp_kek.pubkey_b64()),
         wrapped_u_dek_b64: Some(wrong_cudk_b64),
     })
@@ -652,6 +654,8 @@ fn edge_explain_export_prepare_predict_cas_and_emu_internal_negative_branches() 
     let ok_export = serde_json::to_vec(&CarbonExportRequest {
         tenant_id: "tenant_alpha".to_owned(),
         lang: CarbonExportLangWire::C,
+        accept_compressed: false,
+        prefer_cas_output: false,
         client_response_pubkey_b64: Some(client_resp_kek.pubkey_b64()),
         wrapped_u_dek_b64: Some(cudk_b64.clone()),
     })

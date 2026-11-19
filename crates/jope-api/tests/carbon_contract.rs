@@ -423,6 +423,8 @@ fn default_create_run_request_is_byte_compatible_with_frozen_v1_1_0_strict_edge(
     let export_req = CarbonExportRequest {
         tenant_id: "free_alice_01".to_owned(),
         lang: CarbonExportLangWire::RustRefittable,
+        accept_compressed: true,
+        prefer_cas_output: false,
         client_response_pubkey_b64: Some("BA==".to_owned()),
         wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
     };
@@ -437,6 +439,8 @@ fn default_create_run_request_is_byte_compatible_with_frozen_v1_1_0_strict_edge(
         source_code: None,
         source_sha256: "f".repeat(64),
         encrypted_export_cuen_b64: Some("Q1VFTgEH".to_owned()),
+        encrypted_export_cas_url: None,
+        encrypted_export_cas_sha256: None,
         response_cudk_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(
@@ -523,6 +527,7 @@ fn carbon_v12_prepare_predict_version_export_langs_and_unknown_field_refusal() {
         (CarbonExportLangWire::Js, "js"),
         (CarbonExportLangWire::C, "c"),
         (CarbonExportLangWire::Cpp, "cpp"),
+        (CarbonExportLangWire::ModelObject, "model-object"),
     ] {
         assert_eq!(variant.as_str(), wire_name);
         let enc = serde_json::to_string(&variant).expect("encode lang");
