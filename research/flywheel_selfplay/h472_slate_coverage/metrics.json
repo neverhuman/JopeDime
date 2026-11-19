@@ -1,0 +1,74 @@
+{
+ "wave": "H472",
+ "status": "RUNNING",
+ "script_sha256": "3d36f1789821faf503a310133037f8f2659f3313a8275ce705b48a46bb68004b",
+ "harness_parent": "h471_trainfold_cv.py sha256 7bc9061c3897c39d2970f8ed12085b7f358609796235953fe73f56901805ecbd",
+ "arms": [
+  "pairnf_z40",
+  "sl384_z40",
+  "kp96_z40"
+ ],
+ "control": "pairnf_z40",
+ "slates": {
+  "pairnf_z40": "slate 192, keep 48 (head 48 by fitness + incumbent pick + ~143 random)",
+  "sl384_z40": "slate 384, keep 48 (+ ~335 random; 2x per-step compute)",
+  "kp96_z40": "slate 192, keep 96 (+ ~95 random)",
+  "pool_size": "1151-1152 programs per context"
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "partitions": [
+  "h452a/",
+  "h452b/"
+ ],
+ "folds": 5,
+ "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+ "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+ "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+ "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, median val91 gain with cross-seed family-bootstrap CI low > 0, clean red-team; otherwise NO_LIFT",
+ "redteam_prereg": [
+  "floor-recovery split: pooled gain positive but non-floor Elo <= control is floor-driven, not lift",
+  "kept < 0.5x control => gate-starved; kept > 2x control => z-inflated",
+  "kept-set overlap with control (subset/superset/extras) and non-floor W/L of extras and drops",
+  "sl384 compute confound: a win must come from extras (coverage), not z-inflation",
+  "control CV cells copied from H471 fold_sig (sha list); fresh control re-check in smoke (8d5ac793) and probe (5f3acc50)",
+  "ties never win; val91 gain ~0 with >= 85/91 ties is not evidence",
+  "equal pooled Elo with equal W-L = arithmetic coincidence once adapters differ",
+  "slates use training-fold fitness only; val91 read once per seed for the selected arm only"
+ ],
+ "checkpoint_sha256_prefix": "1d6ea900ebed8d2a",
+ "incumbent_val_utility": 1.1389572403748425,
+ "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "host": "xbabe2",
+ "device": "cpu",
+ "sealed_or_holdout_reads": 0,
+ "verdict": null,
+ "probe": {
+  "utc": "2026-11-19T23:53:30Z",
+  "ok": true,
+  "control_full_sha_equals_h467_h471_probes": "5f3acc50324f349b274f3db78e1a7f0fc066dcd16a679fd085b55e802ae12439",
+  "sl384_full_sha_1step": "343a477023765a53205e06664eccc47f2ad8b5523b57056c309c6d432b70489c",
+  "kp96_full_sha_1step": "446e161818d2e2d560e5f016f063093c5b53d45bb5046e97cdab11c254bb80b1",
+  "peak_rss_gb": 8.15,
+  "min_memavail_gb": 40.6
+ },
+ "smoke_h452a_fold0_seed1": {
+  "pairnf_z40": {
+   "changed": 134,
+   "kept": 15,
+   "gain": 0.000629,
+   "adapter_sha_prefix": "8d5ac7934310",
+   "equals_h471_cell": true
+  },
+  "sl384_z40": "running at prereg",
+  "kp96_z40": "running at prereg"
+ },
+ "control_cells_reused_from_h471": {
+  "n_per_seed": 30,
+  "sha256_list": "control_fold_sig_from_h471.sha256 (in scratch dir)",
+  "verified": true
+ }
+}
