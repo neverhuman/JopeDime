@@ -324,7 +324,7 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
         let dataset =
             register::register(&store, csv_bytes.as_slice(), &Default::default()).unwrap();
 
-        let mut spec: RunSpec = serde_json::from_value(json!({
+        let spec: RunSpec = serde_json::from_value(json!({
             "dataset": dataset.id,
             "target": "label",
             "task": "binary",
@@ -337,16 +337,13 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
             "landmarks": "none",
             "guidance": "heuristic",
             "languages": ["rust", "python"],
-            "require_all_languages": false,
+            "require_all_languages": true,
             "device": "cpu",
             "seed": "73",
             "dry_run": false,
             "plan_digest": null
         }))
         .unwrap();
-        if objective_name == "auroc" {
-            spec.require_all_languages = true;
-        }
 
         let mut prepared = runs.prepare(&spec).unwrap();
         let fit_blob = store.publish_blob(prepared.fit.as_slice()).unwrap();
@@ -491,19 +488,23 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
         let manifest: ExportManifest = serde_json::from_value(body(export_reply).await).unwrap();
         assert_eq!(manifest.model_digest, receipt.model_digest);
 
-        if objective_name == "auroc" {
+        for lang in ["python", "rust"] {
             let alg_req = Request::builder()
                 .method("GET")
                 .uri(format!(
-                    "/v1/runs/{}/algorithms/{}?language=python",
+                    "/v1/runs/{}/algorithms/{}?language={lang}",
                     receipt.run_id, receipt.algorithm_id
                 ))
                 .header(header::HOST, "127.0.0.1:31234")
                 .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
                 .body(Body::empty())
                 .unwrap();
-            let alg_reply = router.oneshot(alg_req).await.unwrap();
-            assert_eq!(alg_reply.status(), StatusCode::OK);
+            let alg_reply = router.clone().oneshot(alg_req).await.unwrap();
+            assert_eq!(
+                alg_reply.status(),
+                StatusCode::OK,
+                "{objective_name} {lang}"
+            );
             let alg: Algorithm = serde_json::from_value(body(alg_reply).await).unwrap();
             assert_eq!(
                 alg.summary,

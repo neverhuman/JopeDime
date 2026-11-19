@@ -15,12 +15,25 @@ pub fn generate(header: &Header) -> Result<String> {
         };
         output.push_str(&format!("  readonly {name}: {value_type} | null;\n"));
     }
-    output.push_str(
-        "}\n\
-         \n\
-         export declare function predict(row: PredictorRow): number;\n\
-         export declare function predictBatch(rows: readonly PredictorRow[]): number[];\n",
-    );
+    if header.task == "binary" && header.class_order.len() == 2 {
+        let c0 = serde_json::to_string(&header.class_order[0])?;
+        let c1 = serde_json::to_string(&header.class_order[1])?;
+        output.push_str(&format!(
+            "}}\n\
+             \n\
+             export type BinaryProbabilityPair = [number, number];\n\
+             export declare const CLASS_ORDER: readonly [{c0}, {c1}];\n\
+             export declare function predict(row: PredictorRow): BinaryProbabilityPair;\n\
+             export declare function predictBatch(rows: readonly PredictorRow[]): BinaryProbabilityPair[];\n"
+        ));
+    } else {
+        output.push_str(
+            "}\n\
+             \n\
+             export declare function predict(row: PredictorRow): number;\n\
+             export declare function predictBatch(rows: readonly PredictorRow[]): number[];\n",
+        );
+    }
     Ok(output)
 }
 
@@ -106,5 +119,22 @@ mod tests {
         let declaration = generate(&fixture_header()).unwrap();
         assert!(declaration.contains("readonly \"age\": number | null;"));
         assert!(declaration.contains("readonly \"region\": string | null;"));
+    }
+
+    #[test]
+    fn binary_fixture_declares_probability_pairs_and_class_order() {
+        let mut header = fixture_header();
+        header.task = "binary".into();
+        header.metric = "auroc".into();
+        header.class_order = vec!["no".into(), "yes".into()];
+        let declaration = generate(&header).unwrap();
+        assert!(declaration.contains("export type BinaryProbabilityPair = [number, number];"));
+        assert!(
+            declaration.contains("export declare const CLASS_ORDER: readonly [\"no\", \"yes\"];")
+        );
+        assert!(declaration.contains(
+            "export declare function predict(row: PredictorRow): BinaryProbabilityPair;"
+        ));
+        assert!(declaration.contains("export declare function predictBatch(rows: readonly PredictorRow[]): BinaryProbabilityPair[];"));
     }
 }

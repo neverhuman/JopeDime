@@ -73,7 +73,7 @@ impl ModelObject {
         self.require_executable()?;
         if self.platt_calibration()?.is_some() {
             return Err(Failure::backend(
-                "bound/source export would drop Platt calibration; export the complete object",
+                "bound JSON export would drop Platt calibration; export the complete object or standalone source",
             ));
         }
         if self.manifest.format == MATH_PIPELINE {
@@ -135,7 +135,14 @@ impl ModelObject {
                 )),
             };
         }
-        let model = self.bound()?;
+        let (model, platt) = match self.platt_calibration()? {
+            Some(calibration) => {
+                self.require_executable()?;
+                let head = self.platt_head(&calibration)?;
+                (head, Some(calibration))
+            }
+            None => (self.bound()?, None),
+        };
         let reason = feat_math::advanced_v3::fitted_portable_unsupported(&model)
             .map_err(|e| Failure::integrity(e.to_string()))?;
         if let Some(reason) = reason {
@@ -155,6 +162,10 @@ impl ModelObject {
                     "source language must be python, rust or javascript",
                 ))
             }
+        };
+        let source = match &platt {
+            Some(calibration) => wrap_portable_with_platt(language, source, calibration)?,
+            None => source,
         };
         Ok(source.into_bytes())
     }
@@ -319,5 +330,186 @@ impl ModelObject {
             );
         }
         Self::decode(manifest_bytes, parts, max_bytes)
+    }
+}
+
+fn py_hex(value: f64) -> String {
+    let bits = value.to_bits();
+    let sign = if bits >> 63 == 0 { "" } else { "-" };
+    let exponent = ((bits >> 52) & 0x7ff) as i32;
+    let fraction = bits & ((1u64 << 52) - 1);
+    if exponent == 0 {
+        if fraction == 0 {
+            format!("\"{sign}0x0.0p+0\"")
+        } else {
+            format!("\"{sign}0x0.{fraction:013x}p-1022\"")
+        }
+    } else {
+        format!("\"{sign}0x1.{fraction:013x}p{:+}\"", exponent - 1023)
+    }
+}
+
+fn js_float(value: f64) -> String {
+    if value == 0.0 {
+        if value.is_sign_negative() {
+            "-0".into()
+        } else {
+            "0".into()
+        }
+    } else {
+        format!("{value:?}")
+    }
+}
+
+fn wrap_portable_with_platt(
+    language: &str,
+    source: String,
+    calibration: &calibration_platt::Calibration,
+) -> Result<String> {
+    use feat_math::transpile::lint_shipped_text;
+
+    calibration
+        .validate()
+        .map_err(|e| Failure::integrity(format!("invalid Platt calibration: {e:#}")))?;
+    let s = &calibration.sigmoid;
+    let class_order_json = serde_json::to_string(&calibration.class_order)
+        .map_err(|e| Failure::integrity(e.to_string()))?;
+
+    match language {
+        "python" => {
+            const PY_TAIL: &str =
+                "def predict_encoded(rows):\n    return [_predict(_encode(row)) for row in rows]";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(PY_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity("unexpected portable Python entrypoint for Platt wrapping")
+                })?;
+            let render_tail = |classes: &str| {
+                format!(
+                    "PLATT_CLASS_ORDER = {classes}\n\n\n\
+                     def fitted_platt(score):\n\
+                     \x20   if not math.isfinite(score) or score < 0.0 or score > 1.0:\n\
+                     \x20       raise ValueError(\"invalid Platt score\")\n\
+                     \x20   slope = float.fromhex({})\n\
+                     \x20   intercept = float.fromhex({})\n\
+                     \x20   scale = float.fromhex({})\n\
+                     \x20   center = float.fromhex({})\n\
+                     \x20   z = intercept if slope == 0.0 else intercept + slope * (score / scale - center)\n\
+                     \x20   if z >= 0.0:\n\
+                     \x20       p = 1.0 / (1.0 + math.exp(-z))\n\
+                     \x20   else:\n\
+                     \x20       e = math.exp(z)\n\
+                     \x20       p = e / (1.0 + e)\n\
+                     \x20   return [1.0 - p, p]\n\n\n\
+                     def predict_encoded(rows):\n\
+                     \x20   return [fitted_platt(_predict(_encode(row))[1]) for row in rows]\n",
+                    py_hex(s.slope),
+                    py_hex(s.intercept),
+                    py_hex(s.scale),
+                    py_hex(s.center),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail("[\"\",\"\"]"));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in Python Platt artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            Ok(format!("{prefix}{}", render_tail(&class_order_json)))
+        }
+        "rust" => {
+            const RS_TAIL: &str =
+                "pub fn predict_encoded(rows: &[Vec<String>]) -> Result<Vec<Vec<f64>>, String> {\n    rows.iter().map(|row| encode(row).map(|x| predict(&x))).collect()\n}";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(RS_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity("unexpected portable Rust entrypoint for Platt wrapping")
+                })?;
+            let render_tail = |c0: &str, c1: &str| {
+                format!(
+                    "pub const PLATT_CLASS_ORDER: [&str; 2] = [{c0:?}, {c1:?}];\n\
+                     pub fn fitted_platt(score: f64) -> Result<[f64; 2], String> {{\n\
+                     \x20   if !score.is_finite() || !(0.0..=1.0).contains(&score) {{ return Err(\"invalid Platt score\".into()); }}\n\
+                     \x20   let slope = f64::from_bits(0x{:016x});\n\
+                     \x20   let intercept = f64::from_bits(0x{:016x});\n\
+                     \x20   let scale = f64::from_bits(0x{:016x});\n\
+                     \x20   let center = f64::from_bits(0x{:016x});\n\
+                     \x20   let z = if slope == 0.0 {{ intercept }} else {{ intercept + slope * (score / scale - center) }};\n\
+                     \x20   let p = if z >= 0.0 {{ 1.0 / (1.0 + (-z).exp()) }} else {{ let e = z.exp(); e / (1.0 + e) }};\n\
+                     \x20   Ok([1.0 - p, p])\n\
+                     }}\n\
+                     pub fn predict_encoded(rows: &[Vec<String>]) -> Result<Vec<Vec<f64>>, String> {{\n\
+                     \x20   rows.iter()\n\
+                     \x20       .map(|row| {{\n\
+                     \x20           let x = encode(row)?;\n\
+                     \x20           let raw = predict(&x);\n\
+                     \x20           let pair = fitted_platt(raw[1])?;\n\
+                     \x20           Ok(vec![pair[0], pair[1]])\n\
+                     \x20       }})\n\
+                     \x20       .collect()\n\
+                     }}\n",
+                    s.slope.to_bits(),
+                    s.intercept.to_bits(),
+                    s.scale.to_bits(),
+                    s.center.to_bits(),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail("", ""));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in Rust Platt artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            Ok(format!(
+                "{prefix}{}",
+                render_tail(&calibration.class_order[0], &calibration.class_order[1])
+            ))
+        }
+        "javascript" => {
+            const JS_TAIL: &str =
+                "function predictEncoded(rows) { return rows.map(row => predict(encode(row))); }\nmodule.exports = { predictEncoded };";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(JS_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity(
+                        "unexpected portable JavaScript entrypoint for Platt wrapping",
+                    )
+                })?;
+            let render_tail = |classes: &str| {
+                format!(
+                    "const PLATT_CLASS_ORDER = Object.freeze({classes});\n\
+                     function fittedPlatt(score) {{\n\
+                     \x20 if (!Number.isFinite(score) || score < 0 || score > 1) throw new Error(\"invalid Platt score\");\n\
+                     \x20 const slope = {}, intercept = {}, scale = {}, center = {};\n\
+                     \x20 const z = slope === 0 ? intercept : intercept + slope * (score / scale - center);\n\
+                     \x20 let p;\n\
+                     \x20 if (z >= 0) p = 1 / (1 + Math.exp(-z)); else {{ const e = Math.exp(z); p = e / (1 + e); }}\n\
+                     \x20 return [1 - p, p];\n\
+                     }}\n\
+                     function predictEncoded(rows) {{ return rows.map(row => fittedPlatt(predict(encode(row))[1])); }}\n\
+                     module.exports = {{ predictEncoded, fittedPlatt, PLATT_CLASS_ORDER }};\n",
+                    js_float(s.slope),
+                    js_float(s.intercept),
+                    js_float(s.scale),
+                    js_float(s.center),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail("[\"\",\"\"]"));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in JavaScript Platt artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            Ok(format!("{prefix}{}", render_tail(&class_order_json)))
+        }
+        _ => Err(Failure::input(
+            "source language must be python, rust or javascript",
+        )),
     }
 }
