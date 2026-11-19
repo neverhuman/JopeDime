@@ -1361,7 +1361,7 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     assert_eq!(CARBON_RELEASE_TAG, "carbon-cli-v1.3.2");
     assert_eq!(
         jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG,
-        "carbon-cli-v1.3.1"
+        "carbon-cli-v1.3.2"
     );
     assert!(!CARBON_GIT_SHA.is_empty());
 
