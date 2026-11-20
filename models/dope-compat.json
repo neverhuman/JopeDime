@@ -1,0 +1,57 @@
+{
+  "schema": "jope.dope-compat/v1",
+  "engine_release_tag": "dope-engine-v1.3.0",
+  "engine_source_commit": "cd35d9d0f0a772bea0e1ae2352eb8eb7d34ad09b",
+  "engine_tag_object": "64d83580b520bd39af16168bbffd943647c9a48a",
+  "preparation_source": "cd35d9d0f0a772bea0e1ae2352eb8eb7d34ad09b",
+  "checkpoint_identity": "ReleasedV1",
+  "standalone_weights_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c",
+  "released_tensors": 56,
+  "released_parameters": 444168,
+  "active_encoder_tensors": 40,
+  "active_encoder_parameters": 353095,
+  "dope512_recipe": "dope-mlcv3-high-f32-descriptor256-task128-dist128/v1",
+  "dope512_subgraph_sha256": "aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045",
+  "fused_serving_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fused_bundle_dope_safetensors_sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+  "research_859_schema": "jope.dope-ultra-packet-859/v1",
+  "research_859": {
+    "schema": "jope.dope-ultra-packet-859/v1",
+    "dim": 859,
+    "opt_in": true,
+    "serving_adopted": false
+  },
+  "consumers": {
+    "engine_auto": {
+      "dope": "none",
+      "guidance": "heuristic",
+      "uses_dope_weights": false
+    },
+    "service_explicit_learned": {
+      "guidance": "Guidance::Learned",
+      "bundles": [
+        "r782",
+        "r882"
+      ],
+      "landmark_mode": "full",
+      "tasks": [
+        "regression"
+      ],
+      "fused_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    },
+    "appliance_companion": {
+      "product": "Dope512",
+      "policy_context": "JopeContext512",
+      "consumer_modes": [
+        "encoding-only",
+        "jope-dl"
+      ],
+      "standalone_weights_sha256": "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c"
+    },
+    "carbon_cells": {
+      "bundle": "r882",
+      "free_tier": "wave0_seed_ranking",
+      "pro_enterprise_tier": "multi_wave_learned_guidance"
+    }
+  }
+}

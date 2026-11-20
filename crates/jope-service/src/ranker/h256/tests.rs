@@ -309,8 +309,8 @@ fn test_h256_stage2_soup_and_5fold_ensemble_rust_golden_parity() {
         let po = fb
             .forward_prior_and_context(&std_ctx, &cand_q_32, &sem24, &gate_risk, &sp_exact, n_cand)
             .unwrap();
-        for i in 0..n_cand {
-            dp_ens[i] += po.delta_prior[i] / 5.0;
+        for (dp, &delta) in dp_ens.iter_mut().zip(&po.delta_prior) {
+            *dp += delta / 5.0;
         }
         fold_priors.push(po);
     }

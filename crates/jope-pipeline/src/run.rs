@@ -162,6 +162,10 @@ pub(crate) fn is_commit(value: &str) -> bool {
 /// partition), the budget, the policy and the parallelism this host admits. Returns the worker
 /// count.
 pub fn preflight(options: &RunOptions) -> Result<usize> {
+    preflight_with_provider(options, false)
+}
+
+pub(crate) fn preflight_with_provider(options: &RunOptions, has_provider: bool) -> Result<usize> {
     options.landmarks.validate()?;
     crate::landmark_encoding::preflight(options)?;
     // The whole range the preparation accepts, not just a positive count: a count it refuses
@@ -172,7 +176,7 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
     // Fail closed before anything is written: a refused run must not leave a half
     // prepared output directory behind to block the retry.
     ensure!(
-        options.policy != Policy::Require,
+        options.policy != Policy::Require || has_provider,
         "--policy require: {PROPOSE_SKIP_REASON}. Re-run with --policy skip to proceed \
          without it."
     );
@@ -308,8 +312,9 @@ pub fn check(options: &RunOptions) -> Result<()> {
     Ok(())
 }
 
-/// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
-pub(crate) fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
+pub(crate) type StaticSeedOffers = (Vec<(String, &'static str)>, Option<String>, Option<String>);
+
+pub(crate) fn collect_static_seed_offers(options: &RunOptions) -> Result<StaticSeedOffers> {
     let mut offered: Vec<(String, &'static str)> = Vec::new();
     let mut parent_receipt_sha256 = None;
     let mut seeds_file_sha256 = None;
@@ -332,6 +337,12 @@ pub(crate) fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, rece
         );
         seeds_file_sha256 = Some(sha);
     }
+    Ok((offered, parent_receipt_sha256, seeds_file_sha256))
+}
+
+/// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
+pub(crate) fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
+    let (offered, parent_receipt_sha256, seeds_file_sha256) = collect_static_seed_offers(options)?;
     let admitted = seeds::admit_up_to(&offered, options.seed_limit)?;
     let limit = search::exploration_limit(options.budget, options.cuts);
     ensure!(
@@ -388,15 +399,7 @@ impl Stages {
 
 /// Run the pipeline and write `<output>/receipt.json`.
 pub fn run(options: &RunOptions) -> Result<Receipt> {
-    crate::narration::from_env(
-        |tap| run_observed(options, tap),
-        || {
-            options
-                .cancel
-                .as_ref()
-                .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::SeqCst))
-        },
-    )
+    crate::seed_provider::run_with_seed_provider(options, None)
 }
 
 /// Run with an explicit observer. Narration failure never changes the pipeline result.
@@ -406,7 +409,7 @@ pub fn run_with_narration(
 ) -> Result<Receipt> {
     crate::narration::with_tap(
         narration,
-        |tap| run_observed(options, tap),
+        |tap| run_observed_with_provider(options, tap, None),
         || {
             options
                 .cancel
@@ -416,8 +419,12 @@ pub fn run_with_narration(
     )
 }
 
-fn run_observed(options: &RunOptions, narration: Option<&jope_narrator::Tap>) -> Result<Receipt> {
-    preflight(options)?;
+pub(crate) fn run_observed_with_provider(
+    options: &RunOptions,
+    narration: Option<&jope_narrator::Tap>,
+    provider: Option<&dyn crate::seed_provider::CutSeedProvider>,
+) -> Result<Receipt> {
+    preflight_with_provider(options, provider.is_some())?;
     let clock = options.clock;
 
     let output = &options.output;
@@ -434,7 +441,8 @@ fn run_observed(options: &RunOptions, narration: Option<&jope_narrator::Tap>) ->
     }
     // A seed that does not parse, a seeds file that does not verify or a parent receipt its own
     // evidence does not re-derive is refused here, before anything is written.
-    let (seed_genomes, seeding) = resolve_seeding(options)?;
+    let (base_offered, _, _) = collect_static_seed_offers(options)?;
+    let (mut seed_genomes, mut seeding) = resolve_seeding(options)?;
     let mut stages = Stages::new();
 
     let started = clock.start();
@@ -461,14 +469,37 @@ fn run_observed(options: &RunOptions, narration: Option<&jope_narrator::Tap>) ->
     let encodings = crate::landmark_encoding::start(options, &preparation, &root)?;
 
     let started = clock.start();
-    // Never let a skipped stage pass unseen.
-    eprintln!("jope pipeline: propose stage SKIPPED - {PROPOSE_SKIP_REASON}");
-    stages.record(
-        "propose",
-        "skipped",
-        Some(PROPOSE_SKIP_REASON.to_owned()),
-        started,
-    );
+    if let Some(provider) = provider {
+        let (next_genomes, next_seeding, outcome) = crate::seed_provider::apply_provider(
+            options,
+            &resolved.row.dataset_hash,
+            &preparation,
+            &root,
+            &base_offered,
+            seed_genomes,
+            seeding,
+            provider,
+        )?;
+        seed_genomes = next_genomes;
+        seeding = next_seeding;
+        match outcome {
+            crate::seed_provider::ProposeOutcome::Skipped(reason) => {
+                stages.record("propose", "skipped", Some(reason), started);
+            }
+            crate::seed_provider::ProposeOutcome::Passed(reason) => {
+                stages.record("propose", "passed", reason, started);
+            }
+        }
+    } else {
+        // Never let a skipped stage pass unseen.
+        eprintln!("jope pipeline: propose stage SKIPPED - {PROPOSE_SKIP_REASON}");
+        stages.record(
+            "propose",
+            "skipped",
+            Some(PROPOSE_SKIP_REASON.to_owned()),
+            started,
+        );
+    }
 
     let started = clock.start();
     let search_options = search::SearchOptions {

@@ -220,12 +220,12 @@ impl PreCondenseResidualWeights {
         summary_64[32..].copy_from_slice(&max_32);
 
         let mut u_24 = [0.0_f32; 24];
-        for k in 0..24 {
+        for (k, u_k) in u_24.iter_mut().enumerate() {
             let mut acc = 0.0_f32;
-            for j in 0..64 {
-                acc += summary_64[j] * self.ctx_summary_proj_64x24[j * 24 + k];
+            for (j, &s_j) in summary_64.iter().enumerate() {
+                acc += s_j * self.ctx_summary_proj_64x24[j * 24 + k];
             }
-            u_24[k] = acc;
+            *u_k = acc;
         }
 
         // Masked active column pooling over `col_features_64x18`
@@ -233,17 +233,17 @@ impl PreCondenseResidualWeights {
         let mut col_mean_18 = [0.0_f32; 18];
         for c in 0..super::stage1b::COL_SLOTS {
             if pre_condense.col_mask_64[c] > 0.5 {
-                for f in 0..18 {
-                    col_mean_18[f] += pre_condense.col_features_64x18[c][f] / active_cols;
+                for (f, cm) in col_mean_18.iter_mut().enumerate() {
+                    *cm += pre_condense.col_features_64x18[c][f] / active_cols;
                 }
             }
         }
-        for k in 0..24 {
+        for (k, u_k) in u_24.iter_mut().enumerate() {
             let mut acc = 0.0_f32;
-            for f in 0..18 {
-                acc += col_mean_18[f] * self.col_proj_18x24[f * 24 + k];
+            for (f, &cm) in col_mean_18.iter().enumerate() {
+                acc += cm * self.col_proj_18x24[f * 24 + k];
             }
-            u_24[k] += acc;
+            *u_k += acc;
         }
 
         let raw: Vec<f32> = (0..n)
@@ -586,6 +586,10 @@ fn semantic_signature(prog: &[f32]) -> Vec<f32> {
     result
 }
 
+#[path = "adapter/history_mask.rs"]
+pub mod history_mask;
+pub use history_mask::{HistoryMode, HISTORY_CONTRACT_V1_SCHEMA};
+
 #[path = "adapter/predict.rs"]
 mod predict_impl;
 
@@ -608,6 +612,10 @@ fn proposal_kl(costs: &[f32], anchor: &[f32]) -> f64 {
 #[cfg(test)]
 #[path = "../../tests/support/cpu_parity.rs"]
 pub(super) mod real_cpu_parity;
+
+#[cfg(test)]
+#[path = "adapter/history_mask_tests.rs"]
+mod history_mask_tests;
 
 #[cfg(test)]
 mod tests;

@@ -213,7 +213,12 @@ impl Receipt {
                 crate::seeds::FROM_SEEDS_FILE if seeding.seeds_file_sha256.is_none() => {
                     errors.push("a seeds-file seed without a seeds file digest".into())
                 }
-                crate::seeds::FROM_INCUMBENT | crate::seeds::FROM_SEEDS_FILE => {}
+                crate::seed_provider::FROM_SEED_PROVIDER if seeding.seeds_file_sha256.is_none() => {
+                    errors.push("a seed-provider seed without a seeds file digest".into())
+                }
+                crate::seeds::FROM_INCUMBENT
+                | crate::seeds::FROM_SEEDS_FILE
+                | crate::seed_provider::FROM_SEED_PROVIDER => {}
                 other => errors.push(format!("seed source {other:?} is unknown")),
             }
             let covered = self.search.coverage.as_ref().is_some_and(|coverage| {

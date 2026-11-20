@@ -273,3 +273,9 @@ fn distance(left: &[f64], right: &[f64]) -> f64 {
 fn is_hex64(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|b| b.is_ascii_hexdigit())
 }
+
+mod provider;
+pub use provider::{fit_cut_summary_context, RetrievalSeedProvider};
+
+#[cfg(test)]
+mod tests;

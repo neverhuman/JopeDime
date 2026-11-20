@@ -66,6 +66,7 @@ pub mod search_context;
 pub mod search_events;
 pub mod search_plan;
 pub mod search_strategy;
+pub mod seed_provider;
 pub mod seeds;
 pub mod select;
 #[cfg(target_os = "linux")]
@@ -75,6 +76,7 @@ pub mod test_score;
 
 pub use receipt::{Receipt, OBJECTIVE_SCHEMA_ID, RECEIPT_SCHEMA_ID};
 pub use run::{run, run_with_narration, Policy, RunOptions};
+pub use seed_provider::{run_with_seed_provider, CutSeedProvider, FitCutView, FROM_SEED_PROVIDER};
 
 /// Version stamped into every receipt.
 pub const TOOL_VERSION: &str = concat!("jope-pipeline/", env!("CARGO_PKG_VERSION"));

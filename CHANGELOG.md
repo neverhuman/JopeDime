@@ -11,8 +11,14 @@ the commit areas (crate or lane) named in each subject line.
 
 ### Encoders
 
+- encoders: pin `dope-core` (`1.3.0`) and `PREPARATION_SOURCE` to the signed, tagged `dope-engine-v1.3.0` commit (`cd35d9d0f0a772bea0e1ae2352eb8eb7d34ad09b`, tag object `64d83580b520bd39af16168bbffd943647c9a48a`), and add `models/dope-compat.json` (`jope.dope-compat/v1`, `DV-00`) binding standalone `ReleasedV1` (`d0b69603…`, `444,168` total / `353,095` active encoder parameters), fused serving composite (`c51a56d0…`), ADR-0004 evaluator subgraph (`aa3dcb31…`), `jope.dope-ultra-packet-859/v1`, and the four consumer surfaces (`engine_auto`, `service_explicit_learned`, `appliance_companion`, `carbon_cells`).
 - encoders: add opt-in pure-Rust `DopeResearchEncoding629` (`High` / `Ultra` 629-D + `col_landmarks34`), extrema-free `DopePacketV1Summary` (`196-D` `PacketFeaturesV1` + `28-D` `PacketGlobalV1`), and `DopeUltraPacket859` (`[629 + 34 + 196 = 859]`) APIs in `crates/jope-encoders/src/dope_encoder/research_upgrade.rs`, matching the `H470-DVP` representation bridge (`#2381`) while keeping serving `Dope512`, `DOPE512_RECIPE`, `d0b69603…`, and ADR-0004 (`aa3dcb31…`) unchanged, and register `test_h470_probe.py` in `docs/internal/core-ip/findings/test-inventory.json`.
 - encoders: pin `dope-core` to the signed, tagged `dope-engine-v1.2.0` commit (`5fc96f2819a97ed313658c336a9a46e637299352`, tag object `4f2d21f3`, Sigstore OIDC run `44389327320`), replacing the intermediate untagged `e6dba52` source pin. `dope-core` (`1.2.0`) and `dope-norm` (`0.1.0`) match `#358` at `71dfa6b9` (Rust research view and 196-D packet, plus `#360` `dope-cli` wire task display fix); `PREPARATION_SOURCE` follows the signed tag revision, and the MLC-v3 weight digest stays `d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c`. Also filter terminal completion callbacks (`s.receipt.outcome.is_none()`) in `dope_encoding::progressive_terminal_equals_full_and_publishes_supplied_fusion` so all 15 non-ignored `dope_encoding` tests pass. This is an engine tag pin, not a weight release and not a scientific accuracy claim.
+
+### Service, pipeline and learning
+
+- service: add `HistoryMode` (`jope.ranker-history-contract/v1`, `DV-02`) and `CpuAdapter::predict_costs_with_history_mask` in `crates/jope-service/src/ranker/adapter/history_mask.rs`, masking absent history slots out of anchor kernel distances, semantic adjustments, cross-attention keys, and `best` while keeping `[true; 4]` bit-for-bit (`0 ULP`) identical to `predict_costs`.
+- pipeline, learning: add post-partition `FitCutView`, `CutSeedProvider`, and `run_with_seed_provider` in `crates/jope-pipeline/src/seed_provider.rs` alongside `RetrievalSeedProvider` (`SeedSetV2`) in `crates/jope-learning/src/retrieval`, feeding family-disjoint retrieved seeds into generation 0 strictly from FIT-only cut views without exposing held-out evaluation rows.
 
 ### Native AutoML regressors
 

@@ -13,7 +13,7 @@ mod authority;
 mod tests;
 use authority::{read_input, ControllerStore};
 
-const PREPARATION_SOURCE: &str = "5fc96f2819a97ed313658c336a9a46e637299352";
+const PREPARATION_SOURCE: &str = "cd35d9d0f0a772bea0e1ae2352eb8eb7d34ad09b";
 /// Already projected/normalized by the authenticated producer; fusion adds no normalizer.
 pub const FUSION_COMPONENT_RECIPE: &str = "foundation1024-target512-supplied-normalized/v1";
 /// Explicit product preparation; model weights and coordinate recipes remain unchanged.
