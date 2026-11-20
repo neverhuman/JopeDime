@@ -12506,6 +12506,16 @@
       "lanes": [],
       "scope": "Offline H470 DOPE value-probe, WP01 cache-authenticator, extrema-free 196D R_packet_v1, WP3 zero-reveal shrinkage, and B03 Stage-1B SVD folding contract tests; research study outside release lanes."
     },
+    "python:research/flywheel_selfplay/h473_ultra_packet_retrieval_and_audits/test_h473_study.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Offline H473 DV-01 92-token H256 layout repair, DV-03 prog_412 collision audit, DV-02 MaskedPresenceV1 benchmark, Matryoshka [32, 64] Two-Tower DopeUltraPacket859 retrieval, and I9/I10 contract tests; research study outside release lanes."
+    },
     "python:research/flywheel_selfplay/h48/test_run.py": {
       "discovery": {
         "kind": "python-family"
