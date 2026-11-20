@@ -87,8 +87,8 @@ pub fn select_with_fitness(
 ) -> Result<(Selection, RustMethod)> {
     let family = calibration.resolve(fitness.is_some());
     anyhow::ensure!(
-        family != Calibration::Platt,
-        "Platt calibration applies only to binary classification"
+        !matches!(family, Calibration::Platt | Calibration::Temperature),
+        "Platt and Temperature calibration apply only to classification"
     );
     if let Some(fitness) = fitness {
         fitness.validate()?;
@@ -297,6 +297,7 @@ pub fn select_with_fitness(
                 method: calibration::CALIBRATION_METHOD,
                 output_transform,
                 platt_calibration: None,
+                temperature_calibration: None,
             })
         }
         _ => None,
@@ -322,6 +323,7 @@ pub fn select_with_fitness(
         },
         fitness: fitness.cloned(),
         binary_fitness: None,
+        multiclass_fitness: None,
         fitness_sha256: fitness.map(Fitness::identity).transpose()?,
         validation: v2.then(|| validation.clone()),
         scored_rows: v2.then_some(n - warmup_rows),
@@ -368,9 +370,12 @@ pub fn select_binary_with_fitness(
         )));
     }
     let family = calibration.resolve_binary(true);
-    if matches!(family, Calibration::Shift | Calibration::Affine) {
+    if matches!(
+        family,
+        Calibration::Shift | Calibration::Affine | Calibration::Temperature
+    ) {
         return Err(Failure::input(
-            "shift and affine calibration apply only to regression; use platt, auto, or none for binary",
+            "shift, affine and temperature calibration do not apply to binary; use platt, auto, or none",
         ));
     }
 
@@ -531,6 +536,7 @@ pub fn select_binary_with_fitness(
         method: crate::calibration_platt::SCHEMA,
         output_transform: None,
         platt_calibration: selected_platt.clone(),
+        temperature_calibration: None,
     });
     let selection = Selection {
         policy: SELECTION_POLICY_V2,
@@ -540,6 +546,7 @@ pub fn select_binary_with_fitness(
         loss: "direction_normalized_fitness".into(),
         fitness: None,
         binary_fitness: Some(fitness.clone()),
+        multiclass_fitness: None,
         fitness_sha256: Some(fitness.identity()?),
         validation: Some(Validation::Iid {}),
         scored_rows: Some(n),
@@ -549,4 +556,229 @@ pub fn select_binary_with_fitness(
         candidates: outcomes,
     };
     Ok((selection, candidates[winner].clone(), selected_platt))
+}
+
+struct MulticlassScored {
+    temperature: Option<crate::calibration_temperature::Calibration>,
+}
+
+/// Multiclass (`K >= 3`) candidate selection scored by a `jope.multiclass-fitness/v1` objective,
+/// with optional cross-fitted Temperature Scaling (`jope.temperature-calibration/v1`).
+pub fn select_multiclass_with_fitness(
+    training: &Training,
+    candidates: &[RustMethod],
+    requested_folds: usize,
+    budget: &Budget,
+    fitness: &crate::fitness_multiclass::MulticlassFitness,
+    calibration: Calibration,
+) -> Result<(
+    Selection,
+    RustMethod,
+    Option<crate::calibration_temperature::Calibration>,
+)> {
+    use crate::fitness_multiclass::Inputs;
+
+    fitness
+        .validate()
+        .map_err(|e| Failure::input(format!("{e:#}")))?;
+    if training.kind != TaskKind::Multiclass || training.classes.len() < 3 {
+        return Err(Failure::input(
+            "multiclass fitness requires a multiclass target with at least 3 classes",
+        ));
+    }
+    if fitness.class_order.as_slice() != training.classes.as_slice() {
+        return Err(Failure::input(format!(
+            "multiclass fitness class_order {:?} differs from dataset class order {:?}",
+            fitness.class_order, training.classes
+        )));
+    }
+    let family = calibration.resolve_multiclass(fitness.probability_sensitive());
+    if matches!(
+        family,
+        Calibration::Shift | Calibration::Affine | Calibration::Platt
+    ) {
+        return Err(Failure::input(
+            "shift, affine and platt calibration do not apply to multiclass; use temperature, auto, or none",
+        ));
+    }
+
+    let k = effective_folds(training, requested_folds)?;
+    let n = training.targets.len();
+    let assignment = folds(TaskKind::Multiclass, &training.targets, k);
+    let class_order: Vec<&str> = training.classes.iter().map(String::as_str).collect();
+    let labels: Vec<&str> = training
+        .targets
+        .iter()
+        .map(|&t| training.classes[t as usize].as_str())
+        .collect();
+
+    let mut outcomes = Vec::with_capacity(candidates.len());
+    let mut best: Option<(f64, usize)> = None;
+    let mut evidence: Vec<Option<MulticlassScored>> = Vec::with_capacity(candidates.len());
+
+    for (index, method) in candidates.iter().enumerate() {
+        let started = Instant::now();
+        let mut outcome = CandidateOutcome {
+            id: method.id.clone(),
+            status: "skipped",
+            loss: None,
+            fitness_value: None,
+            uncalibrated_loss: None,
+            calibrated_loss: None,
+            calibrated: false,
+            folds_completed: 0,
+            reason: None,
+            seconds: 0.0,
+        };
+        evidence.push(None);
+        if budget.exhausted() {
+            outcome.reason = Some("time limit reached".into());
+            outcomes.push(outcome);
+            continue;
+        }
+        let mut completed = 0;
+        let result = crate::error::contain(&method.id, || {
+            out_of_fold(
+                method,
+                training,
+                &assignment,
+                k,
+                budget,
+                &mut completed,
+                &Validation::Iid {},
+            )
+        })
+        .and_then(|(p, scored, _telemetry)| {
+            anyhow::ensure!(
+                scored.len() == n,
+                "scored rows differ from multiclass table"
+            );
+            let Predictions::Probabilities { values, .. } = p else {
+                anyhow::bail!("multiclass selection requires class probability predictions");
+            };
+            let raw_eval = fitness
+                .evaluate(Inputs {
+                    class_order: &class_order,
+                    labels: &labels,
+                    probabilities: &values,
+                })
+                .map(|s| s.loss);
+            if family == Calibration::None {
+                let loss = raw_eval?;
+                return Ok((loss, Some(loss), None, false, None));
+            }
+            budget.check("Temperature calibration")?;
+            let crossed = crate::calibration_temperature::cross_fit_with_fitness(
+                &values,
+                &labels,
+                &class_order,
+                &assignment,
+                fitness,
+            );
+            let cal_eval = match &crossed {
+                Ok(cf) => fitness
+                    .evaluate(Inputs {
+                        class_order: &class_order,
+                        labels: &labels,
+                        probabilities: &cf.probabilities,
+                    })
+                    .map(|s| s.loss)
+                    .map_err(anyhow::Error::from),
+                Err(err) => Err(anyhow::anyhow!("{err:#}")),
+            };
+            match (raw_eval, cal_eval) {
+                (Err(raw_err), Err(_)) => Err(anyhow::Error::from(raw_err)),
+                (raw_res, cal_res) => {
+                    let raw_opt = raw_res.ok();
+                    let cal_opt = cal_res.ok();
+                    let use_calibrated = match (raw_opt, cal_opt) {
+                        (Some(r), Some(c)) => c < r,
+                        (None, Some(_)) => true,
+                        _ => false,
+                    };
+                    let chosen =
+                        if use_calibrated { cal_opt } else { raw_opt }.expect("one score exists");
+                    let chosen_temp = if use_calibrated {
+                        crossed.ok().map(|cf| cf.calibration)
+                    } else {
+                        None
+                    };
+                    Ok((chosen, raw_opt, cal_opt, use_calibrated, chosen_temp))
+                }
+            }
+        });
+        outcome.seconds = started.elapsed().as_secs_f64();
+        outcome.folds_completed = completed;
+        match result {
+            Ok((value, raw, calibrated, use_calibrated, chosen_temp)) => {
+                if best.is_none_or(|(b, _)| value < b) {
+                    best = Some((value, index));
+                }
+                let natural = match fitness.direction() {
+                    Direction::Maximize => -value,
+                    Direction::Minimize => value,
+                };
+                outcome.status = "scored";
+                outcome.loss = Some(value);
+                outcome.fitness_value = Some(natural);
+                if family != Calibration::None {
+                    outcome.uncalibrated_loss = raw;
+                    outcome.calibrated_loss = calibrated;
+                    outcome.calibrated = use_calibrated;
+                }
+                evidence[index] = Some(MulticlassScored {
+                    temperature: chosen_temp,
+                });
+            }
+            Err(error) => {
+                let skipped = crate::error::kind_of(&error) == crate::FailureKind::Budget;
+                outcome.status = if skipped { "skipped" } else { "failed" };
+                outcome.reason = Some(format!("{error:#}"));
+            }
+        }
+        outcomes.push(outcome);
+    }
+
+    let Some((_, winner)) = best else {
+        let budget_ran_out = outcomes.iter().any(|o| o.status == "skipped");
+        let detail: Vec<String> = outcomes
+            .iter()
+            .map(|o| format!("{}: {}", o.id, o.reason.as_deref().unwrap_or(o.status)))
+            .collect();
+        let message = format!("no candidate completed selection ({})", detail.join("; "));
+        return Err(if budget_ran_out {
+            Failure::budget(message)
+        } else {
+            anyhow::anyhow!(message)
+        });
+    };
+
+    let selected_temperature = evidence[winner]
+        .as_ref()
+        .and_then(|ev| ev.temperature.clone());
+    let calibration_record = (family != Calibration::None).then(|| CalibrationRecord {
+        family,
+        method: crate::calibration_temperature::SCHEMA,
+        output_transform: None,
+        platt_calibration: None,
+        temperature_calibration: selected_temperature.clone(),
+    });
+    let selection = Selection {
+        policy: SELECTION_POLICY_V2,
+        fold_policy: FOLD_POLICY,
+        folds: k,
+        metric: fitness.name().to_owned(),
+        loss: "direction_normalized_fitness".into(),
+        fitness: None,
+        binary_fitness: None,
+        multiclass_fitness: Some(fitness.clone()),
+        fitness_sha256: Some(fitness.identity()?),
+        validation: Some(Validation::Iid {}),
+        scored_rows: Some(n),
+        warmup_rows: Some(0),
+        calibration: calibration_record,
+        selected: candidates[winner].id.clone(),
+        candidates: outcomes,
+    };
+    Ok((selection, candidates[winner].clone(), selected_temperature))
 }

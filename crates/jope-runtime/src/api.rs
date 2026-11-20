@@ -24,9 +24,13 @@ pub struct FitOptions {
     /// probability predictions, never on a final test set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub binary_fitness: Option<crate::fitness_classification::ClassificationFitness>,
+    /// Multiclass classification objective (`jope.multiclass-fitness/v1`) used on held-out
+    /// K-class probability predictions, never on a final test set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub multiclass_fitness: Option<crate::fitness_multiclass::MulticlassFitness>,
     pub validation: automl::Validation,
-    /// Objective-aware output calibration; `auto` is `affine` (regression) or `platt` (binary)
-    /// when an objective is given, else `none`.
+    /// Objective-aware output calibration; `auto` is `affine` (regression), `platt` (binary), or
+    /// `temperature` (probability-sensitive multiclass) when an objective is given, else `none`.
     pub calibration: crate::calibration::Calibration,
 }
 
@@ -38,6 +42,7 @@ impl Default for FitOptions {
             folds: automl::DEFAULT_FOLDS,
             fitness: None,
             binary_fitness: None,
+            multiclass_fitness: None,
             validation: automl::Validation::default(),
             calibration: crate::calibration::Calibration::Auto,
         }
@@ -50,6 +55,9 @@ pub struct FitOutcome {
     /// Cross-fitted monotone Platt calibration learned on the selected binary winner's OOF
     /// probabilities (`Some` when binary Platt calibration improved held-out loss).
     pub platt_calibration: Option<crate::calibration_platt::Calibration>,
+    /// Cross-fitted scalar Temperature Scaling learned on the selected multiclass winner's OOF
+    /// probabilities (`Some` when Temperature Scaling improved held-out loss).
+    pub temperature_calibration: Option<crate::calibration_temperature::Calibration>,
     pub method: RustMethod,
     pub selection: Option<Selection>,
     pub select_seconds: f64,
@@ -57,13 +65,18 @@ pub struct FitOutcome {
 }
 
 impl FitOutcome {
-    /// Wrap `fitted` in a [`crate::model_object::ModelObject`], attaching `platt_calibration`
-    /// when present so persisted binary models preserve their calibrated probability map.
+    /// Wrap `fitted` in a [`crate::model_object::ModelObject`], attaching `platt_calibration` or
+    /// `temperature_calibration` when present so persisted classification models preserve their
+    /// calibrated probability map.
     pub fn into_model_object(&self) -> Result<crate::model_object::ModelObject> {
         let object = crate::model_object::ModelObject::from_fitted(&self.fitted)?;
-        match &self.platt_calibration {
-            Some(platt) => object.with_platt_calibration(platt.clone()),
-            None => Ok(object),
+        match (&self.platt_calibration, &self.temperature_calibration) {
+            (Some(_), Some(_)) => Err(Failure::integrity(
+                "fit outcome cannot carry both Platt and Temperature calibration",
+            )),
+            (Some(platt), None) => object.with_platt_calibration(platt.clone()),
+            (None, Some(temp)) => object.with_temperature_calibration(temp.clone()),
+            (None, None) => Ok(object),
         }
     }
 }
@@ -87,9 +100,12 @@ fn fit_inner(
     training_file_sha256: &str,
     created_by: CreatedBy,
 ) -> Result<FitOutcome> {
-    if options.fitness.is_some() && options.binary_fitness.is_some() {
+    let fitness_spec_count = usize::from(options.fitness.is_some())
+        + usize::from(options.binary_fitness.is_some())
+        + usize::from(options.multiclass_fitness.is_some());
+    if fitness_spec_count > 1 {
         return Err(Failure::input(
-            "cannot supply both regression fitness and binary_fitness",
+            "cannot supply more than one of regression fitness, binary_fitness, and multiclass_fitness",
         ));
     }
     if let Some(fitness) = &options.fitness {
@@ -141,6 +157,37 @@ fn fit_inner(
     } else {
         None
     };
+    let effective_multiclass_fitness = if let Some(mf) = &options.multiclass_fitness {
+        mf.validate()
+            .map_err(|e| Failure::input(format!("{e:#}")))?;
+        if training.kind != crate::task::TaskKind::Multiclass || options.method != AUTO {
+            return Err(Failure::input(
+                "multiclass fitness applies only to multiclass classification with --method auto",
+            ));
+        }
+        if mf.class_order.as_slice() != training.classes.as_slice() {
+            return Err(Failure::input(format!(
+                "multiclass fitness class_order {:?} differs from dataset class order {:?}",
+                mf.class_order, training.classes
+            )));
+        }
+        Some(mf.clone())
+    } else if options.calibration == crate::calibration::Calibration::Temperature {
+        if training.kind != crate::task::TaskKind::Multiclass || options.method != AUTO {
+            return Err(Failure::input(
+                "Temperature calibration applies only to multiclass classification with --method auto",
+            ));
+        }
+        Some(
+            crate::fitness_multiclass::MulticlassFitness::from_shorthand(
+                "logloss",
+                training.classes.clone(),
+            )
+            .map_err(|e| Failure::input(format!("{e:#}")))?,
+        )
+    } else {
+        None
+    };
     if !matches!(options.validation, automl::Validation::Iid {})
         && (options.method != AUTO || training.kind != crate::task::TaskKind::Regression)
     {
@@ -150,9 +197,13 @@ fn fit_inner(
     }
     match training.kind {
         crate::task::TaskKind::Regression => {
-            if options.calibration == crate::calibration::Calibration::Platt {
+            if matches!(
+                options.calibration,
+                crate::calibration::Calibration::Platt
+                    | crate::calibration::Calibration::Temperature
+            ) {
                 return Err(Failure::input(
-                    "Platt calibration applies only to binary classification",
+                    "Platt and Temperature calibration apply only to classification",
                 ));
             }
             if options.calibration.resolve(options.fitness.is_some())
@@ -167,10 +218,24 @@ fn fit_inner(
         crate::task::TaskKind::Binary => {
             if matches!(
                 options.calibration,
-                crate::calibration::Calibration::Shift | crate::calibration::Calibration::Affine
+                crate::calibration::Calibration::Shift
+                    | crate::calibration::Calibration::Affine
+                    | crate::calibration::Calibration::Temperature
             ) {
                 return Err(Failure::input(
-                    "shift and affine calibration apply only to regression; use platt, auto, or none for binary",
+                    "shift, affine and temperature calibration do not apply to binary; use platt, auto, or none",
+                ));
+            }
+        }
+        crate::task::TaskKind::Multiclass => {
+            if matches!(
+                options.calibration,
+                crate::calibration::Calibration::Shift
+                    | crate::calibration::Calibration::Affine
+                    | crate::calibration::Calibration::Platt
+            ) {
+                return Err(Failure::input(
+                    "shift, affine and platt calibration do not apply to multiclass; use temperature, auto, or none",
                 ));
             }
         }
@@ -180,7 +245,7 @@ fn fit_inner(
                 crate::calibration::Calibration::Auto | crate::calibration::Calibration::None
             ) {
                 return Err(Failure::input(
-                    "output calibration applies only to regression or binary classification with --method auto",
+                    "output calibration applies only to regression, binary or multiclass classification with --method auto",
                 ));
             }
         }
@@ -212,7 +277,8 @@ fn fit_inner(
         )));
     }
     let started = Instant::now();
-    let (method, selection, platt_calibration) = if options.method == AUTO {
+    let (method, selection, platt_calibration, temperature_calibration) = if options.method == AUTO
+    {
         let candidates = if options.candidates.is_empty() {
             methods::rust_methods(training.kind)?
         } else {
@@ -234,7 +300,17 @@ fn fit_inner(
                 binary_fitness,
                 options.calibration,
             )?;
-            (method, Some(selection), platt)
+            (method, Some(selection), platt, None)
+        } else if let Some(multiclass_fitness) = effective_multiclass_fitness.as_ref() {
+            let (selection, method, temperature) = automl::select_multiclass_with_fitness(
+                training,
+                &candidates,
+                options.folds,
+                budget,
+                multiclass_fitness,
+                options.calibration,
+            )?;
+            (method, Some(selection), None, temperature)
         } else {
             let (selection, method) = automl::select_with_fitness(
                 training,
@@ -245,7 +321,7 @@ fn fit_inner(
                 &options.validation,
                 options.calibration,
             )?;
-            (method, Some(selection), None)
+            (method, Some(selection), None, None)
         }
     } else {
         if !options.candidates.is_empty() {
@@ -254,6 +330,7 @@ fn fit_inner(
         budget.check("fitting")?;
         (
             methods::resolve(training.kind, &options.method)?,
+            None,
             None,
             None,
         )
@@ -290,6 +367,7 @@ fn fit_inner(
     Ok(FitOutcome {
         fitted,
         platt_calibration,
+        temperature_calibration,
         method,
         selection,
         select_seconds,

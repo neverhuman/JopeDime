@@ -18,6 +18,7 @@ pub mod backend;
 pub mod budget;
 pub mod calibration;
 pub use model_object::calibration_platt;
+pub use model_object::calibration_temperature;
 pub mod error;
 pub mod fitness;
 pub mod fitness_classification;

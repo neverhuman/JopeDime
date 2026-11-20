@@ -17,13 +17,13 @@ pub(crate) fn summary_line(command: &str, receipt: &Receipt) {
     let objective = receipt
         .selection
         .as_ref()
-        .filter(|s| s.fitness.is_some() || s.binary_fitness.is_some())
+        .filter(|s| {
+            s.fitness.is_some() || s.binary_fitness.is_some() || s.multiclass_fitness.is_some()
+        })
         .map(|s| {
-            let calibrated = if s
-                .calibration
-                .as_ref()
-                .is_some_and(|c| c.platt_calibration.is_some())
-            {
+            let calibrated = if s.calibration.as_ref().is_some_and(|c| {
+                c.platt_calibration.is_some() || c.temperature_calibration.is_some()
+            }) {
                 " calibrated"
             } else {
                 s.calibration
@@ -72,12 +72,17 @@ pub(crate) fn run_fit(
         }
         landmarks::refuse_aliasing(train, common, &[output.unwrap_or(model_root)])?;
         let b = run.prepare(train.landmarks.enabled())?;
-        let (fitted, platt_calibration) = run.fit(train, &b)?;
+        let (fitted, platt_calibration, temperature_calibration) = run.fit(train, &b)?;
         let started = Instant::now();
         if let Some(output) = output {
             if platt_calibration.is_some() {
                 return Err(Failure::input(
                     "Platt-calibrated binary models require a model-object directory (omit --output to save under --model-root, or pass --calibration none)",
+                ));
+            }
+            if temperature_calibration.is_some() {
+                return Err(Failure::input(
+                    "Temperature-calibrated multiclass models require a model-object directory (omit --output to save under --model-root, or pass --calibration none)",
                 ));
             }
             let bytes = fitted.to_bytes()?;
@@ -86,9 +91,15 @@ pub(crate) fn run_fit(
                 .push(io::write_atomic("model", output, &bytes)?);
         } else {
             let base = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?;
-            let object = match platt_calibration {
-                Some(platt) => base.with_platt_calibration(platt)?,
-                None => base,
+            let object = match (platt_calibration, temperature_calibration) {
+                (Some(platt), None) => base.with_platt_calibration(platt)?,
+                (None, Some(temp)) => base.with_temperature_calibration(temp)?,
+                (Some(_), Some(_)) => {
+                    return Err(Failure::integrity(
+                        "fit produced both Platt and Temperature calibration",
+                    ))
+                }
+                (None, None) => base,
             };
             let path = object.save(model_root, Limits::default().max_model_bytes)?;
             run.receipt.outputs.push(FileRecord {
@@ -337,7 +348,7 @@ pub(crate) fn bundle_object(
 }
 
 fn route_of(manifest_bytes: &[u8]) -> anyhow::Result<ObjectRoute> {
-    use jope_runtime::model_object::{calibration_platt, MATH_PIPELINE};
+    use jope_runtime::model_object::{calibration_platt, calibration_temperature, MATH_PIPELINE};
     #[derive(serde::Deserialize)]
     struct Format {
         format: String,
@@ -348,11 +359,12 @@ fn route_of(manifest_bytes: &[u8]) -> anyhow::Result<ObjectRoute> {
         .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
     Ok(if manifest.format == MATH_PIPELINE {
         ObjectRoute::MathPipeline
-    } else if manifest
-        .required_capabilities
-        .iter()
-        .any(|c| c == calibration_platt::CAPABILITY)
-    {
+    } else if manifest.required_capabilities.iter().any(|c| {
+        matches!(
+            c.as_str(),
+            calibration_platt::CAPABILITY | calibration_temperature::CAPABILITY
+        )
+    }) {
         ObjectRoute::Calibrated
     } else {
         ObjectRoute::Fitted
@@ -381,10 +393,14 @@ pub(crate) fn run_fit_predict(
         run.refuse_aliasing(output, &protected)?;
         landmarks::refuse_aliasing(train, common, &[input, output])?;
         let b = run.prepare(train.landmarks.enabled())?;
-        let (fitted, platt_calibration) = run.fit(train, &b)?;
+        let (fitted, platt_calibration, temperature_calibration) = run.fit(train, &b)?;
         if let Some(platt) = platt_calibration {
             let object = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?
                 .with_platt_calibration(platt)?;
+            run.predict_in_memory_object(&object, input, output, &b)?;
+        } else if let Some(temp) = temperature_calibration {
+            let object = jope_runtime::model_object::ModelObject::from_fitted(&fitted)?
+                .with_temperature_calibration(temp)?;
             run.predict_in_memory_object(&object, input, output, &b)?;
         } else {
             run.predict(&fitted, input, output, &b)?;

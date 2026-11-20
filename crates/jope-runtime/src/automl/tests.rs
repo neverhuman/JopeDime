@@ -487,4 +487,116 @@ mod fitness_tests {
         )
         .is_err());
     }
+
+    #[test]
+    fn multiclass_selection_scores_objectives_and_cross_fits_temperature() {
+        use crate::fitness_multiclass::MulticlassFitness;
+
+        let text = String::from("x1,x2,y\n")
+            + &(0..90)
+                .map(|i| {
+                    let x1 = (i as f64 * 0.31).sin() * 2.5;
+                    let x2 = ((i * 5) % 9) as f64 - 4.0;
+                    let base = if x1 > 0.7 {
+                        0usize
+                    } else if x2 > 0.0 {
+                        1usize
+                    } else {
+                        2usize
+                    };
+                    let cls_idx = if i % 6 == 0 { (base + 1) % 3 } else { base };
+                    let label = ["alpha", "beta", "gamma"][cls_idx];
+                    format!("{x1:.6},{x2:.6},{label}\n")
+                })
+                .collect::<String>();
+        let limits = crate::limits::Limits::default();
+        let csv = crate::table::parse_csv(text.as_bytes(), &limits).unwrap();
+        let train = crate::table::training(
+            &csv,
+            "y",
+            crate::task::TaskChoice::Fixed(TaskKind::Multiclass),
+            &limits,
+        )
+        .unwrap();
+        let classes = train.classes.clone();
+        let candidates = crate::methods::rust_methods(TaskKind::Multiclass).unwrap();
+        let budget = Budget::new(None, 1);
+
+        // Probability-sensitive objective (`logloss`): `Auto` resolves to `Temperature`.
+        let logloss = MulticlassFitness::from_shorthand("logloss", classes.clone()).unwrap();
+        let (selection, winner, temp) = select_multiclass_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &logloss,
+            Calibration::Auto,
+        )
+        .unwrap();
+        assert_eq!(selection.policy, SELECTION_POLICY_V2);
+        assert_eq!(selection.metric, "logloss");
+        assert_eq!(
+            selection.fitness_sha256.as_deref(),
+            Some(logloss.identity().unwrap().as_str())
+        );
+        let cal_record = selection.calibration.as_ref().unwrap();
+        assert_eq!(cal_record.family, Calibration::Temperature);
+        assert_eq!(cal_record.method, crate::calibration_temperature::SCHEMA);
+        for c in &selection.candidates {
+            assert_eq!(c.status, "scored");
+            let raw = c.uncalibrated_loss.unwrap();
+            let cal = c.calibrated_loss.unwrap();
+            assert_eq!(c.loss.unwrap(), raw.min(cal));
+            assert_eq!(c.calibrated, cal < raw);
+        }
+        let chosen = selection
+            .candidates
+            .iter()
+            .find(|c| c.id == winner.id)
+            .unwrap();
+        assert_eq!(temp.is_some(), chosen.calibrated);
+
+        // Argmax-only objective (`macro_f1`): `Auto` resolves to `None` (no redundant temperature search).
+        let macro_f1 = MulticlassFitness::from_shorthand("macro_f1", classes).unwrap();
+        let (f1_sel, _, f1_temp) = select_multiclass_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &macro_f1,
+            Calibration::Auto,
+        )
+        .unwrap();
+        assert!(f1_temp.is_none());
+        assert!(f1_sel.calibration.is_none());
+        for c in &f1_sel.candidates {
+            assert_eq!(c.loss.unwrap(), -c.fitness_value.unwrap());
+            assert!(c.fitness_value.unwrap() > 0.3);
+        }
+
+        // Swapped class_order and Platt/Affine calibration families on multiclass are refused.
+        let swapped = MulticlassFitness::from_shorthand(
+            "logloss",
+            vec!["gamma".into(), "beta".into(), "alpha".into()],
+        )
+        .unwrap();
+        assert!(select_multiclass_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &swapped,
+            Calibration::None
+        )
+        .is_err());
+        assert!(select_multiclass_with_fitness(
+            &train,
+            &candidates,
+            4,
+            &budget,
+            &logloss,
+            Calibration::Platt
+        )
+        .is_err());
+    }
 }

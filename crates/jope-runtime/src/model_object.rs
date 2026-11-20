@@ -14,6 +14,8 @@ use std::path::{Path, PathBuf};
 
 #[path = "calibration_platt.rs"]
 pub mod calibration_platt;
+#[path = "calibration_temperature.rs"]
+pub mod calibration_temperature;
 
 pub const INSPECTION_SCHEMA: &str = "jope.model-object-inspection/v1";
 pub const SCHEMA: &str = "jope.model-object/v1";

@@ -160,6 +160,7 @@ impl Run {
     ) -> anyhow::Result<(
         FittedModel,
         Option<jope_runtime::calibration_platt::Calibration>,
+        Option<jope_runtime::calibration_temperature::Calibration>,
     )> {
         let choice = TaskChoice::parse(&train.task)
             .ok_or_else(|| Failure::input(format!("unknown task {:?}", train.task)))?;
@@ -191,15 +192,15 @@ impl Run {
             &self.limits(),
             &auxiliary,
         )?;
-        let (fitness, binary_fitness) = match (&raw_fitness, training.kind) {
-            (None, _) => (None, None),
+        let (fitness, binary_fitness, multiclass_fitness) = match (&raw_fitness, training.kind) {
+            (None, _) => (None, None, None),
             (Some(raw), task::TaskKind::Regression) => {
                 let parsed = match tentative_reg_fitness {
                     Some(reg) => reg,
                     None => jope_runtime::fitness::Fitness::parse(raw)
                         .map_err(|e| Failure::input(format!("fitness: {e:#}")))?,
                 };
-                (Some(parsed), None)
+                (Some(parsed), None, None)
             }
             (Some(raw), task::TaskKind::Binary) => {
                 if !training.auxiliary.is_empty() {
@@ -214,11 +215,25 @@ impl Run {
                         class_order,
                     )
                     .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
-                (None, Some(parsed))
+                (None, Some(parsed), None)
+            }
+            (Some(raw), task::TaskKind::Multiclass) => {
+                if !training.auxiliary.is_empty() {
+                    return Err(Failure::input(
+                        "multiclass classification objectives do not read auxiliary columns",
+                    ));
+                }
+                let parsed =
+                    jope_runtime::fitness_multiclass::MulticlassFitness::parse_for_classes(
+                        raw,
+                        training.classes.clone(),
+                    )
+                    .map_err(|e| Failure::input(format!("fitness: {e:#}")))?;
+                (None, None, Some(parsed))
             }
             (Some(_), _) => {
                 return Err(Failure::input(
-                    "fitness applies only to regression or binary classification with --method auto",
+                    "fitness applies only to regression, binary or multiclass classification with --method auto",
                 ));
             }
         };
@@ -236,6 +251,7 @@ impl Run {
             folds: train.folds,
             fitness,
             binary_fitness,
+            multiclass_fitness,
             calibration,
             validation: if train.validation == "forward" {
                 jope_runtime::automl::Validation::Forward { gap: train.gap }
@@ -278,7 +294,11 @@ impl Run {
             recipe_sha256: outcome.fitted.header.recipe_sha256.clone(),
         });
         self.receipt.selection = outcome.selection;
-        Ok((outcome.fitted, outcome.platt_calibration))
+        Ok((
+            outcome.fitted,
+            outcome.platt_calibration,
+            outcome.temperature_calibration,
+        ))
     }
 
     pub(super) fn predict_in_memory_object(
@@ -288,9 +308,9 @@ impl Run {
         output: &Path,
         budget: &Budget,
     ) -> anyhow::Result<()> {
-        let contract = object
-            .calibrated_input()?
-            .ok_or_else(|| Failure::integrity("model object has no Platt calibration"))?;
+        let contract = object.calibrated_input()?.ok_or_else(|| {
+            Failure::integrity("model object has no Platt or Temperature calibration")
+        })?;
         let csv = self.read_csv("input", input)?;
         let started = Instant::now();
         let (rows, ignored) = contract.table(&csv)?;
@@ -382,9 +402,9 @@ impl Run {
         budget: &Budget,
         started: Instant,
     ) -> anyhow::Result<()> {
-        let contract = object
-            .calibrated_input()?
-            .ok_or_else(|| Failure::integrity("model object has no Platt calibration"))?;
+        let contract = object.calibrated_input()?.ok_or_else(|| {
+            Failure::integrity("model object has no Platt or Temperature calibration")
+        })?;
         self.receipt.inputs.push(FileRecord {
             role: "model",
             path: model.display().to_string(),
