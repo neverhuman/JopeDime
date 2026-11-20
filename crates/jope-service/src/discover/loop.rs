@@ -107,6 +107,37 @@ pub(crate) fn binary_cell_class(
     }
 }
 
+pub(crate) fn multiclass_cell_class(
+    cell: Option<JmatCell<'_>>,
+    class_order: &[String],
+) -> Result<usize> {
+    ensure!(
+        class_order.len() >= 3,
+        "multiclass class_order requires at least 3 classes"
+    );
+    match cell {
+        Some(JmatCell::Categorical(label)) => class_order
+            .iter()
+            .position(|c| c == label)
+            .context("multiclass target label outside declared class order"),
+        Some(JmatCell::Numeric(value)) if value.is_finite() => {
+            let text = value.to_string();
+            if let Some(idx) = class_order.iter().position(|c| c == &text) {
+                return Ok(idx);
+            }
+            for (idx, raw) in class_order.iter().enumerate() {
+                if let Ok(parsed) = raw.trim().parse::<f64>() {
+                    if parsed.is_finite() && parsed == value {
+                        return Ok(idx);
+                    }
+                }
+            }
+            bail!("numeric multiclass target outside declared class order")
+        }
+        _ => bail!("missing or non-finite multiclass target"),
+    }
+}
+
 /// Internal M1 plan, not a new public API or worker wire schema. `matrix_path`
 /// names an immutable FIT-only matrix: no HOLDOUT/TEST rows enter the worker.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -221,6 +252,39 @@ impl Plan {
             ensure!(
                 counts[0] >= 2 && counts[1] >= 2,
                 "binary FIT matrix needs at least two rows per class"
+            );
+            self.fold_spec(0)?;
+            self.fold_spec(1)?;
+            return Ok(());
+        }
+        if let Ok(multiclass) =
+            crate::objective::multiclass::MulticlassObjective::parse_json(&self.objective)
+        {
+            ensure!(
+                self.groups.is_none() && self.times.is_none() && self.gap_rows == 0,
+                "multiclass discovery supports random IID splits only"
+            );
+            for name in &self.features {
+                matrix
+                    .columns()
+                    .iter()
+                    .find(|c| &c.name == name)
+                    .context("unknown column")?;
+            }
+            let target_col = matrix
+                .columns()
+                .iter()
+                .position(|c| c.name == self.target)
+                .context("unknown target column")?;
+            let mut counts = vec![0usize; multiclass.class_order().len()];
+            for row in 0..matrix.rows() {
+                let cls =
+                    multiclass_cell_class(matrix.cell(row, target_col), multiclass.class_order())?;
+                counts[cls] += 1;
+            }
+            ensure!(
+                counts.iter().all(|&c| c >= 2),
+                "multiclass FIT matrix needs at least two rows per class"
             );
             self.fold_spec(0)?;
             self.fold_spec(1)?;
@@ -351,6 +415,96 @@ impl Plan {
                 "folds": folds
             }));
         }
+        if let Ok(multiclass) =
+            crate::objective::multiclass::MulticlassObjective::parse_json(&self.objective)
+        {
+            let target_col = matrix
+                .columns()
+                .iter()
+                .position(|c| c.name == self.target)
+                .context("unknown target column")?;
+            let num_classes = multiclass.class_order().len();
+            let labels: Vec<usize> = (0..matrix.rows())
+                .map(|row| {
+                    multiclass_cell_class(matrix.cell(row, target_col), multiclass.class_order())
+                })
+                .collect::<Result<_>>()?;
+            let cap = if rung == 0 { 20_000 } else { 100_000 };
+            let phase_label = if rung == 0 { "rung0" } else { "rung1" };
+            let repeats = if rung == 0 {
+                1
+            } else {
+                self.limits().promotion_repeats
+            };
+            let mut folds = vec![];
+            for repeat in 0..repeats {
+                let seed = if repeat == 0 {
+                    self.seed
+                } else {
+                    evaluation_seed(self.seed, 0, u32::from(repeat), 255)
+                };
+                let selected = if labels.len() <= cap {
+                    (0..labels.len()).collect::<Vec<_>>()
+                } else {
+                    super::splits::stratified_split(
+                        &labels,
+                        cap,
+                        seed,
+                        &format!("dsc03/{phase_label}/rows"),
+                    )?
+                    .0
+                };
+                let sub_labels: Vec<usize> = selected.iter().map(|&r| labels[r]).collect();
+                let mut counts = vec![0usize; num_classes];
+                for &cls in &sub_labels {
+                    counts[cls] += 1;
+                }
+                let min_class = counts.into_iter().min().unwrap_or(0);
+                ensure!(
+                    min_class >= 2,
+                    "multiclass CV requires at least 2 rows per class"
+                );
+                let k = if rung == 0 {
+                    2
+                } else {
+                    (self.limits().rung1_folds as usize).min(min_class).max(2)
+                };
+                let val_partitions = super::splits::stratified_k_fold(
+                    &sub_labels,
+                    k,
+                    seed,
+                    &format!("dsc03/{phase_label}/folds"),
+                )?;
+                for val_positions in val_partitions {
+                    let val_set: BTreeSet<usize> =
+                        val_positions.into_iter().map(|pos| selected[pos]).collect();
+                    let train: Vec<u64> = selected
+                        .iter()
+                        .copied()
+                        .filter(|r| !val_set.contains(r))
+                        .map(|r| r as u64)
+                        .collect();
+                    let validation: Vec<u64> = selected
+                        .iter()
+                        .copied()
+                        .filter(|r| val_set.contains(r))
+                        .map(|r| r as u64)
+                        .collect();
+                    folds.push(json!({
+                        "repeat": repeat,
+                        "train": train,
+                        "validation": validation
+                    }));
+                }
+            }
+            return Ok(json!({
+                "version": NATIVE_FOLDS_VERSION,
+                "matrix_sha256": self.matrix_sha256,
+                "target": self.target,
+                "features": self.features,
+                "folds": folds
+            }));
+        }
         let rows: Vec<_> = (0..matrix.rows())
             .map(|row| AuditRowId {
                 dataset: self.dataset_id.clone(),
@@ -438,8 +592,8 @@ use helpers::{
     accepted_summary, checkpoint_blobs, evaluation_ordinal, experiment, hex_blob,
     projected_summary, public_metric, round_rng, rung0_budget_limit, rung0_budget_used,
 };
-pub(crate) use native::BinaryRefitState;
 pub use native::{evaluate_native, run_m1, NativeSpace};
+pub(crate) use native::{BinaryRefitState, MulticlassRefitState};
 use planning::plan_wave;
 #[cfg(feature = "research")]
 use planning::plan_wave_inner;

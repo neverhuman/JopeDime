@@ -69,6 +69,28 @@ pub(crate) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTab
             parsed_row.push(Some(binary.class_order()[cls].to_owned()));
             rows.push(parsed_row);
         }
+    } else if let Ok(multiclass) =
+        crate::objective::multiclass::MulticlassObjective::parse_json(&plan.objective)
+    {
+        let feature_cols = &columns[..plan.features.len()];
+        let target_col = columns[plan.features.len()];
+        for row in 0..matrix.rows() {
+            let mut parsed_row = Vec::with_capacity(columns.len());
+            for &column in feature_cols {
+                parsed_row.push(match matrix.cell(row, column) {
+                    Some(JmatCell::Missing) => None,
+                    Some(JmatCell::Numeric(v)) if v.is_finite() => Some(v.to_string()),
+                    Some(JmatCell::Categorical(s)) => Some(s.to_owned()),
+                    _ => bail!("multiclass finalization requires valid feature cells"),
+                });
+            }
+            let cls = crate::discover::r#loop::multiclass_cell_class(
+                matrix.cell(row, target_col),
+                multiclass.class_order(),
+            )?;
+            parsed_row.push(Some(multiclass.class_order()[cls].clone()));
+            rows.push(parsed_row);
+        }
     } else {
         for row in 0..matrix.rows() {
             rows.push(columns.iter().map(|&column| match matrix.cell(row, column) {
@@ -230,6 +252,61 @@ pub(crate) fn refit(
         );
         return Ok(object);
     }
+    if let Ok(multiclass) =
+        crate::objective::multiclass::MulticlassObjective::parse_json(&plan.objective)
+    {
+        let state: crate::discover::r#loop::MulticlassRefitState =
+            serde_json::from_str(&envelope.model_json)?;
+        ensure!(
+            state.version == 1,
+            "unsupported multiclass refit state version"
+        );
+        let fitted = jope_runtime::fitted::FittedModel::from_bytes(&state.fitted_bytes)?;
+        let fitted_features: Vec<String> = fitted
+            .header
+            .input_schema
+            .iter()
+            .map(|col| col.name.clone())
+            .collect();
+        ensure!(
+            fitted_features == plan.features
+                && fitted.header.target == plan.target
+                && fitted.header.class_order.as_slice() == multiclass.class_order()
+                && fitted.header.method.recipe == champion.candidate.dsl,
+            "private multiclass model contract mismatch"
+        );
+        let mut object = ModelObject::from_fitted_bytes(state.fitted_bytes)?;
+        if let Some(temperature) = state.temperature {
+            object = object.with_temperature_calibration(temperature)?;
+        }
+        object.manifest().validate(max_model)?;
+        object.verify_executable()?;
+        let predictions = predict_multiclass(&object, table, multiclass.class_order().len())?;
+        let target_idx = table
+            .headers
+            .iter()
+            .position(|c| c == &plan.target)
+            .context("target missing")?;
+        let mut measured =
+            Vec::with_capacity(predictions.len() * (multiclass.class_order().len() + 1) * 8);
+        for (row, probs) in table.rows.iter().zip(predictions) {
+            let label = row[target_idx].as_deref().context("target missing")?;
+            let cls = multiclass
+                .class_order()
+                .iter()
+                .position(|c| c == label)
+                .context("multiclass target outside class order")? as f64;
+            measured.extend(cls.to_le_bytes());
+            for p in probs {
+                measured.extend(p.to_le_bytes());
+            }
+        }
+        ensure!(
+            digest(&measured) == response.predictions_digest,
+            "frozen multiclass model object cannot exactly represent this native fit"
+        );
+        return Ok(object);
+    }
     let native: NativeFit = serde_json::from_str(&envelope.model_json)?;
     ensure!(
         native.version == 1
@@ -381,6 +458,65 @@ pub(crate) fn score_binary(
     objective: &crate::objective::binary::BinaryObjective,
 ) -> Result<f64> {
     let probabilities = predict_binary(object, table)?;
+    let column = table
+        .headers
+        .iter()
+        .position(|c| c == target)
+        .context("target missing")?;
+    let labels: Vec<&str> = table
+        .rows
+        .iter()
+        .map(|r| r[column].as_deref().context("target missing"))
+        .collect::<Result<_>>()?;
+    Ok(objective.evaluate(&labels, &probabilities)?.value)
+}
+
+pub(crate) fn predict_multiclass(
+    object: &ModelObject,
+    table: &CsvTable,
+    expected_classes: usize,
+) -> Result<Vec<Vec<f64>>> {
+    use jope_runtime::methods::native::Predictions;
+    let raw = if let Some(calibrated) = object.calibrated_input()? {
+        calibrated.table(table)?.0
+    } else {
+        let fitted = object.fitted()?;
+        jope_runtime::table::prediction_ignoring(
+            table,
+            fitted.schema(),
+            &fitted.header.target,
+            &fitted.header.auxiliary_columns,
+        )?
+        .0
+    };
+    let predicted = jope_runtime::api::predict_object(
+        object,
+        &raw,
+        &jope_runtime::budget::Budget::new(None, 1),
+    )?;
+    let Predictions::Probabilities { values, .. } = predicted else {
+        bail!("multiclass model object did not produce probability predictions");
+    };
+    ensure!(
+        values.len() == table.rows.len(),
+        "multiclass prediction row count mismatch"
+    );
+    for row in &values {
+        ensure!(
+            row.len() == expected_classes,
+            "multiclass probability width mismatch"
+        );
+    }
+    Ok(values)
+}
+
+pub(crate) fn score_multiclass(
+    object: &ModelObject,
+    table: &CsvTable,
+    target: &str,
+    objective: &crate::objective::multiclass::MulticlassObjective,
+) -> Result<f64> {
+    let probabilities = predict_multiclass(object, table, objective.class_order().len())?;
     let column = table
         .headers
         .iter()

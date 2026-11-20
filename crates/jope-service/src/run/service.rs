@@ -97,6 +97,34 @@ pub(crate) fn run_binary_objective(
     ))
 }
 
+/// Resolve a multiclass (`K >= 3`) classification objective against the dataset's deterministic
+/// ordered `class_order` and emit its canonical `jope.multiclass-fitness/v1` JSON string for
+/// worker and finalizer binding.
+pub(crate) fn run_multiclass_objective(
+    spec: &jope_api::ObjectiveSpec,
+    class_order: Vec<String>,
+) -> Result<(String, jope_api::ResolvedObjective)> {
+    use jope_runtime::fitness::Direction;
+    let text = match spec {
+        jope_api::ObjectiveSpec::Name(name) => name.clone(),
+        jope_api::ObjectiveSpec::Specification(value) => serde_json::to_string(value)?,
+    };
+    let objective = crate::objective::multiclass::MulticlassObjective::parse(&text, class_order)?;
+    let serialized = serde_json::to_string(objective.fitness())?;
+    Ok((
+        serialized,
+        jope_api::ResolvedObjective {
+            name: objective.fitness().name().to_owned(),
+            digest: objective.identity()?,
+            direction: match objective.fitness().direction() {
+                Direction::Minimize => jope_api::Direction::Minimize,
+                Direction::Maximize => jope_api::Direction::Maximize,
+            },
+            fitting: "selection_only".into(),
+        },
+    ))
+}
+
 pub(crate) enum RunAdmission {
     Heuristic,
     Learned(Box<LearnedAdmission>),
@@ -265,7 +293,11 @@ impl BackendPlan {
             RunAdmission::Heuristic
                 if self.landmark_mode == LandmarkMode::Full
                     && crate::objective::binary::BinaryObjective::parse_json(&plan.objective)
-                        .is_err() =>
+                        .is_err()
+                    && crate::objective::multiclass::MulticlassObjective::parse_json(
+                        &plan.objective,
+                    )
+                    .is_err() =>
             {
                 // Full requests still compute the real CPU recipe when Auto has
                 // resolved to heuristic on regression runs.

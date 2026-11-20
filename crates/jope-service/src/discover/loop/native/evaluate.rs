@@ -107,6 +107,11 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     {
         return binary_native_scores(request, matrix, spec, &binary_objective);
     }
+    if let Ok(multiclass_objective) =
+        crate::objective::multiclass::MulticlassObjective::parse_json(objective_raw)
+    {
+        return multiclass_native_scores(request, matrix, spec, &multiclass_objective);
+    }
     let objective = RegressionObjective::parse(objective_raw)?;
     let calibration_family =
         resolve_calibration_family(spec.calibration_mode.as_deref(), objective_raw)?;
@@ -615,6 +620,274 @@ fn binary_native_scores<B: AsRef<[u8]>>(
             ensure!(p1.is_finite(), "non-finite binary prediction");
             bytes.extend(y.to_le_bytes());
             bytes.extend(p1.to_le_bytes());
+        }
+    }
+    Ok(worker::Scores {
+        values: scores,
+        fold_scores,
+        predictions_digest: digest(&bytes),
+    })
+}
+
+pub(in crate::discover::r#loop) fn resolve_multiclass_method(
+    dsl: &str,
+) -> Result<jope_runtime::methods::registry::RustMethod> {
+    let canonical = feat_math::GenomeIr::parse(dsl)?.canonical();
+    jope_runtime::methods::registry::rust_methods(jope_runtime::task::TaskKind::Multiclass)?
+        .into_iter()
+        .find(|m| m.dsl == canonical)
+        .context("unsupported multiclass candidate pipeline")
+}
+
+pub(in crate::discover::r#loop) fn multiclass_matrix_data<B: AsRef<[u8]>>(
+    matrix: &Matrix<B>,
+    target: &str,
+    features: &[String],
+    class_order: &[String],
+) -> Result<BinaryMatrixData> {
+    ensure!(
+        class_order.len() >= 3
+            && !features.is_empty()
+            && features.iter().collect::<BTreeSet<_>>().len() == features.len()
+            && !features.iter().any(|f| f == target),
+        "invalid native multiclass features or class order"
+    );
+    let find = |name: &str| {
+        matrix
+            .columns()
+            .iter()
+            .position(|c| c.name == name)
+            .context("unknown native column")
+    };
+    let target_col = find(target)?;
+    let feature_cols: Vec<usize> = features.iter().map(|s| find(s)).collect::<Result<_>>()?;
+    let schema_cols: Vec<feat_math::advanced_v3::ColumnSpec> = features
+        .iter()
+        .zip(&feature_cols)
+        .map(|(name, &col_idx)| match matrix.columns()[col_idx].kind {
+            crate::dataset::jmat::ColumnKind::Numeric => {
+                feat_math::advanced_v3::ColumnSpec::numeric(name)
+            }
+            crate::dataset::jmat::ColumnKind::Categorical => {
+                feat_math::advanced_v3::ColumnSpec::categorical(name)
+            }
+        })
+        .collect();
+    let schema = jope_runtime::table::iid_schema(schema_cols)?;
+    let mut values = Vec::with_capacity(matrix.rows());
+    let mut targets = Vec::with_capacity(matrix.rows());
+    let mut labels = Vec::with_capacity(matrix.rows());
+    for row in 0..matrix.rows() {
+        let cls = crate::discover::r#loop::multiclass_cell_class(
+            matrix.cell(row, target_col),
+            class_order,
+        )?;
+        targets.push(cls as f64);
+        labels.push(class_order[cls].clone());
+        let feature_row = feature_cols
+            .iter()
+            .map(|&col| match matrix.cell(row, col) {
+                Some(JmatCell::Missing) => Ok(None),
+                Some(JmatCell::Numeric(v)) if v.is_finite() => Ok(Some(v.to_string())),
+                Some(JmatCell::Categorical(s)) => Ok(Some(s.to_owned())),
+                _ => bail!("invalid feature cell in multiclass FIT matrix"),
+            })
+            .collect::<Result<Vec<_>>>()?;
+        values.push(feature_row);
+    }
+    let table = jope_runtime::table::raw_table(&schema, &values)?;
+    Ok(BinaryMatrixData {
+        schema,
+        table,
+        targets,
+        labels,
+        classes: class_order.to_vec(),
+    })
+}
+
+fn multiclass_native_scores<B: AsRef<[u8]>>(
+    request: &Request,
+    matrix: &Matrix<B>,
+    spec: NativeFolds,
+    objective: &crate::objective::multiclass::MulticlassObjective,
+) -> Result<worker::Scores> {
+    use jope_runtime::calibration::Calibration;
+    use jope_runtime::methods::native::{fit_native, predict_bound, Predictions};
+    use jope_runtime::task::TaskKind;
+
+    let method = resolve_multiclass_method(&request.dsl)?;
+    let cal_family = match spec.calibration_mode.as_deref() {
+        Some("none") => Calibration::None,
+        Some("temperature") => Calibration::Temperature,
+        None | Some("auto") => Calibration::resolve_multiclass(
+            Calibration::Auto,
+            objective.fitness().probability_sensitive(),
+        ),
+        Some(other) => {
+            bail!(
+                "unsupported multiclass calibration_mode '{other}'; expected none, auto, or temperature"
+            )
+        }
+    };
+    match (&spec.refit_output, spec.refit_max_bytes) {
+        (Some(path), Some(maximum)) => {
+            return super::model::multiclass_native_refit(
+                request, matrix, &spec, &method, objective, cal_family, path, maximum,
+            )
+        }
+        (None, None) => {}
+        _ => bail!("incomplete private refit handoff"),
+    }
+
+    let data = multiclass_matrix_data(
+        matrix,
+        &spec.target,
+        &spec.features,
+        objective.class_order(),
+    )?;
+    let num_classes = data.classes.len();
+    let class_refs: Vec<&str> = data.classes.iter().map(String::as_str).collect();
+    let mut validation_rows = BTreeSet::new();
+    let mut surrogate = Vec::with_capacity(spec.folds.len());
+    let mut fold_scores = Vec::with_capacity(spec.folds.len());
+
+    struct RepeatOof<'a> {
+        labels: Vec<&'a str>,
+        targets: Vec<f64>,
+        raw_probs: Vec<Vec<f64>>,
+        fold_ids: Vec<usize>,
+    }
+    let mut by_repeat: BTreeMap<u8, RepeatOof<'_>> = BTreeMap::new();
+    let eval_started = std::time::Instant::now();
+
+    for (fold_idx, fold) in spec.folds.into_iter().enumerate() {
+        if fold_idx > 0
+            && request.limits.wall_ms > 0
+            && eval_started.elapsed().as_millis() >= u128::from(request.limits.wall_ms)
+        {
+            return Err(EvalWallClockTimeout.into());
+        }
+        let train: BTreeSet<_> = fold.train.iter().copied().collect();
+        ensure!(
+            !train.is_empty() && train.len() == fold.train.len() && !fold.validation.is_empty(),
+            "empty or duplicated fold"
+        );
+        ensure!(
+            fold.validation
+                .iter()
+                .all(|r| !train.contains(r) && validation_rows.insert((fold.repeat, *r))),
+            "overlapping fold rows"
+        );
+        let train_table = subset_raw_table(&data.table, &fold.train)?;
+        let train_targets: Vec<f64> = fold.train.iter().map(|&r| data.targets[r]).collect();
+        let bound = fit_native(
+            &method,
+            TaskKind::Multiclass,
+            &data.schema,
+            &data.classes,
+            &train_table,
+            &train_targets,
+        )
+        .map_err(|_| UndefinedFitness)?;
+        let val_table = subset_raw_table(&data.table, &fold.validation)?;
+        let Predictions::Probabilities { values, .. } =
+            predict_bound(&bound, &val_table, &data.classes).map_err(|_| UndefinedFitness)?
+        else {
+            return Err(UndefinedFitness.into());
+        };
+        let mut brier_sum = 0.0;
+        let oof = by_repeat.entry(fold.repeat).or_insert_with(|| RepeatOof {
+            labels: Vec::new(),
+            targets: Vec::new(),
+            raw_probs: Vec::new(),
+            fold_ids: Vec::new(),
+        });
+        for (&r, probs) in fold.validation.iter().zip(values) {
+            ensure!(
+                probs.len() == num_classes
+                    && probs
+                        .iter()
+                        .all(|p| p.is_finite() && (0.0..=1.0).contains(p)),
+                "non-finite multiclass probability"
+            );
+            let true_cls = data.targets[r] as usize;
+            for (c, &p) in probs.iter().enumerate() {
+                let indicator = if c == true_cls { 1.0 } else { 0.0 };
+                brier_sum += (p - indicator).powi(2);
+            }
+            oof.labels.push(data.labels[r].as_str());
+            oof.targets.push(data.targets[r]);
+            oof.raw_probs.push(probs);
+            oof.fold_ids.push(fold_idx);
+        }
+        let brier = brier_sum / fold.validation.len() as f64;
+        surrogate.push(brier);
+        fold_scores.push(brier);
+    }
+
+    let mut raw_losses = Vec::with_capacity(by_repeat.len());
+    let mut raw_values = Vec::with_capacity(by_repeat.len());
+    let mut raw_ok = true;
+    let mut cal_losses = Vec::with_capacity(by_repeat.len());
+    let mut cal_values = Vec::with_capacity(by_repeat.len());
+    let mut cal_probs_by_repeat: Vec<Vec<Vec<f64>>> = Vec::with_capacity(by_repeat.len());
+    let mut cal_ok = cal_family == Calibration::Temperature;
+
+    for oof in by_repeat.values() {
+        match objective.evaluate(&oof.labels, &oof.raw_probs) {
+            Ok(score) => {
+                raw_losses.push(score.loss);
+                raw_values.push(score.value);
+            }
+            Err(_) => raw_ok = false,
+        }
+        if cal_ok {
+            match jope_runtime::calibration_temperature::cross_fit_with_fitness(
+                &oof.raw_probs,
+                &oof.labels,
+                &class_refs,
+                &oof.fold_ids,
+                objective.fitness(),
+            )
+            .and_then(|cf| {
+                let score = objective.evaluate(&oof.labels, &cf.probabilities)?;
+                Ok((score, cf.probabilities))
+            }) {
+                Ok((score, probs)) => {
+                    cal_losses.push(score.loss);
+                    cal_values.push(score.value);
+                    cal_probs_by_repeat.push(probs);
+                }
+                Err(_) => cal_ok = false,
+            }
+        }
+    }
+
+    let mean = |v: &[f64]| v.iter().map(|x| x / v.len() as f64).sum::<f64>();
+    let use_cal = cal_ok && (!raw_ok || mean(&cal_losses) < mean(&raw_losses));
+    let (chosen_loss, chosen_value) = if use_cal {
+        (mean(&cal_losses), mean(&cal_values))
+    } else if raw_ok {
+        (mean(&raw_losses), mean(&raw_values))
+    } else {
+        return Err(UndefinedFitness.into());
+    };
+    let scores = vec![mean(&surrogate), chosen_loss, chosen_value];
+    ensure!(scores.iter().all(|x| x.is_finite()), "non-finite CV score");
+
+    let mut bytes = Vec::new();
+    for (rep_idx, oof) in by_repeat.values().enumerate() {
+        for (i, &y) in oof.targets.iter().enumerate() {
+            let row = if use_cal {
+                &cal_probs_by_repeat[rep_idx][i]
+            } else {
+                &oof.raw_probs[i]
+            };
+            bytes.extend(y.to_le_bytes());
+            for &p in row {
+                ensure!(p.is_finite(), "non-finite multiclass prediction");
+                bytes.extend(p.to_le_bytes());
+            }
         }
     }
     Ok(worker::Scores {

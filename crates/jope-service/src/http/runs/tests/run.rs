@@ -80,7 +80,7 @@ fn requested_export_languages_filter_the_actual_native_seed_and_mutations() {
         run_language_filter(&[Language::Rust, Language::Python, Language::Javascript]).unwrap();
     let space = CpuRunSpace {
         allowed: allowed.clone(),
-        binary_roster: None,
+        classification_roster: None,
         #[cfg(all(feature = "failpoints", debug_assertions))]
         pub06_values: None,
     };
@@ -192,7 +192,7 @@ fn binary_run_space_filters_methods_by_export_language() {
     assert_eq!(py_rs_roster.len(), 5);
     let space = CpuRunSpace {
         allowed: allowed.clone(),
-        binary_roster: Some(py_rs_roster),
+        classification_roster: Some(py_rs_roster),
         #[cfg(all(feature = "failpoints", debug_assertions))]
         pub06_values: None,
     };
@@ -229,7 +229,7 @@ async fn live_system_info_and_binary_dry_run_plan_support_explicit_and_auto_task
     let sys_info: SystemInfo = serde_json::from_value(body(sys_reply).await).unwrap();
     assert_eq!(
         sys_info.capabilities.tasks,
-        vec![Task::Regression, Task::Binary]
+        vec![Task::Regression, Task::Binary, Task::Multiclass]
     );
 
     let dataset = register::register(
@@ -278,12 +278,70 @@ async fn live_system_info_and_binary_dry_run_plan_support_explicit_and_auto_task
     assert_eq!(auto_plan.objective.direction, Direction::Minimize);
 
     spec.task = Task::Multiclass;
+    spec.objective = ObjectiveSpec::Name("logloss".into());
     let denied = app
-        .oneshot(request(&spec, "multiclass-denied"))
+        .clone()
+        .oneshot(request(&spec, "multiclass-2class-invalid"))
         .await
         .unwrap();
-    assert_eq!(denied.status(), StatusCode::UNPROCESSABLE_ENTITY);
-    assert_eq!(body(denied).await["code"], "CAPABILITY_UNAVAILABLE");
+    assert_eq!(denied.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(body(denied).await["code"], "INVALID_INPUT");
+
+    let mc_dataset = register::register(
+        engine.store(),
+        multiclass_csv_bytes().as_slice(),
+        &Default::default(),
+    )
+    .unwrap();
+    spec.dataset = mc_dataset.id;
+    spec.target = "species".into();
+    spec.task = Task::Multiclass;
+    spec.objective = ObjectiveSpec::Name("macro_f1".into());
+    let mc_explicit_reply = app
+        .clone()
+        .oneshot(request(&spec, "multiclass-explicit-plan"))
+        .await
+        .unwrap();
+    assert_eq!(mc_explicit_reply.status(), StatusCode::OK);
+    let mc_explicit_plan: Plan = serde_json::from_value(body(mc_explicit_reply).await).unwrap();
+    assert_eq!(mc_explicit_plan.task.value, Task::Multiclass);
+    assert!(!mc_explicit_plan.task.inferred);
+    assert_eq!(mc_explicit_plan.objective.name, "macro_f1");
+    assert_eq!(mc_explicit_plan.objective.direction, Direction::Maximize);
+    assert!(mc_explicit_plan
+        .warnings
+        .iter()
+        .any(|w| w.code == "BASELINE_MEAN"));
+
+    spec.task = Task::Auto;
+    spec.objective = ObjectiveSpec::Name("log_loss".into());
+    let mc_auto_reply = app
+        .oneshot(request(&spec, "multiclass-auto-plan"))
+        .await
+        .unwrap();
+    assert_eq!(mc_auto_reply.status(), StatusCode::OK);
+    let mc_auto_plan: Plan = serde_json::from_value(body(mc_auto_reply).await).unwrap();
+    assert_eq!(mc_auto_plan.task.value, Task::Multiclass);
+    assert!(mc_auto_plan.task.inferred);
+    assert_eq!(mc_auto_plan.objective.name, "logloss");
+    assert_eq!(mc_auto_plan.objective.direction, Direction::Minimize);
+}
+
+fn multiclass_csv_bytes() -> Vec<u8> {
+    let mut csv = String::from("x_num,x_cat,species\n");
+    for i in 0..60 {
+        let cls = i % 3;
+        let center = [-3.0, 0.0, 3.0][cls];
+        let x_num = if i % 13 == 0 {
+            String::new()
+        } else {
+            format!("{:.3}", center + ((i as f64 * 0.37).sin()) * 0.4)
+        };
+        let x_cat = ["alpha_tier", "beta_tier", "gamma_tier"][(cls + usize::from(i % 7 == 0)) % 3];
+        let species = ["alpha", "beta", "gamma"][cls];
+        csv.push_str(&format!("{x_num},{x_cat},{species}\n"));
+    }
+    csv.into_bytes()
 }
 
 #[tokio::test]
@@ -372,9 +430,10 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
             comparators: None,
         };
 
+        let key = format!("bin-start-{objective_name}");
         let identity = RequestIdentity::new(
             "local-engine-owner",
-            &format!("bin-start-{objective_name}"),
+            &key,
             4,
             "/v1/runs",
             None,
@@ -393,7 +452,7 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
 
         let space = CpuRunSpace {
             allowed: run_language_filter(&spec.languages).unwrap(),
-            binary_roster: Some(binary_run_roster(&spec.languages).unwrap()),
+            classification_roster: Some(binary_run_roster(&spec.languages).unwrap()),
             #[cfg(all(feature = "failpoints", debug_assertions))]
             pub06_values: None,
         };
@@ -511,6 +570,250 @@ async fn binary_discovery_finalization_prediction_and_export_roundtrip_end_to_en
                 "Frozen completed CPU binary classification model"
             );
             assert!(!alg.source[0].source.is_empty());
+        }
+    }
+}
+
+#[tokio::test]
+async fn multiclass_discovery_finalization_prediction_and_export_roundtrip_end_to_end() {
+    use crate::discover::r#loop::HeuristicAdmission;
+
+    for (task_mode, objective_name) in [("auto", "macro_f1"), ("multiclass", "logloss")] {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01");
+        std::fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(root).unwrap();
+        let home = directory.path().canonicalize().unwrap();
+        let lease = Arc::new(EngineLock::acquire(&home).unwrap());
+        let store = Arc::new(Store::open(&home).unwrap());
+        let config = Config::load(
+            &home.join("config.toml"),
+            &Default::default(),
+            &Default::default(),
+        )
+        .unwrap();
+        let executable = std::env::current_exe().unwrap();
+        let binary = format!(
+            "{}:{}",
+            env!("CARGO_PKG_VERSION"),
+            hash(&std::fs::read(&executable).unwrap())
+        );
+        let runs = Arc::new(RunService {
+            journal: Arc::new(EventLog::new(Arc::clone(&store))),
+            store: Arc::clone(&store),
+            config: config.clone(),
+            home: home.clone(),
+            executable,
+            binary,
+            activity: Arc::new(EngineActivity::default()),
+            admission: Mutex::new(()),
+            _lease: lease,
+        });
+        let csv_bytes = multiclass_csv_bytes();
+        let dataset =
+            register::register(&store, csv_bytes.as_slice(), &Default::default()).unwrap();
+
+        let spec: RunSpec = serde_json::from_value(json!({
+            "dataset": dataset.id,
+            "target": "species",
+            "task": task_mode,
+            "ignore_columns": [],
+            "test_dataset": null,
+            "split": {"kind": "random", "holdout_fraction": 0.25, "group_column": null, "time_column": null},
+            "objective": objective_name,
+            "effort": "fast",
+            "budget": {"evaluations": "4", "wall_seconds": "60"},
+            "landmarks": "none",
+            "guidance": "heuristic",
+            "languages": ["rust", "python", "javascript"],
+            "require_all_languages": true,
+            "device": "cpu",
+            "seed": "73",
+            "dry_run": false,
+            "plan_digest": null
+        }))
+        .unwrap();
+
+        let mut prepared = runs.prepare(&spec).unwrap();
+        assert_eq!(prepared.public.task.value, Task::Multiclass);
+        assert_eq!(prepared.public.task.inferred, task_mode == "auto");
+        let fit_blob = store.publish_blob(prepared.fit.as_slice()).unwrap();
+        let holdout_blob = store.publish_blob(prepared.holdout.as_slice()).unwrap();
+        prepared.search.matrix_path = store.verified_blob_path(&fit_blob).unwrap();
+        let holdout_path = store.verified_blob_path(&holdout_blob).unwrap();
+
+        let finalization = FinalizationRequest {
+            run_id: prepared.search.run_id.clone(),
+            fit: Partition {
+                path: prepared.search.matrix_path.clone(),
+                sha256: prepared.search.matrix_sha256.clone(),
+                rows: prepared.fit_rows,
+            },
+            holdout: Partition {
+                path: holdout_path,
+                sha256: hash(&prepared.holdout),
+                rows: prepared.holdout_rows,
+            },
+            test: None,
+            refit: Refit::FitHoldout,
+            model_root: home.join("models"),
+            scratch_root: home.join("run-scratch"),
+            max_input_bytes: 16 * 1024 * 1024,
+            max_model_bytes: MODEL_LIMIT,
+            comparators: None,
+        };
+
+        let key = format!("mc-start-{objective_name}");
+        let identity = RequestIdentity::new(
+            "local-engine-owner",
+            &key,
+            4,
+            "/v1/runs",
+            None,
+            &serde_json::to_value(&spec).unwrap(),
+        )
+        .unwrap();
+        let mut discovery = Discovery::start_command(
+            Arc::clone(&store),
+            prepared.search.clone(),
+            Arc::clone(&runs.journal),
+            identity,
+            vec![fit_blob, holdout_blob],
+            prepared.public.warnings,
+        )
+        .unwrap();
+
+        let space = CpuRunSpace {
+            allowed: run_language_filter(&spec.languages).unwrap(),
+            classification_roster: Some(multiclass_run_roster(&spec.languages).unwrap()),
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            pub06_values: None,
+        };
+        let executor = InlineQ1Native {
+            calls: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+        };
+        while discovery.completed().is_none() {
+            discovery
+                .advance(&space, &HeuristicAdmission, &executor, 1, usize::MAX)
+                .unwrap();
+        }
+        let finalizer = Finalizer::with_journal(Arc::clone(&store), Arc::clone(&runs.journal));
+        let receipt = finalizer.finalize(&finalization, &executor).unwrap();
+        assert!(receipt.scores.cv.unwrap().is_finite());
+        assert!(receipt.scores.holdout.unwrap().is_finite());
+        if objective_name == "macro_f1" {
+            assert!(
+                receipt.scores.holdout.unwrap() >= 0.8,
+                "expected separable 3-class holdout macro_f1 >= 0.8, got {}",
+                receipt.scores.holdout.unwrap()
+            );
+        }
+
+        let auth = LocalAuth::new(BearerToken::from_hex(&"ab".repeat(32)).unwrap(), 31234).unwrap();
+        let router = crate::http::router::router_with_state(
+            auth,
+            crate::engine::DatasetState {
+                store: Arc::clone(&store),
+                config,
+                home,
+            },
+            Some(Arc::clone(&runs)),
+        );
+        let pred_req = Request::builder()
+            .method("POST")
+            .uri("/v1/predictions")
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header("idempotency-key", format!("mc-predict-{objective_name}"))
+            .body(Body::from(
+                serde_json::to_vec(&PredictRequest {
+                    model_artifact: receipt.model_artifact.clone(),
+                    dataset: dataset.id.clone(),
+                })
+                .unwrap(),
+            ))
+            .unwrap();
+        let pred_reply = router.clone().oneshot(pred_req).await.unwrap();
+        assert_eq!(pred_reply.status(), StatusCode::OK);
+        let csv_out = String::from_utf8(
+            to_bytes(pred_reply.into_body(), 1 << 20)
+                .await
+                .unwrap()
+                .to_vec(),
+        )
+        .unwrap();
+        let mut lines = csv_out.lines();
+        assert_eq!(lines.next(), Some("prediction,p_alpha,p_beta,p_gamma"));
+        let pred_rows: Vec<&str> = lines.collect();
+        assert_eq!(pred_rows.len(), 60);
+        for line in pred_rows {
+            let parts: Vec<&str> = line.split(',').collect();
+            assert_eq!(parts.len(), 4);
+            assert!(matches!(parts[0], "alpha" | "beta" | "gamma"));
+            let p_a: f64 = parts[1].parse().unwrap();
+            let p_b: f64 = parts[2].parse().unwrap();
+            let p_g: f64 = parts[3].parse().unwrap();
+            assert!(
+                (0.0..=1.0).contains(&p_a)
+                    && (0.0..=1.0).contains(&p_b)
+                    && (0.0..=1.0).contains(&p_g)
+            );
+            assert!((p_a + p_b + p_g - 1.0).abs() <= 1e-6);
+        }
+
+        let export_kind = if objective_name == "macro_f1" {
+            ExportKind::Bundle
+        } else {
+            ExportKind::Model
+        };
+        let export_req = Request::builder()
+            .method("POST")
+            .uri(format!("/v1/runs/{}/exports", receipt.run_id))
+            .header(header::HOST, "127.0.0.1:31234")
+            .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header("idempotency-key", format!("mc-export-{objective_name}"))
+            .body(Body::from(
+                serde_json::to_vec(&ExportRequest {
+                    algorithm_id: receipt.algorithm_id.clone(),
+                    kind: export_kind,
+                    languages: spec.languages.clone(),
+                    require_all_languages: spec.require_all_languages,
+                    refit: Refit::FitHoldout,
+                })
+                .unwrap(),
+            ))
+            .unwrap();
+        let export_reply = router.clone().oneshot(export_req).await.unwrap();
+        assert_eq!(export_reply.status(), StatusCode::OK, "{objective_name}");
+        let manifest: ExportManifest = serde_json::from_value(body(export_reply).await).unwrap();
+        assert_eq!(manifest.model_digest, receipt.model_digest);
+
+        if objective_name == "macro_f1" {
+            for lang in ["python", "rust", "javascript"] {
+                let alg_req = Request::builder()
+                    .method("GET")
+                    .uri(format!(
+                        "/v1/runs/{}/algorithms/{}?language={lang}",
+                        receipt.run_id, receipt.algorithm_id
+                    ))
+                    .header(header::HOST, "127.0.0.1:31234")
+                    .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+                    .body(Body::empty())
+                    .unwrap();
+                let alg_reply = router.clone().oneshot(alg_req).await.unwrap();
+                assert_eq!(
+                    alg_reply.status(),
+                    StatusCode::OK,
+                    "{objective_name} {lang}"
+                );
+                let alg: Algorithm = serde_json::from_value(body(alg_reply).await).unwrap();
+                assert_eq!(
+                    alg.summary,
+                    "Frozen completed CPU multiclass classification model"
+                );
+                assert!(!alg.source[0].source.is_empty());
+            }
         }
     }
 }
