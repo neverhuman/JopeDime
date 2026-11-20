@@ -205,3 +205,122 @@ fn ultra_packet_859_assembles_exact_layout_and_refuses_notarget_packet() {
         .encode_ultra_packet_859(&ultra_cond, &pkt_notarget)
         .is_err());
 }
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DopeCompatManifest {
+    schema: String,
+    engine_release_tag: String,
+    engine_source_commit: String,
+    engine_tag_object: String,
+    preparation_source: String,
+    checkpoint_identity: String,
+    standalone_weights_sha256: String,
+    released_tensors: usize,
+    released_parameters: usize,
+    active_encoder_tensors: usize,
+    active_encoder_parameters: usize,
+    dope512_recipe: String,
+    dope512_subgraph_sha256: String,
+    fused_serving_composite_sha256: String,
+    fused_bundle_dope_safetensors_sha256: String,
+    research_859_schema: String,
+    research_859: DopeCompatResearch859,
+    consumers: DopeCompatConsumers,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DopeCompatResearch859 {
+    schema: String,
+    dim: usize,
+    opt_in: bool,
+    serving_adopted: bool,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DopeCompatConsumers {
+    engine_auto: serde_json::Value,
+    service_explicit_learned: serde_json::Value,
+    appliance_companion: serde_json::Value,
+    carbon_cells: serde_json::Value,
+}
+
+#[test]
+fn dope_compat_manifest_matches_pinned_v130_and_encoder_constants() {
+    use dope_core::mlc_v3::{MLC_V3_EXPECTED_PARAMETERS, MLC_V3_EXPECTED_TENSORS};
+    use starforge::dope_encoder::{
+        FitScope, Head, TrainingInput, DOPE512_RECIPE, DOPE_ULTRA_PACKET_859_SCHEMA,
+        DOPE_WEIGHTS_SHA256,
+    };
+
+    let raw = include_str!("../../../../models/dope-compat.json");
+    let compat: DopeCompatManifest = serde_json::from_str(raw).unwrap();
+    assert_eq!(compat.schema, "jope.dope-compat/v1");
+    assert_eq!(compat.engine_release_tag, "dope-engine-v1.3.0");
+    assert_eq!(
+        compat.engine_source_commit,
+        "cd35d9d0f0a772bea0e1ae2352eb8eb7d34ad09b"
+    );
+    assert_eq!(
+        compat.engine_tag_object,
+        "64d83580b520bd39af16168bbffd943647c9a48a"
+    );
+    assert_eq!(compat.preparation_source, compat.engine_source_commit);
+    assert_eq!(compat.checkpoint_identity, "ReleasedV1");
+    assert_eq!(compat.standalone_weights_sha256, DOPE_WEIGHTS_SHA256);
+    assert_eq!(compat.released_tensors, MLC_V3_EXPECTED_TENSORS);
+    assert_eq!(compat.released_parameters, MLC_V3_EXPECTED_PARAMETERS);
+    assert_eq!(compat.active_encoder_tensors, 40);
+    assert_eq!(compat.active_encoder_parameters, 353_095);
+    assert_eq!(compat.dope512_recipe, DOPE512_RECIPE);
+    assert_eq!(
+        compat.dope512_subgraph_sha256,
+        "aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045"
+    );
+    assert_eq!(
+        compat.fused_serving_composite_sha256,
+        "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    );
+    assert_ne!(
+        compat.standalone_weights_sha256,
+        compat.fused_serving_composite_sha256
+    );
+    assert_ne!(
+        compat.standalone_weights_sha256,
+        compat.fused_bundle_dope_safetensors_sha256
+    );
+    assert_eq!(compat.research_859_schema, DOPE_ULTRA_PACKET_859_SCHEMA);
+    assert_eq!(compat.research_859.schema, DOPE_ULTRA_PACKET_859_SCHEMA);
+    assert_eq!(compat.research_859.dim, DOPE_ULTRA_PACKET_859_DIM);
+    assert!(compat.research_859.opt_in);
+    assert!(!compat.research_859.serving_adopted);
+    assert_eq!(compat.consumers.engine_auto["dope"], "none");
+    assert_eq!(
+        compat.consumers.service_explicit_learned["guidance"],
+        "Guidance::Learned"
+    );
+    assert_eq!(compat.consumers.appliance_companion["product"], "Dope512");
+    assert_eq!(
+        compat.consumers.appliance_companion["policy_context"],
+        "JopeContext512"
+    );
+    assert_eq!(
+        compat.consumers.carbon_cells["free_tier"],
+        "wave0_seed_ranking"
+    );
+    assert_eq!(
+        compat.consumers.carbon_cells["pro_enterprise_tier"],
+        "multi_wave_learned_guidance"
+    );
+
+    let x = (0..12).map(|i| vec![i as f64, 1.0]).collect::<Vec<_>>();
+    let y = (0..12).map(|i| (2 * i) as f64).collect::<Vec<_>>();
+    let ids = (0..12).collect::<Vec<u64>>();
+    let prepared = prepare_table_with_ids(&x, &y, PrepTask::Regression, ids.clone()).unwrap();
+    let input = TrainingInput::numeric(x, y, ids, Head::Regression);
+    let fit_scope = FitScope::from_prepared(&input, &prepared).unwrap();
+    assert_eq!(fit_scope.preparation_source, compat.preparation_source);
+    assert!(include_str!("../../Cargo.toml").contains(&compat.engine_source_commit));
+}

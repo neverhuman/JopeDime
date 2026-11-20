@@ -1,20 +1,20 @@
 use super::*;
 
-struct Fixture {
-    prog_412: Vec<f32>,
-    proj_16: Vec<f32>,
-    tokens: Vec<f32>,
-    token_mask: Vec<f32>,
-    revealed_indices: Vec<i64>,
-    revealed_fitness: Vec<f32>,
-    revealed_gates: Vec<f32>,
-    ctx_feat: Vec<f32>,
-    base_prior_cost: Vec<f32>,
-    sos_prior: Vec<f32>,
+pub(super) struct Fixture {
+    pub(super) prog_412: Vec<f32>,
+    pub(super) proj_16: Vec<f32>,
+    pub(super) tokens: Vec<f32>,
+    pub(super) token_mask: Vec<f32>,
+    pub(super) revealed_indices: Vec<i64>,
+    pub(super) revealed_fitness: Vec<f32>,
+    pub(super) revealed_gates: Vec<f32>,
+    pub(super) ctx_feat: Vec<f32>,
+    pub(super) base_prior_cost: Vec<f32>,
+    pub(super) sos_prior: Vec<f32>,
 }
 
 impl Fixture {
-    fn serving(batch: usize, proposals: usize) -> Self {
+    pub(super) fn serving(batch: usize, proposals: usize) -> Self {
         let candidates = REVEALED + proposals;
         let bn = batch * candidates;
         Self {
@@ -31,7 +31,7 @@ impl Fixture {
         }
     }
 
-    fn inputs(&self, batch: usize, proposals: usize) -> PredictCostsInputs<'_> {
+    pub(super) fn inputs(&self, batch: usize, proposals: usize) -> PredictCostsInputs<'_> {
         PredictCostsInputs {
             batch,
             candidates: REVEALED + proposals,
@@ -252,11 +252,11 @@ fn synthetic_weights(change: impl FnOnce(&mut FixtureParameters)) -> Vec<u8> {
     bytes
 }
 
-fn synthetic_adapter() -> CpuAdapter {
+pub(super) fn synthetic_adapter() -> CpuAdapter {
     CpuAdapter::from_bytes(&synthetic_weights(|_| {})).unwrap()
 }
 
-fn synthetic_fixture(proposals: usize) -> Fixture {
+pub(super) fn synthetic_fixture(proposals: usize) -> Fixture {
     let mut f = Fixture::serving(2, proposals);
     let n = 4 + proposals;
     for b in 0..2 {

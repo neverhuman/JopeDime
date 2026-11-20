@@ -630,8 +630,8 @@ impl H256Stage1ContextEncoder {
                 }
             }
         }
-        for d in 0..32 {
-            mean_32[d] /= mask_sum;
+        for m_val in &mut mean_32 {
+            *m_val /= mask_sum;
         }
         let mut out = [0.0_f32; 64];
         out[..32].copy_from_slice(&mean_32);
@@ -1147,8 +1147,8 @@ impl H256CriticModels {
             let x_row = &cand_feats_64[i * 64..(i + 1) * 64];
             let mut acc_c = self.w_c_full[64];
             let mut acc_g = self.w_g_full[64];
-            for d in 0..64 {
-                let xv = f64::from(x_row[d]);
+            for (d, &xv_f32) in x_row.iter().enumerate().take(64) {
+                let xv = f64::from(xv_f32);
                 acc_c += xv * self.w_c_full[d];
                 acc_g += xv * self.w_g_full[d];
             }
@@ -1157,8 +1157,8 @@ impl H256CriticModels {
 
             let s_row = &sem24[i * 24..(i + 1) * 24];
             let mut dot_sp = 0.0_f64;
-            for d in 0..24 {
-                dot_sp += f64::from(s_row[d]) * self.sp_dir_full[d];
+            for (d, &sv_f32) in s_row.iter().enumerate().take(24) {
+                dot_sp += f64::from(sv_f32) * self.sp_dir_full[d];
             }
             sp_proj[i] = -dot_sp;
         }
@@ -1201,7 +1201,7 @@ impl H256CriticModels {
     }
 
     /// Executes the Round-1 `2+2` active reveal step.
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, clippy::type_complexity)]
     pub fn run_2plus2_active_reveal_step(
         rcost: &[f64],
         h_cost: &[f64],
