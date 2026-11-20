@@ -1,0 +1,188 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "unified-icl-regbin-v2",
+  "bundle_version": "2.0.0",
+  "bucket": "veox-jopedime-models-use2",
+  "published_at": "2026-11-20T00:37:10Z",
+  "signing": "none",
+  "supported_tasks": [
+    "regression",
+    "binary"
+  ],
+  "sealed_inputs_opened": false,
+  "dope_pin": {
+    "git_rev": "15e12aa3dc33851655580f6aa7c9c66353143f23",
+    "weights_sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d"
+  },
+  "lineage": "UnifiedICLRegBin v2.0.0 dual-task (regression + binary classification) foundation model pair (M 25.0M + L 109.1M), providing both Stage 2B FullS3 3-valley soups (4,996 public S3 tables, 0/42,352 official-split matches) and Stage 2A NoArena zero-Arena-exposure checkpoints, conditioned on frozen DOPE v1.1.0.",
+  "files": [
+    {
+      "path": "unified_icl_regbin_M.safetensors",
+      "kind": "weights",
+      "bytes": 99985668,
+      "sha256": "51dcb550184377b8de42a0bb9418f72b5aa7ecc2eba4a127eda8e3edb55815de",
+      "blob": "blobs/sha256/51dcb550184377b8de42a0bb9418f72b5aa7ecc2eba4a127eda8e3edb55815de",
+      "source_checkpoint_sha256": "db519b98df377e29d19840c4a811301e23af46a2eb77f61d4bd969e5b0934eea",
+      "stage": "stage2b_full_s3_soup_3valley",
+      "exposure_regime": "in-corpus",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "unified_icl_regbin_M.safetensors",
+        "component_kind": "model",
+        "sha256": "51dcb550184377b8de42a0bb9418f72b5aa7ecc2eba4a127eda8e3edb55815de",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:51dcb550184377b8de42a0bb9418f72b5aa7ecc2eba4a127eda8e3edb55815de",
+        "redistribution": "internal",
+        "model_lineage": "UnifiedICLRegBin-M v2 (25.0M params) 3-valley soup fine-tuned across 4,996 s3://veox-jopedime-datasets-use2 tables under per-episode distinct random splits (0/42,352 official-split matches) with frozen DOPE v1.1.0 conditioning.",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "unified_icl_regbin_L.safetensors",
+      "kind": "weights",
+      "bytes": 436334908,
+      "sha256": "fcfb119e6f2a7f0d5418e7d98a1560d173b72cdbb998af5681fa140ba86e10ab",
+      "blob": "blobs/sha256/fcfb119e6f2a7f0d5418e7d98a1560d173b72cdbb998af5681fa140ba86e10ab",
+      "source_checkpoint_sha256": "e406cfa6e821a305abf828213b35da460aea428b1bc5d0466446b39e01ad6e1a",
+      "stage": "stage2b_full_s3_soup_3valley",
+      "exposure_regime": "in-corpus",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "unified_icl_regbin_L.safetensors",
+        "component_kind": "model",
+        "sha256": "fcfb119e6f2a7f0d5418e7d98a1560d173b72cdbb998af5681fa140ba86e10ab",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:fcfb119e6f2a7f0d5418e7d98a1560d173b72cdbb998af5681fa140ba86e10ab",
+        "redistribution": "internal",
+        "model_lineage": "UnifiedICLRegBin-L v2 (109.1M params) 3-valley soup fine-tuned across 4,996 s3://veox-jopedime-datasets-use2 tables under per-episode distinct random splits (0/42,352 official-split matches) with frozen DOPE v1.1.0 conditioning.",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "unified_icl_regbin_M_stage2a_noarena.safetensors",
+      "kind": "weights",
+      "bytes": 99985668,
+      "sha256": "96b4b4959109d689f2424d21a50e549760cf05f3433494c548c6832678eb916b",
+      "blob": "blobs/sha256/96b4b4959109d689f2424d21a50e549760cf05f3433494c548c6832678eb916b",
+      "source_checkpoint_sha256": "abc486e8038b6a945a33fa4cd309106e02b1df558bbc8b7f878d587931a8ba8a",
+      "stage": "stage2a_joint_noarena",
+      "exposure_regime": "unseen_arena",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "unified_icl_regbin_M_stage2a_noarena.safetensors",
+        "component_kind": "model",
+        "sha256": "96b4b4959109d689f2424d21a50e549760cf05f3433494c548c6832678eb916b",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:96b4b4959109d689f2424d21a50e549760cf05f3433494c548c6832678eb916b",
+        "redistribution": "internal",
+        "model_lineage": "UnifiedICLRegBin-M v2 Stage 2A checkpoint (25.0M params) trained strictly prior to Arena table absorption (pre_arena_stage_arena_exposures=0).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "unified_icl_regbin_L_stage2a_noarena.safetensors",
+      "kind": "weights",
+      "bytes": 436334908,
+      "sha256": "9cf2bb3f2d56cb7d2fba2a959029c15715c8414b0104b2cdc12a0bc5204c0b33",
+      "blob": "blobs/sha256/9cf2bb3f2d56cb7d2fba2a959029c15715c8414b0104b2cdc12a0bc5204c0b33",
+      "source_checkpoint_sha256": "5eaf852e9449ab764251a46feef4cf32a3b15c9f48e6cc552df23e2290f79f93",
+      "stage": "stage2a_joint_noarena",
+      "exposure_regime": "unseen_arena",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "unified_icl_regbin_L_stage2a_noarena.safetensors",
+        "component_kind": "model",
+        "sha256": "9cf2bb3f2d56cb7d2fba2a959029c15715c8414b0104b2cdc12a0bc5204c0b33",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:9cf2bb3f2d56cb7d2fba2a959029c15715c8414b0104b2cdc12a0bc5204c0b33",
+        "redistribution": "internal",
+        "model_lineage": "UnifiedICLRegBin-L v2 Stage 2A checkpoint (109.1M params) trained strictly prior to Arena table absorption (pre_arena_stage_arena_exposures=0).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "dope.safetensors",
+      "kind": "weights",
+      "bytes": 1782416,
+      "sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+      "blob": "blobs/sha256/0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "dope.safetensors",
+        "component_kind": "encoder",
+        "sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+        "redistribution": "internal",
+        "model_lineage": "Pinned frozen DOPE v1.1.0 MlcV3Model safetensors (dope-core@15e12aa3dc33).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "featurizer_config.json",
+      "kind": "config",
+      "bytes": 533,
+      "sha256": "3ac2b3c82b024117337c26f131a758a84afb33246ff489b38b03d61c4bb35fdc",
+      "blob": "blobs/sha256/3ac2b3c82b024117337c26f131a758a84afb33246ff489b38b03d61c4bb35fdc",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "featurizer_config.json",
+        "component_kind": "config",
+        "sha256": "3ac2b3c82b024117337c26f131a758a84afb33246ff489b38b03d61c4bb35fdc",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:3ac2b3c82b024117337c26f131a758a84afb33246ff489b38b03d61c4bb35fdc",
+        "redistribution": "internal",
+        "model_lineage": "Context-only evaluation-matched featurizer and multi-view inference configuration (jope.unified_regbin_icl.featurizer/v2).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    }
+  ],
+  "notices": [
+    {
+      "path": "docs/notices/jain-governed-models.txt",
+      "text": "Jain-governed model notice\n\nThese frozen artifacts are governed Jain release inputs. They are eligible for the\ndefault model policy but are not certified as open-source or open-weight models.\nRedistribution is permitted only as part of an approved Jain release bundle.\n"
+    }
+  ]
+}

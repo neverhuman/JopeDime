@@ -65,6 +65,17 @@
       "licenses": [
         "LicenseRef-Jain-Internal-Model"
       ]
+    },
+    {
+      "bundle_id": "unified-icl-regbin-v2",
+      "manifest": "models/bundles/unified-icl-regbin-v2.json",
+      "manifest_sha256": "cc04e4ab815b82c9f8df58f239c7ce86ac942386744317cd04fd8de70ae3b677",
+      "s3_key": "bundles/unified-icl-regbin-v2/manifest.json",
+      "files": 6,
+      "bytes": 1074424101,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model"
+      ]
     }
   ]
 }
