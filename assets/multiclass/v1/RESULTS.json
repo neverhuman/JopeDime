@@ -1,11 +1,11 @@
 {
   "schema": "jope.multiclass-benchmark-results/v1",
-  "generated_utc": "2026-11-20T07:28:47Z",
+  "generated_utc": "2026-11-20T08:40:00Z",
   "source_sha": "de71db702d925ba0191b5c1e25ca1c422a486aae",
   "host": "xbabe1",
   "compute_device": "cpu (14 workers x 4 threads, CUDA_VISIBLE_DEVICES=\"\")",
   "sealed_inputs_opened": false,
-  "sealed_data_attestation": "Zero reads, training episodes, or evaluations on s3://jopedime-714044927654-us-east-2-sealed, catalog sealed test.csv files, benchmarks/panel.json sealed_rows, or dev91 SEALED/CONFIRM/FMGAP splits.",
+  "sealed_data_attestation": "Zero reads, training episodes, or evaluations on sealed S3 bucket s3://jopedime-714044927654-us-east-2-sealed (T2/T3), benchmarks/panel.json sealed_rows (sealed_sha256), or dev91 SEALED/CONFIRM/FMGAP evaluation splits. All Arena evaluations run on exact unsubsampled public OpenML fold-0 splits (TabArena v0.1 + BeyondArena, 0 external competitor reruns); generalist corpus training used public T1 s3://veox-jopedime-datasets-use2 tables under distinct random splits (0 / 42,352 official-split matches).",
   "model_bundle_pin": {
     "bundle_id": "unified-icl-regbin-v2",
     "manifest_path": "models/bundles/unified-icl-regbin-v2.json",
@@ -18,25 +18,27 @@
     "split_audit_receipt_sha256": "76cb87c93210b6a2534121c5ce27d08bebade1a7bbb65cfa890097b5d2921301",
     "public_field_definition_sha256": "908d9202a777175ff6a9a8a0f9fff22f479f4b7ae612e8a8f5c203c834aa244c",
     "per_task_scores_csv": "assets/multiclass/v1/per-task-scores.csv",
-    "per_task_scores_csv_sha256": "fc8cd0c86b7e00852bd07225971c451300cb8a5755ba9d00a55454528a0e8933",
+    "per_task_scores_csv_sha256": "529f776c4ca954578469e686df24110963e2d2521b3d23dc0d3a1265ab19f52c",
     "total_episodes_audited": 42352,
     "exact_sanctioned_split_matches": 0,
     "within_run_duplicate_splits": 0,
-    "pre_arena_stage_arena_exposures": 0
+    "pre_arena_stage_arena_exposures": 0,
+    "c2_classification_screen_sha256": "3fcd1881ea032441b6e79f4897f4229126009b1817b929cd75e329fb1bd77dbc"
   },
   "regimes": {
     "unseen": {
-      "definition": "Evaluated tables absent from the model's training corpus (0 exposures, 0 pretrained task weights).",
+      "definition": "Zero exposures to the evaluated tables or any C2 S3_CATALOG counterpart (0 rows, 0 splits, 0 multiclass supervision).",
       "models": [
-        "jopedime native CPU multiclass roster + cross-fitted Temperature Scaling (synthetic/multiclass-10 committed suite & TabArena_multiclass 8 tasks)",
-        "UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR (One-vs-Rest + Train-OOF Temperature on TabArena_multiclass 8 tasks, pre_arena_stage_arena_exposures = 0)"
+        "jopedime_native_multiclass_auto (jopedime CLI multiclass roster + cross-fitted Temperature Scaling on 10 committed synthetic/multiclass splits & all 8/8 TabArena_multiclass splits; 0 pretrained weights)",
+        "UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR on the 4 C2-clean TabArena_multiclass tasks with 0 S3_CATALOG copies/flags (SDSS17, anneal, splice, students_dropout_and_academic_success)"
       ]
     },
     "in-corpus": {
-      "definition": "Evaluated tables included in the 4,996-table generalist S3 corpus under per-episode distinct random regression/binary splits (0/42,352 official-split matches, 0 multiclass objective supervision during pretraining, 0 per-table specialist fine-tuning).",
+      "definition": "Evaluated tables (or older public T1 S3_CATALOG multi_label copies reduced to binary in Stage 2A) included in random-split regression/binary pretraining (0/42,352 official-split matches, 0 multiclass objective supervision, 0 per-table specialist fine-tuning).",
       "models": [
-        "UnifiedICLRegBin_M_v2_FullS3_OvR",
-        "UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid"
+        "UnifiedICLRegBin_M_v2_FullS3_OvR (all 33/33 Arena multiclass tasks: 8 TabArena + 25 BeyondArena)",
+        "UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid (all 33/33 Arena multiclass tasks)",
+        "UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR on the 4 TabArena_multiclass tasks with older S3_CATALOG copies/flags in C2 screen (MIC, hiva_agnostic, maternal_health_risk, website_phishing)"
       ]
     },
     "recall": {
@@ -1758,6 +1760,122 @@
           "ci95_high": 858.68,
           "n_tasks": 8
         }
+      }
+    }
+  },
+  "stage2a_c2_regime_decomposition": {
+    "unseen_c2_clean_4": {
+      "n_tasks": 4,
+      "tasks": [
+        "SDSS17",
+        "anneal",
+        "splice",
+        "students_dropout_and_academic_success"
+      ],
+      "mean_logloss": 0.33415,
+      "median_logloss": 0.2382,
+      "mean_macro_f1": 0.78194,
+      "median_macro_f1": 0.80184,
+      "mean_brier": 0.17953,
+      "mean_accuracy": 0.87586
+    },
+    "in_corpus_c2_catalog_overlap_4": {
+      "n_tasks": 4,
+      "tasks": [
+        "MIC",
+        "hiva_agnostic",
+        "maternal_health_risk",
+        "website_phishing"
+      ],
+      "mean_logloss": 0.46953,
+      "median_logloss": 0.53617,
+      "mean_macro_f1": 0.44041,
+      "median_macro_f1": 0.45827,
+      "mean_brier": 0.23459,
+      "mean_accuracy": 0.84411
+    }
+  },
+  "s3_benchmark_publication": {
+    "bucket": "veox-jopedime-learning-use2",
+    "campaign": "multiclass-v1-arena33-20261120",
+    "read_id": "multiclass-v1-arena33-synth10-20261120",
+    "manifest_key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/reads/multiclass-v1-arena33-synth10-20261120/manifests/b723121d2f3b05599b60d4f399ad5bef9e73ccc9268c8b79f36641779e91c321.json",
+    "manifest_sha256": "b723121d2f3b05599b60d4f399ad5bef9e73ccc9268c8b79f36641779e91c321",
+    "manifest_bytes": 39344,
+    "commit_key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/reads/multiclass-v1-arena33-synth10-20261120/COMMIT.b723121d2f3b0559.json",
+    "commit_sha256": "34c2aca5c582c7543163d3a4b0cd4d60c23c1992c8f86d93f9e4245735ad60bf",
+    "commit_bytes": 2463,
+    "n_scored_records": 92,
+    "n_total_objects": 102,
+    "total_bytes": 233748,
+    "derived_tables": {
+      "evaluations": {
+        "schema": "jope.table.evaluations/v1",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/tables/evaluations/e97346ecfeb32298810c35326c48870a20b4913f15628f0e101e5fb6585c35aa.parquet",
+        "sha256": "e97346ecfeb32298810c35326c48870a20b4913f15628f0e101e5fb6585c35aa",
+        "bytes": 20606,
+        "n_rows": 92
+      },
+      "fold_metrics": {
+        "schema": "jope.table.fold_metrics/v1",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/tables/fold_metrics/7be0f46f032e38161686ad4a1d8af628fb713f00e058092792d95ab4020ef8c1.parquet",
+        "sha256": "7be0f46f032e38161686ad4a1d8af628fb713f00e058092792d95ab4020ef8c1",
+        "bytes": 13683,
+        "n_rows": 368
+      },
+      "elo_fits": {
+        "schema": "jope.table.elo_fits/v1",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/tables/elo_fits/2c5fa47725ca6428f2e11df9a648a34ba71e2e1410018121de567bdbd7a51b9e.parquet",
+        "sha256": "2c5fa47725ca6428f2e11df9a648a34ba71e2e1410018121de567bdbd7a51b9e",
+        "bytes": 11132,
+        "n_rows": 202
+      },
+      "head_to_head": {
+        "schema": "jope.table.head_to_head/v1",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/tables/head_to_head/3339dd906611c576e1e1bcc87d3f10bf22e729c9d953aa9a4079bf321c71d792.parquet",
+        "sha256": "3339dd906611c576e1e1bcc87d3f10bf22e729c9d953aa9a4079bf321c71d792",
+        "bytes": 2915,
+        "n_rows": 0
+      },
+      "methods": {
+        "schema": "jope.table.methods/v1",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/tables/methods/fa8c8bb297785662e62c0ef963554dcdc0730d80f7c79371a7fea74821e5eb95.parquet",
+        "sha256": "fa8c8bb297785662e62c0ef963554dcdc0730d80f7c79371a7fea74821e5eb95",
+        "bytes": 4475,
+        "n_rows": 4
+      }
+    },
+    "files": [
+      {
+        "name": "per-task-scores.csv",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/reads/multiclass-v1-arena33-synth10-20261120/files/sha256/529f776c4ca954578469e686df24110963e2d2521b3d23dc0d3a1265ab19f52c.csv",
+        "sha256": "529f776c4ca954578469e686df24110963e2d2521b3d23dc0d3a1265ab19f52c",
+        "bytes": 22321
+      },
+      {
+        "name": "CORE_RESULTS.json",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/reads/multiclass-v1-arena33-synth10-20261120/files/sha256/e74be91a3d2f610b6943fbaee0ffa3940c45c061aa57a4d3a43c04616a77470a.json",
+        "sha256": "e74be91a3d2f610b6943fbaee0ffa3940c45c061aa57a4d3a43c04616a77470a",
+        "bytes": 50126
+      },
+      {
+        "name": "SPLIT_AUDIT_RECEIPT_V2.json",
+        "key": "experiments/public-benchmark-evaluations/v1/campaigns/multiclass-v1-arena33-20261120/reads/multiclass-v1-arena33-synth10-20261120/files/sha256/76cb87c93210b6a2534121c5ce27d08bebade1a7bbb65cfa890097b5d2921301.json",
+        "sha256": "76cb87c93210b6a2534121c5ce27d08bebade1a7bbb65cfa890097b5d2921301",
+        "bytes": 2402
+      }
+    ],
+    "commit_version_id": "6L0_aOJlIJc8vF4HS2DS56sjdkC_qfpv",
+    "datasets_collections": {
+      "collections/beyondarena-multiclass/v1.json": {
+        "bytes": 9580,
+        "member_count": 25,
+        "sha256": "11de322bb6e2d621d1b8e88bc44f058af2971d7f759bf95d7f43a02a399c05e7"
+      },
+      "collections/tabarena-multiclass/v1.json": {
+        "bytes": 7811,
+        "member_count": 8,
+        "sha256": "a0e92616005373caf8233261fc5f4aa1a81e582a9620437b48647dbaf93f4ad8"
       }
     }
   }
