@@ -144,6 +144,11 @@ pub(crate) fn apply_provider(
             ProposeOutcome::Skipped("--policy skip requested".to_owned()),
         ));
     }
+    if base_seeding.seeds_file_sha256.is_some() || options.seed_genomes.is_some() {
+        anyhow::bail!(
+            "--seed-genomes cannot be combined with CutSeedProvider; seeds_file_sha256 is already bound"
+        );
+    }
     ensure!(
         (1..=seeds::MAX_SEED_LIMIT).contains(&options.seed_limit),
         "the seed limit must be 1..={}, got {}",
@@ -177,6 +182,9 @@ pub(crate) fn apply_provider(
             .map(|g| (g.genome.clone(), FROM_SEED_PROVIDER)),
     );
     if effective_limit == 0 {
+        if options.policy == Policy::Require {
+            anyhow::bail!("--policy require: budget permits 0 generation-0 seeds");
+        }
         let mut seeding = base_seeding;
         seeding.offered = combined.len() as u64;
         return Ok((
@@ -186,6 +194,9 @@ pub(crate) fn apply_provider(
         ));
     }
     let admitted = seeds::admit_up_to(&combined, effective_limit)?;
+    if options.policy == Policy::Require && admitted.seeds.is_empty() {
+        anyhow::bail!("--policy require: CutSeedProvider admitted 0 generation-0 seeds");
+    }
     let seeding = receipt::Seeding {
         offered: admitted.offered as u64,
         seeds: admitted
@@ -198,7 +209,7 @@ pub(crate) fn apply_provider(
             })
             .collect(),
         parent_receipt_sha256: base_seeding.parent_receipt_sha256,
-        seeds_file_sha256: base_seeding.seeds_file_sha256.or(provider_sha),
+        seeds_file_sha256: provider_sha,
     };
     let summary = format!(
         "seed_provider proposed {} genome(s); {} seed(s) admitted to generation 0",

@@ -11,15 +11,34 @@
   "active_encoder_tensors": 40,
   "active_encoder_parameters": 353095,
   "dope512_recipe": "dope-mlcv3-high-f32-descriptor256-task128-dist128/v1",
-  "dope512_subgraph_sha256": "aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045",
+  "evaluator_cargo_lock_subgraph_sha256": "aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045",
+  "evaluator_identity_digest": "2d586706d326766231ff64be8d1cf8865639872761f8ae9ffe694eab1d8bcd59",
   "fused_serving_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
   "fused_bundle_dope_safetensors_sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
-  "research_859_schema": "jope.dope-ultra-packet-859/v1",
+  "research_schemas": [
+    "jope.dope-research-view-629/v1",
+    "jope.dope-packet-v1/v1",
+    "jope.dope-ultra-packet-859/v1"
+  ],
   "research_859": {
     "schema": "jope.dope-ultra-packet-859/v1",
     "dim": 859,
     "opt_in": true,
     "serving_adopted": false
+  },
+  "contracts": {
+    "ranker_history": "jope.ranker-history-contract/v1",
+    "h256_token_layout": {
+      "schema": "jope.h256-token-layout/v1",
+      "path": "research/flywheel_selfplay/h473_ultra_packet_retrieval_and_audits/token_layout.json",
+      "sha256": "8d13526abce20cb68c9fd98a2de066a27f4086504f52ce9006850bdf49201e18"
+    }
+  },
+  "exposure": {
+    "upstream_schema": "dope.exposure-inventory/v1",
+    "dl_val91_exposure_class": "in_corpus",
+    "dl_val91_family_overlap": "10/19",
+    "dl_val91_view_overlap": "50/91"
   },
   "consumers": {
     "engine_auto": {
@@ -50,8 +69,18 @@
     },
     "carbon_cells": {
       "bundle": "r882",
-      "free_tier": "wave0_seed_ranking",
-      "pro_enterprise_tier": "multi_wave_learned_guidance"
+      "free_tier": "wave0_seed_only",
+      "pro_enterprise_tier": "multi_wave_learned"
+    },
+    "unified_icl_regbin_v2": {
+      "bundle": "unified-icl-regbin-v2",
+      "manifest": "models/bundles/unified-icl-regbin-v2.json",
+      "tasks": [
+        "regression",
+        "binary"
+      ],
+      "dope_git_rev": "15e12aa3dc33851655580f6aa7c9c66353143f23",
+      "dope_safetensors_sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d"
     }
   }
 }

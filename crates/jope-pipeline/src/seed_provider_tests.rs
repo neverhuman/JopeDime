@@ -205,3 +205,65 @@ fn provider_receives_only_fit_rows_and_is_invariant_to_holdout_poisoning() {
         .iter()
         .any(|s| s.name == "propose" && s.status == "passed"));
 }
+
+struct EmptyProvider;
+
+impl CutSeedProvider for EmptyProvider {
+    fn propose_seeds(
+        &self,
+        _fit_cuts: &[FitCutView<'_>],
+        _limit: usize,
+    ) -> Result<Vec<SeedGenome>> {
+        Ok(Vec::new())
+    }
+}
+
+#[test]
+fn seed_provider_refuses_seed_genomes_conflict_and_empty_require_policy() {
+    let tmp = tempfile::tempdir().unwrap();
+    let seeds_path = tmp.path().join("seeds.json");
+    let g = "(pipe X (standardize) (ridge))";
+    seeds::write(
+        &seeds_path,
+        &seeds::SeedsFile::new(
+            None,
+            vec![SeedGenome {
+                genome: g.to_owned(),
+                program_sha256: sha256_hex(g.as_bytes()),
+                bank_entry_sha256: None,
+                receipt_sha256: None,
+            }],
+        ),
+    )
+    .unwrap();
+
+    // 1. Refuse simultaneous --seed-genomes and active CutSeedProvider.
+    let prov = RecordingFitProvider::new();
+    let conflict_opts = RunOptions {
+        budget: Budget {
+            evaluations: 12,
+            seconds: 300,
+        },
+        languages: vec![Language::Rust],
+        policy: Policy::Auto,
+        seed_genomes: Some(seeds_path),
+        clock: Clock::Frozen,
+        source_commit: Some("81dd03702a846d652f15a1f56480d8f074bddec4".into()),
+        ..RunOptions::new(committed_dataset(), tmp.path().join("conflict-run"))
+    };
+    assert!(run_with_seed_provider(&conflict_opts, Some(&prov)).is_err());
+
+    // 2. Under Policy::Require, 0 admitted seeds MUST fail closed.
+    let require_empty_opts = RunOptions {
+        budget: Budget {
+            evaluations: 12,
+            seconds: 300,
+        },
+        languages: vec![Language::Rust],
+        policy: Policy::Require,
+        clock: Clock::Frozen,
+        source_commit: Some("81dd03702a846d652f15a1f56480d8f074bddec4".into()),
+        ..RunOptions::new(committed_dataset(), tmp.path().join("require-empty"))
+    };
+    assert!(run_with_seed_provider(&require_empty_opts, Some(&EmptyProvider)).is_err());
+}

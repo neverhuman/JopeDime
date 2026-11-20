@@ -79,6 +79,29 @@ impl PredictCostsInputs<'_> {
                 actual: self.candidates,
             });
         }
+        self.validate_slice_lengths()
+    }
+
+    /// Check flattened dimensions for `MaskedPresenceV1` (`1 <= candidates <= 4096`).
+    pub fn validate_shapes_masked(&self) -> std::result::Result<(), InputShapeError> {
+        if self.batch == 0 {
+            return Err(InputShapeError {
+                field: "batch",
+                expected: 1,
+                actual: 0,
+            });
+        }
+        if !(1..=4096).contains(&self.candidates) {
+            return Err(InputShapeError {
+                field: "candidates",
+                expected: 1,
+                actual: self.candidates,
+            });
+        }
+        self.validate_slice_lengths()
+    }
+
+    fn validate_slice_lengths(&self) -> std::result::Result<(), InputShapeError> {
         let bn = self.batch.saturating_mul(self.candidates);
         let expected = [
             (

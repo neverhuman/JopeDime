@@ -1,6 +1,6 @@
-//! Presence-masked history contract (`DV-02`) for `CpuAdapter`, eliminating
-//! artificial Wave-0 history values while preserving exact `0-ULP` parity when
-//! all four history slots are present.
+//! Presence-masked history contract (`DV-02`) for `CpuAdapter`, matching Python
+//! `FlywheelBlockFormerAdapterNet` (`MaskedPresenceV1`) across `K_rev = 0..=4`
+//! while preserving exact `0-ULP` parity with `predict_costs` at `[true; 4]`.
 
 use super::*;
 use serde::{Deserialize, Serialize};
@@ -21,20 +21,22 @@ pub enum HistoryMode {
     MaskedPresenceV1,
 }
 
-pub(super) type ActiveSlot = (usize, usize, f32, f32);
+pub(super) type ActiveSlot = (usize, f32, f32);
 
 impl CpuAdapter {
     /// Evaluate ranker candidate costs under an explicit `[batch * REVEALED]` slot-presence mask.
     ///
     /// Absent slots (`history_present[b * 4 + j] == false`) never read `revealed_indices`,
-    /// `revealed_fitness`, or `revealed_gates`. When all four slots of a batch item are `true`,
-    /// the computation is bit-for-bit (`0 ULP`) identical to [`CpuAdapter::predict_costs`].
+    /// `revealed_fitness`, or `revealed_gates`. Active slots are compacted to `0..K_rev` so
+    /// `K_rev = 0` skips history attention/trajectory delta heads cleanly, `1 <= K_rev <= 3`
+    /// is invariant to which physical slots hold the observations, and `[true; 4]` with zero
+    /// `base_prior_cost` is bit-for-bit (`0 ULP`) identical to [`CpuAdapter::predict_costs`].
     pub fn predict_costs_with_history_mask(
         &self,
         inputs: PredictCostsInputs<'_>,
         history_present: &[bool],
     ) -> Result<PredictedCosts> {
-        inputs.validate_shapes()?;
+        inputs.validate_shapes_masked()?;
         ensure!(
             history_present.len() == inputs.batch * REVEALED,
             "history_present has {} elements; expected {}",
@@ -49,6 +51,7 @@ impl CpuAdapter {
             ("prog_412", inputs.prog_412),
             ("proj_16", inputs.proj_16),
             ("tokens", inputs.tokens),
+            ("base_prior_cost", inputs.base_prior_cost),
         ] {
             ensure!(values.iter().all(|v| v.is_finite()), "non-finite {name}");
         }
@@ -60,10 +63,9 @@ impl CpuAdapter {
             inputs
                 .ctx_feat
                 .iter()
-                .chain(inputs.base_prior_cost)
                 .chain(inputs.sos_prior)
                 .all(|v| *v == 0.0),
-            "F12 context and priors must be zero"
+            "F12 context and sos_prior must be zero"
         );
 
         let mut per_batch_active: Vec<Vec<ActiveSlot>> = Vec::with_capacity(inputs.batch);
@@ -85,10 +87,10 @@ impl CpuAdapter {
                 );
                 let r = idx as usize;
                 ensure!(
-                    active.iter().all(|(_, prev_r, _, _)| *prev_r != r),
+                    active.iter().all(|&(prev_r, _, _)| prev_r != r),
                     "invalid revealed indices"
                 );
-                active.push((slot_j, r, f, g));
+                active.push((r, f, g));
             }
             per_batch_active.push(active);
         }
@@ -102,20 +104,34 @@ impl CpuAdapter {
                 total.iter().chain(&anchor).all(|v| v.is_finite()),
                 "adapter produced non-finite costs"
             );
-            let kl = if active.len() == REVEALED {
-                proposal_kl(&total[REVEALED..], &anchor[REVEALED..])
+            let kl = if active.len() == REVEALED && inputs.candidates > REVEALED {
+                if inputs.candidates - REVEALED <= 1 {
+                    0.0
+                } else {
+                    proposal_kl(&total[REVEALED..], &anchor[REVEALED..])
+                }
             } else if active.is_empty() {
-                proposal_kl(&total, &anchor)
+                if total.len() <= 1 {
+                    0.0
+                } else {
+                    proposal_kl(&total, &anchor)
+                }
             } else {
-                let mut prop_total = Vec::with_capacity(inputs.candidates - active.len());
-                let mut prop_anchor = Vec::with_capacity(inputs.candidates - active.len());
+                let mut prop_total =
+                    Vec::with_capacity(inputs.candidates.saturating_sub(active.len()));
+                let mut prop_anchor =
+                    Vec::with_capacity(inputs.candidates.saturating_sub(active.len()));
                 for c in 0..inputs.candidates {
-                    if active.iter().all(|(_, r, _, _)| *r != c) {
+                    if active.iter().all(|&(r, _, _)| r != c) {
                         prop_total.push(total[c]);
                         prop_anchor.push(anchor[c]);
                     }
                 }
-                proposal_kl(&prop_total, &prop_anchor)
+                if prop_total.len() <= 1 {
+                    0.0
+                } else {
+                    proposal_kl(&prop_total, &prop_anchor)
+                }
             };
             proposal_kl_to_anchor.push(kl);
             total_cost.extend(total);
@@ -139,7 +155,8 @@ impl CpuAdapter {
         let n = inputs.candidates;
         let prog = &inputs.prog_412[b * n * 412..(b + 1) * n * 412];
         let proj = &inputs.proj_16[b * n * 16..(b + 1) * n * 16];
-        let (anchor, anchor_prior) = self.anchor_masked(prog, proj, active)?;
+        let base_prior = &inputs.base_prior_cost[b * n..(b + 1) * n];
+        let (anchor, anchor_prior) = self.anchor_masked(prog, proj, base_prior, active)?;
         let raw_tokens = Tensor::from_vec(
             inputs.tokens[b * 320..b * 320 + 320].to_vec(),
             (10, 32),
@@ -208,25 +225,31 @@ impl CpuAdapter {
             )?,
         )?;
         let mm = centered_scaled(&mm_raw, self.scalar("mm_prior_scale")?.tanh());
+        if active.is_empty() {
+            let total = (0..n).map(|i| anchor[i] + mm[i]).collect();
+            return Ok((total, anchor));
+        }
+
+        let k_rev = active.len();
         let eff: Vec<f32> = anchor_prior.iter().zip(&mm).map(|(a, m)| a + m).collect();
         let qv = flat(&q)?;
         let qnorm = normalized_rows(&qv, 32, 1e-8);
         let capped: Vec<f32> = active
             .iter()
-            .map(|&(_, _, f, g)| if g > 0.5 { f } else { f.min(2.5) })
+            .map(|&(_, f, g)| if g > 0.5 { f } else { f.min(2.5) })
             .collect();
         let residual: Vec<f32> = active
             .iter()
             .enumerate()
-            .map(|(k, &(_, r, _, _))| capped[k] / SCALE - eff[r])
+            .map(|(k, &(r, _, _))| capped[k] / SCALE - eff[r])
             .collect();
         let sem_scale = softplus(self.scalar("sem_kernel_scale_raw")?);
         let emb_scale = softplus(self.scalar("emb_kernel_scale_raw")?);
         let w0 = softplus(self.scalar("null_kernel_w0_raw")?) + 0.15;
         let mut sem_adj = Vec::with_capacity(n);
         for i in 0..n {
-            let mut distances = Vec::with_capacity(active.len());
-            for (k, &(_, r, _, _)) in active.iter().enumerate() {
+            let mut distances = Vec::with_capacity(k_rev);
+            for (k, &(r, _, _)) in active.iter().enumerate() {
                 let cos_sem =
                     dot(&sem[i * 24..i * 24 + 24], &sem[r * 24..r * 24 + 24]).clamp(-1.0, 1.0);
                 let cos_emb =
@@ -243,44 +266,32 @@ impl CpuAdapter {
             }
             sem_adj.push(num / (w0 + den));
         }
-        let mut history = vec![0.0_f32; REVEALED * 60];
-        let mut traj_mask = [1.0_f32, 0.0, 0.0, 0.0, 0.0];
-        for (k, &(slot_j, r, f, g)) in active.iter().enumerate() {
-            traj_mask[1 + slot_j] = 1.0;
-            let dst = &mut history[slot_j * 60..(slot_j + 1) * 60];
-            dst[..24].copy_from_slice(&sem[r * 24..r * 24 + 24]);
-            dst[24..56].copy_from_slice(&qv[r * 32..r * 32 + 32]);
-            dst[56..60].copy_from_slice(&[residual[k], f / SCALE, g, slot_j as f32 / 64.0]);
+        let mut history = Vec::with_capacity(k_rev * 60);
+        for (k, &(r, f, g)) in active.iter().enumerate() {
+            history.extend_from_slice(&sem[r * 24..r * 24 + 24]);
+            history.extend_from_slice(&qv[r * 32..r * 32 + 32]);
+            history.extend_from_slice(&[residual[k], f / SCALE, g, k as f32 / 64.0]);
         }
         let history = self
             .norm(
                 &self.linear(
-                    &Tensor::from_vec(history, (4, 60), &self.device)?,
+                    &Tensor::from_vec(history, (k_rev, 60), &self.device)?,
                     "hist_token_proj.0",
                 )?,
                 "hist_token_proj.1",
             )?
             .silu()?;
         let null = self.p("null_hist_token").reshape((1, 32))?;
-        let key_mask = if active.len() == REVEALED {
-            None
-        } else {
-            Some(&traj_mask[..])
-        };
         let attn = self.attention(
             &q,
             &Tensor::cat(&[&null, &history], 0)?,
             "traj_cross_attn",
-            key_mask,
+            None,
         )?;
-        let best = if active.is_empty() {
-            0.0
-        } else {
-            capped
-                .iter()
-                .map(|f| f / SCALE)
-                .fold(f32::INFINITY, f32::min)
-        };
+        let best = capped
+            .iter()
+            .map(|f| f / SCALE)
+            .fold(f32::INFINITY, f32::min);
         let extra: Vec<f32> = (0..n).flat_map(|i| [eff[i], sem_adj[i], best]).collect();
         let raw = flat(
             &self.linear(
