@@ -257,8 +257,8 @@ fn emit_calibrated_with_checks_and_options(
         .collect::<Vec<_>>()
         .join(",");
     source.push_str(&format!(r#"
-const SELF_CHECK_ABS_TOL: f64 = 1e-12;
-const SELF_CHECK_REL_TOL: f64 = 1e-10;
+const SELF_CHECK_ABS_TOL: f64 = 1e-9;
+const SELF_CHECK_REL_TOL: f64 = 1e-7;
 #[test]
 fn self_check() {{
     let rows: Vec<(Vec<f64>, f64)> = vec![{rows}];

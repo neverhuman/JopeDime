@@ -574,3 +574,25 @@ that reports `client`, `engine`, `mcp` and `embedded`, with `cloud-tls` for HTTP
 licence and third-party notices only), a 1,932 B manifest, a 64 B signature and the 128 B
 footer, 23,109,726 B in all. The native-only budget moves to those measurements; tolerance
 stays 5%. NEEDED stays `libc`, `libgcc_s`, `libm`. No release was signed or published.
+
+## A24 — Rebaseline `fixture` (`dist-ci`) after binary classification series (`#2385`–`#2390`)
+
+**Problem.** Full `main` CI (`ci.yml` run `44634602104`, job `135958059422` at
+`66c8dc0aa1ab306252cc36a26494c39f8f9a8ea4`) passed dependency fence, ELF `DT_NEEDED`
+(`libc.so.6`, `libgcc_s.so.1`, `libm.so.6`), and third-party notices (`148 crates, 102 distinct
+texts`), then refused the A21 5% `fixture` budget (`8,144,648` / `8,268,941` B; 5% ceiling
+`8,551,880` / `8,682,388` B) during `pack and sign (development key)` after the binary
+classification runtime/service/CLI/Platt-export PR series (`#2385`, `#2386`, `#2388`, `#2390`)
+landed on `main`.
+
+**Measurement.** Building `deploy/appliance/build.sh --profile fixture --cargo-profile dist-ci`
+on xbabe2 (`x86_64-unknown-linux-gnu`) from `bf47ee09c49fc1613f194d528843c1d354d62591` with
+`jope-runtime::math_pipeline::select_pipeline_self_check_rows` measures:
+
+- `base_executable_bytes = 8,600,296` (`SHA-256: 8579c94d2f0f31c899246a0a64693a212dfad08544c2d0968e2e70371db42ca1`), `+455,648` B (`+5.59%`) over A21's `8,144,648` B.
+- `final_executable_bytes = 8,722,240` (`SHA-256: 4c5afd8ab50458a49064157b8b7a4d7e7ec11bb365563820532893629ca08eca`), `+453,299` B (`+5.48%`) over A21's `8,268,941` B.
+- The three synthetic fixture model entries (`103,220` raw bytes / `86,376` stored bytes: `693d3a5f…`, `5284fbb3…`, `3d4d3050…`) are unchanged, `DT_NEEDED` remains `libc.so.6`, `libgcc_s.so.1`, `libm.so.6`, `gpu_library_bytes` is zero, and `jope-dist verify` passes (`ok = true`).
+
+Only `[profile.fixture]` in `deploy/appliance/size-budgets.toml` updates to `8,600,296` /
+`8,722,240` B, retaining `tolerance_percent = 5`. No native-only, fused, GPU, or release budget,
+REL-07 ceiling, dependency policy, or release signing key changes.

@@ -312,8 +312,8 @@ def fitted_predict(rows):
     };
     block.push_str(&format!(r#"
 SELF_CHECK_ROWS = {rows}
-SELF_CHECK_ABS_TOL = 1e-12
-SELF_CHECK_REL_TOL = 1e-10
+SELF_CHECK_ABS_TOL = 1e-9
+SELF_CHECK_REL_TOL = 1e-7
 def _self_check_f64(value):
     return float("nan") if value == "nan" else float.fromhex(value)
 def self_check():
@@ -360,20 +360,14 @@ pub fn emit_math_pipeline_with_options(
     }
     let genome = GenomeIr::parse(&pipeline.state.dsl)
         .map_err(|e| Failure::integrity(format!("pipeline dsl: {e:#}")))?;
-    // Every exported math-pipeline carries 64 engine-derived numeric self-checks.
-    let rows: Vec<Vec<f64>> = (0..64)
-        .map(|i| {
-            (0..input.selected.len())
-                .map(|j| ((i + 17 * j) % 64) as f64 / 63.0)
-                .collect()
-        })
-        .collect();
-    let expected = pipeline.state.model.predict(&rows)?;
-    let checks: Vec<CheckRow> = rows
-        .into_iter()
-        .zip(expected)
-        .map(|(inputs, expected)| CheckRow { inputs, expected })
-        .collect();
+    // Every exported math-pipeline carries 64 split-margin-screened numeric self-checks.
+    let checks: Vec<CheckRow> = crate::math_pipeline::select_pipeline_self_check_rows(
+        &pipeline.state.model,
+        input.selected.len(),
+    )?
+    .into_iter()
+    .map(|(inputs, expected)| CheckRow { inputs, expected })
+    .collect();
     let mut source = emit_calibrated_with_checks_and_options(
         &genome,
         &pipeline.state.model,

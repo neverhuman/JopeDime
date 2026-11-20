@@ -43,9 +43,9 @@ tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 8144648
-final_executable_bytes = 8268941
-note = "A21: measured Linux dist-ci development fixture; pre-CLI main already8144488/8267461B, candidate adds160B code and1480B compressed notices; models unchanged,5% tolerance retained. See measurements/browser-predict-fixture-20261102.json."
+base_executable_bytes = 8600296
+final_executable_bytes = 8722240
+note = "A24: measured Linux dist-ci development fixture after binary classification series (#2385-#2390) and split-margin self-check screening; +455,648 B code / +453,299 B package over A21, fixture models unchanged (103,220 raw / 86,376 stored B), NEEDED libc/libgcc_s/libm only, 5% tolerance retained."
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded,engine,mcp,client,cloud-tls`.
 # Rebaselined 2026-11-04 (amendment A23): the public edition is now the released CLI with its
