@@ -66,6 +66,69 @@ fn platt_fixture() -> calibration_platt::Calibration {
         .calibration
 }
 
+fn multiclass_fixture() -> (FittedModel, feat_math::advanced_v3::RawTable) {
+    use crate::{api, budget::Budget, fitted::CreatedBy, limits::Limits, table, task};
+    let mut csv = String::from("x,y\n");
+    for i in 0..45 {
+        let cls = match i % 3 {
+            0 => "alpha",
+            1 => "beta",
+            _ => "gamma",
+        };
+        csv.push_str(&format!("{},{cls}\n", (i % 9) as f64 - 4.0));
+    }
+    let parsed = table::parse_csv(csv.as_bytes(), &Limits::default()).unwrap();
+    let training = table::training(
+        &parsed,
+        "y",
+        task::TaskChoice::Fixed(task::TaskKind::Multiclass),
+        &Limits::default(),
+    )
+    .unwrap();
+    let fitted = api::fit(
+        &training,
+        &api::FitOptions {
+            method: "multiclass_ovr_logistic".into(),
+            ..Default::default()
+        },
+        &Budget::new(None, 1),
+        &parsed.sha256,
+        CreatedBy::default(),
+    )
+    .unwrap()
+    .fitted;
+    let query = table::parse_csv(b"x\n-3.5\n0.0\n2.5\n4.0\n", &Limits::default()).unwrap();
+    (
+        fitted,
+        table::prediction(&query, &training.schema, &training.target)
+            .unwrap()
+            .0,
+    )
+}
+
+fn temperature_fixture() -> calibration_temperature::Calibration {
+    let classes = ["alpha", "beta", "gamma"];
+    let mut probs = Vec::new();
+    let mut labels = Vec::new();
+    let mut folds = Vec::new();
+    for i in 0..60 {
+        let pred_cls = i % 3;
+        let true_cls = if i % 4 == 0 {
+            (pred_cls + 1) % 3
+        } else {
+            pred_cls
+        };
+        let mut row = vec![0.02; 3];
+        row[pred_cls] = 0.96;
+        probs.push(row);
+        labels.push(classes[true_cls]);
+        folds.push(i % 3);
+    }
+    calibration_temperature::cross_fit(&probs, &labels, &classes, &folds)
+        .unwrap()
+        .calibration
+}
+
 fn future() -> ModelObject {
     let state = b"{\"variant\":\"future\",\"operators\":[\"org.example/solver/v7\"]}".to_vec();
     let buffer = vec![0, 255, 0, 128, 1, 7];

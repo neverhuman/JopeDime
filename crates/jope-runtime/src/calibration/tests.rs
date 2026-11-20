@@ -158,7 +158,19 @@ fn transforms_validate_and_families_resolve() {
     assert_eq!(Calibration::Auto.resolve(false), Calibration::None);
     assert_eq!(Calibration::Auto.resolve_binary(true), Calibration::Platt);
     assert_eq!(Calibration::Auto.resolve_binary(false), Calibration::None);
+    assert_eq!(
+        Calibration::Auto.resolve_multiclass(true),
+        Calibration::Temperature
+    );
+    assert_eq!(
+        Calibration::Auto.resolve_multiclass(false),
+        Calibration::None
+    );
     assert_eq!(Calibration::parse("shift"), Some(Calibration::Shift));
     assert_eq!(Calibration::parse("platt"), Some(Calibration::Platt));
+    assert_eq!(
+        Calibration::parse("temperature"),
+        Some(Calibration::Temperature)
+    );
     assert_eq!(Calibration::parse("other"), None);
 }

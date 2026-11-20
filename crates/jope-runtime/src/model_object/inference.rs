@@ -1,14 +1,27 @@
 use super::*;
 
 impl ModelObject {
-    /// The input contract of a Platt-calibrated object, or `None` when it has no calibration.
-    /// It exposes no executable head, so prediction still goes through [`Self::predict`].
+    /// The input contract of a Platt- or Temperature-calibrated object, or `None` when it has no
+    /// calibration. It exposes no executable head, so prediction still goes through [`Self::predict`].
     pub fn calibrated_input(&self) -> Result<Option<CalibratedInput>> {
-        let Some(calibration) = self.platt_calibration()? else {
-            return Ok(None);
+        let platt = self.platt_calibration()?;
+        let temperature = self.temperature_calibration()?;
+        let head = match (platt, temperature) {
+            (None, None) => return Ok(None),
+            (Some(_), Some(_)) => {
+                return Err(Failure::integrity(
+                    "model object cannot carry both Platt and Temperature calibration sections",
+                ))
+            }
+            (Some(calibration), None) => {
+                self.require_executable()?;
+                self.platt_head(&calibration)?
+            }
+            (None, Some(calibration)) => {
+                self.require_executable()?;
+                self.temperature_head(&calibration)?
+            }
         };
-        self.require_executable()?;
-        let head = self.platt_head(&calibration)?;
         let header = match self.manifest.format.as_str() {
             APPLIANCE => Some(FittedModel::from_bytes(&self.parts[&self.manifest.primary])?.header),
             _ => None,
@@ -20,16 +33,24 @@ impl ModelObject {
         }))
     }
 
-    /// Predict through the complete object. Calibrated binary rows retain explicit class order.
-    /// Math pipelines keep their separate numeric-input API, and a bare uncalibrated binary
-    /// bound object lacks class names; wrap it in an appliance object or attach its calibration.
+    /// Predict through the complete object. Calibrated binary and multiclass rows retain explicit
+    /// class order. Math pipelines keep their separate numeric-input API, and a bare uncalibrated
+    /// classification bound object lacks class names; wrap it in an appliance object or attach its
+    /// calibration.
     pub fn predict(
         &self,
         table: &feat_math::advanced_v3::RawTable,
     ) -> Result<crate::methods::native::Predictions> {
         use crate::methods::native::{predict_bound, Predictions};
         self.require_executable()?;
-        if let Some(calibration) = self.platt_calibration()? {
+        let platt = self.platt_calibration()?;
+        let temperature = self.temperature_calibration()?;
+        if platt.is_some() && temperature.is_some() {
+            return Err(Failure::integrity(
+                "model object cannot carry both Platt and Temperature calibration sections",
+            ));
+        }
+        if let Some(calibration) = platt {
             let head = self.platt_head(&calibration)?;
             let Predictions::Probabilities { classes, values } =
                 predict_bound(&head, table, &calibration.class_order)?
@@ -47,6 +68,21 @@ impl ModelObject {
                 .collect::<Result<Vec<_>>>()?;
             return Ok(Predictions::Probabilities { classes, values });
         }
+        if let Some(calibration) = temperature {
+            let head = self.temperature_head(&calibration)?;
+            let Predictions::Probabilities { classes, values } =
+                predict_bound(&head, table, &calibration.class_order)?
+            else {
+                return Err(Failure::integrity(
+                    "Temperature head did not return multiclass probabilities",
+                ));
+            };
+            let values = values
+                .into_iter()
+                .map(|row| calibration.apply(&row))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Predictions::Probabilities { classes, values });
+        }
         match self.manifest.format.as_str() {
             APPLIANCE => self.fitted()?.predict(table),
             BOUND => predict_bound(&self.bound()?, table, &[]),
@@ -61,6 +97,9 @@ impl ModelObject {
         if self.platt_calibration()?.is_some() {
             return Err(Failure::backend("standalone fitted export would drop Platt calibration; use the complete object and ModelObject::predict"));
         }
+        if self.temperature_calibration()?.is_some() {
+            return Err(Failure::backend("standalone fitted export would drop Temperature calibration; use the complete object and ModelObject::predict"));
+        }
         if self.manifest.format != APPLIANCE {
             return Err(Failure::backend(
                 "this command needs an appliance fitted object",
@@ -74,6 +113,11 @@ impl ModelObject {
         if self.platt_calibration()?.is_some() {
             return Err(Failure::backend(
                 "bound JSON export would drop Platt calibration; export the complete object or standalone source",
+            ));
+        }
+        if self.temperature_calibration()?.is_some() {
+            return Err(Failure::backend(
+                "bound JSON export would drop Temperature calibration; export the complete object",
             ));
         }
         if self.manifest.format == MATH_PIPELINE {
@@ -110,6 +154,11 @@ impl ModelObject {
         if self.platt_calibration()?.is_some() {
             return Err(Failure::backend(
                 "math-pipeline decode/source export cannot preserve Platt calibration; export the complete object",
+            ));
+        }
+        if self.temperature_calibration()?.is_some() {
+            return Err(Failure::backend(
+                "math-pipeline decode/source export cannot preserve Temperature calibration; export the complete object",
             ));
         }
         if self.manifest.format != MATH_PIPELINE {
@@ -203,8 +252,17 @@ impl ModelObject {
     /// Verify the complete executable state without reducing an appliance to its native model.
     pub fn verify_executable(&self) -> Result<()> {
         self.require_executable()?;
-        if let Some(calibration) = self.platt_calibration()? {
+        let platt = self.platt_calibration()?;
+        let temperature = self.temperature_calibration()?;
+        if platt.is_some() && temperature.is_some() {
+            return Err(Failure::integrity(
+                "model object cannot carry both Platt and Temperature calibration sections",
+            ));
+        }
+        if let Some(calibration) = platt {
             self.platt_head(&calibration)?;
+        } else if let Some(calibration) = temperature {
+            self.temperature_head(&calibration)?;
         } else if self.manifest.format == APPLIANCE {
             self.fitted()?;
         } else if self.manifest.format == MATH_PIPELINE {

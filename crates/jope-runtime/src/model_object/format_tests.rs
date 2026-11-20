@@ -399,3 +399,80 @@ fn calibrated_input_reports_the_head_contract_without_exporting_it() {
         }
     }
 }
+
+#[test]
+fn temperature_object_round_trip_predicts_with_stored_scalar_and_prevents_stripping() {
+    use crate::methods::native::Predictions;
+    let (fitted, query) = multiclass_fixture();
+    let raw = fitted.predict(&query).unwrap();
+    let Predictions::Probabilities { classes, values } = &raw else {
+        panic!("multiclass fixture");
+    };
+    let calibration = temperature_fixture();
+    assert!((calibration.temperature - 1.0).abs() > 0.05);
+    let expected = Predictions::Probabilities {
+        classes: classes.clone(),
+        values: values
+            .iter()
+            .map(|row| calibration.apply(row).unwrap())
+            .collect(),
+    };
+    assert_ne!(
+        serde_json::to_vec(&raw).unwrap(),
+        serde_json::to_vec(&expected).unwrap()
+    );
+
+    for object in [
+        ModelObject::from_fitted(&fitted).unwrap(),
+        ModelObject::from_bound(&fitted.model).unwrap(),
+    ] {
+        let before = object.parts.clone();
+        let calibrated = object
+            .with_temperature_calibration(calibration.clone())
+            .unwrap();
+        for (name, bytes) in before {
+            assert_eq!(calibrated.parts[&name], bytes);
+        }
+        assert_eq!(object.temperature_calibration().unwrap(), None);
+        assert_eq!(
+            calibrated.manifest.required_capabilities,
+            vec![calibration_temperature::CAPABILITY]
+        );
+        assert_eq!(
+            calibrated.temperature_calibration().unwrap(),
+            Some(calibration.clone())
+        );
+        assert!(calibrated.inspect().unwrap().executable);
+        assert_eq!(
+            serde_json::to_vec(&calibrated.predict(&query).unwrap()).unwrap(),
+            serde_json::to_vec(&expected).unwrap()
+        );
+        assert!(calibrated.fitted().is_err());
+        assert!(calibrated.bound().is_err());
+        assert!(calibrated.export_source("python").is_err());
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = calibrated.save(dir.path(), 1 << 20).unwrap();
+        let loaded = ModelObject::read(&path, 1 << 20).unwrap();
+        assert_eq!(
+            serde_json::to_vec(&loaded.predict(&query).unwrap()).unwrap(),
+            serde_json::to_vec(&expected).unwrap()
+        );
+        assert!(load_fitted(&path, 1 << 20).is_err());
+    }
+
+    // Temperature part without required capability cannot be silently stripped.
+    let base = ModelObject::from_fitted(&fitted).unwrap();
+    let mut manifest = base.manifest.clone();
+    let mut parts = base.parts.clone();
+    let bytes = serde_json::to_vec(&calibration).unwrap();
+    manifest.files.push(Part::new(
+        calibration_temperature::PART,
+        "application/json",
+        &bytes,
+    ));
+    parts.insert(calibration_temperature::PART.into(), bytes);
+    let stripped = ModelObject::new(manifest, parts, 1 << 20).unwrap();
+    assert!(stripped.fitted().is_err());
+    assert!(stripped.bound().is_err());
+}

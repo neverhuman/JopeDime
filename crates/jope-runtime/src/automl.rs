@@ -100,6 +100,8 @@ pub struct Selection {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub binary_fitness: Option<crate::fitness_classification::ClassificationFitness>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub multiclass_fitness: Option<crate::fitness_multiclass::MulticlassFitness>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fitness_sha256: Option<String>,
     /// `v2` only (an objective or forward validation): a `v1` record keeps its original shape.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -126,6 +128,9 @@ pub struct CalibrationRecord {
     /// Cross-fitted monotone Platt map for the selected binary candidate when calibration won.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub platt_calibration: Option<crate::calibration_platt::Calibration>,
+    /// Cross-fitted scalar Temperature map for the selected multiclass candidate when calibration won.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature_calibration: Option<crate::calibration_temperature::Calibration>,
 }
 
 fn subset(table: &RawTable, rows: &[usize]) -> Result<RawTable> {
@@ -308,7 +313,9 @@ pub fn select(
 }
 
 mod selection;
-pub use selection::{select_binary_with_fitness, select_with_fitness};
+pub use selection::{
+    select_binary_with_fitness, select_multiclass_with_fitness, select_with_fitness,
+};
 
 #[cfg(test)]
 mod tests;

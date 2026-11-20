@@ -529,3 +529,113 @@ fn binary_objective_and_platt_calibration_roundtrip_through_model_object() {
     );
     assert_eq!(kind_of(&bad_reg_cal.unwrap_err()), FailureKind::Input);
 }
+
+#[test]
+fn multiclass_objective_and_temperature_calibration_roundtrip_through_model_object() {
+    use jope_runtime::api::predict_object;
+    use jope_runtime::calibration::Calibration;
+    use jope_runtime::fitness_multiclass::MulticlassFitness;
+    use jope_runtime::model_object::{load_fitted, ModelObject};
+
+    // Noisy 3-class table where nearest-centroid squared distances are miscalibrated for logloss,
+    // so cross-fitted Temperature Scaling strictly improves held-out logloss.
+    let mut text = String::from("x1,x2,y\n");
+    for i in 0..90 {
+        let base = i % 3;
+        let center_x1 = [-4.0, 0.0, 4.0][base];
+        let center_x2 = [3.0, -3.0, 3.0][base];
+        let x1 = center_x1 + ((i as f64 * 0.37).sin()) * 0.6;
+        let x2 = center_x2 + ((i as f64 * 0.53).cos()) * 0.6;
+        let noisy_cls = if i % 4 == 0 { (base + 1) % 3 } else { base };
+        let label = ["alpha", "beta", "gamma"][noisy_cls];
+        text.push_str(&format!("{x1:.6},{x2:.6},{label}\n"));
+    }
+    let limits = Limits::default();
+    let table = parse_csv(text.as_bytes(), &limits).unwrap();
+    let train = training(
+        &table,
+        "y",
+        TaskChoice::Fixed(TaskKind::Multiclass),
+        &limits,
+    )
+    .unwrap();
+    let classes = train.classes.clone();
+    let mf = MulticlassFitness::from_shorthand("logloss", classes.clone()).unwrap();
+    let budget = Budget::new(None, 1);
+
+    let outcome = fit(
+        &train,
+        &FitOptions {
+            candidates: vec!["multiclass_nearest_centroid".into()],
+            folds: 5,
+            multiclass_fitness: Some(mf),
+            calibration: Calibration::Temperature,
+            ..FitOptions::default()
+        },
+        &budget,
+        &table.sha256,
+        CreatedBy::default(),
+    )
+    .unwrap();
+
+    let selection = outcome.selection.as_ref().unwrap();
+    assert_eq!(selection.policy, "jope.runtime-select/v2");
+    assert_eq!(selection.metric, "logloss");
+    assert!(
+        outcome.temperature_calibration.is_some(),
+        "expected Temperature calibration on noisy multiclass probabilities"
+    );
+
+    let object = outcome.into_model_object().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let saved = object.save(dir.path(), limits.max_model_bytes).unwrap();
+    // Uncalibrated fitted loader must refuse a Temperature-calibrated object so calibration is never dropped.
+    assert!(load_fitted(&saved, limits.max_model_bytes).is_err());
+
+    let reloaded = ModelObject::read(&saved, limits.max_model_bytes).unwrap();
+    assert!(reloaded.temperature_calibration().unwrap().is_some());
+    let query_csv = parse_csv(b"x2,x1\n3.0,-4.0\n-3.0,0.0\n3.0,4.0\n", &limits).unwrap();
+    let (rows, _) = reloaded
+        .calibrated_input()
+        .unwrap()
+        .unwrap()
+        .table(&query_csv)
+        .unwrap();
+    let preds = predict_object(&reloaded, &rows, &budget).unwrap();
+    let Predictions::Probabilities {
+        classes: pred_classes,
+        values,
+    } = &preds
+    else {
+        panic!("expected multiclass probability predictions");
+    };
+    assert_eq!(pred_classes, &classes);
+    assert_eq!(values.len(), 3);
+    for row in values {
+        assert_eq!(row.len(), 3);
+        assert!(row.iter().all(|p| p.is_finite() && (0.0..=1.0).contains(p)));
+        assert!((row.iter().sum::<f64>() - 1.0).abs() <= 1e-12);
+    }
+    let csv_bytes = predictions_csv(&preds).unwrap();
+    let csv_str = std::str::from_utf8(&csv_bytes).unwrap();
+    assert!(
+        csv_str.starts_with("prediction,p_alpha,p_beta,p_gamma\n"),
+        "{csv_str}"
+    );
+
+    // Incompatible calibration families on multiclass fail cleanly with Input error kind.
+    for bad_cal in [Calibration::Affine, Calibration::Platt] {
+        let err = fit(
+            &train,
+            &FitOptions {
+                calibration: bad_cal,
+                ..FitOptions::default()
+            },
+            &budget,
+            &table.sha256,
+            CreatedBy::default(),
+        )
+        .unwrap_err();
+        assert_eq!(kind_of(&err), FailureKind::Input);
+    }
+}

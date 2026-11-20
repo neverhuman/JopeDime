@@ -311,15 +311,16 @@ impl FittedModel {
             if selection.get("metric").and_then(|v| v.as_str()) != Some(h.metric.as_str()) {
                 return Err(fail("selection metric differs from header"));
             }
-            if let Some(spec) = selection.get("fitness").filter(|v| !v.is_null()) {
-                if selection
-                    .get("binary_fitness")
-                    .is_some_and(|v| !v.is_null())
-                {
-                    return Err(fail(
-                        "selection cannot carry both regression and binary fitness",
-                    ));
-                }
+            let reg_spec = selection.get("fitness").filter(|v| !v.is_null());
+            let bin_spec = selection.get("binary_fitness").filter(|v| !v.is_null());
+            let mc_spec = selection.get("multiclass_fitness").filter(|v| !v.is_null());
+            let present_count = usize::from(reg_spec.is_some())
+                + usize::from(bin_spec.is_some())
+                + usize::from(mc_spec.is_some());
+            if present_count > 1 {
+                return Err(fail("selection cannot carry multiple task fitness specs"));
+            }
+            if let Some(spec) = reg_spec {
                 let fitness: crate::fitness::Fitness = serde_json::from_value(spec.clone())
                     .map_err(|e| fail(&format!("invalid fitness: {e}")))?;
                 if kind != TaskKind::Regression
@@ -333,7 +334,7 @@ impl FittedModel {
                 {
                     return Err(fail("fitness identity differs from selection record"));
                 }
-            } else if let Some(spec) = selection.get("binary_fitness").filter(|v| !v.is_null()) {
+            } else if let Some(spec) = bin_spec {
                 let bf: crate::fitness_classification::ClassificationFitness =
                     serde_json::from_value(spec.clone())
                         .map_err(|e| fail(&format!("invalid binary fitness: {e}")))?;
@@ -348,6 +349,23 @@ impl FittedModel {
                 {
                     return Err(fail(
                         "binary fitness identity differs from selection record",
+                    ));
+                }
+            } else if let Some(spec) = mc_spec {
+                let mf: crate::fitness_multiclass::MulticlassFitness =
+                    serde_json::from_value(spec.clone())
+                        .map_err(|e| fail(&format!("invalid multiclass fitness: {e}")))?;
+                if kind != TaskKind::Multiclass
+                    || mf.class_order.as_slice() != h.class_order.as_slice()
+                    || mf.name() != h.metric
+                    || Some(
+                        mf.identity()
+                            .map_err(|e| fail(&format!("invalid multiclass fitness: {e}")))?
+                            .as_str(),
+                    ) != selection.get("fitness_sha256").and_then(|v| v.as_str())
+                {
+                    return Err(fail(
+                        "multiclass fitness identity differs from selection record",
                     ));
                 }
             } else if h.metric != task::metric(kind)

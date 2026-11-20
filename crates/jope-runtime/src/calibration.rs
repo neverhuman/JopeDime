@@ -43,7 +43,8 @@ const INTERCEPT_BOUND: f64 = 50.0;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Calibration {
-    /// `affine` (regression) or `platt` (binary) when an objective is given, otherwise `none`.
+    /// `affine` (regression), `platt` (binary), or `temperature` (probability-sensitive
+    /// multiclass) when an objective is given, otherwise `none`.
     #[default]
     Auto,
     /// Raw native predictions.
@@ -54,6 +55,8 @@ pub enum Calibration {
     Affine,
     /// Cross-fitted monotone Platt scaling of positive-class probability (binary).
     Platt,
+    /// Cross-fitted Temperature Scaling of K-class probability vectors (multiclass).
+    Temperature,
 }
 
 impl Calibration {
@@ -64,6 +67,7 @@ impl Calibration {
             "shift" => Some(Self::Shift),
             "affine" => Some(Self::Affine),
             "platt" => Some(Self::Platt),
+            "temperature" => Some(Self::Temperature),
             _ => None,
         }
     }
@@ -79,6 +83,16 @@ impl Calibration {
     pub fn resolve_binary(self, has_objective: bool) -> Self {
         match self {
             Self::Auto if has_objective => Self::Platt,
+            Self::Auto => Self::None,
+            other => other,
+        }
+    }
+    /// The concrete family for a multiclass classification selection: `Auto` resolves to
+    /// `Temperature` on probability-sensitive objectives (`logloss`, `brier`, `cost_matrix_loss`)
+    /// and `None` on pure `argmax` objectives (`macro_f1`, `accuracy`, `balanced_accuracy`).
+    pub fn resolve_multiclass(self, probability_sensitive: bool) -> Self {
+        match self {
+            Self::Auto if probability_sensitive => Self::Temperature,
             Self::Auto => Self::None,
             other => other,
         }
@@ -333,7 +347,7 @@ pub fn fit_until(
     };
     if matches!(
         family,
-        Calibration::None | Calibration::Auto | Calibration::Platt
+        Calibration::None | Calibration::Auto | Calibration::Platt | Calibration::Temperature
     ) || y.len() < MIN_CALIBRATION_ROWS
     {
         return Ok(base);
