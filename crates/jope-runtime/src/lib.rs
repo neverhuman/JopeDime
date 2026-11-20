@@ -21,6 +21,7 @@ pub use model_object::calibration_platt;
 pub mod error;
 pub mod fitness;
 pub mod fitness_classification;
+pub mod fitness_multiclass;
 pub mod fitted;
 pub mod fitted_cpp;
 pub mod fitted_js;
