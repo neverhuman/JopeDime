@@ -95,10 +95,8 @@ pub struct RetrievalSeedProvider {
 impl CutSeedProvider for RetrievalSeedProvider {
     fn propose_seeds(&self, fit_cuts: &[FitCutView<'_>], limit: usize) -> Result<Vec<SeedGenome>> {
         ensure!(!fit_cuts.is_empty(), "fit_cuts must be non-empty");
-        if limit == 0 {
-            return Ok(Vec::new());
-        }
         let context = fit_cut_summary_context(fit_cuts).to_vec();
+        let full_cap = self.candidates.len().max(1);
         let request = RetrievalRequest {
             request_id: self.request_id.clone(),
             own_parent_families: self.own_parent_families.clone(),
@@ -107,15 +105,26 @@ impl CutSeedProvider for RetrievalSeedProvider {
             role_manifest_sha256: self.role_manifest_sha256.clone(),
             context,
             eligible_support: self.eligible_support.clone(),
-            cap: limit,
-            requested_by_source: BTreeMap::from([(SeedSourceV2::OtherLineageRetrieval, limit)]),
+            cap: full_cap,
+            requested_by_source: BTreeMap::from([(
+                SeedSourceV2::OtherLineageRetrieval,
+                limit.max(1),
+            )]),
             snapshot_sha256: self.snapshot_sha256.clone(),
             cold_cost_ms: 0,
             warm_cost_ms: 0,
             cache_warmup_ms: 0,
         };
+        super::validate_request(&request)?;
+        if limit == 0 {
+            return Ok(Vec::new());
+        }
         let materialized = materialize(&request, &self.candidates, self.mode)?;
-        let admitted = admit_v2(&materialized.seeds)?;
+        let mut seed_set = materialized.seeds;
+        seed_set.cap = limit;
+        seed_set.requested_by_source =
+            BTreeMap::from([(SeedSourceV2::OtherLineageRetrieval, limit)]);
+        let admitted = admit_v2(&seed_set)?;
         Ok(admitted
             .seeds
             .into_iter()

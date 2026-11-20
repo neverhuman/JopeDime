@@ -55,9 +55,9 @@ pub use workflow::{
 
 mod research_upgrade;
 pub use research_upgrade::{
-    build_research_conditioning, extract_packet_v1_from_dml3_bytes,
-    extract_packet_v1_from_encoding, pool_col_landmarks_34d, DopePacketV1Summary,
-    DopeResearchEncoding629, DopeUltraPacket859, ResearchConditioningLevel,
+    build_research_conditioning, extract_packet_v1_for_conditioning,
+    extract_packet_v1_from_dml3_bytes, extract_packet_v1_from_encoding, pool_col_landmarks_34d,
+    DopePacketV1Summary, DopeResearchEncoding629, DopeUltraPacket859, ResearchConditioningLevel,
     DOPE_COL_LANDMARK_POOL_34_DIM, DOPE_PACKET_V1_SCHEMA, DOPE_RESEARCH_VIEW_629_DIM,
     DOPE_RESEARCH_VIEW_629_SCHEMA, DOPE_ULTRA_PACKET_859_DIM, DOPE_ULTRA_PACKET_859_SCHEMA,
 };

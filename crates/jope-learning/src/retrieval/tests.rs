@@ -275,3 +275,93 @@ fn retrieval_seed_provider_feeds_family_disjoint_seeds_post_partition_without_ho
         std::fs::read(out_poison.join("prepared/provider-seeds.json")).unwrap()
     );
 }
+
+#[test]
+fn retrieval_seed_provider_validates_at_zero_limit_and_does_not_starve_past_duplicates() {
+    let tmp = tempfile::tempdir().unwrap();
+    let resolved = dataset::resolve(&committed_dataset()).unwrap();
+    let rows = dataset::training_rows(&resolved).unwrap();
+    let prep = prepare::partition(
+        &rows,
+        &resolved.row.dataset_hash,
+        jope_pipeline::DEFAULT_SEED,
+        1,
+    )
+    .unwrap()
+    .write(&tmp.path().join("prep"))
+    .unwrap();
+    let views = FitCutView::from_preparation(&prep, &resolved.row.dataset_hash);
+    let ctx = fit_cut_summary_context(&views);
+    let role_sha = "c".repeat(64);
+    let snap_sha = "d".repeat(64);
+
+    // 1. Invalid manifest/snapshot digest MUST fail closed even when limit == 0.
+    let mut bad_provider = RetrievalSeedProvider {
+        request_id: "req-edge".into(),
+        own_parent_families: vec!["p-own".into()],
+        own_dataset_families: vec!["d-own".into()],
+        own_program_sha256: Vec::new(),
+        role_manifest_sha256: "not-hex".into(),
+        snapshot_sha256: snap_sha.clone(),
+        eligible_support: vec!["c1".into()],
+        candidates: Vec::new(),
+        mode: RetrievalMode::Cold,
+    };
+    assert!(bad_provider.propose_seeds(&views, 0).is_err());
+    bad_provider.role_manifest_sha256 = role_sha.clone();
+    bad_provider.snapshot_sha256 = "short".into();
+    assert!(bad_provider.propose_seeds(&views, 0).is_err());
+
+    // 2. Top ranks holding BOOTSTRAP_GENOME + canonical duplicate must not starve rank 4 at limit=2.
+    let g_boot = jope_pipeline::search::BOOTSTRAP_GENOME;
+    let g_dup_a = "(pipe X (standardize) (ridge))";
+    let g_dup_b = "  (pipe X (standardize) (ridge))  ";
+    let g_second = "(pipe X (rank) (ridge))";
+
+    let dedup_provider = RetrievalSeedProvider {
+        request_id: "req-dedup".into(),
+        own_parent_families: vec!["p-own".into()],
+        own_dataset_families: vec!["d-own".into()],
+        own_program_sha256: Vec::new(),
+        role_manifest_sha256: role_sha.clone(),
+        snapshot_sha256: snap_sha,
+        eligible_support: vec!["r1".into(), "r2".into(), "r3".into(), "r4".into()],
+        candidates: vec![
+            candidate("r1", g_boot, "p1", "f1", "train", ctx, &role_sha),
+            candidate(
+                "r2",
+                g_dup_a,
+                "p2",
+                "f2",
+                "train",
+                [ctx[0] + 0.01, ctx[1], ctx[2], ctx[3]],
+                &role_sha,
+            ),
+            candidate(
+                "r3",
+                g_dup_b,
+                "p3",
+                "f3",
+                "train",
+                [ctx[0] + 0.02, ctx[1], ctx[2], ctx[3]],
+                &role_sha,
+            ),
+            candidate(
+                "r4",
+                g_second,
+                "p4",
+                "f4",
+                "train",
+                [ctx[0] + 0.03, ctx[1], ctx[2], ctx[3]],
+                &role_sha,
+            ),
+        ],
+        mode: RetrievalMode::Cold,
+    };
+
+    assert!(dedup_provider.propose_seeds(&views, 0).unwrap().is_empty());
+    let selected = dedup_provider.propose_seeds(&views, 2).unwrap();
+    assert_eq!(selected.len(), 2);
+    assert_eq!(selected[0].genome, g_dup_a);
+    assert_eq!(selected[1].genome, g_second);
+}

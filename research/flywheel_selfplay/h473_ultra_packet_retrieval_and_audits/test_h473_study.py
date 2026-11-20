@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -280,6 +281,20 @@ class TestH473Study(unittest.TestCase):
         )
         for mod_name in expected_modules:
             self.assertTrue((HERE / mod_name).is_file(), f"missing module {mod_name}")
+
+        study_digests = (
+            "13a67b2e36f5e6579d67fa25d88ddb81711d4f57c433027420ae2ff1316d88e8",
+            "45a886276d57068cdbf403926137e0971dc53a16da9f7ff333b1226935368ea0",
+            "e01365377df6a5fcf10d2b5d22858ce837c4943c6ccea8458990dfdb4fa5235e",
+            "17ce3bd88333a62f4086b382c022a66e29a673b98d12bd8cd5316787763cf89f",
+        )
+        prereg_text = (HERE / "PREREG.md").read_text(encoding="utf-8")
+        for mod_name, want_sha256 in zip(expected_modules[:4], study_digests, strict=True):
+            got_sha256 = hashlib.sha256((HERE / mod_name).read_bytes()).hexdigest()
+            self.assertEqual(got_sha256, want_sha256, f"SHA-256 drift in {mod_name}")
+            self.assertIn(want_sha256, prereg_text, f"PREREG.md missing {mod_name} SHA-256")
+        self_sha256 = hashlib.sha256((HERE / "test_h473_study.py").read_bytes()).hexdigest()
+        self.assertIn(self_sha256, prereg_text, "PREREG.md missing test_h473_study.py SHA-256")
 
         def _forbid_nonfinite(val: str) -> None:
             raise ValueError(f"non-finite JSON constant: {val}")

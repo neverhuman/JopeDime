@@ -6,7 +6,7 @@ use anyhow::{bail, ensure, Result};
 use candle_core::Tensor;
 use dope_core::landmark::bundle::{LandmarkBundle, LandmarkMode as CoreLandmarkMode};
 use dope_core::mlc_v3::{
-    packet_features_v1_from_encoding, packet_global_v1_from_encoding, Dml3Envelope, MlcV3Encoding,
+    packet_features_v1_from_encoding, Dml3Envelope, MlcV3Encoding,
     ResearchConditioningLevel as CoreResearchLevel, PACKET_FEATURES_V1_DIM, PACKET_GLOBAL_V1_DIM,
 };
 use dope_core::prepare::{
@@ -117,10 +117,25 @@ pub struct DopeResearchEncoding629 {
 pub struct DopePacketV1Summary {
     pub schema: String,
     pub level: String,
+    pub source_digest: String,
     pub include_target_bundle: bool,
     pub global28: Vec<f32>,
     pub features196: Vec<f32>,
     pub digest: String,
+}
+
+impl DopePacketV1Summary {
+    /// Bind an explicit FIT source digest and recompute the packet commitment digest.
+    pub fn with_source_digest(mut self, source_digest: impl Into<String>) -> Self {
+        self.source_digest = source_digest.into();
+        self.digest = compute_packet_v1_digest(
+            &self.level,
+            &self.source_digest,
+            self.include_target_bundle,
+            &self.features196,
+        );
+        self
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -135,35 +150,70 @@ pub struct DopeUltraPacket859 {
     pub features859: Vec<f32>,
 }
 
+fn compute_packet_v1_digest(
+    level: &str,
+    source_digest: &str,
+    include_target_bundle: bool,
+    features196: &[f32],
+) -> String {
+    let mut hash = Sha256::new();
+    hash.update(b"jope.dope-packet-v1/v1\0");
+    hash.update(level.as_bytes());
+    hash.update([0]);
+    hash.update(source_digest.as_bytes());
+    hash.update([0, u8::from(include_target_bundle)]);
+    for v in features196 {
+        hash.update(v.to_le_bytes());
+    }
+    format!("{:x}", hash.finalize())
+}
+
+fn build_packet_v1_summary(
+    enc: &MlcV3Encoding,
+    source_digest: String,
+    include_target_bundle: bool,
+) -> Result<DopePacketV1Summary> {
+    let lvl = CoreResearchLevel::parse(&enc.level)?;
+    let features196 = packet_features_v1_from_encoding(enc, include_target_bundle)?;
+    ensure!(
+        features196.iter().all(|v| v.is_finite()),
+        "non-finite coordinate in PacketFeaturesV1"
+    );
+    let global28 = features196[..PACKET_GLOBAL_V1_DIM].to_vec();
+    let digest = compute_packet_v1_digest(
+        lvl.as_str(),
+        &source_digest,
+        include_target_bundle,
+        &features196,
+    );
+    Ok(DopePacketV1Summary {
+        schema: DOPE_PACKET_V1_SCHEMA.into(),
+        level: lvl.as_str().into(),
+        source_digest,
+        include_target_bundle,
+        global28,
+        features196: features196.to_vec(),
+        digest,
+    })
+}
+
 pub fn extract_packet_v1_from_encoding(
     enc: &MlcV3Encoding,
     include_target_bundle: bool,
 ) -> Result<DopePacketV1Summary> {
-    let lvl = CoreResearchLevel::parse(&enc.level)?;
-    let global28 = packet_global_v1_from_encoding(enc, include_target_bundle)?;
-    let features196 = packet_features_v1_from_encoding(enc, include_target_bundle)?;
-    ensure!(
-        global28
-            .iter()
-            .chain(features196.iter())
-            .all(|v| v.is_finite()),
-        "non-finite coordinate in PacketFeaturesV1"
-    );
-    let mut hash = Sha256::new();
-    hash.update(b"jope.dope-packet-v1/v1\0");
-    hash.update(lvl.as_str().as_bytes());
-    hash.update([u8::from(include_target_bundle)]);
-    for v in &features196 {
-        hash.update(v.to_le_bytes());
-    }
-    Ok(DopePacketV1Summary {
-        schema: DOPE_PACKET_V1_SCHEMA.into(),
-        level: lvl.as_str().into(),
+    build_packet_v1_summary(enc, String::new(), include_target_bundle)
+}
+
+pub fn extract_packet_v1_for_conditioning(
+    enc: &MlcV3Encoding,
+    conditioning: &DopeConditioning,
+    include_target_bundle: bool,
+) -> Result<DopePacketV1Summary> {
+    build_packet_v1_summary(
+        enc,
+        conditioning.bundle.source_digest.clone(),
         include_target_bundle,
-        global28: global28.to_vec(),
-        features196: features196.to_vec(),
-        digest: format!("{:x}", hash.finalize()),
-    })
+    )
 }
 
 pub fn extract_packet_v1_from_dml3_bytes(
@@ -255,11 +305,38 @@ impl DopeEncoder {
         packet: &DopePacketV1Summary,
     ) -> Result<DopeUltraPacket859> {
         ensure!(
+            packet.schema == DOPE_PACKET_V1_SCHEMA,
+            "encode_ultra_packet_859 requires packet schema '{DOPE_PACKET_V1_SCHEMA}'"
+        );
+        ensure!(
+            packet.level == "ultra",
+            "encode_ultra_packet_859 requires an 'ultra' level PacketFeaturesV1 summary"
+        );
+        ensure!(
             packet.include_target_bundle
                 && packet.features196.len() == PACKET_FEATURES_V1_DIM
                 && packet.global28.len() == PACKET_GLOBAL_V1_DIM
                 && packet.features196.iter().all(|v| v.is_finite()),
             "encode_ultra_packet_859 requires target-coupled finite 196-D PacketFeaturesV1"
+        );
+        ensure!(
+            packet.global28.as_slice() == &packet.features196[..PACKET_GLOBAL_V1_DIM],
+            "packet global28 prefix disagrees with features196[..28]"
+        );
+        ensure!(
+            !packet.source_digest.is_empty()
+                && packet.source_digest == conditioning_ultra.bundle.source_digest,
+            "packet source_digest does not match conditioning_ultra source_digest"
+        );
+        let expected_packet_digest = compute_packet_v1_digest(
+            &packet.level,
+            &packet.source_digest,
+            packet.include_target_bundle,
+            &packet.features196,
+        );
+        ensure!(
+            packet.digest == expected_packet_digest,
+            "packet digest integrity check failed"
         );
         let view =
             self.encode_research_view_629(conditioning_ultra, ResearchConditioningLevel::Ultra)?;

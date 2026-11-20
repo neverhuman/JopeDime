@@ -181,6 +181,10 @@ pub(crate) fn preflight_with_provider(options: &RunOptions, has_provider: bool) 
          without it."
     );
     ensure!(
+        !has_provider || options.policy == Policy::Skip || options.seed_genomes.is_none(),
+        "--seed-genomes cannot be combined with an active CutSeedProvider"
+    );
+    ensure!(
         options.islands <= 1 || options.migration_interval >= 1,
         "--migration-interval must be at least 1 with more than one island"
     );

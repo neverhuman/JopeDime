@@ -112,7 +112,7 @@ pub struct CandidateCounts {
     pub eligible: usize,
 }
 
-fn validate_request(request: &RetrievalRequest) -> Result<()> {
+pub(super) fn validate_request(request: &RetrievalRequest) -> Result<()> {
     ensure!(!request.request_id.is_empty(), "request identity required");
     ensure!(request.cap > 0, "explicit positive seed cap required");
     ensure!(
