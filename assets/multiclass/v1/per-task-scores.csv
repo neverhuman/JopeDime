@@ -1,83 +1,93 @@
-suite,dataset,method,exposure_regime,n_train,n_test,n_features,n_classes,logloss,macro_f1,brier,accuracy,temperature
-TabArena_multiclass,MIC,jopedime_native_multiclass_auto,unseen,1132,567,111,8,1.105544,0.118059,0.463239,0.758377,2.042034
-TabArena_multiclass,MIC,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,1132,567,111,8,0.632491,0.172602,0.248716,0.858907,1.229211
-TabArena_multiclass,MIC,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,1132,567,111,8,0.629838,0.163071,0.247733,0.855379,1.201809
-TabArena_multiclass,MIC,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,1132,567,111,8,0.577032,0.176646,0.233318,0.86067,1.018505
-TabArena_multiclass,SDSS17,jopedime_native_multiclass_auto,unseen,52035,26018,11,3,0.932459,0.265517,0.547433,0.611999,1.016028
-TabArena_multiclass,SDSS17,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,52035,26018,11,3,0.140713,0.955443,0.062606,0.962411,0.506886
-TabArena_multiclass,SDSS17,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,52035,26018,11,3,0.146202,0.955795,0.063397,0.962757,0.49256
-TabArena_multiclass,SDSS17,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,52035,26018,11,3,0.094069,0.963698,0.045314,0.969598,1.040054
-TabArena_multiclass,anneal,jopedime_native_multiclass_auto,unseen,598,300,38,5,0.049019,0.882646,0.017836,0.983333,0.153667
-TabArena_multiclass,anneal,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,598,300,38,5,0.152275,0.751485,0.069424,0.956667,0.671153
-TabArena_multiclass,anneal,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,598,300,38,5,0.164233,0.748152,0.074336,0.953333,0.682132
-TabArena_multiclass,anneal,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,598,300,38,5,0.108888,0.917569,0.036076,0.976667,0.649533
-TabArena_multiclass,hiva_agnostic,jopedime_native_multiclass_auto,unseen,2563,1282,1617,3,0.403151,0.334906,0.187054,0.888456,1.72164
-TabArena_multiclass,hiva_agnostic,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,2563,1282,1617,3,0.173289,0.327379,0.068117,0.964899,1.319944
-TabArena_multiclass,hiva_agnostic,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,2563,1282,1617,3,0.173736,0.327379,0.068127,0.964899,1.288853
-TabArena_multiclass,hiva_agnostic,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,2563,1282,1617,3,0.181892,0.327379,0.071248,0.964899,1.038634
-TabArena_multiclass,maternal_health_risk,jopedime_native_multiclass_auto,unseen,676,338,6,3,0.782182,0.633121,0.465528,0.618343,3.068475
-TabArena_multiclass,maternal_health_risk,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,676,338,6,3,0.628129,0.672475,0.388216,0.701183,0.593118
-TabArena_multiclass,maternal_health_risk,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,676,338,6,3,0.629484,0.668658,0.388405,0.698225,0.632972
-TabArena_multiclass,maternal_health_risk,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,676,338,6,3,0.443469,0.862677,0.242736,0.857988,0.972148
-TabArena_multiclass,splice,jopedime_native_multiclass_auto,unseen,2126,1064,60,3,0.933351,0.497348,0.560164,0.565789,2.023478
-TabArena_multiclass,splice,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,2126,1064,60,3,0.324117,0.852194,0.184767,0.868421,0.527488
-TabArena_multiclass,splice,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,2126,1064,60,3,0.335875,0.834785,0.196213,0.853383,0.512251
-TabArena_multiclass,splice,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,2126,1064,60,3,0.120603,0.963807,0.056996,0.965226,0.996489
-TabArena_multiclass,students_dropout_and_academic_success,jopedime_native_multiclass_auto,unseen,2949,1475,36,3,0.974011,0.437381,0.578103,0.56,2.281433
-TabArena_multiclass,students_dropout_and_academic_success,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,2949,1475,36,3,0.719499,0.568625,0.401331,0.715932,0.943446
-TabArena_multiclass,students_dropout_and_academic_success,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,2949,1475,36,3,0.706858,0.563128,0.395583,0.719322,0.873048
-TabArena_multiclass,students_dropout_and_academic_success,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,2949,1475,36,3,0.574742,0.691365,0.321946,0.768814,0.921181
-TabArena_multiclass,website_phishing,jopedime_native_multiclass_auto,unseen,902,451,9,3,0.430914,0.64995,0.234309,0.840355,2.240457
-TabArena_multiclass,website_phishing,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,902,451,9,3,0.444219,0.589168,0.233318,0.851441,0.831317
-TabArena_multiclass,website_phishing,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,902,451,9,3,0.39642,0.587512,0.225121,0.849224,0.807314
-TabArena_multiclass,website_phishing,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,902,451,9,3,0.254873,0.86411,0.1483,0.895787,0.919008
-BeyondArena_multiclass,asp_potassco_classification,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,906,306,136,11,2.356725,0.040356,0.919357,0.111111,0.892345
-BeyondArena_multiclass,asp_potassco_classification,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,906,306,136,11,2.25629,0.090014,0.891429,0.150327,1.053609
-BeyondArena_multiclass,audiology_diagnosis,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,132,67,68,3,0.301214,0.782456,0.162034,0.910448,0.891954
-BeyondArena_multiclass,audiology_diagnosis,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,132,67,68,3,0.254218,0.705628,0.134923,0.880597,0.907941
-BeyondArena_multiclass,biogeographical_ancestry_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,423,212,104,10,1.828492,0.293707,0.78121,0.386792,1.088166
-BeyondArena_multiclass,biogeographical_ancestry_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,423,212,104,10,1.509496,0.354327,0.676113,0.476415,0.860859
-BeyondArena_multiclass,biomechanical_orthopaedic_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,206,104,6,3,0.284796,0.866492,0.168333,0.894231,0.578791
-BeyondArena_multiclass,biomechanical_orthopaedic_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,206,104,6,3,0.280497,0.867604,0.165915,0.894231,0.892077
-BeyondArena_multiclass,cardiotocography,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,1254,872,22,3,0.43374,0.612949,0.258789,0.802752,0.847474
-BeyondArena_multiclass,cardiotocography,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,1254,872,22,3,0.329774,0.80942,0.185759,0.883028,0.955362
-BeyondArena_multiclass,consumer_complaints,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,1000000,226140,16,3,0.622674,0.402531,0.394982,0.674445,1.12363
-BeyondArena_multiclass,consumer_complaints,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,1000000,226140,16,3,0.568885,0.413036,0.367095,0.688167,1.038602
-BeyondArena_multiclass,covertype,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,286899,225726,13,3,0.743691,0.479865,0.423775,0.717379,1.070228
-BeyondArena_multiclass,covertype,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,286899,225726,13,3,0.609003,0.510552,0.394918,0.698435,0.972904
-BeyondArena_multiclass,dementia_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,250,120,8,3,0.764917,0.667875,0.456739,0.716667,0.827002
-BeyondArena_multiclass,dementia_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,250,120,8,3,0.784802,0.621332,0.464384,0.675,1.008401
-BeyondArena_multiclass,ecoli_proteins,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,218,109,6,5,0.336945,0.820077,0.177151,0.87156,0.714
-BeyondArena_multiclass,ecoli_proteins,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,218,109,6,5,0.315907,0.849818,0.170171,0.889908,0.959966
-BeyondArena_multiclass,eryhemato_squamous_disease,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,244,122,34,6,0.119091,0.964568,0.048419,0.97541,0.419386
-BeyondArena_multiclass,eryhemato_squamous_disease,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,244,122,34,6,0.097647,0.95338,0.057304,0.959016,0.497066
-BeyondArena_multiclass,forensic_glass_identification,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,142,72,9,6,1.001754,0.483465,0.479693,0.638889,0.755659
-BeyondArena_multiclass,forensic_glass_identification,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,142,72,9,6,0.902375,0.620646,0.414322,0.763889,0.92462
-BeyondArena_multiclass,ghanas_indigenous_intel,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,9933,995,14,4,0.237958,0.318094,0.133063,0.912563,1.078368
-BeyondArena_multiclass,ghanas_indigenous_intel,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,9933,995,14,4,0.268264,0.317108,0.153126,0.903518,1.021157
-BeyondArena_multiclass,hepatitis_c_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,405,203,12,4,0.222857,0.51897,0.102822,0.921182,0.909841
-BeyondArena_multiclass,hepatitis_c_prediction,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,405,203,12,4,0.208049,0.565865,0.093194,0.926108,1.066452
-BeyondArena_multiclass,horse_colic_survival,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,229,115,20,3,0.811538,0.358189,0.466538,0.634783,1.105749
-BeyondArena_multiclass,horse_colic_survival,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,229,115,20,3,0.71841,0.514599,0.423199,0.695652,1.044186
-BeyondArena_multiclass,ljubljana_primary_tumor,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,201,101,17,11,1.498321,0.337358,0.60983,0.514851,0.861927
-BeyondArena_multiclass,ljubljana_primary_tumor,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,201,101,17,11,1.272607,0.448507,0.537573,0.584158,0.922766
-BeyondArena_multiclass,lung_cancer,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,131,66,12600,4,0.142555,0.931038,0.069789,0.954545,0.584522
-BeyondArena_multiclass,lung_cancer,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,131,66,12600,4,0.123847,0.931038,0.06217,0.954545,0.998783
-BeyondArena_multiclass,maternal_health_risk,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,676,338,6,3,0.574787,0.721243,0.352906,0.739645,0.662465
-BeyondArena_multiclass,maternal_health_risk,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,676,338,6,3,0.408282,0.840516,0.229109,0.840237,1.039277
-BeyondArena_multiclass,mic,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,1132,567,111,8,0.643383,0.180534,0.248642,0.862434,1.218583
-BeyondArena_multiclass,mic,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,1132,567,111,8,0.561183,0.187874,0.22011,0.865961,1.032078
-BeyondArena_multiclass,mice_protein_trisomy_discriminant,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,720,360,76,8,1.676715,0.579906,0.618538,0.588889,0.334441
-BeyondArena_multiclass,mice_protein_trisomy_discriminant,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,720,360,76,8,2.332441,0.563446,0.689257,0.563889,0.495868
-BeyondArena_multiclass,micro_mass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,380,191,1082,20,0.986776,0.722497,0.39409,0.722513,0.594753
-BeyondArena_multiclass,micro_mass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,380,191,1082,20,0.635518,0.766871,0.275876,0.801047,0.939232
-BeyondArena_multiclass,otto_group_product_classification_challenge,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,41252,20626,93,9,1.237062,0.396988,0.53383,0.599001,0.853216
-BeyondArena_multiclass,otto_group_product_classification_challenge,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,41252,20626,93,9,0.611809,0.726762,0.301159,0.787938,0.976507
-BeyondArena_multiclass,predict_students_dropout_and_academic_success,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,2949,1475,36,3,0.689635,0.557946,0.38451,0.735593,0.798523
-BeyondArena_multiclass,predict_students_dropout_and_academic_success,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,2949,1475,36,3,0.56117,0.681972,0.314896,0.776271,0.943591
-BeyondArena_multiclass,sdss_17,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,52035,26018,11,3,0.132697,0.956142,0.060695,0.962987,0.484158
-BeyondArena_multiclass,sdss_17,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,52035,26018,11,3,0.080376,0.971497,0.038229,0.976286,0.983597
-BeyondArena_multiclass,splice,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,2126,1064,60,3,0.358818,0.839853,0.204168,0.854323,0.422711
-BeyondArena_multiclass,splice,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,2126,1064,60,3,0.177612,0.947479,0.079336,0.952068,0.959427
-BeyondArena_multiclass,website_phishing,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,902,451,9,3,0.421659,0.607674,0.22904,0.853659,0.919662
-BeyondArena_multiclass,website_phishing,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,902,451,9,3,0.292087,0.834628,0.173013,0.875831,0.931509
+suite,task,task_type,method,exposure_regime,exposure_note,sealed_inputs_opened,n_train,n_test,n_features,n_classes,logloss,macro_f1,brier,accuracy,temperature
+synthetic_multiclass,multiclass.categorical_input,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,0.000000,1.000000,0.000000,1.000000,0.050000
+synthetic_multiclass,multiclass.grouped_observations,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,1.099988,0.187879,0.667584,0.187500,20.000000
+synthetic_multiclass,multiclass.high_dimensional_noise,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,1.098933,0.315152,0.666884,0.312500,20.000000
+synthetic_multiclass,multiclass.imbalance,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,0.726653,0.285714,0.406309,0.750000,1.000000
+synthetic_multiclass,multiclass.many_classes,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,7,1.944492,0.204082,0.856738,0.312500,20.000000
+synthetic_multiclass,multiclass.missing_values,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,1.099153,0.251082,0.667027,0.250000,20.000000
+synthetic_multiclass,multiclass.nonlinear_boundaries,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,4,1.333953,0.207143,0.727726,0.312500,1.684198
+synthetic_multiclass,multiclass.overlapping_classes,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,1.098342,0.222222,0.666489,0.250000,20.000000
+synthetic_multiclass,multiclass.rare_class,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,5,1.459632,0.257143,0.731900,0.312500,1.439314
+synthetic_multiclass,multiclass.three_classes,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_committed_synthetic_split,false,64,16,8,3,1.098326,0.422559,0.666242,0.437500,1.000000
+TabArena_multiclass,MIC,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,1132,567,111,8,1.105544,0.118059,0.463239,0.758377,2.042034
+TabArena_multiclass,MIC,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,in-corpus,pre_arena_stage_arena_exposures=0_0_multiclass_supervision; older_S3_CATALOG_copies_flagged_in_C2_screen,false,1132,567,111,8,0.632491,0.172602,0.248716,0.858907,1.229211
+TabArena_multiclass,MIC,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1132,567,111,8,0.629838,0.163071,0.247733,0.855379,1.201809
+TabArena_multiclass,MIC,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1132,567,111,8,0.577032,0.176646,0.233318,0.86067,1.018505
+TabArena_multiclass,SDSS17,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,52035,26018,11,3,0.932459,0.265517,0.547433,0.611999,1.016028
+TabArena_multiclass,SDSS17,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,0_multiclass_supervision_0_arena_and_0_C2_S3_CATALOG_copies,false,52035,26018,11,3,0.140713,0.955443,0.062606,0.962411,0.506886
+TabArena_multiclass,SDSS17,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,52035,26018,11,3,0.146202,0.955795,0.063397,0.962757,0.49256
+TabArena_multiclass,SDSS17,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,52035,26018,11,3,0.094069,0.963698,0.045314,0.969598,1.040054
+TabArena_multiclass,anneal,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,598,300,38,5,0.049019,0.882646,0.017836,0.983333,0.153667
+TabArena_multiclass,anneal,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,0_multiclass_supervision_0_arena_and_0_C2_S3_CATALOG_copies,false,598,300,38,5,0.152275,0.751485,0.069424,0.956667,0.671153
+TabArena_multiclass,anneal,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,598,300,38,5,0.164233,0.748152,0.074336,0.953333,0.682132
+TabArena_multiclass,anneal,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,598,300,38,5,0.108888,0.917569,0.036076,0.976667,0.649533
+TabArena_multiclass,hiva_agnostic,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,2563,1282,1617,3,0.403151,0.334906,0.187054,0.888456,1.72164
+TabArena_multiclass,hiva_agnostic,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,in-corpus,pre_arena_stage_arena_exposures=0_0_multiclass_supervision; older_S3_CATALOG_copies_flagged_in_C2_screen,false,2563,1282,1617,3,0.173289,0.327379,0.068117,0.964899,1.319944
+TabArena_multiclass,hiva_agnostic,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2563,1282,1617,3,0.173736,0.327379,0.068127,0.964899,1.288853
+TabArena_multiclass,hiva_agnostic,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2563,1282,1617,3,0.181892,0.327379,0.071248,0.964899,1.038634
+TabArena_multiclass,maternal_health_risk,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,676,338,6,3,0.782182,0.633121,0.465528,0.618343,3.068475
+TabArena_multiclass,maternal_health_risk,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,in-corpus,pre_arena_stage_arena_exposures=0_0_multiclass_supervision; older_S3_CATALOG_copies_flagged_in_C2_screen,false,676,338,6,3,0.628129,0.672475,0.388216,0.701183,0.593118
+TabArena_multiclass,maternal_health_risk,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,676,338,6,3,0.629484,0.668658,0.388405,0.698225,0.632972
+TabArena_multiclass,maternal_health_risk,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,676,338,6,3,0.443469,0.862677,0.242736,0.857988,0.972148
+TabArena_multiclass,splice,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,2126,1064,60,3,0.933351,0.497348,0.560164,0.565789,2.023478
+TabArena_multiclass,splice,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,0_multiclass_supervision_0_arena_and_0_C2_S3_CATALOG_copies,false,2126,1064,60,3,0.324117,0.852194,0.184767,0.868421,0.527488
+TabArena_multiclass,splice,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2126,1064,60,3,0.335875,0.834785,0.196213,0.853383,0.512251
+TabArena_multiclass,splice,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2126,1064,60,3,0.120603,0.963807,0.056996,0.965226,0.996489
+TabArena_multiclass,students_dropout_and_academic_success,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,2949,1475,36,3,0.974011,0.437381,0.578103,0.56,2.281433
+TabArena_multiclass,students_dropout_and_academic_success,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,unseen,0_multiclass_supervision_0_arena_and_0_C2_S3_CATALOG_copies,false,2949,1475,36,3,0.719499,0.568625,0.401331,0.715932,0.943446
+TabArena_multiclass,students_dropout_and_academic_success,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2949,1475,36,3,0.706858,0.563128,0.395583,0.719322,0.873048
+TabArena_multiclass,students_dropout_and_academic_success,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2949,1475,36,3,0.574742,0.691365,0.321946,0.768814,0.921181
+TabArena_multiclass,website_phishing,multiclass,jopedime_native_multiclass_auto,unseen,0_pretrained_weights_scratch_train_fold_fit,false,902,451,9,3,0.430914,0.64995,0.234309,0.840355,2.240457
+TabArena_multiclass,website_phishing,multiclass,UnifiedICLRegBin_M_v2_Stage2A_NoArena_OvR,in-corpus,pre_arena_stage_arena_exposures=0_0_multiclass_supervision; older_S3_CATALOG_copies_flagged_in_C2_screen,false,902,451,9,3,0.444219,0.589168,0.233318,0.851441,0.831317
+TabArena_multiclass,website_phishing,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,902,451,9,3,0.39642,0.587512,0.225121,0.849224,0.807314
+TabArena_multiclass,website_phishing,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,902,451,9,3,0.254873,0.86411,0.1483,0.895787,0.919008
+BeyondArena_multiclass,asp_potassco_classification,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,906,306,136,11,2.356725,0.040356,0.919357,0.111111,0.892345
+BeyondArena_multiclass,asp_potassco_classification,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,906,306,136,11,2.25629,0.090014,0.891429,0.150327,1.053609
+BeyondArena_multiclass,audiology_diagnosis,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,132,67,68,3,0.301214,0.782456,0.162034,0.910448,0.891954
+BeyondArena_multiclass,audiology_diagnosis,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,132,67,68,3,0.254218,0.705628,0.134923,0.880597,0.907941
+BeyondArena_multiclass,biogeographical_ancestry_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,423,212,104,10,1.828492,0.293707,0.78121,0.386792,1.088166
+BeyondArena_multiclass,biogeographical_ancestry_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,423,212,104,10,1.509496,0.354327,0.676113,0.476415,0.860859
+BeyondArena_multiclass,biomechanical_orthopaedic_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,206,104,6,3,0.284796,0.866492,0.168333,0.894231,0.578791
+BeyondArena_multiclass,biomechanical_orthopaedic_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,206,104,6,3,0.280497,0.867604,0.165915,0.894231,0.892077
+BeyondArena_multiclass,cardiotocography,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1254,872,22,3,0.43374,0.612949,0.258789,0.802752,0.847474
+BeyondArena_multiclass,cardiotocography,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1254,872,22,3,0.329774,0.80942,0.185759,0.883028,0.955362
+BeyondArena_multiclass,consumer_complaints,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1000000,226140,16,3,0.622674,0.402531,0.394982,0.674445,1.12363
+BeyondArena_multiclass,consumer_complaints,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1000000,226140,16,3,0.568885,0.413036,0.367095,0.688167,1.038602
+BeyondArena_multiclass,covertype,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,286899,225726,13,3,0.743691,0.479865,0.423775,0.717379,1.070228
+BeyondArena_multiclass,covertype,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,286899,225726,13,3,0.609003,0.510552,0.394918,0.698435,0.972904
+BeyondArena_multiclass,dementia_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,250,120,8,3,0.764917,0.667875,0.456739,0.716667,0.827002
+BeyondArena_multiclass,dementia_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,250,120,8,3,0.784802,0.621332,0.464384,0.675,1.008401
+BeyondArena_multiclass,ecoli_proteins,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,218,109,6,5,0.336945,0.820077,0.177151,0.87156,0.714
+BeyondArena_multiclass,ecoli_proteins,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,218,109,6,5,0.315907,0.849818,0.170171,0.889908,0.959966
+BeyondArena_multiclass,eryhemato_squamous_disease,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,244,122,34,6,0.119091,0.964568,0.048419,0.97541,0.419386
+BeyondArena_multiclass,eryhemato_squamous_disease,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,244,122,34,6,0.097647,0.95338,0.057304,0.959016,0.497066
+BeyondArena_multiclass,forensic_glass_identification,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,142,72,9,6,1.001754,0.483465,0.479693,0.638889,0.755659
+BeyondArena_multiclass,forensic_glass_identification,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,142,72,9,6,0.902375,0.620646,0.414322,0.763889,0.92462
+BeyondArena_multiclass,ghanas_indigenous_intel,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,9933,995,14,4,0.237958,0.318094,0.133063,0.912563,1.078368
+BeyondArena_multiclass,ghanas_indigenous_intel,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,9933,995,14,4,0.268264,0.317108,0.153126,0.903518,1.021157
+BeyondArena_multiclass,hepatitis_c_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,405,203,12,4,0.222857,0.51897,0.102822,0.921182,0.909841
+BeyondArena_multiclass,hepatitis_c_prediction,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,405,203,12,4,0.208049,0.565865,0.093194,0.926108,1.066452
+BeyondArena_multiclass,horse_colic_survival,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,229,115,20,3,0.811538,0.358189,0.466538,0.634783,1.105749
+BeyondArena_multiclass,horse_colic_survival,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,229,115,20,3,0.71841,0.514599,0.423199,0.695652,1.044186
+BeyondArena_multiclass,ljubljana_primary_tumor,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,201,101,17,11,1.498321,0.337358,0.60983,0.514851,0.861927
+BeyondArena_multiclass,ljubljana_primary_tumor,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,201,101,17,11,1.272607,0.448507,0.537573,0.584158,0.922766
+BeyondArena_multiclass,lung_cancer,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,131,66,12600,4,0.142555,0.931038,0.069789,0.954545,0.584522
+BeyondArena_multiclass,lung_cancer,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,131,66,12600,4,0.123847,0.931038,0.06217,0.954545,0.998783
+BeyondArena_multiclass,maternal_health_risk,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,676,338,6,3,0.574787,0.721243,0.352906,0.739645,0.662465
+BeyondArena_multiclass,maternal_health_risk,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,676,338,6,3,0.408282,0.840516,0.229109,0.840237,1.039277
+BeyondArena_multiclass,mic,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1132,567,111,8,0.643383,0.180534,0.248642,0.862434,1.218583
+BeyondArena_multiclass,mic,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,1132,567,111,8,0.561183,0.187874,0.22011,0.865961,1.032078
+BeyondArena_multiclass,mice_protein_trisomy_discriminant,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,720,360,76,8,1.676715,0.579906,0.618538,0.588889,0.334441
+BeyondArena_multiclass,mice_protein_trisomy_discriminant,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,720,360,76,8,2.332441,0.563446,0.689257,0.563889,0.495868
+BeyondArena_multiclass,micro_mass,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,380,191,1082,20,0.986776,0.722497,0.39409,0.722513,0.594753
+BeyondArena_multiclass,micro_mass,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,380,191,1082,20,0.635518,0.766871,0.275876,0.801047,0.939232
+BeyondArena_multiclass,otto_group_product_classification_challenge,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,41252,20626,93,9,1.237062,0.396988,0.53383,0.599001,0.853216
+BeyondArena_multiclass,otto_group_product_classification_challenge,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,41252,20626,93,9,0.611809,0.726762,0.301159,0.787938,0.976507
+BeyondArena_multiclass,predict_students_dropout_and_academic_success,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2949,1475,36,3,0.689635,0.557946,0.38451,0.735593,0.798523
+BeyondArena_multiclass,predict_students_dropout_and_academic_success,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2949,1475,36,3,0.56117,0.681972,0.314896,0.776271,0.943591
+BeyondArena_multiclass,sdss_17,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,52035,26018,11,3,0.132697,0.956142,0.060695,0.962987,0.484158
+BeyondArena_multiclass,sdss_17,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,52035,26018,11,3,0.080376,0.971497,0.038229,0.976286,0.983597
+BeyondArena_multiclass,splice,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2126,1064,60,3,0.358818,0.839853,0.204168,0.854323,0.422711
+BeyondArena_multiclass,splice,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,2126,1064,60,3,0.177612,0.947479,0.079336,0.952068,0.959427
+BeyondArena_multiclass,website_phishing,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,902,451,9,3,0.421659,0.607674,0.22904,0.853659,0.919662
+BeyondArena_multiclass,website_phishing,multiclass,UnifiedICLRegBin_M_v2_FullS3_OvR + TrainOOF_Hybrid,in-corpus,s3_corpus_random_regbin_splits_0_multiclass_supervision_0_official_split_matches,false,902,451,9,3,0.292087,0.834628,0.173013,0.875831,0.931509
