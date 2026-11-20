@@ -11,10 +11,11 @@ implementation before changing a subsystem.
 | Bounded search, evaluation, caching, worker budgets | `crates/jope-pipeline/` | [Pipeline](pipeline.md) |
 | Regression objectives, calibration, appliance API and MCP | `crates/jope-runtime/`, `crates/jope-appliance/`, `examples/objectives/` | [Regression objectives](regression-objectives.md) |
 | Binary classification objectives, Platt calibration, service runs and exports | `crates/jope-runtime/`, `crates/jope-service/`, `crates/jope-appliance/` | [Binary classification](binary-classification.md), [binary benchmarks](binary-benchmarks.md) |
+| Multiclass classification objectives, Temperature Scaling, service runs and exports | `crates/jope-runtime/`, `crates/jope-service/`, `crates/jope-appliance/` | [Multiclass classification](multiclass-classification.md), [multiclass benchmarks](multiclass-benchmarks.md) |
 | Distributed execution and fitted-result authority | `crates/jope-engine/`, `crates/smartcluster/` | [Architecture](architecture.md), [runbooks](runbooks/) |
 | Encoders, neural proposals, learning state | `crates/hyperion/`, `crates/jope-policy/`, `crates/jope-learning/` | [Learning](learning.md), [models](models.md) |
 | Dataset custody and access | `crates/jope-datasets/`, `catalogs/`, `datasets/` | [Datasets](datasets.md) |
-| Benchmarks and comparison evidence | `crates/jope-bench/`, `crates/jope-arena/`, `benchmarks/`, `assets/binary/` | [Same-cut benchmarks](same-cut-bench.md), [binary benchmarks](binary-benchmarks.md) |
+| Benchmarks and comparison evidence | `crates/jope-bench/`, `crates/jope-arena/`, `benchmarks/`, `assets/binary/`, `assets/multiclass/` | [Same-cut benchmarks](same-cut-bench.md), [binary benchmarks](binary-benchmarks.md), [multiclass benchmarks](multiclass-benchmarks.md) |
 | Rust observatory and React/Vite dashboard | `crates/jope-observatory/`, `web/training-dashboard/` | [Dashboard](dashboard/README.md) |
 | CLI and repository verification | `crates/jope-cli/`, `crates/jope-records/`, `crates/jope-ci/` | [Agent contract](../AGENTS.md) |
 | CI, release, systemd and host maintenance | `deploy/ci/`, `deploy/release/`, `deploy/systemd/`, `deploy/maintenance/` | [Release runbook](release/README.md) |
