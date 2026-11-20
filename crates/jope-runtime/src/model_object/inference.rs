@@ -117,7 +117,7 @@ impl ModelObject {
         }
         if self.temperature_calibration()?.is_some() {
             return Err(Failure::backend(
-                "bound JSON export would drop Temperature calibration; export the complete object",
+                "bound JSON export would drop Temperature calibration; export the complete object or standalone source",
             ));
         }
         if self.manifest.format == MATH_PIPELINE {
@@ -184,13 +184,26 @@ impl ModelObject {
                 )),
             };
         }
-        let (model, platt) = match self.platt_calibration()? {
-            Some(calibration) => {
+        let platt = self.platt_calibration()?;
+        let temperature = self.temperature_calibration()?;
+        if platt.is_some() && temperature.is_some() {
+            return Err(Failure::integrity(
+                "model object cannot carry both Platt and Temperature calibration sections",
+            ));
+        }
+        let (model, platt, temperature) = match (platt, temperature) {
+            (Some(calibration), None) => {
                 self.require_executable()?;
                 let head = self.platt_head(&calibration)?;
-                (head, Some(calibration))
+                (head, Some(calibration), None)
             }
-            None => (self.bound()?, None),
+            (None, Some(calibration)) => {
+                self.require_executable()?;
+                let head = self.temperature_head(&calibration)?;
+                (head, None, Some(calibration))
+            }
+            (None, None) => (self.bound()?, None, None),
+            (Some(_), Some(_)) => unreachable!(),
         };
         let reason = feat_math::advanced_v3::fitted_portable_unsupported(&model)
             .map_err(|e| Failure::integrity(e.to_string()))?;
@@ -212,9 +225,12 @@ impl ModelObject {
                 ))
             }
         };
-        let source = match &platt {
-            Some(calibration) => wrap_portable_with_platt(language, source, calibration)?,
-            None => source,
+        let source = if let Some(calibration) = &platt {
+            wrap_portable_with_platt(language, source, calibration)?
+        } else if let Some(calibration) = &temperature {
+            wrap_portable_with_temperature(language, source, calibration)?
+        } else {
+            source
         };
         Ok(source.into_bytes())
     }
@@ -561,6 +577,214 @@ fn wrap_portable_with_platt(
             if !hits.is_empty() {
                 return Err(Failure::integrity(format!(
                     "banned vocabulary in JavaScript Platt artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            Ok(format!("{prefix}{}", render_tail(&class_order_json)))
+        }
+        _ => Err(Failure::input(
+            "source language must be python, rust or javascript",
+        )),
+    }
+}
+
+fn wrap_portable_with_temperature(
+    language: &str,
+    source: String,
+    calibration: &calibration_temperature::Calibration,
+) -> Result<String> {
+    use feat_math::transpile::lint_shipped_text;
+
+    calibration
+        .validate()
+        .map_err(|e| Failure::integrity(format!("invalid Temperature calibration: {e:#}")))?;
+    let k = calibration.class_order.len();
+    let class_order_json = serde_json::to_string(&calibration.class_order)
+        .map_err(|e| Failure::integrity(e.to_string()))?;
+    let dummy_classes = vec![""; k];
+    let dummy_classes_json =
+        serde_json::to_string(&dummy_classes).map_err(|e| Failure::integrity(e.to_string()))?;
+    let floor = calibration_temperature::PROBABILITY_FLOOR;
+    let sum_tol = crate::fitness_multiclass::PROBABILITY_SUM_TOLERANCE;
+
+    match language {
+        "python" => {
+            const PY_TAIL: &str =
+                "def predict_encoded(rows):\n    return [_predict(_encode(row)) for row in rows]";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(PY_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity(
+                        "unexpected portable Python entrypoint for Temperature wrapping",
+                    )
+                })?;
+            let render_tail = |classes: &str| {
+                format!(
+                    "TEMPERATURE_CLASS_ORDER = {classes}\n\n\n\
+                     def fitted_temperature(probs):\n\
+                     \x20   if len(probs) != {k}:\n\
+                     \x20       raise ValueError(\"invalid Temperature probability length\")\n\
+                     \x20   total = 0.0\n\
+                     \x20   for p in probs:\n\
+                     \x20       if not math.isfinite(p) or p < 0.0 or p > 1.0:\n\
+                     \x20           raise ValueError(\"invalid Temperature probability\")\n\
+                     \x20       total += p\n\
+                     \x20   if abs(total - 1.0) > float.fromhex({}):\n\
+                     \x20       raise ValueError(\"invalid Temperature probability sum\")\n\
+                     \x20   inv_t = 1.0 / float.fromhex({})\n\
+                     \x20   floor = float.fromhex({})\n\
+                     \x20   logits = [math.log(p if p >= floor else floor) * inv_t for p in probs]\n\
+                     \x20   max_logit = max(logits)\n\
+                     \x20   exps = [math.exp(z - max_logit) for z in logits]\n\
+                     \x20   denom = 0.0\n\
+                     \x20   for e in exps:\n\
+                     \x20       denom += e\n\
+                     \x20   if not math.isfinite(denom) or denom <= 0.0:\n\
+                     \x20       raise ValueError(\"invalid Temperature normalizer\")\n\
+                     \x20   return [e / denom for e in exps]\n\n\n\
+                     def predict_encoded(rows):\n\
+                     \x20   return [fitted_temperature(_predict(_encode(row))) for row in rows]\n",
+                    py_hex(sum_tol),
+                    py_hex(calibration.temperature),
+                    py_hex(floor),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail(&dummy_classes_json));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in Python Temperature artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            Ok(format!("{prefix}{}", render_tail(&class_order_json)))
+        }
+        "rust" => {
+            const RS_TAIL: &str =
+                "pub fn predict_encoded(rows: &[Vec<String>]) -> Result<Vec<Vec<f64>>, String> {\n    rows.iter().map(|row| encode(row).map(|x| predict(&x))).collect()\n}";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(RS_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity(
+                        "unexpected portable Rust entrypoint for Temperature wrapping",
+                    )
+                })?;
+            let format_rs_classes = |items: &[&str]| {
+                items
+                    .iter()
+                    .map(|item| format!("{item:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            };
+            let render_tail = |classes_literal: &str| {
+                format!(
+                    "pub const TEMPERATURE_CLASS_ORDER: [&str; {k}] = [{classes_literal}];\n\
+                     pub fn fitted_temperature(probs: &[f64]) -> Result<Vec<f64>, String> {{\n\
+                     \x20   if probs.len() != {k} {{ return Err(\"invalid Temperature probability length\".into()); }}\n\
+                     \x20   let mut total = 0.0;\n\
+                     \x20   for &p in probs {{\n\
+                     \x20       if !p.is_finite() || !(0.0..=1.0).contains(&p) {{ return Err(\"invalid Temperature probability\".into()); }}\n\
+                     \x20       total += p;\n\
+                     \x20   }}\n\
+                     \x20   if (total - 1.0).abs() > f64::from_bits(0x{:016x}) {{ return Err(\"invalid Temperature probability sum\".into()); }}\n\
+                     \x20   let inv_t = 1.0 / f64::from_bits(0x{:016x});\n\
+                     \x20   let floor = f64::from_bits(0x{:016x});\n\
+                     \x20   let mut logits = Vec::with_capacity(probs.len());\n\
+                     \x20   let mut max_logit = f64::NEG_INFINITY;\n\
+                     \x20   for &p in probs {{\n\
+                     \x20       let z = p.max(floor).ln() * inv_t;\n\
+                     \x20       if z > max_logit {{ max_logit = z; }}\n\
+                     \x20       logits.push(z);\n\
+                     \x20   }}\n\
+                     \x20   let mut exps = Vec::with_capacity(probs.len());\n\
+                     \x20   let mut denom = 0.0;\n\
+                     \x20   for z in logits {{\n\
+                     \x20       let e = (z - max_logit).exp();\n\
+                     \x20       denom += e;\n\
+                     \x20       exps.push(e);\n\
+                     \x20   }}\n\
+                     \x20   if !denom.is_finite() || denom <= 0.0 {{ return Err(\"invalid Temperature normalizer\".into()); }}\n\
+                     \x20   Ok(exps.into_iter().map(|e| e / denom).collect())\n\
+                     }}\n\
+                     pub fn predict_encoded(rows: &[Vec<String>]) -> Result<Vec<Vec<f64>>, String> {{\n\
+                     \x20   rows.iter()\n\
+                     \x20       .map(|row| {{\n\
+                     \x20           let x = encode(row)?;\n\
+                     \x20           let raw = predict(&x);\n\
+                     \x20           fitted_temperature(&raw)\n\
+                     \x20       }})\n\
+                     \x20       .collect()\n\
+                     }}\n",
+                    sum_tol.to_bits(),
+                    calibration.temperature.to_bits(),
+                    floor.to_bits(),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail(&format_rs_classes(&dummy_classes)));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in Rust Temperature artifact: {}",
+                    hits.join(", ")
+                )));
+            }
+            let real_refs: Vec<&str> = calibration.class_order.iter().map(String::as_str).collect();
+            Ok(format!(
+                "{prefix}{}",
+                render_tail(&format_rs_classes(&real_refs))
+            ))
+        }
+        "javascript" => {
+            const JS_TAIL: &str =
+                "function predictEncoded(rows) { return rows.map(row => predict(encode(row))); }\nmodule.exports = { predictEncoded };";
+            let prefix = source
+                .trim_end_matches('\n')
+                .strip_suffix(JS_TAIL)
+                .ok_or_else(|| {
+                    Failure::integrity(
+                        "unexpected portable JavaScript entrypoint for Temperature wrapping",
+                    )
+                })?;
+            let render_tail = |classes: &str| {
+                format!(
+                    "const TEMPERATURE_CLASS_ORDER = Object.freeze({classes});\n\
+                     function fittedTemperature(probs) {{\n\
+                     \x20 if (!Array.isArray(probs) || probs.length !== {k}) throw new Error(\"invalid Temperature probability length\");\n\
+                     \x20 let total = 0.0;\n\
+                     \x20 for (const p of probs) {{\n\
+                     \x20   if (!Number.isFinite(p) || p < 0 || p > 1) throw new Error(\"invalid Temperature probability\");\n\
+                     \x20   total += p;\n\
+                     \x20 }}\n\
+                     \x20 if (Math.abs(total - 1) > {}) throw new Error(\"invalid Temperature probability sum\");\n\
+                     \x20 const invT = 1 / {}, floor = {};\n\
+                     \x20 const logits = [];\n\
+                     \x20 let maxLogit = -Infinity;\n\
+                     \x20 for (const p of probs) {{\n\
+                     \x20   const z = Math.log(p >= floor ? p : floor) * invT;\n\
+                     \x20   if (z > maxLogit) maxLogit = z;\n\
+                     \x20   logits.push(z);\n\
+                     \x20 }}\n\
+                     \x20 const exps = [];\n\
+                     \x20 let denom = 0.0;\n\
+                     \x20 for (const z of logits) {{\n\
+                     \x20   const e = Math.exp(z - maxLogit);\n\
+                     \x20   denom += e;\n\
+                     \x20   exps.push(e);\n\
+                     \x20 }}\n\
+                     \x20 if (!Number.isFinite(denom) || denom <= 0) throw new Error(\"invalid Temperature normalizer\");\n\
+                     \x20 return exps.map(e => e / denom);\n\
+                     }}\n\
+                     function predictEncoded(rows) {{ return rows.map(row => fittedTemperature(predict(encode(row)))); }}\n\
+                     module.exports = {{ predictEncoded, fittedTemperature, TEMPERATURE_CLASS_ORDER }};\n",
+                    js_float(sum_tol),
+                    js_float(calibration.temperature),
+                    js_float(floor),
+                )
+            };
+            let hits = lint_shipped_text(&render_tail(&dummy_classes_json));
+            if !hits.is_empty() {
+                return Err(Failure::integrity(format!(
+                    "banned vocabulary in JavaScript Temperature artifact: {}",
                     hits.join(", ")
                 )));
             }

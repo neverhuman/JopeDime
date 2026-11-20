@@ -403,6 +403,7 @@ fn calibrated_input_reports_the_head_contract_without_exporting_it() {
 #[test]
 fn temperature_object_round_trip_predicts_with_stored_scalar_and_prevents_stripping() {
     use crate::methods::native::Predictions;
+    use std::process::Command;
     let (fitted, query) = multiclass_fixture();
     let raw = fitted.predict(&query).unwrap();
     let Predictions::Probabilities { classes, values } = &raw else {
@@ -449,7 +450,132 @@ fn temperature_object_round_trip_predicts_with_stored_scalar_and_prevents_stripp
         );
         assert!(calibrated.fitted().is_err());
         assert!(calibrated.bound().is_err());
-        assert!(calibrated.export_source("python").is_err());
+
+        let Predictions::Probabilities {
+            values: expected_rows,
+            ..
+        } = &expected
+        else {
+            unreachable!();
+        };
+        let work_dir = std::env::current_dir()
+            .unwrap()
+            .join("target/exp-05-temperature-object-export");
+        fs::create_dir_all(&work_dir).unwrap();
+        let rows_json = serde_json::to_string(&query.rows).unwrap();
+
+        let py_src = String::from_utf8(calibrated.export_source("python").unwrap()).unwrap();
+        assert!(py_src.contains("TEMPERATURE_CLASS_ORDER"));
+        let py_path = work_dir.join("temperature_portable.py");
+        fs::write(&py_path, &py_src).unwrap();
+        let py_out = Command::new("python3")
+            .args([
+                "-c",
+                "import json, runpy, sys; m = runpy.run_path(sys.argv[1]); assert m['TEMPERATURE_CLASS_ORDER'] == json.loads(sys.argv[2]); print(json.dumps(m['predict_encoded'](json.loads(sys.argv[3]))))",
+            ])
+            .arg(&py_path)
+            .arg(serde_json::to_string(classes).unwrap())
+            .arg(&rows_json)
+            .output()
+            .unwrap();
+        assert!(
+            py_out.status.success(),
+            "python temperature export failed: {}",
+            String::from_utf8_lossy(&py_out.stderr)
+        );
+        let py_preds: Vec<Vec<f64>> = serde_json::from_slice(&py_out.stdout).unwrap();
+        assert_eq!(py_preds.len(), expected_rows.len());
+        for (got, exp) in py_preds.iter().zip(expected_rows) {
+            assert_eq!(got.len(), exp.len());
+            for (g, e) in got.iter().zip(exp) {
+                assert!((g - e).abs() <= 1e-12, "python got={g} exp={e}");
+            }
+        }
+
+        let js_src = String::from_utf8(calibrated.export_source("javascript").unwrap()).unwrap();
+        assert!(js_src.contains("TEMPERATURE_CLASS_ORDER"));
+        let js_path = work_dir.join("temperature_portable.cjs");
+        fs::write(&js_path, &js_src).unwrap();
+        let js_out = Command::new("node")
+            .args([
+                "-e",
+                "const m = require(process.argv[1]); const cls = JSON.parse(process.argv[2]); if (JSON.stringify(m.TEMPERATURE_CLASS_ORDER) !== JSON.stringify(cls)) throw new Error('class order mismatch'); console.log(JSON.stringify(m.predictEncoded(JSON.parse(process.argv[3]))));",
+            ])
+            .arg(&js_path)
+            .arg(serde_json::to_string(classes).unwrap())
+            .arg(&rows_json)
+            .output()
+            .unwrap();
+        assert!(
+            js_out.status.success(),
+            "node temperature export failed: {}",
+            String::from_utf8_lossy(&js_out.stderr)
+        );
+        let js_preds: Vec<Vec<f64>> = serde_json::from_slice(&js_out.stdout).unwrap();
+        assert_eq!(js_preds.len(), expected_rows.len());
+        for (got, exp) in js_preds.iter().zip(expected_rows) {
+            assert_eq!(got.len(), exp.len());
+            for (g, e) in got.iter().zip(exp) {
+                assert!((g - e).abs() <= 1e-12, "node got={g} exp={e}");
+            }
+        }
+
+        let mut rs_src = String::from_utf8(calibrated.export_source("rust").unwrap()).unwrap();
+        let rs_rows_lit = format!(
+            "vec![{}]",
+            query
+                .rows
+                .iter()
+                .map(|r| format!(
+                    "vec![{}]",
+                    r.iter()
+                        .map(|c| format!("{c:?}.to_string()"))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                ))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        let rs_classes_lit = classes
+            .iter()
+            .map(|c| format!("{c:?}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let rs_exp_lit = format!(
+            "vec![{}]",
+            expected_rows
+                .iter()
+                .map(|r| format!("vec!{r:?}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        rs_src.push_str(&format!(
+            "\nfn main() {{ assert_eq!(TEMPERATURE_CLASS_ORDER, [{rs_classes_lit}]); let _ = &TEMPERATURE_CLASS_ORDER; let got = predict_encoded(&{rs_rows_lit}).unwrap(); let exp: Vec<Vec<f64>> = {rs_exp_lit}; assert_eq!(got.len(), exp.len()); for (g, e) in got.iter().zip(&exp) {{ assert_eq!(g.len(), e.len()); for (gv, ev) in g.iter().zip(e) {{ assert!((gv - ev).abs() <= 1e-12); }} }} }}\n"
+        ));
+        let rs_path = work_dir.join("temperature_portable.rs");
+        let rs_bin = work_dir.join("temperature_portable_bin");
+        fs::write(&rs_path, &rs_src).unwrap();
+        let rs_compile = Command::new("rustc")
+            .args(["--edition=2021", "-D", "warnings", "-A", "dead_code"])
+            .arg(&rs_path)
+            .arg("-o")
+            .arg(&rs_bin)
+            .output()
+            .unwrap();
+        assert!(
+            rs_compile.status.success(),
+            "rustc temperature export failed: {}",
+            String::from_utf8_lossy(&rs_compile.stderr)
+        );
+        let rs_run = Command::new(&rs_bin).output().unwrap();
+        assert!(
+            rs_run.status.success(),
+            "rust temperature binary failed: {}",
+            String::from_utf8_lossy(&rs_run.stderr)
+        );
+        assert!(calibrated
+            .with_temperature_calibration(calibration.clone())
+            .is_err());
 
         let dir = tempfile::tempdir().unwrap();
         let path = calibrated.save(dir.path(), 1 << 20).unwrap();

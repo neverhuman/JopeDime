@@ -622,6 +622,15 @@ fn multiclass_objective_and_temperature_calibration_roundtrip_through_model_obje
         csv_str.starts_with("prediction,p_alpha,p_beta,p_gamma\n"),
         "{csv_str}"
     );
+    for (lang, fn_marker) in [
+        ("python", "fitted_temperature"),
+        ("rust", "fitted_temperature"),
+        ("javascript", "fittedTemperature"),
+    ] {
+        let exported = String::from_utf8(reloaded.export_source(lang).unwrap()).unwrap();
+        assert!(exported.contains("TEMPERATURE_CLASS_ORDER"), "{lang}");
+        assert!(exported.contains(fn_marker), "{lang}");
+    }
 
     // Incompatible calibration families on multiclass fail cleanly with Input error kind.
     for bad_cal in [Calibration::Affine, Calibration::Platt] {
