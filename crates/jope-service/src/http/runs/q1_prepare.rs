@@ -2,9 +2,12 @@ use super::*;
 
 impl RunService {
     pub(in crate::http::runs) fn prepare(&self, spec: &RunSpec) -> Result<Prepared> {
-        if !matches!(spec.task, Task::Regression | Task::Binary | Task::Auto) {
+        if !matches!(
+            spec.task,
+            Task::Regression | Task::Binary | Task::Multiclass | Task::Auto
+        ) {
             return Err(unavailable(
-                "This run backend supports regression and binary classification.",
+                "This run backend supports regression, binary and multiclass classification.",
             ));
         }
         if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
@@ -45,6 +48,18 @@ impl RunService {
                         ["0".into(), "1".into()],
                     )
                     .map_err(|_| invalid("The objective is invalid for binary classification."))?;
+                }
+            }
+        } else if spec.task == Task::Multiclass {
+            if let ObjectiveSpec::Name(name) = &spec.objective {
+                if !name.trim_start().starts_with('{') {
+                    crate::objective::multiclass::MulticlassObjective::parse(
+                        name,
+                        vec!["0".into(), "1".into(), "2".into()],
+                    )
+                    .map_err(|_| {
+                        invalid("The objective is invalid for multiclass classification.")
+                    })?;
                 }
             }
         }
@@ -119,6 +134,11 @@ impl RunService {
                 false,
                 "Explicit binary classification task.".to_owned(),
             ),
+            Task::Multiclass => (
+                Task::Multiclass,
+                false,
+                "Explicit multiclass classification task.".to_owned(),
+            ),
             Task::Auto => {
                 let mut distinct = std::collections::BTreeSet::new();
                 for row in &table.rows {
@@ -152,13 +172,22 @@ impl RunService {
                             distinct.len()
                         ),
                     )
+                } else if distinct.len() >= 3 {
+                    (
+                        Task::Multiclass,
+                        true,
+                        format!(
+                            "Inferred multiclass task from {} non-numeric target labels.",
+                            distinct.len()
+                        ),
+                    )
                 } else {
-                    return Err(unavailable(
-                        "Target column implies multiclass classification; this run backend supports regression and binary classification.",
-                    ));
+                    return Err(invalid(&format!(
+                        "Target column `{}` must have at least 2 distinct values.",
+                        spec.target
+                    )));
                 }
             }
-            Task::Multiclass => unreachable!("checked above"),
         };
         if resolved_task == Task::Binary {
             return self.prepare_binary(
@@ -168,6 +197,19 @@ impl RunService {
                 target,
                 &ignored,
                 language_filter,
+                comparators,
+                backend,
+                task_inferred,
+                task_reason,
+            );
+        }
+        if resolved_task == Task::Multiclass {
+            return self.prepare_multiclass(
+                spec,
+                dataset,
+                table,
+                target,
+                &ignored,
                 comparators,
                 backend,
                 task_inferred,
@@ -702,6 +744,338 @@ impl RunService {
         backend
             .bind_fit(&fit, &search)
             .map_err(|_| invalid("Unable to prepare binary FIT context."))?;
+        public.landmarks.sample_rows = backend.landmark_rows as u32;
+        public.comparators = Some(comparators);
+        let rows = |ids: Vec<usize>| {
+            ids.into_iter()
+                .map(|row| AuditRowId {
+                    dataset: spec.dataset.clone(),
+                    row: row as u64,
+                })
+                .collect()
+        };
+        Ok(Prepared {
+            public,
+            search,
+            fit,
+            holdout,
+            fit_rows: rows(fit_ids),
+            holdout_rows: rows(holdout_ids),
+            backend,
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn prepare_multiclass(
+        &self,
+        spec: &RunSpec,
+        dataset: RegisteredDataset,
+        mut table: jope_runtime::table::CsvTable,
+        target: usize,
+        ignored: &std::collections::BTreeSet<&String>,
+        mut comparators: ResolvedComparators,
+        mut backend: BackendPlan,
+        task_inferred: bool,
+        task_reason: String,
+    ) -> Result<Prepared> {
+        let _ = multiclass_run_roster(&spec.languages)?;
+        let mut distinct = std::collections::BTreeSet::new();
+        for row in &mut table.rows {
+            let Some(trimmed) = row[target]
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+            else {
+                return Err(invalid(&format!(
+                    "Target column `{}` cannot contain missing values.",
+                    spec.target
+                )));
+            };
+            distinct.insert(trimmed.clone());
+            row[target] = Some(trimmed);
+        }
+        let all_numeric = distinct
+            .iter()
+            .all(|label| crate::dataset::finite_number(label).is_some());
+        let mut classes: Vec<String> = distinct.into_iter().collect();
+        if all_numeric {
+            classes.sort_by(|a, b| {
+                let left = crate::dataset::finite_number(a).unwrap_or(0.0);
+                let right = crate::dataset::finite_number(b).unwrap_or(0.0);
+                left.total_cmp(&right).then_with(|| a.cmp(b))
+            });
+            for window in classes.windows(2) {
+                if crate::dataset::finite_number(&window[0])
+                    == crate::dataset::finite_number(&window[1])
+                {
+                    return Err(invalid(&format!(
+                        "Multiclass target column `{}` has duplicate numeric class encodings.",
+                        spec.target
+                    )));
+                }
+            }
+        }
+        if classes.len() < 3 {
+            return Err(invalid(&format!(
+                "Multiclass target column `{}` must have at least 3 distinct classes; found {}.",
+                spec.target,
+                classes.len()
+            )));
+        }
+        let (objective, resolved_objective) =
+            crate::run::service::run_multiclass_objective(&spec.objective, classes.clone())
+                .map_err(|_| {
+                    invalid(
+                        "The objective is invalid for multiclass classification or its class_order does not match the dataset.",
+                    )
+                })?;
+        if comparators.enabled {
+            comparators = ResolvedComparators {
+                enabled: false,
+                tier: None,
+                ids: Vec::new(),
+                ceiling_seconds: None,
+                reason: "multiclass task".into(),
+            };
+        }
+        let kept: Vec<usize> = (0..table.headers.len())
+            .filter(|&index| !ignored.contains(&&table.headers[index]))
+            .collect();
+        let features: Vec<String> = kept
+            .iter()
+            .filter(|&&index| index != target)
+            .map(|&index| table.headers[index].clone())
+            .collect();
+        if features.is_empty() {
+            return Err(invalid("At least one feature column is required."));
+        }
+        let leaks = crate::dataset::leakage::target_leakage(&table, &spec.target);
+        let id_columns = crate::dataset::group_leak::id_like_columns(
+            &table.headers,
+            &spec.target,
+            &spec.ignore_columns,
+        );
+        let id_values: Vec<(String, Vec<Option<String>>)> = id_columns
+            .iter()
+            .filter_map(|name| {
+                let index = table.headers.iter().position(|header| header == name)?;
+                let values = table
+                    .rows
+                    .iter()
+                    .map(|row| row.get(index).cloned().flatten())
+                    .collect();
+                Some((name.clone(), values))
+            })
+            .collect();
+        table.headers = kept.iter().map(|&i| table.headers[i].clone()).collect();
+        table.rows = table
+            .rows
+            .into_iter()
+            .map(|row| kept.iter().map(|&i| row[i].clone()).collect())
+            .collect();
+        let fit_count =
+            super::q1_fit_rows::fit_row_count(table.rows.len() as u64, spec.split.holdout_fraction)
+                as usize;
+        let effort = SearchEffort::from_name(match spec.effort {
+            Effort::Fast => "fast",
+            Effort::Medium => "medium",
+            Effort::High => "high",
+            Effort::Ultra => "ultra",
+        })
+        .unwrap()
+        .limits_with_budget(BudgetOverrides {
+            evaluations: spec.budget.evaluations.map(|v| v.0),
+            wall_seconds: spec.budget.wall_seconds.map(|v| v.0),
+            ..Default::default()
+        });
+        let num_classes = classes.len();
+        if effort.evaluations == 0
+            || effort.wall_seconds == 0
+            || fit_count < num_classes.saturating_mul(2)
+            || fit_count > self.config.limits.rung1_max_rows.value as usize
+            || fit_count >= table.rows.len()
+        {
+            return Err(invalid(
+                "Budget or FIT row count is outside the backend's configured limits.",
+            ));
+        }
+        let target_column = table
+            .headers
+            .iter()
+            .position(|name| name == &spec.target)
+            .ok_or_else(|| invalid("Unknown target column."))?;
+        let class_index_map: std::collections::BTreeMap<&str, usize> = classes
+            .iter()
+            .enumerate()
+            .map(|(idx, name)| (name.as_str(), idx))
+            .collect();
+        let row_classes: Vec<usize> = table
+            .rows
+            .iter()
+            .map(|row| {
+                row[target_column]
+                    .as_deref()
+                    .and_then(|s| class_index_map.get(s).copied())
+                    .ok_or_else(|| invalid("Target label missing from multiclass order."))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let (fit_ids, holdout_ids) = crate::discover::splits::stratified_split(
+            &row_classes,
+            fit_count,
+            spec.seed.0,
+            "public-run/fit-v1",
+        )
+        .map_err(io)?;
+        let mut fit_class_counts = vec![0usize; num_classes];
+        for &r in &fit_ids {
+            fit_class_counts[row_classes[r]] += 1;
+        }
+        let mut holdout_class_counts = vec![0usize; num_classes];
+        for &r in &holdout_ids {
+            holdout_class_counts[row_classes[r]] += 1;
+        }
+        if fit_class_counts.iter().any(|&c| c < 2) || holdout_class_counts.iter().any(|&c| c < 1) {
+            return Err(invalid(
+                "Each multiclass target class needs at least 2 FIT rows and 1 holdout row.",
+            ));
+        }
+        let min_fit_class = fit_class_counts.iter().copied().min().unwrap_or(0);
+        let encode = |ids: &[usize]| -> Result<Vec<u8>> {
+            let mut part = table.clone();
+            part.rows = ids.iter().map(|&i| table.rows[i].clone()).collect();
+            jmat::encode(&part).map_err(io)
+        };
+        let fit = encode(&fit_ids)?;
+        let holdout = encode(&holdout_ids)?;
+        let spanning =
+            crate::dataset::group_leak::spanning_columns(&id_values, &fit_ids, &holdout_ids);
+        let parsed_objective =
+            crate::objective::multiclass::MulticlassObjective::parse_json(&objective)
+                .map_err(io)?;
+        let prior_vec: Vec<f64> = fit_class_counts
+            .iter()
+            .map(|&c| c as f64 / fit_ids.len() as f64)
+            .collect();
+        let prior_probs = vec![prior_vec; holdout_ids.len()];
+        let holdout_labels: Vec<&str> = holdout_ids
+            .iter()
+            .map(|&r| classes[row_classes[r]].as_str())
+            .collect();
+        let prior_baseline = parsed_objective
+            .evaluate(&holdout_labels, &prior_probs)
+            .ok()
+            .map(|s| s.value);
+        let effective_cv_folds = (effort.rung1_folds as usize).min(min_fit_class).max(2) as u8;
+        let governor = Governor::new(
+            std::num::NonZeroU64::new(u64::MAX).unwrap(),
+            NonZeroU32::new(1).unwrap(),
+            self.config.limits.disk_reserve.value,
+        );
+        let estimates = governor.preflight(
+            Requirements {
+                matrix_ram_bytes: dataset.csv.bytes.saturating_mul(4),
+                per_worker_ram_bytes: WORKER_RAM,
+                matrix_disk_bytes: (fit.len() + holdout.len()) as u64,
+                artifact_bytes: MODEL_LIMIT,
+                ..Default::default()
+            },
+            &mut SystemSensors::without_gpu(&self.home),
+        )?;
+        let timeout = self
+            .config
+            .limits
+            .eval_timeout
+            .value
+            .as_millis()
+            .min(u128::from(effort.wall_seconds) * 1000)
+            .max(1) as u64;
+        let mut normalized = serde_json::to_value(spec).map_err(io)?;
+        normalized["dry_run"] = json!(false);
+        normalized["plan_digest"] = Value::Null;
+        let plan_digest = hash(
+            &serde_json::to_vec(
+                &json!({"backend":"cpu-native-multiclass/v1", "spec":normalized,
+            "dataset":dataset.csv, "fit":hash(&fit), "binary":self.binary, "timeout_ms":timeout,
+            "worker_ram":WORKER_RAM, "workers":1, "estimates":estimates,
+            "ranker_bundle":backend.bundle_digest,"placement":backend.placement}),
+            )
+            .map_err(io)?,
+        );
+        if spec.plan_digest.as_ref().is_some_and(|v| v != &plan_digest) {
+            return Err(issue(
+                ErrorCode::PlanChanged,
+                "Plan digest changed; request a fresh dry-run plan.",
+            ));
+        }
+        let excluded_ops: Vec<String> = Vec::new();
+        let mut public: Plan = serde_json::from_value(json!({"plan_digest":plan_digest,
+            "task":{"value":"multiclass","inferred":task_inferred,"reason":task_reason},
+            "objective":resolved_objective,
+            "rows":{"total":table.rows.len().to_string(),"fit":fit_count.to_string(),"holdout":holdout_ids.len().to_string(),"test":null},
+            "effort":{"name":spec.effort,"evaluations":effort.evaluations.to_string(),"wall_seconds":effort.wall_seconds.to_string(),"cv_folds":effective_cv_folds,"rounds_in_flight":1},
+            "guidance":backend.guidance,"landmarks":{"mode":spec.landmarks,"sample_rows":0},
+            "languages":{"requested":spec.languages,"excluded_operations":excluded_ops,"intersection_empty":false},
+            "placement":backend.placement,
+            "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
+        for leak in &leaks {
+            public.warnings.push(
+                crate::dataset::leakage::warning(leak)
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
+        for column in &spanning {
+            public.warnings.push(
+                crate::dataset::group_leak::warning(column)
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
+        if let Some(score_val) = prior_baseline {
+            public.warnings.push(
+                crate::warnings::catalog("BASELINE_MEAN")
+                    .expect("BASELINE_MEAN is catalogued")
+                    .event(
+                        WarningState::Raised,
+                        Some(score_val),
+                        None,
+                        format!(
+                            "Baseline predicts the training-set empirical {}-class prior of `{}`. On the same {} evaluation rows its {} is {score_val:.6}.",
+                            num_classes,
+                            spec.target,
+                            holdout_ids.len(),
+                            public.objective.name,
+                        ),
+                        "Compare the model with this number. It uses the same evaluation rows and no others.",
+                    )
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
+        let search = SearchPlan {
+            run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
+            dataset_id: spec.dataset.clone(),
+            problem_digest: hash(&serde_json::to_vec(&json!({"spec":normalized,"csv_sha256":dataset.csv.sha256,
+                "fit_sha256":hash(&fit),"objective_digest":public.objective.digest,"split":"public-run/fit-v1"})).map_err(io)?),
+            bundle_digest: backend.bundle_digest.clone(),
+            binary_version: self.binary.clone(),
+            matrix_path: PathBuf::new(),
+            matrix_sha256: hash(&fit),
+            target: spec.target.clone(),
+            features,
+            objective,
+            seed: spec.seed.0,
+            planned_workers: 1,
+            effort: spec.effort,
+            evaluations: effort.evaluations,
+            wall_seconds: effort.wall_seconds,
+            evaluation_wall_ms: timeout,
+            evaluation_rss_bytes: WORKER_RAM,
+            groups: None,
+            times: None,
+            gap_rows: 0,
+        };
+        backend
+            .bind_fit(&fit, &search)
+            .map_err(|_| invalid("Unable to prepare multiclass FIT context."))?;
         public.landmarks.sample_rows = backend.landmark_rows as u32;
         public.comparators = Some(comparators);
         let rows = |ids: Vec<usize>| {

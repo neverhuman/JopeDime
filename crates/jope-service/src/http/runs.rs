@@ -374,19 +374,47 @@ fn binary_run_roster(
     Ok(roster)
 }
 
+fn multiclass_run_roster(
+    languages: &[Language],
+) -> Result<Vec<jope_runtime::methods::registry::RustMethod>> {
+    let _ = run_language_filter(languages)?;
+    let roster =
+        jope_runtime::methods::registry::rust_methods(jope_runtime::task::TaskKind::Multiclass)
+            .map_err(io)?;
+    if roster.is_empty() {
+        return Err(unavailable(
+            "Requested export languages have no supported multiclass pipeline intersection.",
+        ));
+    }
+    Ok(roster)
+}
+
+fn classification_run_roster(
+    objective: &str,
+    languages: &[Language],
+) -> Result<Option<Vec<jope_runtime::methods::registry::RustMethod>>> {
+    if crate::objective::binary::BinaryObjective::parse_json(objective).is_ok() {
+        Ok(Some(binary_run_roster(languages)?))
+    } else if crate::objective::multiclass::MulticlassObjective::parse_json(objective).is_ok() {
+        Ok(Some(multiclass_run_roster(languages)?))
+    } else {
+        Ok(None)
+    }
+}
+
 struct CpuRunSpace {
     allowed: feat_math::evolve::api::capability::LanguageFilter,
-    binary_roster: Option<Vec<jope_runtime::methods::registry::RustMethod>>,
+    classification_roster: Option<Vec<jope_runtime::methods::registry::RustMethod>>,
     #[cfg(all(feature = "failpoints", debug_assertions))]
     pub06_values: Option<Pub06InternalValues>,
 }
 impl SearchSpace for CpuRunSpace {
     fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
-        if let Some(roster) = &self.binary_roster {
+        if let Some(roster) = &self.classification_roster {
             let canonical = feat_math::GenomeIr::parse(dsl)?.canonical();
             anyhow::ensure!(
                 roster.iter().any(|m| m.dsl == canonical),
-                "binary pipeline is excluded by the supported method roster or export languages"
+                "classification pipeline is excluded by the supported method roster or export languages"
             );
             return Ok(canonical);
         }
@@ -410,7 +438,7 @@ impl SearchSpace for CpuRunSpace {
                 values.round.as_str(),
             ));
         }
-        if let Some(roster) = &self.binary_roster {
+        if let Some(roster) = &self.classification_roster {
             return Ok(vec![self.canonical(&roster[0].dsl)?]);
         }
         Ok(vec![self.canonical("(pipe X (standardize) (ridge))")?])
@@ -429,7 +457,7 @@ impl SearchSpace for CpuRunSpace {
         {
             anyhow::bail!("PUB-06 test worker failure after internal-value injection");
         }
-        if let Some(roster) = &self.binary_roster {
+        if let Some(roster) = &self.classification_roster {
             use rand_chacha::rand_core::RngCore;
             let mut proposals = Vec::with_capacity(count.min(roster.len()));
             let start = (rng.next_u64() as usize) % roster.len();
@@ -851,7 +879,7 @@ fn issue(code: ErrorCode, detail: impl Into<String>) -> Box<Problem> {
 fn remedy(code: ErrorCode) -> &'static str {
     match code {
         ErrorCode::IoFailure => "The local engine could not read or write its store; check `jain serve --status` and the free disk space, then retry.",
-        _ => "Change the request to a supported run: task regression or binary, a random holdout split, and at least one export language (rust, python or javascript).",
+        _ => "Change the request to a supported run: task regression, binary or multiclass, a random holdout split, and at least one export language (rust, python or javascript).",
     }
 }
 fn invalid(detail: &str) -> Box<Problem> {

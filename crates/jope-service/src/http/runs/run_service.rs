@@ -99,13 +99,17 @@ impl RunService {
         if let Err(error) = persisted {
             return response(&io(error));
         }
-        let is_binary =
-            crate::objective::binary::BinaryObjective::parse_json(&prepared.search.objective)
-                .is_ok();
+        let classification_roster = match classification_run_roster(
+            &prepared.search.objective,
+            &context.backend.spec.languages,
+        ) {
+            Ok(roster) => roster,
+            Err(error) => return response(&error),
+        };
         let sender = match self.worker_sender(
             _pub06_values,
             false,
-            is_binary,
+            classification_roster,
             prepared.backend,
             context.backend.spec.languages.clone(),
         ) {
@@ -137,28 +141,23 @@ impl RunService {
         self: &Arc<Self>,
         _pub06_values: Pub06Injection,
         explicit_continue: bool,
-        is_binary: bool,
+        classification_roster: Option<Vec<jope_runtime::methods::registry::RustMethod>>,
         backend: BackendPlan,
         languages: Vec<Language>,
     ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
         let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
         let owner = Arc::clone(self);
         let allowed = run_language_filter(&languages)?;
-        let binary_roster = if is_binary {
-            Some(binary_run_roster(&languages)?)
-        } else {
-            None
-        };
         #[cfg(all(feature = "failpoints", debug_assertions))]
         let run_space = CpuRunSpace {
             allowed,
-            binary_roster,
+            classification_roster,
             pub06_values: _pub06_values,
         };
         #[cfg(not(all(feature = "failpoints", debug_assertions)))]
         let run_space = CpuRunSpace {
             allowed,
-            binary_roster,
+            classification_roster,
         };
         let learned = backend.learned();
         let admission = backend.admission;
@@ -267,13 +266,14 @@ impl RunService {
             let injection = None;
             #[cfg(not(all(feature = "failpoints", debug_assertions)))]
             let injection = ();
-            let is_binary =
-                crate::objective::binary::BinaryObjective::parse_json(&context.search.objective)
-                    .is_ok();
+            let classification_roster = classification_run_roster(
+                &context.search.objective,
+                &context.backend.spec.languages,
+            )?;
             let sender = self.worker_sender(
                 injection,
                 true,
-                is_binary,
+                classification_roster,
                 backend,
                 context.backend.spec.languages.clone(),
             )?;

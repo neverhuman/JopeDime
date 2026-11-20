@@ -161,7 +161,10 @@ impl Finalizer {
                 "invalid prepared partition"
             );
         }
-        if crate::objective::binary::BinaryObjective::parse_json(&plan.objective).is_err() {
+        if crate::objective::binary::BinaryObjective::parse_json(&plan.objective).is_err()
+            && crate::objective::multiclass::MulticlassObjective::parse_json(&plan.objective)
+                .is_err()
+        {
             let fitness = jope_runtime::fitness::Fitness::parse(&plan.objective)?;
             ensure!(
                 fitness.columns().is_empty() && !fitness.requires_order(),
@@ -296,7 +299,9 @@ impl Finalizer {
             .tempdir_in(&request.scratch_root)?;
         let binary_objective =
             crate::objective::binary::BinaryObjective::parse_json(&plan.objective).ok();
-        let regression_objective = if binary_objective.is_none() {
+        let multiclass_objective =
+            crate::objective::multiclass::MulticlassObjective::parse_json(&plan.objective).ok();
+        let regression_objective = if binary_objective.is_none() && multiclass_objective.is_none() {
             Some(RegressionObjective::parse(&plan.objective)?)
         } else {
             None
@@ -329,6 +334,8 @@ impl Finalizer {
                 let table = load(&request.holdout, plan, request.max_input_bytes)?;
                 let score = if let Some(binary) = &binary_objective {
                     super::model::score_binary(&fit_object, &table, &plan.target, binary)?
+                } else if let Some(multiclass) = &multiclass_objective {
+                    super::model::score_multiclass(&fit_object, &table, &plan.target, multiclass)?
                 } else {
                     score(
                         &fit_object,
@@ -411,6 +418,8 @@ impl Finalizer {
                     let table = load(part, plan, request.max_input_bytes)?;
                     if let Some(binary) = &binary_objective {
                         super::model::score_binary(exported, &table, &plan.target, binary)
+                    } else if let Some(multiclass) = &multiclass_objective {
+                        super::model::score_multiclass(exported, &table, &plan.target, multiclass)
                     } else {
                         score(
                             exported,

@@ -46,7 +46,11 @@ pub(crate) struct LiveCapabilities {
 impl CapabilityProvider for LiveCapabilities {
     fn capabilities(&self) -> Capabilities {
         Capabilities {
-            tasks: vec![jope_api::Task::Regression, jope_api::Task::Binary],
+            tasks: vec![
+                jope_api::Task::Regression,
+                jope_api::Task::Binary,
+                jope_api::Task::Multiclass,
+            ],
             languages: vec![
                 jope_api::Language::Rust,
                 jope_api::Language::Python,

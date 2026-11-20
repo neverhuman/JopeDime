@@ -26,6 +26,19 @@ pub(super) fn algorithm(
         .map_err(|_| integrity())?;
     let summary = if model.manifest().format == jope_runtime::model_object::MATH_PIPELINE {
         "Frozen completed CPU regression model"
+    } else if model.temperature_calibration().ok().flatten().is_some()
+        || model
+            .calibrated_input()
+            .ok()
+            .flatten()
+            .and_then(|c| c.header)
+            .is_some_and(|h| h.task == "multiclass")
+        || model
+            .fitted()
+            .ok()
+            .is_some_and(|f| f.header.task == "multiclass")
+    {
+        "Frozen completed CPU multiclass classification model"
     } else {
         "Frozen completed CPU binary classification model"
     };
