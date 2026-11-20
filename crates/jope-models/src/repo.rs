@@ -124,8 +124,60 @@ mod tests {
         let repo = Repo::at(Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
         let r = verify_manifests(&repo).unwrap();
         assert!(r.errors.is_empty(), "{:?}", r.errors);
-        assert_eq!(r.bundles.len(), 5);
+        assert_eq!(r.bundles.len(), 6);
         assert!(r.bundles.iter().any(|(id, _, _)| id == "r882"));
-        assert_eq!(r.pinned.len(), 3);
+        assert!(r.bundles.iter().any(|(id, files, bytes)| id
+            == crate::UNIFIED_ICL_REGBIN_V2_BUNDLE_ID
+            && *files == 6
+            && *bytes == 1_074_424_101));
+        assert_eq!(r.pinned.len(), 4);
+        assert!(r
+            .pinned
+            .iter()
+            .any(|id| id == crate::UNIFIED_ICL_REGBIN_V2_BUNDLE_ID));
+    }
+
+    #[test]
+    fn unified_icl_regbin_v2_pins_match_committed_manifest() {
+        let repo = Repo::at(Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
+        let manifest_path = repo.manifest_path(crate::UNIFIED_ICL_REGBIN_V2_BUNDLE_ID);
+        let bytes = std::fs::read(&manifest_path).unwrap();
+        assert_eq!(
+            sha256_hex(&bytes),
+            crate::UNIFIED_ICL_REGBIN_V2_MANIFEST_SHA256
+        );
+        let m = crate::manifest::BundleManifest::parse(&bytes).unwrap();
+        assert_eq!(m.bundle_id, crate::UNIFIED_ICL_REGBIN_V2_BUNDLE_ID);
+        assert_eq!(
+            m.extra.get("bundle_version").and_then(|v| v.as_str()),
+            Some(crate::UNIFIED_ICL_REGBIN_V2_VERSION)
+        );
+        let digest_of = |path: &str| {
+            m.files
+                .iter()
+                .find(|f| f.path == path)
+                .map(|f| f.sha256.as_str())
+                .unwrap_or("")
+        };
+        assert_eq!(
+            digest_of("unified_icl_regbin_M.safetensors"),
+            crate::UNIFIED_ICL_REGBIN_M_V2_SHA256
+        );
+        assert_eq!(
+            digest_of("unified_icl_regbin_L.safetensors"),
+            crate::UNIFIED_ICL_REGBIN_L_V2_SHA256
+        );
+        assert_eq!(
+            digest_of("unified_icl_regbin_M_stage2a_noarena.safetensors"),
+            crate::UNIFIED_ICL_REGBIN_M_V2_STAGE2A_SHA256
+        );
+        assert_eq!(
+            digest_of("unified_icl_regbin_L_stage2a_noarena.safetensors"),
+            crate::UNIFIED_ICL_REGBIN_L_V2_STAGE2A_SHA256
+        );
+        assert_eq!(
+            digest_of("dope.safetensors"),
+            crate::UNIFIED_ICL_REGBIN_DOPE_SHA256
+        );
     }
 }
