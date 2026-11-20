@@ -1,12 +1,5 @@
-//! Cross-fitted Temperature Scaling (`Guo et al., ICML 2017`) of native K-class (`K >= 3`)
-//! probability vectors.
-//!
-//! Input probability rows MUST already be out-of-fold base-head predictions aligned with
-//! `class_order`. For each validation fold, fit the scalar temperature `T in [0.05, 20.0]` on
-//! other folds only, minimizing the user's `jope.multiclass-fitness/v1` objective via deterministic
-//! coarse grid + golden-section refinement over `ln(T)`. Refit the stored scalar temperature on
-//! all out-of-fold rows for future predictions. Because `T > 0` scales every class log-probability
-//! by the same positive constant, `argmax` class order is strictly preserved on every row.
+//! Cross-fitted Temperature Scaling of native multiclass probability vectors.
+//! Preserves strict argmax class ordering while fitting a positive temperature on out-of-fold rows.
 use crate::fitness_multiclass::{Inputs, MulticlassFitness, PROBABILITY_SUM_TOLERANCE};
 use crate::Failure;
 use anyhow::{ensure, Result};
@@ -316,18 +309,18 @@ pub fn fit_temperature(
     );
     let lo = MIN_TEMPERATURE.ln();
     let hi = MAX_TEMPERATURE.ln();
-    let eval = |u: f64| evaluate_log_temp(u, probabilities, labels, class_order, fitness);
+    let score_log_temp = |u: f64| evaluate_log_temp(u, probabilities, labels, class_order, fitness);
 
-    // Baseline at T = 1.0 (ln T = 0.0).
-    let base_loss = eval(0.0);
+    // Baseline at unit temperature (zero log-temperature).
+    let base_loss = score_log_temp(0.0);
     let mut best_u = 0.0;
     let mut best_loss = base_loss;
 
-    // Coarse deterministic grid over [ln 0.05, ln 20.0] (symmetric around 0.0 so u = 0.0 is hit).
+    // Coarse deterministic grid over the bounded log-temperature interval (symmetric around zero).
     let mut grid = Vec::with_capacity(GRID_STEPS + 1);
     for idx in 0..=GRID_STEPS {
         let u = lo + (hi - lo) * (idx as f64 / GRID_STEPS as f64);
-        let loss = eval(u);
+        let loss = score_log_temp(u);
         grid.push((u, loss));
         if loss < best_loss {
             best_loss = loss;
@@ -353,7 +346,7 @@ pub fn fit_temperature(
         (-1.5_f64.max(lo), 1.5_f64.min(hi)),
     ] {
         if a < b {
-            let (cand_u, cand_loss) = golden_section_min(a, b, &eval);
+            let (cand_u, cand_loss) = golden_section_min(a, b, &score_log_temp);
             if cand_loss < best_loss {
                 best_loss = cand_loss;
                 best_u = cand_u;

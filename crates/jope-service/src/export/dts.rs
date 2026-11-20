@@ -26,6 +26,22 @@ pub fn generate(header: &Header) -> Result<String> {
              export declare function predict(row: PredictorRow): BinaryProbabilityPair;\n\
              export declare function predictBatch(rows: readonly PredictorRow[]): BinaryProbabilityPair[];\n"
         ));
+    } else if header.task == "multiclass" && header.class_order.len() >= 3 {
+        let tuple_elems = vec!["number"; header.class_order.len()].join(", ");
+        let class_literals = header
+            .class_order
+            .iter()
+            .map(serde_json::to_string)
+            .collect::<std::result::Result<Vec<_>, _>>()?
+            .join(", ");
+        output.push_str(&format!(
+            "}}\n\
+             \n\
+             export type MulticlassProbabilityTuple = [{tuple_elems}];\n\
+             export declare const CLASS_ORDER: readonly [{class_literals}];\n\
+             export declare function predict(row: PredictorRow): MulticlassProbabilityTuple;\n\
+             export declare function predictBatch(rows: readonly PredictorRow[]): MulticlassProbabilityTuple[];\n"
+        ));
     } else {
         output.push_str(
             "}\n\
@@ -136,5 +152,25 @@ mod tests {
             "export declare function predict(row: PredictorRow): BinaryProbabilityPair;"
         ));
         assert!(declaration.contains("export declare function predictBatch(rows: readonly PredictorRow[]): BinaryProbabilityPair[];"));
+    }
+
+    #[test]
+    fn multiclass_fixture_declares_probability_tuple_and_class_order() {
+        let mut header = fixture_header();
+        header.task = "multiclass".into();
+        header.metric = "logloss".into();
+        header.class_order = vec!["alpha".into(), "beta".into(), "gamma".into()];
+        let declaration = generate(&header).unwrap();
+        assert!(declaration
+            .contains("export type MulticlassProbabilityTuple = [number, number, number];"));
+        assert!(declaration.contains(
+            "export declare const CLASS_ORDER: readonly [\"alpha\", \"beta\", \"gamma\"];"
+        ));
+        assert!(declaration.contains(
+            "export declare function predict(row: PredictorRow): MulticlassProbabilityTuple;"
+        ));
+        assert!(declaration.contains(
+            "export declare function predictBatch(rows: readonly PredictorRow[]): MulticlassProbabilityTuple[];"
+        ));
     }
 }

@@ -761,11 +761,6 @@ async fn multiclass_discovery_finalization_prediction_and_export_roundtrip_end_t
             assert!((p_a + p_b + p_g - 1.0).abs() <= 1e-6);
         }
 
-        let export_kind = if objective_name == "macro_f1" {
-            ExportKind::Bundle
-        } else {
-            ExportKind::Model
-        };
         let export_req = Request::builder()
             .method("POST")
             .uri(format!("/v1/runs/{}/exports", receipt.run_id))
@@ -776,7 +771,7 @@ async fn multiclass_discovery_finalization_prediction_and_export_roundtrip_end_t
             .body(Body::from(
                 serde_json::to_vec(&ExportRequest {
                     algorithm_id: receipt.algorithm_id.clone(),
-                    kind: export_kind,
+                    kind: ExportKind::Bundle,
                     languages: spec.languages.clone(),
                     require_all_languages: spec.require_all_languages,
                     refit: Refit::FitHoldout,
@@ -788,32 +783,31 @@ async fn multiclass_discovery_finalization_prediction_and_export_roundtrip_end_t
         assert_eq!(export_reply.status(), StatusCode::OK, "{objective_name}");
         let manifest: ExportManifest = serde_json::from_value(body(export_reply).await).unwrap();
         assert_eq!(manifest.model_digest, receipt.model_digest);
+        assert_eq!(manifest.languages.len(), 3, "{objective_name}");
 
-        if objective_name == "macro_f1" {
-            for lang in ["python", "rust", "javascript"] {
-                let alg_req = Request::builder()
-                    .method("GET")
-                    .uri(format!(
-                        "/v1/runs/{}/algorithms/{}?language={lang}",
-                        receipt.run_id, receipt.algorithm_id
-                    ))
-                    .header(header::HOST, "127.0.0.1:31234")
-                    .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
-                    .body(Body::empty())
-                    .unwrap();
-                let alg_reply = router.clone().oneshot(alg_req).await.unwrap();
-                assert_eq!(
-                    alg_reply.status(),
-                    StatusCode::OK,
-                    "{objective_name} {lang}"
-                );
-                let alg: Algorithm = serde_json::from_value(body(alg_reply).await).unwrap();
-                assert_eq!(
-                    alg.summary,
-                    "Frozen completed CPU multiclass classification model"
-                );
-                assert!(!alg.source[0].source.is_empty());
-            }
+        for lang in ["python", "rust", "javascript"] {
+            let alg_req = Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/v1/runs/{}/algorithms/{}?language={lang}",
+                    receipt.run_id, receipt.algorithm_id
+                ))
+                .header(header::HOST, "127.0.0.1:31234")
+                .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+                .body(Body::empty())
+                .unwrap();
+            let alg_reply = router.clone().oneshot(alg_req).await.unwrap();
+            assert_eq!(
+                alg_reply.status(),
+                StatusCode::OK,
+                "{objective_name} {lang}"
+            );
+            let alg: Algorithm = serde_json::from_value(body(alg_reply).await).unwrap();
+            assert_eq!(
+                alg.summary,
+                "Frozen completed CPU multiclass classification model"
+            );
+            assert!(!alg.source[0].source.is_empty());
         }
     }
 }
