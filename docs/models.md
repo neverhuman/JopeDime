@@ -59,7 +59,11 @@ Corrections are published under a new id; an existing blob or manifest is never 
 Current bundles: `policy-step-60000` (step-60000 policy + context transforms, 119.6 MB),
 `jope-prime-gen31-v2` (the starforge encoder bundle: foundation/target/Hyperion v5 encoders, gen31
 policy, chimera experts, upstream `model-bundle.v1.json`; 1.10 GB; three files are
-`redistribution: prohibited`), `hyperion-v7` (246.5 MB).
+`redistribution: prohibited`), `hyperion-v7` (246.5 MB), `r882` / `r882-regression` (embedded proposal
+assets), and `unified-icl-regbin-v2` (`v2.0.0` dual-task regression + binary tabular foundation bundle:
+`M` `25.0M` and `L` `109.1M` `Stage 2B FullS3` 3-valley soups plus `Stage 2A NoArena` zero-Arena-exposure
+SafeTensors, pinned `dope.safetensors`, and `featurizer_config.json`; 1.07 GB; `redistribution: internal`;
+see [binary benchmarks](binary-benchmarks.md)).
 
 ## Local cache (`$JOPE_HOME/models`)
 

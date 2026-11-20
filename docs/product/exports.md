@@ -1,9 +1,9 @@
 # Export and prediction
 
-The CLI help advertises exporting a selected run model or generated source with `jopedime export`. Supported export kinds are `model`, `source`, and `bundle`; supported languages are Rust, Python, JavaScript, and TypeScript. `jopedime predict` accepts either a local model path or a completed run ID, plus input and output CSV paths.
+The CLI exports a selected run model or generated source with `jopedime export` (or offline via `ModelObject::export_source`). Supported export kinds are `model`, `source`, and `bundle`; supported languages are Rust, Python, JavaScript, and TypeScript. `jopedime predict` accepts either a local model path (`ModelObject` directory or `.jope` file) or a completed run ID, plus input and output CSV paths.
 
-These command surfaces were confirmed from the current executable's help output. They have not been executed here because a completed run requires an available registered dataset and run.
+For binary classification runs (`--task binary` or two-class `--task auto`; see [Binary classification](../binary-classification.md)):
 
-Dataset registration is now available, but the current service router still returns `CAPABILITY_UNAVAILABLE` for run creation, `model_export`, `artifact_download`, and `model_predict`. No export or prediction output is available to show from this build.
-
-**TODO(SVC-05-F01):** execute and document export from a completed run and prediction from its exported model after run, export, and prediction handlers are implemented. Include the generated artifact names and prediction output from the permitted fixture.
+- `POST /v1/predictions` and `jopedime predict` emit two calibrated probability columns matching the authenticated `class_order: [c0, c1]`.
+- `ModelObject::export_source` and `POST /v1/runs/{id}/exports` (`EXP-05`, PR `#2390`) emit standalone zero-dependency predictors even when post-hoc `Calibration::Platt { a, b }` is attached (`logloss`, `brier`), wrapping the portable predictor across Python (`float.fromhex`), Rust (`f64::from_bits`), JavaScript (`Object.freeze`), and TypeScript (`.d.ts` `BinaryProbabilityPair` and `CLASS_ORDER`) with `<= 1e-12` parity against `ModelObject::predict_proba`.
+- Raw container accessors (`ModelObject::fitted()` and `ModelObject::bound()`) remain fail-closed when post-hoc `Calibration::Platt` is present so callers cannot bypass calibrated probability scaling.

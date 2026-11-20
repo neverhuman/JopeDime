@@ -59,21 +59,21 @@ PY
 
 | Operation | Method and path | Current router result |
 |---|---|---|
-| `system_info` | `GET /v1/system` | `200 OK`, system snapshot above |
+| `system_info` | `GET /v1/system` | `200 OK`, system snapshot (`tasks: ["regression", "binary"]` when store-bound) |
 | `dataset_register` | `POST /v1/datasets` | `201 Created`; CSV upload verified |
 | `dataset_inspect` | `GET /v1/datasets`, `GET /v1/datasets/{id}` | `422 CAPABILITY_UNAVAILABLE` |
 | `dataset_delete` | `DELETE /v1/datasets/{id}` | `422 CAPABILITY_UNAVAILABLE` |
-| `objective_validate` | `POST /v1/objectives/validate` | `422 CAPABILITY_UNAVAILABLE` |
-| `run_start` | `POST /v1/runs` | `200` dry-run plan or `201` durable start; bounded CPU numeric regression |
+| `objective_validate` | `POST /v1/objectives/validate` | `422 CAPABILITY_UNAVAILABLE` (CLI validation via `jopedime objective`) |
+| `run_start` | `POST /v1/runs` | `200` dry-run plan or `201` durable start; bounded CPU regression and binary classification (`Task::Binary` / 2-class `Task::Auto`) |
 | `run_status` | `GET /v1/runs`, `GET /v1/runs/{id}` | `200` paginated inventory or committed snapshot; long-poll supported |
 | `run_control` | `POST /v1/runs/{id}/control` | `422 CAPABILITY_UNAVAILABLE` |
 | `run_fork` | `POST /v1/runs/{id}/fork` | `422 CAPABILITY_UNAVAILABLE` |
 | `run_delete` | `DELETE /v1/runs/{id}` | `422 CAPABILITY_UNAVAILABLE` |
 | `run_events` | `GET /v1/runs/{id}/events` | `200` durable JSON page or authenticated SSE stream |
-| `algorithm_get` | `GET /v1/runs/{id}/algorithms`, `GET /v1/runs/{id}/algorithms/{alg}` | `422 CAPABILITY_UNAVAILABLE` |
-| `model_export` | `POST /v1/runs/{id}/exports` | `422 CAPABILITY_UNAVAILABLE` |
-| `artifact_download` | `GET /v1/artifacts/{id}` | `422 CAPABILITY_UNAVAILABLE` |
-| `model_predict` | `POST /v1/predictions` | `422 CAPABILITY_UNAVAILABLE` |
+| `algorithm_get` | `GET /v1/runs/{id}/algorithms`, `GET /v1/runs/{id}/algorithms/{alg}` | `200` committed candidate summary and multi-language source on store-bound runs |
+| `model_export` | `POST /v1/runs/{id}/exports` | `200` standalone source / bundle export (Rust, Python, JS/TS, including Platt-calibrated binary models) |
+| `artifact_download` | `GET /v1/artifacts/{id}` | `200` content-addressed artifact download on store-bound runs |
+| `model_predict` | `POST /v1/predictions` | `200` regression predictions or two-column `[P(c0), P(c1)]` binary CSV probabilities |
 | `feedback_export` | `GET /v1/runs/{id}/feedback` | `422 CAPABILITY_UNAVAILABLE` |
 | `store_gc` | `POST /v1/store/gc` | `422 CAPABILITY_UNAVAILABLE` |
 
