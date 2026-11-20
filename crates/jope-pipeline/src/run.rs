@@ -312,9 +312,9 @@ pub fn check(options: &RunOptions) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn collect_static_seed_offers(
-    options: &RunOptions,
-) -> Result<(Vec<(String, &'static str)>, Option<String>, Option<String>)> {
+pub(crate) type StaticSeedOffers = (Vec<(String, &'static str)>, Option<String>, Option<String>);
+
+pub(crate) fn collect_static_seed_offers(options: &RunOptions) -> Result<StaticSeedOffers> {
     let mut offered: Vec<(String, &'static str)> = Vec::new();
     let mut parent_receipt_sha256 = None;
     let mut seeds_file_sha256 = None;
