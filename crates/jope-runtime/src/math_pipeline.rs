@@ -336,6 +336,114 @@ impl MathPipeline {
     }
 }
 
+/// Select 64 deterministic interior `[0.015, 0.985]` numeric check rows for `model` that avoid
+/// `0.0`/`1.0` boundary mass-points and screen out rows within `1e-9` of a discontinuous tree/bin
+/// split threshold so cross-platform `libm` (`musl` vs `glibc` vs `libSystem` vs `ucrtbase`)
+/// sub-ULP differences cannot flip a `self_check` decision branch.
+pub(crate) fn select_pipeline_self_check_rows(
+    model: &feat_math::model::Model,
+    width: usize,
+) -> Result<Vec<(Vec<f64>, f64)>> {
+    const TARGET_ROWS: usize = 64;
+    if width == 0 {
+        let rows = vec![Vec::new(); TARGET_ROWS];
+        let expected = model.predict(&rows)?;
+        return Ok(rows.into_iter().zip(expected).collect());
+    }
+
+    const PERTURB_DELTA: f64 = 1e-9;
+    let candidate_row = |k: usize| -> Vec<f64> {
+        let kf = (k + 1) as f64;
+        (0..width)
+            .map(|j| {
+                let jf = (j + 1) as f64;
+                let frac = (kf * 0.618_033_988_749_894_9 + jf * 0.414_213_562_373_095_1).fract();
+                0.015 + 0.970 * frac
+            })
+            .collect()
+    };
+
+    let mut accepted: Vec<(Vec<f64>, f64)> = Vec::with_capacity(TARGET_ROWS);
+    let mut fallback: Vec<(f64, usize, Vec<f64>, f64)> = Vec::new();
+
+    for &(start, end) in &[(0usize, 96usize), (96usize, 256usize)] {
+        if accepted.len() >= TARGET_ROWS {
+            break;
+        }
+        let count = end - start;
+        let mut probe_rows: Vec<Vec<f64>> = Vec::with_capacity(count * 5);
+        let mut base_rows: Vec<Vec<f64>> = Vec::with_capacity(count);
+        for k in start..end {
+            let base = candidate_row(k);
+            let plus: Vec<f64> = base.iter().map(|&v| (v + PERTURB_DELTA).min(1.0)).collect();
+            let minus: Vec<f64> = base.iter().map(|&v| (v - PERTURB_DELTA).max(0.0)).collect();
+            let alt_pos: Vec<f64> = base
+                .iter()
+                .enumerate()
+                .map(|(j, &v)| {
+                    let step = if j % 2 == 0 {
+                        PERTURB_DELTA
+                    } else {
+                        -PERTURB_DELTA
+                    };
+                    (v + step).clamp(0.0, 1.0)
+                })
+                .collect();
+            let alt_neg: Vec<f64> = base
+                .iter()
+                .enumerate()
+                .map(|(j, &v)| {
+                    let step = if j % 2 == 0 {
+                        -PERTURB_DELTA
+                    } else {
+                        PERTURB_DELTA
+                    };
+                    (v + step).clamp(0.0, 1.0)
+                })
+                .collect();
+            probe_rows.push(base.clone());
+            probe_rows.push(plus);
+            probe_rows.push(minus);
+            probe_rows.push(alt_pos);
+            probe_rows.push(alt_neg);
+            base_rows.push(base);
+        }
+        let preds = model.predict(&probe_rows)?;
+        for (idx, base) in base_rows.into_iter().enumerate() {
+            let k = start + idx;
+            let p0 = preds[idx * 5];
+            let neighbors = &preds[idx * 5 + 1..idx * 5 + 5];
+            let all_finite = p0.is_finite() && neighbors.iter().all(|v| v.is_finite());
+            let max_delta = if all_finite {
+                neighbors
+                    .iter()
+                    .map(|&v| (v - p0).abs())
+                    .fold(0.0_f64, f64::max)
+            } else {
+                f64::INFINITY
+            };
+            let smooth_bound = 1e-4 * (1.0 + p0.abs());
+            if all_finite && max_delta <= smooth_bound {
+                accepted.push((base, p0));
+                if accepted.len() == TARGET_ROWS {
+                    return Ok(accepted);
+                }
+            } else {
+                fallback.push((max_delta, k, base, p0));
+            }
+        }
+    }
+
+    fallback.sort_by(|a, b| a.0.total_cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+    for (_, _, row, pred) in fallback {
+        if accepted.len() == TARGET_ROWS {
+            break;
+        }
+        accepted.push((row, pred));
+    }
+    Ok(accepted)
+}
+
 mod contract;
 use contract::undefined;
 pub(super) use contract::{
