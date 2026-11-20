@@ -32,7 +32,6 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
-import torch.nn as nn  # noqa: E402
 import torch.nn.functional as F  # noqa: E402
 
 HERE = Path(__file__).resolve().parent

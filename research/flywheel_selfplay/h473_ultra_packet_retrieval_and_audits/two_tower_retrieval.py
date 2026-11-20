@@ -807,4 +807,3 @@ def eval_part_b_val91_regcheck(
             "prior0rev_ultra_minus_incumbent0rev": contrast_fn(pl_res["ret_ultra_packet_2t"]["prior0rev_u"], pl_res["incumbent_0rev"]["prior0rev_u"], val_families),
         },
     }
-
