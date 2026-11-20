@@ -11,6 +11,8 @@ cargo build --locked -p jope-appliance
 jopedime fit --train train.csv --target y --task regression --method ridge --json > fit.json
 # Binary tasks retain class_order and optional cross-fitted Platt calibration (`--calibration auto|platt|none`):
 jopedime fit --train binary_train.csv --target label --task binary --fitness logloss --calibration auto --json > bin_fit.json
+# Multiclass tasks (`K >= 3`) retain class_order and optional cross-fitted Temperature Scaling (`--calibration auto|temperature|none`):
+jopedime fit --train multiclass_train.csv --target species --task multiclass --fitness logloss --calibration auto --json > mc_fit.json
 # Read outputs[0].path from fit.json into MODEL using your language's JSON parser.
 jopedime predict --model "$MODEL" --input rows.csv --output predictions.csv --json
 jopedime model inspect --model "$MODEL"
@@ -58,6 +60,8 @@ Rust implementation: `jope_runtime::model_object`.
 | `model.jope` | Native appliance fitted state under `org.jopedime/appliance-fitted/v1` |
 | `state.json` | Complete bound state under `org.jopedime/battle-artifact/v2` |
 | `pipeline.json` + `input.json` | Fitted feat-math pipeline and its numeric input contract under `org.jopedime/math-pipeline/v1` |
+| `platt.json` | Cross-fitted binary Platt calibration under `org.jopedime/platt-calibration/v1` |
+| `temperature.json` | Cross-fitted multiclass Temperature Scaling (`jope.temperature-calibration/v1`) under `org.jopedime/temperature-calibration/v1` |
 | Additional `.bin` or `.json` parts | Optional typed buffers, operator parameters, support rows, calibration or other fitted state, as defined by that decoder |
 
 The directory ID is `sha256-` plus SHA-256 of the **exact manifest bytes**. A reader
