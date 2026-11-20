@@ -1,0 +1,2236 @@
+{
+  "schema": "jope.binary-benchmark-results/v1",
+  "generated_utc": "2026-11-19T21:52:41Z",
+  "sealed_inputs_opened": false,
+  "sealed_data_attestation": "Zero reads, training episodes, or evaluations on s3://jopedime-714044927654-us-east-2-sealed, catalog sealed test.csv files, benchmarks/panel.json sealed_rows, or dev91 SEALED/CONFIRM/FMGAP splits.",
+  "model_bundle": {
+    "bundle_id": "unified-icl-regbin-v2",
+    "bundle_version": "2.0.0",
+    "bucket": "veox-jopedime-models-use2",
+    "manifest_path": "models/bundles/unified-icl-regbin-v2.json",
+    "manifest_sha256": "cc04e4ab815b82c9f8df58f239c7ce86ac942386744317cd04fd8de70ae3b677",
+    "manifest_version_id": "bmGrKkE3GCwfC0Su5EhUaFb3YNh2SWks",
+    "verified_blobs": [
+      {
+        "path": "unified_icl_regbin_M.safetensors",
+        "sha256": "51dcb550184377b8de42a0bb9418f72b5aa7ecc2eba4a127eda8e3edb55815de",
+        "bytes": 99985668,
+        "version_id": "w3LkT0YYI7oBw6xaSeQLEnV28g6Y4KNw"
+      },
+      {
+        "path": "unified_icl_regbin_L.safetensors",
+        "sha256": "fcfb119e6f2a7f0d5418e7d98a1560d173b72cdbb998af5681fa140ba86e10ab",
+        "bytes": 436334908,
+        "version_id": "WFHVx3dy9dESsJBrqjnJKufQIATL9OzB"
+      },
+      {
+        "path": "unified_icl_regbin_M_stage2a_noarena.safetensors",
+        "sha256": "96b4b4959109d689f2424d21a50e549760cf05f3433494c548c6832678eb916b",
+        "bytes": 99985668,
+        "version_id": "wB1NHPax4Ejs6d5pfiDMdUXxMIBmFPQ7"
+      },
+      {
+        "path": "unified_icl_regbin_L_stage2a_noarena.safetensors",
+        "sha256": "9cf2bb3f2d56cb7d2fba2a959029c15715c8414b0104b2cdc12a0bc5204c0b33",
+        "bytes": 436334908,
+        "version_id": "nkl2KJqXVYwd2uNmLAE7rBGkqZ_V_EUw"
+      },
+      {
+        "path": "dope.safetensors",
+        "sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+        "bytes": 1782416,
+        "version_id": "sKLCCeythNI12z0307ceizoYK_m0nESZ"
+      },
+      {
+        "path": "featurizer_config.json",
+        "sha256": "3ac2b3c82b024117337c26f131a758a84afb33246ff489b38b03d61c4bb35fdc",
+        "bytes": 533,
+        "version_id": "kvHNJ7..piNtHXMvPtV3ifym2tRc_jz8"
+      }
+    ]
+  },
+  "audit_bindings": {
+    "split_audit_receipt_sha256": "76cb87c93210b6a2534121c5ce27d08bebade1a7bbb65cfa890097b5d2921301",
+    "sanctioned_eval_bundle_parity_receipt_sha256": "011d3eace2bd3da1d9df21f8e2fb05c0850de2f44acb68d36008d3ae591b5f61",
+    "per_task_scores_csv": "assets/binary/unified-icl-regbin-v2/per-task-scores.csv",
+    "per_task_scores_csv_sha256": "0db0b53e9d5afbf7ec2e37cf34b5025f50085353232844730375481c4a04e427",
+    "total_episodes_audited": 42352,
+    "exact_sanctioned_split_matches": 0,
+    "within_run_duplicate_splits": 0,
+    "pre_arena_stage_arena_exposures": 0,
+    "unvisited_trainable_tables": 0
+  },
+  "regimes": {
+    "unseen": {
+      "definition": "Evaluated tables absent from the model's training corpus (0 exposures).",
+      "models": [
+        "jopedime native CPU binary roster + cross-fitted Platt scaling (synthetic/binary-10 committed suite)",
+        "Step0_Warmstart_r5_M on TabArena_binary (30 tasks)",
+        "UnifiedICLRegBin_M_v2_Stage2A_NoArena on TabArena_binary (30 tasks)"
+      ]
+    },
+    "in-corpus": {
+      "definition": "Evaluated tables included in the 4,996-table generalist S3 corpus under per-episode distinct random splits (0/42,352 official-split matches, 0 duplicate splits, 0 per-table specialist fine-tuning).",
+      "models": [
+        "UnifiedICLRegBin_M_v2_FullS3",
+        "UnifiedICLRegBin_M_v2_FullS3 + TrainOOF_Hybrid",
+        "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3",
+        "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3 + TrainOOF_Hybrid"
+      ]
+    },
+    "recall": {
+      "definition": "Per-table or per-family specialist fine-tuning on scored tables' all-row random splits.",
+      "models_claimed_in_this_release": [],
+      "count": 0
+    }
+  },
+  "native_product_unseen_benchmark": {
+    "schema": "jope.native-binary-unseen-benchmark/v1",
+    "executed_utc": "2026-11-20T00:55:20Z",
+    "host": "xbabe1",
+    "source_sha": "bf47ee09c49fc1613f194d528843c1d354d62591",
+    "exposure_regime": "unseen",
+    "sealed_inputs_opened": false,
+    "suite": "datasets/synthetic/binary (10 committed official train/test datasets)",
+    "mean_logloss_auto_platt": 0.280222,
+    "mean_logloss_uncalibrated": 0.308949,
+    "mean_roc_auc": 0.895898,
+    "mean_brier": 0.079004,
+    "datasets": [
+      {
+        "dataset": "binary.categorical",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.001215,
+        "logloss_uncalibrated": 0.001215,
+        "roc_auc": 1.0,
+        "brier": 2e-06,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.constant_features",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.060945,
+        "logloss_uncalibrated": 0.060945,
+        "roc_auc": 1.0,
+        "brier": 0.016442,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.duplicated_rows",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.082732,
+        "logloss_uncalibrated": 0.082732,
+        "roc_auc": 1.0,
+        "brier": 0.016411,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.grouped_observations",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 1.055527,
+        "logloss_uncalibrated": 1.055527,
+        "roc_auc": 0.988281,
+        "brier": 0.235818,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.imbalanced",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.241524,
+        "logloss_uncalibrated": 0.268859,
+        "roc_auc": 0.5,
+        "brier": 0.059793,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.linear",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.049318,
+        "logloss_uncalibrated": 0.069239,
+        "roc_auc": 1.0,
+        "brier": 0.006314,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.missing_values",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.136419,
+        "logloss_uncalibrated": 0.136419,
+        "roc_auc": 0.987854,
+        "brier": 0.044496,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.nonlinear",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.extra_trees",
+        "logloss_auto_platt": 0.231103,
+        "logloss_uncalibrated": 0.500327,
+        "roc_auc": 0.972727,
+        "brier": 0.072028,
+        "recipe_sha256": "65b7e066140b008987c3ab5b5f147d9a68eb13bd57a803a3324c8d4b66cee6d0"
+      },
+      {
+        "dataset": "binary.outliers",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.logit_ridge",
+        "logloss_auto_platt": 0.199493,
+        "logloss_uncalibrated": 0.170277,
+        "roc_auc": 0.987854,
+        "brier": 0.065985,
+        "recipe_sha256": "54f1e9d4dd57972095c326e12b27fa632334c7b42fab93f923edf8550e3ae85e"
+      },
+      {
+        "dataset": "binary.overlapping",
+        "exposure_regime": "unseen",
+        "n_train": 64,
+        "n_test": 32,
+        "winner": "rust.portfolio",
+        "logloss_auto_platt": 0.743947,
+        "logloss_uncalibrated": 0.743947,
+        "roc_auc": 0.522267,
+        "brier": 0.272754,
+        "recipe_sha256": "a8b76f9c93566953ecfbb2143cd5071f12bdc44a22858d56252218209ee3c4ee"
+      }
+    ]
+  },
+  "our_metrics_summary": {
+    "BeyondArena_binary": {
+      "UnifiedICLRegBin_M_v2_FullS3": {
+        "mean_accuracy": 0.84874,
+        "mean_brier": 0.1073,
+        "mean_logloss": 0.34485,
+        "mean_roc_auc": 0.78363,
+        "median_logloss": 0.33157,
+        "median_roc_auc": 0.78128,
+        "n_tasks": 73
+      }
+    },
+    "BeyondArena_regression": {
+      "UnifiedICLRegBin_M_v2_FullS3": {
+        "mean_nrmse": 0.60318,
+        "median_nrmse": 0.64864,
+        "median_r2": 0.57926,
+        "n_tasks": 44
+      }
+    },
+    "TabArena_binary": {
+      "Step0_Warmstart_r5_M": {
+        "mean_accuracy": 0.85968,
+        "mean_brier": 0.10152,
+        "mean_logloss": 0.32779,
+        "mean_roc_auc": 0.81776,
+        "median_logloss": 0.30826,
+        "median_roc_auc": 0.80414,
+        "n_tasks": 30
+      },
+      "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+        "mean_accuracy": 0.84242,
+        "mean_brier": 0.11452,
+        "mean_logloss": 0.3703,
+        "mean_roc_auc": 0.72382,
+        "median_logloss": 0.33471,
+        "median_roc_auc": 0.72826,
+        "n_tasks": 20
+      },
+      "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3 + TrainOOF_Hybrid": {
+        "mean_accuracy": 0.86056,
+        "mean_brier": 0.10191,
+        "mean_logloss": 0.33575,
+        "mean_roc_auc": 0.81207,
+        "median_logloss": 0.35519,
+        "median_roc_auc": 0.79327,
+        "n_tasks": 20
+      },
+      "UnifiedICLRegBin_M_v2_FullS3": {
+        "mean_accuracy": 0.85377,
+        "mean_brier": 0.10524,
+        "mean_logloss": 0.33962,
+        "mean_roc_auc": 0.8117,
+        "median_logloss": 0.32563,
+        "median_roc_auc": 0.8007,
+        "n_tasks": 30
+      },
+      "UnifiedICLRegBin_M_v2_FullS3 + TrainOOF_Hybrid": {
+        "mean_accuracy": 0.86506,
+        "mean_brier": 0.09789,
+        "mean_logloss": 0.31716,
+        "mean_roc_auc": 0.83568,
+        "median_logloss": 0.30761,
+        "median_roc_auc": 0.80519,
+        "n_tasks": 30
+      },
+      "UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+        "mean_accuracy": 0.85281,
+        "mean_brier": 0.10545,
+        "mean_logloss": 0.34209,
+        "mean_roc_auc": 0.80792,
+        "median_logloss": 0.33462,
+        "median_roc_auc": 0.80201,
+        "n_tasks": 30
+      }
+    },
+    "TabArena_regression": {
+      "Step0_Warmstart_r5_M": {
+        "mean_nrmse": 0.46603,
+        "median_nrmse": 0.3771,
+        "median_r2": 0.8578,
+        "n_tasks": 13
+      },
+      "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+        "mean_nrmse": 0.46259,
+        "median_nrmse": 0.37717,
+        "median_r2": 0.85775,
+        "n_tasks": 13
+      },
+      "UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3 + TrainOOF_Hybrid": {
+        "mean_nrmse": 0.44832,
+        "median_nrmse": 0.39824,
+        "median_r2": 0.84141,
+        "n_tasks": 13
+      },
+      "UnifiedICLRegBin_M_v2_FullS3": {
+        "mean_nrmse": 0.46267,
+        "median_nrmse": 0.37296,
+        "median_r2": 0.8609,
+        "n_tasks": 13
+      },
+      "UnifiedICLRegBin_M_v2_FullS3 + TrainOOF_Hybrid": {
+        "mean_nrmse": 0.44997,
+        "median_nrmse": 0.39767,
+        "median_r2": 0.84186,
+        "n_tasks": 13
+      },
+      "UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+        "mean_nrmse": 0.46451,
+        "median_nrmse": 0.37799,
+        "median_r2": 0.85713,
+        "n_tasks": 13
+      }
+    }
+  },
+  "ladders": {
+    "Combined_Binary_Arena": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1410.23,
+          "ci95_low": 1268.21,
+          "elo": 1334.96,
+          "n_tasks": 103,
+          "rank": 10
+        },
+        "CAT (tuned + ensemble)": {
+          "ci95_high": 1443.45,
+          "ci95_low": 1299.68,
+          "elo": 1364.17,
+          "n_tasks": 103,
+          "rank": 6
+        },
+        "CAT (tuned)": {
+          "ci95_high": 1432.67,
+          "ci95_low": 1284.01,
+          "elo": 1352.64,
+          "n_tasks": 103,
+          "rank": 8
+        },
+        "GBM (default)": {
+          "ci95_high": 1185.33,
+          "ci95_low": 1055.88,
+          "elo": 1118.52,
+          "n_tasks": 103,
+          "rank": 20
+        },
+        "GBM (tuned + ensemble)": {
+          "ci95_high": 1425.53,
+          "ci95_low": 1278.57,
+          "elo": 1345.35,
+          "n_tasks": 103,
+          "rank": 9
+        },
+        "GBM (tuned)": {
+          "ci95_high": 1372.8,
+          "ci95_low": 1223.67,
+          "elo": 1290.97,
+          "n_tasks": 103,
+          "rank": 13
+        },
+        "LR (default)": {
+          "ci95_high": 1024.29,
+          "ci95_low": 873.13,
+          "elo": 946.0,
+          "n_tasks": 103,
+          "rank": 30
+        },
+        "LR (tuned + ensemble)": {
+          "ci95_high": 1069.07,
+          "ci95_low": 923.67,
+          "elo": 995.48,
+          "n_tasks": 103,
+          "rank": 26
+        },
+        "LR (tuned)": {
+          "ci95_high": 1036.37,
+          "ci95_low": 889.72,
+          "elo": 963.99,
+          "n_tasks": 103,
+          "rank": 29
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 103,
+          "rank": 25
+        },
+        "RF (tuned + ensemble)": {
+          "ci95_high": 1121.18,
+          "ci95_low": 1043.67,
+          "elo": 1080.76,
+          "n_tasks": 103,
+          "rank": 22
+        },
+        "RF (tuned)": {
+          "ci95_high": 1098.18,
+          "ci95_low": 1026.33,
+          "elo": 1060.19,
+          "n_tasks": 103,
+          "rank": 23
+        },
+        "RealMLP (default)": {
+          "ci95_high": 1257.97,
+          "ci95_low": 1114.89,
+          "elo": 1183.17,
+          "n_tasks": 103,
+          "rank": 17
+        },
+        "RealMLP (tuned + ensemble)": {
+          "ci95_high": 1489.65,
+          "ci95_low": 1328.5,
+          "elo": 1401.59,
+          "n_tasks": 103,
+          "rank": 4
+        },
+        "RealMLP (tuned)": {
+          "ci95_high": 1355.51,
+          "ci95_low": 1203.74,
+          "elo": 1271.66,
+          "n_tasks": 103,
+          "rank": 15
+        },
+        "TabICLv2 (default)": {
+          "ci95_high": 1489.56,
+          "ci95_low": 1314.94,
+          "elo": 1394.78,
+          "n_tasks": 103,
+          "rank": 5
+        },
+        "TabM (default)": {
+          "ci95_high": 1343.05,
+          "ci95_low": 1183.67,
+          "elo": 1254.92,
+          "n_tasks": 103,
+          "rank": 16
+        },
+        "TabM (tuned + ensemble)": {
+          "ci95_high": 1453.7,
+          "ci95_low": 1277.95,
+          "elo": 1357.54,
+          "n_tasks": 103,
+          "rank": 7
+        },
+        "TabM (tuned)": {
+          "ci95_high": 1416.48,
+          "ci95_low": 1243.25,
+          "elo": 1322.74,
+          "n_tasks": 103,
+          "rank": 12
+        },
+        "TabPFN-3 (default)": {
+          "ci95_high": 1592.28,
+          "ci95_low": 1410.18,
+          "elo": 1491.75,
+          "n_tasks": 103,
+          "rank": 3
+        },
+        "TabPFN-3.5 (default)": {
+          "ci95_high": 1760.58,
+          "ci95_low": 1506.03,
+          "elo": 1614.71,
+          "n_tasks": 103,
+          "rank": 1
+        },
+        "TabPFN-3.5-Fast (default)": {
+          "ci95_high": 1695.55,
+          "ci95_low": 1471.51,
+          "elo": 1570.68,
+          "n_tasks": 103,
+          "rank": 2
+        },
+        "XGB (default)": {
+          "ci95_high": 1245.88,
+          "ci95_low": 1098.37,
+          "elo": 1167.83,
+          "n_tasks": 103,
+          "rank": 18
+        },
+        "XGB (tuned + ensemble)": {
+          "ci95_high": 1405.79,
+          "ci95_low": 1255.42,
+          "elo": 1324.37,
+          "n_tasks": 103,
+          "rank": 11
+        },
+        "XGB (tuned)": {
+          "ci95_high": 1367.18,
+          "ci95_low": 1217.67,
+          "elo": 1286.34,
+          "n_tasks": 103,
+          "rank": 14
+        },
+        "XT (default)": {
+          "ci95_high": 1037.75,
+          "ci95_low": 948.51,
+          "elo": 993.73,
+          "n_tasks": 103,
+          "rank": 28
+        },
+        "XT (tuned + ensemble)": {
+          "ci95_high": 1199.04,
+          "ci95_low": 1102.03,
+          "elo": 1148.89,
+          "n_tasks": 103,
+          "rank": 19
+        },
+        "XT (tuned)": {
+          "ci95_high": 1167.78,
+          "ci95_low": 1061.85,
+          "elo": 1112.12,
+          "n_tasks": 103,
+          "rank": 21
+        },
+        "[OURS] Step0_Warmstart_r5_M": {
+          "ci95_high": 1107.02,
+          "ci95_low": 867.21,
+          "elo": 993.73,
+          "n_tasks": 30,
+          "rank": 27
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+          "ci95_high": 710.69,
+          "ci95_low": 422.6,
+          "elo": 600.63,
+          "n_tasks": 20,
+          "rank": 34
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3 + TrainOOF_Hybrid": {
+          "ci95_high": 1021.0,
+          "ci95_low": 828.61,
+          "elo": 935.46,
+          "n_tasks": 20,
+          "rank": 31
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 981.28,
+          "ci95_low": 830.64,
+          "elo": 906.76,
+          "n_tasks": 103,
+          "rank": 32
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3 + TrainOOF_Hybrid": {
+          "ci95_high": 1131.88,
+          "ci95_low": 932.31,
+          "elo": 1036.81,
+          "n_tasks": 30,
+          "rank": 24
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+          "ci95_high": 988.37,
+          "ci95_low": 713.1,
+          "elo": 866.5,
+          "n_tasks": 30,
+          "rank": 33
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 45818,
+      "n_methods": 34,
+      "n_tasks": 103
+    },
+    "TabArena_binary_default_zero_tuning": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1493.49,
+          "ci95_low": 1217.4,
+          "elo": 1344.28,
+          "n_tasks": 30,
+          "rank": 17
+        },
+        "GBM (default)": {
+          "ci95_high": 1227.3,
+          "ci95_low": 1017.75,
+          "elo": 1114.28,
+          "n_tasks": 30,
+          "rank": 26
+        },
+        "GBM_aio_0808 (default)": {
+          "ci95_high": 1344.43,
+          "ci95_low": 1171.18,
+          "elo": 1243.48,
+          "n_tasks": 30,
+          "rank": 21
+        },
+        "LR (default)": {
+          "ci95_high": 1064.27,
+          "ci95_low": 760.28,
+          "elo": 918.46,
+          "n_tasks": 30,
+          "rank": 30
+        },
+        "PREP_GBM (default)": {
+          "ci95_high": 1547.82,
+          "ci95_low": 1237.91,
+          "elo": 1375.81,
+          "n_tasks": 30,
+          "rank": 15
+        },
+        "PREP_LR (default)": {
+          "ci95_high": 1363.12,
+          "ci95_low": 1097.53,
+          "elo": 1221.98,
+          "n_tasks": 30,
+          "rank": 23
+        },
+        "REALMLP (default)": {
+          "ci95_high": 1356.19,
+          "ci95_low": 1146.73,
+          "elo": 1236.34,
+          "n_tasks": 30,
+          "rank": 22
+        },
+        "REALMLP_GPU (default)": {
+          "ci95_high": 1433.08,
+          "ci95_low": 1164.92,
+          "elo": 1287.09,
+          "n_tasks": 30,
+          "rank": 18
+        },
+        "REALTABPFN-V2.5 (default)": {
+          "ci95_high": 1641.5,
+          "ci95_low": 1361.37,
+          "elo": 1479.38,
+          "n_tasks": 30,
+          "rank": 13
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 30,
+          "rank": 29
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 2186.65,
+          "ci95_low": 1704.53,
+          "elo": 1920.47,
+          "n_tasks": 30,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 2028.99,
+          "ci95_low": 1568.35,
+          "elo": 1775.88,
+          "n_tasks": 30,
+          "rank": 4
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 1846.97,
+          "ci95_low": 1497.21,
+          "elo": 1650.25,
+          "n_tasks": 30,
+          "rank": 9
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 2093.54,
+          "ci95_low": 1605.5,
+          "elo": 1830.16,
+          "n_tasks": 30,
+          "rank": 3
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 2142.57,
+          "ci95_low": 1666.77,
+          "elo": 1877.94,
+          "n_tasks": 30,
+          "rank": 2
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 1889.51,
+          "ci95_low": 1495.12,
+          "elo": 1675.79,
+          "n_tasks": 30,
+          "rank": 8
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1455.24,
+          "ci95_low": 1108.2,
+          "elo": 1268.31,
+          "n_tasks": 30,
+          "rank": 19
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 1744.08,
+          "ci95_low": 1417.27,
+          "elo": 1552.91,
+          "n_tasks": 30,
+          "rank": 10
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 1984.72,
+          "ci95_low": 1579.17,
+          "elo": 1759.46,
+          "n_tasks": 30,
+          "rank": 5
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 1907.59,
+          "ci95_low": 1582.31,
+          "elo": 1718.68,
+          "n_tasks": 30,
+          "rank": 7
+        },
+        "TABDPT-1.3 (default)": {
+          "ci95_high": 1627.0,
+          "ci95_low": 1313.54,
+          "elo": 1461.19,
+          "n_tasks": 30,
+          "rank": 14
+        },
+        "TABDPT_GPU (default)": {
+          "ci95_high": 1343.35,
+          "ci95_low": 1049.17,
+          "elo": 1192.87,
+          "n_tasks": 30,
+          "rank": 24
+        },
+        "TABDPT_TURBO (default)": {
+          "ci95_high": 1488.93,
+          "ci95_low": 1247.45,
+          "elo": 1355.94,
+          "n_tasks": 30,
+          "rank": 16
+        },
+        "TABFM (default)": {
+          "ci95_high": 2004.83,
+          "ci95_low": 1532.56,
+          "elo": 1745.85,
+          "n_tasks": 30,
+          "rank": 6
+        },
+        "TABICLV2 (default)": {
+          "ci95_high": 1722.23,
+          "ci95_low": 1383.18,
+          "elo": 1531.35,
+          "n_tasks": 30,
+          "rank": 11
+        },
+        "TABM_GPU (default)": {
+          "ci95_high": 1442.38,
+          "ci95_low": 1093.96,
+          "elo": 1250.6,
+          "n_tasks": 30,
+          "rank": 20
+        },
+        "TABPFN-V2.6 (default)": {
+          "ci95_high": 1666.29,
+          "ci95_low": 1361.91,
+          "elo": 1492.83,
+          "n_tasks": 30,
+          "rank": 12
+        },
+        "XGB (default)": {
+          "ci95_high": 1312.95,
+          "ci95_low": 1041.95,
+          "elo": 1173.13,
+          "n_tasks": 30,
+          "rank": 25
+        },
+        "XT (default)": {
+          "ci95_high": 1061.69,
+          "ci95_low": 954.13,
+          "elo": 1006.24,
+          "n_tasks": 30,
+          "rank": 28
+        },
+        "[OURS] Step0_Warmstart_r5_M": {
+          "ci95_high": 1179.88,
+          "ci95_low": 878.49,
+          "elo": 1036.44,
+          "n_tasks": 30,
+          "rank": 27
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+          "ci95_high": 750.16,
+          "ci95_low": 443.77,
+          "elo": 625.53,
+          "n_tasks": 20,
+          "rank": 33
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 1028.14,
+          "ci95_low": 725.79,
+          "elo": 891.64,
+          "n_tasks": 30,
+          "rank": 31
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+          "ci95_high": 1023.3,
+          "ci95_low": 686.09,
+          "elo": 875.48,
+          "n_tasks": 30,
+          "rank": 32
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 15520,
+      "n_methods": 33,
+      "n_tasks": 30
+    },
+    "TabArena_binary_full_field": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "AutoGluon 1.4 (4h)": {
+          "ci95_high": 1790.11,
+          "ci95_low": 1414.12,
+          "elo": 1580.19,
+          "n_tasks": 30,
+          "rank": 14
+        },
+        "AutoGluon 1.4 (best, 1h)": {
+          "ci95_high": 1720.4,
+          "ci95_low": 1430.54,
+          "elo": 1552.58,
+          "n_tasks": 30,
+          "rank": 17
+        },
+        "AutoGluon 1.4 (best, 4h)": {
+          "ci95_high": 1724.73,
+          "ci95_low": 1396.11,
+          "elo": 1549.1,
+          "n_tasks": 30,
+          "rank": 19
+        },
+        "AutoGluon 1.4 (best, 5m)": {
+          "ci95_high": 1619.81,
+          "ci95_low": 1387.82,
+          "elo": 1483.1,
+          "n_tasks": 30,
+          "rank": 28
+        },
+        "AutoGluon 1.4 (extreme, 1h)": {
+          "ci95_high": 1797.14,
+          "ci95_low": 1427.29,
+          "elo": 1594.44,
+          "n_tasks": 30,
+          "rank": 13
+        },
+        "AutoGluon 1.4 (extreme, 4h)": {
+          "ci95_high": 1769.99,
+          "ci95_low": 1398.67,
+          "elo": 1565.58,
+          "n_tasks": 30,
+          "rank": 16
+        },
+        "AutoGluon 1.4 (extreme, 5m)": {
+          "ci95_high": 1710.78,
+          "ci95_low": 1376.09,
+          "elo": 1526.37,
+          "n_tasks": 30,
+          "rank": 21
+        },
+        "AutoGluon 1.4 (fast, 4h)": {
+          "ci95_high": 1552.29,
+          "ci95_low": 1293.97,
+          "elo": 1398.22,
+          "n_tasks": 30,
+          "rank": 40
+        },
+        "AutoGluon 1.4 (fast, 5m)": {
+          "ci95_high": 1610.57,
+          "ci95_low": 1318.01,
+          "elo": 1445.17,
+          "n_tasks": 30,
+          "rank": 33
+        },
+        "AutoGluon 1.4 (high, 4h)": {
+          "ci95_high": 1613.14,
+          "ci95_low": 1301.13,
+          "elo": 1438.03,
+          "n_tasks": 30,
+          "rank": 34
+        },
+        "AutoGluon 1.4 (high, 5m)": {
+          "ci95_high": 1605.73,
+          "ci95_low": 1378.23,
+          "elo": 1471.16,
+          "n_tasks": 30,
+          "rank": 29
+        },
+        "AutoGluon 1.5 (extreme, 4h)": {
+          "ci95_high": 1843.41,
+          "ci95_low": 1463.37,
+          "elo": 1634.88,
+          "n_tasks": 30,
+          "rank": 11
+        },
+        "AutoGluon_v130_bq_4h8c": {
+          "ci95_high": 1678.53,
+          "ci95_low": 1373.17,
+          "elo": 1501.52,
+          "n_tasks": 30,
+          "rank": 25
+        },
+        "CAT (default)": {
+          "ci95_high": 1495.07,
+          "ci95_low": 1230.12,
+          "elo": 1347.95,
+          "n_tasks": 30,
+          "rank": 49
+        },
+        "CAT (tuned + ensemble)": {
+          "ci95_high": 1504.06,
+          "ci95_low": 1209.14,
+          "elo": 1348.74,
+          "n_tasks": 30,
+          "rank": 48
+        },
+        "CAT (tuned)": {
+          "ci95_high": 1529.81,
+          "ci95_low": 1227.02,
+          "elo": 1368.12,
+          "n_tasks": 30,
+          "rank": 45
+        },
+        "GBM (default)": {
+          "ci95_high": 1227.01,
+          "ci95_low": 1023.3,
+          "elo": 1110.72,
+          "n_tasks": 30,
+          "rank": 69
+        },
+        "GBM (tuned + ensemble)": {
+          "ci95_high": 1508.35,
+          "ci95_low": 1257.34,
+          "elo": 1361.8,
+          "n_tasks": 30,
+          "rank": 46
+        },
+        "GBM (tuned)": {
+          "ci95_high": 1451.25,
+          "ci95_low": 1183.32,
+          "elo": 1295.01,
+          "n_tasks": 30,
+          "rank": 56
+        },
+        "GBM_aio_0808 (default)": {
+          "ci95_high": 1354.26,
+          "ci95_low": 1166.19,
+          "elo": 1245.93,
+          "n_tasks": 30,
+          "rank": 59
+        },
+        "GBM_aio_0808 (tuned + ensemble)": {
+          "ci95_high": 1618.4,
+          "ci95_low": 1363.37,
+          "elo": 1471.16,
+          "n_tasks": 30,
+          "rank": 30
+        },
+        "GBM_aio_0808 (tuned)": {
+          "ci95_high": 1580.62,
+          "ci95_low": 1329.26,
+          "elo": 1436.45,
+          "n_tasks": 30,
+          "rank": 35
+        },
+        "LR (default)": {
+          "ci95_high": 1099.48,
+          "ci95_low": 749.09,
+          "elo": 930.5,
+          "n_tasks": 30,
+          "rank": 79
+        },
+        "LR (tuned + ensemble)": {
+          "ci95_high": 1175.3,
+          "ci95_low": 818.25,
+          "elo": 996.14,
+          "n_tasks": 30,
+          "rank": 75
+        },
+        "LR (tuned)": {
+          "ci95_high": 1147.53,
+          "ci95_low": 791.98,
+          "elo": 969.46,
+          "n_tasks": 30,
+          "rank": 76
+        },
+        "PREP_GBM (default)": {
+          "ci95_high": 1535.31,
+          "ci95_low": 1249.29,
+          "elo": 1377.96,
+          "n_tasks": 30,
+          "rank": 42
+        },
+        "PREP_GBM (tuned + ensemble)": {
+          "ci95_high": 1683.44,
+          "ci95_low": 1348.96,
+          "elo": 1499.87,
+          "n_tasks": 30,
+          "rank": 26
+        },
+        "PREP_GBM (tuned)": {
+          "ci95_high": 1641.88,
+          "ci95_low": 1328.29,
+          "elo": 1468.35,
+          "n_tasks": 30,
+          "rank": 31
+        },
+        "PREP_LR (default)": {
+          "ci95_high": 1375.97,
+          "ci95_low": 1099.57,
+          "elo": 1233.78,
+          "n_tasks": 30,
+          "rank": 63
+        },
+        "PREP_LR (tuned + ensemble)": {
+          "ci95_high": 1495.28,
+          "ci95_low": 1164.76,
+          "elo": 1324.81,
+          "n_tasks": 30,
+          "rank": 52
+        },
+        "PREP_LR (tuned)": {
+          "ci95_high": 1425.47,
+          "ci95_low": 1078.02,
+          "elo": 1243.56,
+          "n_tasks": 30,
+          "rank": 60
+        },
+        "Portfolio-N200 (ensemble) (4h)": {
+          "ci95_high": 1707.38,
+          "ci95_low": 1384.59,
+          "elo": 1524.89,
+          "n_tasks": 30,
+          "rank": 22
+        },
+        "REALMLP (default)": {
+          "ci95_high": 1363.99,
+          "ci95_low": 1143.9,
+          "elo": 1237.49,
+          "n_tasks": 30,
+          "rank": 62
+        },
+        "REALMLP (tuned + ensemble)": {
+          "ci95_high": 1605.0,
+          "ci95_low": 1318.48,
+          "elo": 1445.77,
+          "n_tasks": 30,
+          "rank": 32
+        },
+        "REALMLP (tuned)": {
+          "ci95_high": 1393.84,
+          "ci95_low": 1094.08,
+          "elo": 1227.64,
+          "n_tasks": 30,
+          "rank": 64
+        },
+        "REALMLP_GPU (default)": {
+          "ci95_high": 1441.22,
+          "ci95_low": 1176.29,
+          "elo": 1295.62,
+          "n_tasks": 30,
+          "rank": 55
+        },
+        "REALMLP_GPU (tuned + ensemble)": {
+          "ci95_high": 1653.36,
+          "ci95_low": 1377.25,
+          "elo": 1492.68,
+          "n_tasks": 30,
+          "rank": 27
+        },
+        "REALMLP_GPU (tuned)": {
+          "ci95_high": 1576.61,
+          "ci95_low": 1317.93,
+          "elo": 1429.52,
+          "n_tasks": 30,
+          "rank": 36
+        },
+        "REALTABPFN-V2.5 (default)": {
+          "ci95_high": 1706.13,
+          "ci95_low": 1409.27,
+          "elo": 1531.67,
+          "n_tasks": 30,
+          "rank": 20
+        },
+        "REALTABPFN-V2.5 (tuned + ensemble)": {
+          "ci95_high": 1733.84,
+          "ci95_low": 1428.22,
+          "elo": 1551.49,
+          "n_tasks": 30,
+          "rank": 18
+        },
+        "REALTABPFN-V2.5 (tuned)": {
+          "ci95_high": 1699.71,
+          "ci95_low": 1387.46,
+          "elo": 1521.73,
+          "n_tasks": 30,
+          "rank": 23
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 30,
+          "rank": 74
+        },
+        "RF (tuned + ensemble)": {
+          "ci95_high": 1212.44,
+          "ci95_low": 1067.09,
+          "elo": 1130.71,
+          "n_tasks": 30,
+          "rank": 68
+        },
+        "RF (tuned)": {
+          "ci95_high": 1175.26,
+          "ci95_low": 1035.48,
+          "elo": 1090.15,
+          "n_tasks": 30,
+          "rank": 70
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 2249.02,
+          "ci95_low": 1773.11,
+          "elo": 1979.64,
+          "n_tasks": 30,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 2116.78,
+          "ci95_low": 1653.92,
+          "elo": 1868.01,
+          "n_tasks": 30,
+          "rank": 4
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 1956.73,
+          "ci95_low": 1602.42,
+          "elo": 1756.16,
+          "n_tasks": 30,
+          "rank": 9
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 2147.7,
+          "ci95_low": 1669.36,
+          "elo": 1880.02,
+          "n_tasks": 30,
+          "rank": 3
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 2215.8,
+          "ci95_low": 1730.42,
+          "elo": 1938.49,
+          "n_tasks": 30,
+          "rank": 2
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 1983.23,
+          "ci95_low": 1595.26,
+          "elo": 1771.62,
+          "n_tasks": 30,
+          "rank": 8
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1465.68,
+          "ci95_low": 1129.29,
+          "elo": 1281.61,
+          "n_tasks": 30,
+          "rank": 57
+        },
+        "TA-TABM (tuned + ensemble)": {
+          "ci95_high": 1617.05,
+          "ci95_low": 1266.23,
+          "elo": 1423.21,
+          "n_tasks": 30,
+          "rank": 37
+        },
+        "TA-TABM (tuned)": {
+          "ci95_high": 1560.23,
+          "ci95_low": 1213.27,
+          "elo": 1371.66,
+          "n_tasks": 30,
+          "rank": 44
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 1830.1,
+          "ci95_low": 1497.47,
+          "elo": 1635.63,
+          "n_tasks": 30,
+          "rank": 10
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 2075.69,
+          "ci95_low": 1667.77,
+          "elo": 1838.95,
+          "n_tasks": 30,
+          "rank": 5
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 2027.82,
+          "ci95_low": 1680.05,
+          "elo": 1819.99,
+          "n_tasks": 30,
+          "rank": 6
+        },
+        "TABDPT-1.3 (default)": {
+          "ci95_high": 1683.48,
+          "ci95_low": 1368.06,
+          "elo": 1507.31,
+          "n_tasks": 30,
+          "rank": 24
+        },
+        "TABDPT_GPU (default)": {
+          "ci95_high": 1403.62,
+          "ci95_low": 1091.32,
+          "elo": 1240.31,
+          "n_tasks": 30,
+          "rank": 61
+        },
+        "TABDPT_GPU (tuned + ensemble)": {
+          "ci95_high": 1517.09,
+          "ci95_low": 1248.77,
+          "elo": 1374.03,
+          "n_tasks": 30,
+          "rank": 43
+        },
+        "TABDPT_GPU (tuned)": {
+          "ci95_high": 1499.99,
+          "ci95_low": 1204.86,
+          "elo": 1340.99,
+          "n_tasks": 30,
+          "rank": 51
+        },
+        "TABDPT_TURBO (default)": {
+          "ci95_high": 1544.58,
+          "ci95_low": 1288.18,
+          "elo": 1404.31,
+          "n_tasks": 30,
+          "rank": 39
+        },
+        "TABFM (default)": {
+          "ci95_high": 2028.97,
+          "ci95_low": 1594.56,
+          "elo": 1785.25,
+          "n_tasks": 30,
+          "rank": 7
+        },
+        "TABICLV2 (default)": {
+          "ci95_high": 1806.97,
+          "ci95_low": 1456.25,
+          "elo": 1605.94,
+          "n_tasks": 30,
+          "rank": 12
+        },
+        "TABM (tuned + ensemble)": {
+          "ci95_high": 1581.95,
+          "ci95_low": 1222.38,
+          "elo": 1388.19,
+          "n_tasks": 30,
+          "rank": 41
+        },
+        "TABM (tuned)": {
+          "ci95_high": 1525.38,
+          "ci95_low": 1158.83,
+          "elo": 1324.0,
+          "n_tasks": 30,
+          "rank": 53
+        },
+        "TABM_GPU (default)": {
+          "ci95_high": 1458.7,
+          "ci95_low": 1127.69,
+          "elo": 1274.12,
+          "n_tasks": 30,
+          "rank": 58
+        },
+        "TABM_GPU (tuned + ensemble)": {
+          "ci95_high": 1609.92,
+          "ci95_low": 1261.74,
+          "elo": 1417.3,
+          "n_tasks": 30,
+          "rank": 38
+        },
+        "TABM_GPU (tuned)": {
+          "ci95_high": 1538.55,
+          "ci95_low": 1187.4,
+          "elo": 1346.76,
+          "n_tasks": 30,
+          "rank": 50
+        },
+        "TABPFN-V2.6 (default)": {
+          "ci95_high": 1763.69,
+          "ci95_low": 1438.51,
+          "elo": 1577.7,
+          "n_tasks": 30,
+          "rank": 15
+        },
+        "XGB (default)": {
+          "ci95_high": 1343.86,
+          "ci95_low": 1067.12,
+          "elo": 1191.26,
+          "n_tasks": 30,
+          "rank": 65
+        },
+        "XGB (tuned + ensemble)": {
+          "ci95_high": 1490.35,
+          "ci95_low": 1257.5,
+          "elo": 1358.25,
+          "n_tasks": 30,
+          "rank": 47
+        },
+        "XGB (tuned)": {
+          "ci95_high": 1437.55,
+          "ci95_low": 1217.71,
+          "elo": 1313.53,
+          "n_tasks": 30,
+          "rank": 54
+        },
+        "XT (default)": {
+          "ci95_high": 1084.87,
+          "ci95_low": 959.49,
+          "elo": 1021.36,
+          "n_tasks": 30,
+          "rank": 73
+        },
+        "XT (tuned + ensemble)": {
+          "ci95_high": 1268.99,
+          "ci95_low": 1076.59,
+          "elo": 1167.36,
+          "n_tasks": 30,
+          "rank": 66
+        },
+        "XT (tuned)": {
+          "ci95_high": 1267.05,
+          "ci95_low": 1055.12,
+          "elo": 1150.46,
+          "n_tasks": 30,
+          "rank": 67
+        },
+        "[OURS] Step0_Warmstart_r5_M": {
+          "ci95_high": 1198.84,
+          "ci95_low": 898.07,
+          "elo": 1059.1,
+          "n_tasks": 30,
+          "rank": 72
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+          "ci95_high": 728.77,
+          "ci95_low": 406.78,
+          "elo": 592.21,
+          "n_tasks": 20,
+          "rank": 81
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3 + TrainOOF_Hybrid": {
+          "ci95_high": 1075.23,
+          "ci95_low": 837.33,
+          "elo": 963.57,
+          "n_tasks": 20,
+          "rank": 77
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 1076.03,
+          "ci95_low": 749.83,
+          "elo": 929.65,
+          "n_tasks": 30,
+          "rank": 80
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3 + TrainOOF_Hybrid": {
+          "ci95_high": 1202.76,
+          "ci95_low": 934.25,
+          "elo": 1075.04,
+          "n_tasks": 30,
+          "rank": 71
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+          "ci95_high": 1076.44,
+          "ci95_low": 742.97,
+          "elo": 933.05,
+          "n_tasks": 30,
+          "rank": 78
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 95610,
+      "n_methods": 81,
+      "n_tasks": 30
+    },
+    "BeyondArena_binary_default_zero_tuning": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1344.54,
+          "ci95_low": 1195.53,
+          "elo": 1261.59,
+          "n_tasks": 73,
+          "rank": 12
+        },
+        "GBM (default)": {
+          "ci95_high": 1182.61,
+          "ci95_low": 1008.92,
+          "elo": 1092.24,
+          "n_tasks": 73,
+          "rank": 17
+        },
+        "LR (default)": {
+          "ci95_high": 1044.34,
+          "ci95_low": 860.77,
+          "elo": 950.53,
+          "n_tasks": 73,
+          "rank": 20
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 73,
+          "rank": 18
+        },
+        "TA-CAUSILO (default)": {
+          "ci95_high": 1472.0,
+          "ci95_low": 1294.84,
+          "elo": 1374.94,
+          "n_tasks": 73,
+          "rank": 8
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 1673.73,
+          "ci95_low": 1403.29,
+          "elo": 1527.2,
+          "n_tasks": 73,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 1572.98,
+          "ci95_low": 1340.84,
+          "elo": 1447.95,
+          "n_tasks": 73,
+          "rank": 5
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 1488.57,
+          "ci95_low": 1276.81,
+          "elo": 1374.03,
+          "n_tasks": 73,
+          "rank": 9
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 1591.13,
+          "ci95_low": 1319.92,
+          "elo": 1441.83,
+          "n_tasks": 62,
+          "rank": 6
+        },
+        "TA-REALMLP (default)": {
+          "ci95_high": 1205.43,
+          "ci95_low": 1038.37,
+          "elo": 1113.89,
+          "n_tasks": 73,
+          "rank": 16
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 1623.11,
+          "ci95_low": 1370.93,
+          "elo": 1480.45,
+          "n_tasks": 73,
+          "rank": 2
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 1456.4,
+          "ci95_low": 1247.99,
+          "elo": 1344.59,
+          "n_tasks": 73,
+          "rank": 10
+        },
+        "TA-TABFM (default)": {
+          "ci95_high": 1601.89,
+          "ci95_low": 1344.18,
+          "elo": 1464.63,
+          "n_tasks": 62,
+          "rank": 4
+        },
+        "TA-TABICLv2 (default)": {
+          "ci95_high": 1303.15,
+          "ci95_low": 1142.55,
+          "elo": 1218.13,
+          "n_tasks": 73,
+          "rank": 13
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1291.28,
+          "ci95_low": 1118.68,
+          "elo": 1193.4,
+          "n_tasks": 73,
+          "rank": 14
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 1441.76,
+          "ci95_low": 1258.7,
+          "elo": 1340.71,
+          "n_tasks": 73,
+          "rank": 11
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 1607.31,
+          "ci95_low": 1360.2,
+          "elo": 1470.89,
+          "n_tasks": 73,
+          "rank": 3
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 1521.17,
+          "ci95_low": 1301.15,
+          "elo": 1399.11,
+          "n_tasks": 73,
+          "rank": 7
+        },
+        "XGB (default)": {
+          "ci95_high": 1221.4,
+          "ci95_low": 1053.14,
+          "elo": 1134.64,
+          "n_tasks": 73,
+          "rank": 15
+        },
+        "XT (default)": {
+          "ci95_high": 1028.4,
+          "ci95_low": 904.85,
+          "elo": 968.49,
+          "n_tasks": 73,
+          "rank": 19
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 985.22,
+          "ci95_low": 788.28,
+          "elo": 886.6,
+          "n_tasks": 73,
+          "rank": 21
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 14901,
+      "n_methods": 21,
+      "n_tasks": 73
+    },
+    "BeyondArena_binary_full_field": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1380.94,
+          "ci95_low": 1219.74,
+          "elo": 1290.45,
+          "n_tasks": 73,
+          "rank": 16
+        },
+        "CAT (tuned + ensemble)": {
+          "ci95_high": 1417.58,
+          "ci95_low": 1257.0,
+          "elo": 1323.81,
+          "n_tasks": 73,
+          "rank": 12
+        },
+        "CAT (tuned)": {
+          "ci95_high": 1401.86,
+          "ci95_low": 1233.28,
+          "elo": 1302.62,
+          "n_tasks": 73,
+          "rank": 14
+        },
+        "GBM (default)": {
+          "ci95_high": 1194.53,
+          "ci95_low": 1016.7,
+          "elo": 1099.21,
+          "n_tasks": 73,
+          "rank": 28
+        },
+        "GBM (tuned + ensemble)": {
+          "ci95_high": 1384.8,
+          "ci95_low": 1206.39,
+          "elo": 1284.87,
+          "n_tasks": 73,
+          "rank": 17
+        },
+        "GBM (tuned)": {
+          "ci95_high": 1354.57,
+          "ci95_low": 1174.47,
+          "elo": 1251.33,
+          "n_tasks": 73,
+          "rank": 22
+        },
+        "LR (default)": {
+          "ci95_high": 1037.88,
+          "ci95_low": 858.25,
+          "elo": 949.62,
+          "n_tasks": 73,
+          "rank": 36
+        },
+        "LR (tuned + ensemble)": {
+          "ci95_high": 1068.93,
+          "ci95_low": 907.04,
+          "elo": 983.91,
+          "n_tasks": 73,
+          "rank": 33
+        },
+        "LR (tuned)": {
+          "ci95_high": 1041.14,
+          "ci95_low": 874.69,
+          "elo": 956.05,
+          "n_tasks": 73,
+          "rank": 35
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 73,
+          "rank": 32
+        },
+        "RF (tuned + ensemble)": {
+          "ci95_high": 1093.02,
+          "ci95_low": 1001.02,
+          "elo": 1042.45,
+          "n_tasks": 73,
+          "rank": 30
+        },
+        "RF (tuned)": {
+          "ci95_high": 1087.8,
+          "ci95_low": 1002.78,
+          "elo": 1038.69,
+          "n_tasks": 73,
+          "rank": 31
+        },
+        "TA-CAUSILO (default)": {
+          "ci95_high": 1537.61,
+          "ci95_low": 1337.39,
+          "elo": 1428.11,
+          "n_tasks": 73,
+          "rank": 8
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 1708.19,
+          "ci95_low": 1428.68,
+          "elo": 1553.7,
+          "n_tasks": 73,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 1624.48,
+          "ci95_low": 1377.61,
+          "elo": 1489.18,
+          "n_tasks": 73,
+          "rank": 6
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 1548.27,
+          "ci95_low": 1322.69,
+          "elo": 1425.33,
+          "n_tasks": 73,
+          "rank": 9
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 1642.09,
+          "ci95_low": 1371.13,
+          "elo": 1490.89,
+          "n_tasks": 62,
+          "rank": 5
+        },
+        "TA-REALMLP (default)": {
+          "ci95_high": 1231.99,
+          "ci95_low": 1053.76,
+          "elo": 1132.42,
+          "n_tasks": 73,
+          "rank": 26
+        },
+        "TA-REALMLP (tuned + ensemble)": {
+          "ci95_high": 1436.22,
+          "ci95_low": 1242.48,
+          "elo": 1323.31,
+          "n_tasks": 73,
+          "rank": 13
+        },
+        "TA-REALMLP (tuned)": {
+          "ci95_high": 1362.0,
+          "ci95_low": 1172.07,
+          "elo": 1254.77,
+          "n_tasks": 73,
+          "rank": 21
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 1660.58,
+          "ci95_low": 1396.13,
+          "elo": 1512.3,
+          "n_tasks": 73,
+          "rank": 3
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 1522.56,
+          "ci95_low": 1297.18,
+          "elo": 1398.52,
+          "n_tasks": 73,
+          "rank": 10
+        },
+        "TA-TABFM (default)": {
+          "ci95_high": 1657.28,
+          "ci95_low": 1379.11,
+          "elo": 1506.59,
+          "n_tasks": 62,
+          "rank": 4
+        },
+        "TA-TABICLv2 (default)": {
+          "ci95_high": 1380.14,
+          "ci95_low": 1194.0,
+          "elo": 1282.25,
+          "n_tasks": 73,
+          "rank": 18
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1323.42,
+          "ci95_low": 1136.71,
+          "elo": 1218.22,
+          "n_tasks": 73,
+          "rank": 24
+        },
+        "TA-TABM (tuned + ensemble)": {
+          "ci95_high": 1408.22,
+          "ci95_low": 1206.89,
+          "elo": 1291.6,
+          "n_tasks": 73,
+          "rank": 15
+        },
+        "TA-TABM (tuned)": {
+          "ci95_high": 1381.84,
+          "ci95_low": 1184.15,
+          "elo": 1270.46,
+          "n_tasks": 73,
+          "rank": 19
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 1507.06,
+          "ci95_low": 1308.11,
+          "elo": 1397.64,
+          "n_tasks": 73,
+          "rank": 11
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 1657.72,
+          "ci95_low": 1399.9,
+          "elo": 1513.17,
+          "n_tasks": 73,
+          "rank": 2
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 1580.54,
+          "ci95_low": 1344.77,
+          "elo": 1455.38,
+          "n_tasks": 73,
+          "rank": 7
+        },
+        "XGB (default)": {
+          "ci95_high": 1239.43,
+          "ci95_low": 1053.99,
+          "elo": 1142.31,
+          "n_tasks": 73,
+          "rank": 25
+        },
+        "XGB (tuned + ensemble)": {
+          "ci95_high": 1365.23,
+          "ci95_low": 1185.78,
+          "elo": 1264.41,
+          "n_tasks": 73,
+          "rank": 20
+        },
+        "XGB (tuned)": {
+          "ci95_high": 1338.01,
+          "ci95_low": 1154.97,
+          "elo": 1238.25,
+          "n_tasks": 73,
+          "rank": 23
+        },
+        "XT (default)": {
+          "ci95_high": 1035.46,
+          "ci95_low": 918.78,
+          "elo": 978.34,
+          "n_tasks": 73,
+          "rank": 34
+        },
+        "XT (tuned + ensemble)": {
+          "ci95_high": 1180.1,
+          "ci95_low": 1062.51,
+          "elo": 1114.82,
+          "n_tasks": 73,
+          "rank": 27
+        },
+        "XT (tuned)": {
+          "ci95_high": 1142.0,
+          "ci95_low": 1017.02,
+          "elo": 1072.84,
+          "n_tasks": 73,
+          "rank": 29
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 999.26,
+          "ci95_low": 807.66,
+          "elo": 903.28,
+          "n_tasks": 73,
+          "rank": 37
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 47837,
+      "n_methods": 37,
+      "n_tasks": 73
+    },
+    "TabArena_regression_default_zero_tuning": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1701.29,
+          "ci95_low": 1281.09,
+          "elo": 1443.44,
+          "n_tasks": 13,
+          "rank": 18
+        },
+        "GBM (default)": {
+          "ci95_high": 1425.49,
+          "ci95_low": 1092.48,
+          "elo": 1224.69,
+          "n_tasks": 13,
+          "rank": 24
+        },
+        "GBM_aio_0808 (default)": {
+          "ci95_high": 1608.39,
+          "ci95_low": 1274.09,
+          "elo": 1395.61,
+          "n_tasks": 13,
+          "rank": 19
+        },
+        "LR (default)": {
+          "ci95_high": 496.81,
+          "ci95_low": -2103.09,
+          "elo": 308.22,
+          "n_tasks": 13,
+          "rank": 33
+        },
+        "PREP_GBM (default)": {
+          "ci95_high": 1827.55,
+          "ci95_low": 1338.93,
+          "elo": 1542.25,
+          "n_tasks": 13,
+          "rank": 17
+        },
+        "PREP_LR (default)": {
+          "ci95_high": 1090.86,
+          "ci95_low": 599.86,
+          "elo": 901.29,
+          "n_tasks": 13,
+          "rank": 32
+        },
+        "REALMLP (default)": {
+          "ci95_high": 1530.55,
+          "ci95_low": 1152.24,
+          "elo": 1290.44,
+          "n_tasks": 13,
+          "rank": 23
+        },
+        "REALMLP_GPU (default)": {
+          "ci95_high": 1538.97,
+          "ci95_low": 1158.95,
+          "elo": 1294.3,
+          "n_tasks": 13,
+          "rank": 22
+        },
+        "REALTABPFN-V2.5 (default)": {
+          "ci95_high": 2199.73,
+          "ci95_low": 1442.55,
+          "elo": 1700.4,
+          "n_tasks": 13,
+          "rank": 14
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 13,
+          "rank": 30
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 3335.22,
+          "ci95_low": 2362.12,
+          "elo": 2647.37,
+          "n_tasks": 13,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 3097.12,
+          "ci95_low": 2263.2,
+          "elo": 2503.04,
+          "n_tasks": 13,
+          "rank": 3
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 2873.87,
+          "ci95_low": 1995.47,
+          "elo": 2272.16,
+          "n_tasks": 13,
+          "rank": 7
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 3370.37,
+          "ci95_low": 2279.06,
+          "elo": 2629.07,
+          "n_tasks": 13,
+          "rank": 2
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 2983.06,
+          "ci95_low": 2173.99,
+          "elo": 2415.35,
+          "n_tasks": 13,
+          "rank": 4
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 2842.29,
+          "ci95_low": 2116.87,
+          "elo": 2339.62,
+          "n_tasks": 13,
+          "rank": 6
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1609.79,
+          "ci95_low": 1190.64,
+          "elo": 1348.57,
+          "n_tasks": 13,
+          "rank": 21
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 2459.77,
+          "ci95_low": 1743.46,
+          "elo": 1974.25,
+          "n_tasks": 13,
+          "rank": 10
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 2921.31,
+          "ci95_low": 2170.94,
+          "elo": 2389.73,
+          "n_tasks": 13,
+          "rank": 5
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 2536.39,
+          "ci95_low": 1921.35,
+          "elo": 2090.81,
+          "n_tasks": 13,
+          "rank": 9
+        },
+        "TABDPT-1.3 (default)": {
+          "ci95_high": 2182.55,
+          "ci95_low": 1562.27,
+          "elo": 1761.3,
+          "n_tasks": 13,
+          "rank": 13
+        },
+        "TABDPT_GPU (default)": {
+          "ci95_high": 2070.74,
+          "ci95_low": 1518.94,
+          "elo": 1695.81,
+          "n_tasks": 13,
+          "rank": 16
+        },
+        "TABDPT_TURBO (default)": {
+          "ci95_high": 2025.35,
+          "ci95_low": 1557.62,
+          "elo": 1695.81,
+          "n_tasks": 13,
+          "rank": 15
+        },
+        "TABFM (default)": {
+          "ci95_high": 2794.44,
+          "ci95_low": 1990.83,
+          "elo": 2253.9,
+          "n_tasks": 13,
+          "rank": 8
+        },
+        "TABICLV2 (default)": {
+          "ci95_high": 2345.41,
+          "ci95_low": 1480.19,
+          "elo": 1766.09,
+          "n_tasks": 13,
+          "rank": 12
+        },
+        "TABM_GPU (default)": {
+          "ci95_high": 1690.25,
+          "ci95_low": 1198.09,
+          "elo": 1383.79,
+          "n_tasks": 13,
+          "rank": 20
+        },
+        "TABPFN-V2.6 (default)": {
+          "ci95_high": 2393.05,
+          "ci95_low": 1666.57,
+          "elo": 1871.03,
+          "n_tasks": 13,
+          "rank": 11
+        },
+        "XGB (default)": {
+          "ci95_high": 1335.38,
+          "ci95_low": 1052.8,
+          "elo": 1169.87,
+          "n_tasks": 13,
+          "rank": 25
+        },
+        "XT (default)": {
+          "ci95_high": 1257.09,
+          "ci95_low": 934.93,
+          "elo": 1092.79,
+          "n_tasks": 13,
+          "rank": 26
+        },
+        "[OURS] Step0_Warmstart_r5_M": {
+          "ci95_high": 1257.21,
+          "ci95_low": 775.83,
+          "elo": 1018.61,
+          "n_tasks": 13,
+          "rank": 28
+        },
+        "[OURS] UnifiedICLRegBin_Ensemble_Mv2_L_v2_Val0_FullS3": {
+          "ci95_high": 1187.83,
+          "ci95_low": 793.1,
+          "elo": 1000.0,
+          "n_tasks": 13,
+          "rank": 31
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 1289.57,
+          "ci95_low": 864.22,
+          "elo": 1071.64,
+          "n_tasks": 13,
+          "rank": 27
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_Stage2A_NoArena": {
+          "ci95_high": 1247.16,
+          "ci95_low": 775.2,
+          "elo": 1018.61,
+          "n_tasks": 13,
+          "rank": 29
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 6864,
+      "n_methods": 33,
+      "n_tasks": 13
+    },
+    "BeyondArena_regression_default_zero_tuning": {
+      "anchor": "RF (default)",
+      "anchor_elo": 1000.0,
+      "bootstrap_rounds": 1000,
+      "elo": {
+        "CAT (default)": {
+          "ci95_high": 1359.74,
+          "ci95_low": 1203.97,
+          "elo": 1273.82,
+          "n_tasks": 44,
+          "rank": 14
+        },
+        "GBM (default)": {
+          "ci95_high": 1283.07,
+          "ci95_low": 1148.83,
+          "elo": 1208.63,
+          "n_tasks": 44,
+          "rank": 16
+        },
+        "LR (default)": {
+          "ci95_high": 986.09,
+          "ci95_low": 684.62,
+          "elo": 849.4,
+          "n_tasks": 44,
+          "rank": 21
+        },
+        "RF (default)": {
+          "ci95_high": 1000.0,
+          "ci95_low": 1000.0,
+          "elo": 1000.0,
+          "n_tasks": 44,
+          "rank": 20
+        },
+        "TA-CAUSILO (default)": {
+          "ci95_high": 1619.02,
+          "ci95_low": 1371.23,
+          "elo": 1476.9,
+          "n_tasks": 44,
+          "rank": 7
+        },
+        "TA-KUMO-TABULAR (default)": {
+          "ci95_high": 1898.72,
+          "ci95_low": 1570.85,
+          "elo": 1720.62,
+          "n_tasks": 44,
+          "rank": 1
+        },
+        "TA-KUMO-TABULAR-MEDIUM (default)": {
+          "ci95_high": 1783.34,
+          "ci95_low": 1483.26,
+          "elo": 1615.38,
+          "n_tasks": 44,
+          "rank": 2
+        },
+        "TA-KUMO-TABULAR-SMALL (default)": {
+          "ci95_high": 1694.5,
+          "ci95_low": 1441.05,
+          "elo": 1544.12,
+          "n_tasks": 44,
+          "rank": 4
+        },
+        "TA-LIMIX-2 (default)": {
+          "ci95_high": 1763.38,
+          "ci95_low": 1425.21,
+          "elo": 1573.43,
+          "n_tasks": 35,
+          "rank": 3
+        },
+        "TA-REALMLP (default)": {
+          "ci95_high": 1365.74,
+          "ci95_low": 1208.66,
+          "elo": 1277.97,
+          "n_tasks": 44,
+          "rank": 13
+        },
+        "TA-SELDON (default)": {
+          "ci95_high": 1651.05,
+          "ci95_low": 1373.07,
+          "elo": 1490.78,
+          "n_tasks": 44,
+          "rank": 6
+        },
+        "TA-SELDON-MINI (default)": {
+          "ci95_high": 1589.64,
+          "ci95_low": 1356.76,
+          "elo": 1454.85,
+          "n_tasks": 44,
+          "rank": 8
+        },
+        "TA-TABFM (default)": {
+          "ci95_high": 1547.98,
+          "ci95_low": 1315.9,
+          "elo": 1412.33,
+          "n_tasks": 35,
+          "rank": 10
+        },
+        "TA-TABICLv2 (default)": {
+          "ci95_high": 1421.28,
+          "ci95_low": 1211.38,
+          "elo": 1303.67,
+          "n_tasks": 44,
+          "rank": 12
+        },
+        "TA-TABM (default)": {
+          "ci95_high": 1378.28,
+          "ci95_low": 1181.68,
+          "elo": 1268.62,
+          "n_tasks": 44,
+          "rank": 15
+        },
+        "TA-TABPFN-3 (default)": {
+          "ci95_high": 1495.78,
+          "ci95_low": 1296.86,
+          "elo": 1379.42,
+          "n_tasks": 44,
+          "rank": 11
+        },
+        "TA-TABPFN-3.5 (default)": {
+          "ci95_high": 1670.79,
+          "ci95_low": 1396.65,
+          "elo": 1513.66,
+          "n_tasks": 44,
+          "rank": 5
+        },
+        "TA-TABPFN-3.5-FAST (default)": {
+          "ci95_high": 1549.42,
+          "ci95_low": 1321.29,
+          "elo": 1418.86,
+          "n_tasks": 44,
+          "rank": 9
+        },
+        "XGB (default)": {
+          "ci95_high": 1236.36,
+          "ci95_low": 1099.15,
+          "elo": 1164.3,
+          "n_tasks": 44,
+          "rank": 17
+        },
+        "XT (default)": {
+          "ci95_high": 1111.88,
+          "ci95_low": 1019.39,
+          "elo": 1066.33,
+          "n_tasks": 44,
+          "rank": 19
+        },
+        "[OURS] UnifiedICLRegBin_M_v2_FullS3": {
+          "ci95_high": 1219.4,
+          "ci95_low": 1004.49,
+          "elo": 1111.75,
+          "n_tasks": 44,
+          "rank": 18
+        }
+      },
+      "engine": "bencheval.EloHelper (sha256=12a8a1ee)",
+      "n_battles": 8889,
+      "n_methods": 21,
+      "n_tasks": 44
+    }
+  }
+}

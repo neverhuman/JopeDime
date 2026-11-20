@@ -9,6 +9,8 @@ the existing single-file workflow. `fit-predict` remains the explicit transient 
 cargo build --locked -p jope-appliance
 # Use target/debug/jopedime below, or an installed, authenticated appliance.
 jopedime fit --train train.csv --target y --task regression --method ridge --json > fit.json
+# Binary tasks retain class_order and optional cross-fitted Platt calibration (`--calibration auto|platt|none`):
+jopedime fit --train binary_train.csv --target label --task binary --fitness logloss --calibration auto --json > bin_fit.json
 # Read outputs[0].path from fit.json into MODEL using your language's JSON parser.
 jopedime predict --model "$MODEL" --input rows.csv --output predictions.csv --json
 jopedime model inspect --model "$MODEL"

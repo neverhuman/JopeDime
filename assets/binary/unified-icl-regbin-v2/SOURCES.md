@@ -1,0 +1,8 @@
+# Sources & Custody: Binary Classification & `unified-icl-regbin-v2` Benchmarks
+
+- **Bundle Manifest:** [`models/bundles/unified-icl-regbin-v2.json`](../../../models/bundles/unified-icl-regbin-v2.json) (`sha256=cc04e4ab815b82c9f8df58f239c7ce86ac942386744317cd04fd8de70ae3b677`, S3 `VersionId=bmGrKkE3GCwfC0Su5EhUaFb3YNh2SWks`)
+- **Summary & Ladders:** [`RESULTS.json`](RESULTS.json) (`sha256=43c3bfc86b98acbf9cf1fe062df51943c91a7c57e9fb2c59ea6b52230f2789e5`)
+- **Per-Task Exact Fold-0 Scores:** [`per-task-scores.csv`](per-task-scores.csv) (`sha256=0db0b53e9d5afbf7ec2e37cf34b5025f50085353232844730375481c4a04e427`, `355` task-method rows across `160` public OpenML tasks: `30` TabArena binary, `73` BeyondArena binary, `13` TabArena regression, `44` BeyondArena regression)
+- **Sealed Data Attestation:** `sealed_inputs_opened: false` (`0` reads from `s3://jopedime-714044927654-us-east-2-sealed`, catalog `test.csv`, `benchmarks/panel.json` `sealed_rows`, or `dev91` `SEALED` / `CONFIRM` / `FMGAP` splits).
+- **Split & Coverage Audit:** `42,352` episodes audited across `M_v2` (`26,752`) and `L_v2` (`15,600`): `4,996 / 4,996` trainable public S3 tables visited (`0` unvisited), `0` official `(train_idx, test_idx)` split matches, `0` intra-run duplicate splits, and `0` pre-Arena exposures in Phase 1 + Stage 2A (`sha256=76cb87c93210b6a2534121c5ce27d08bebade1a7bbb65cfa890097b5d2921301`).
+- **Competitor Baseline Source:** Official public field result parquets (`TabArena v0.1` + `BeyondArena`); `0` external competitor reruns; Bradley-Terry Elo anchored at `RF (default) = 1000.0` (`1,000` bootstrap draws).
