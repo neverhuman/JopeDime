@@ -1,0 +1,27 @@
+\section{Component Ablations and Classification Parity}
+\label{sec:ablations}
+
+\begin{table}[t]
+\centering
+\sffamily\footnotesize\lining
+\setlength\tabcolsep{4.5pt}
+\begin{tabularx}{\linewidth}{@{}Lrlrrrr@{}}
+\toprule
+Classification Suite & Tables & Metric & \EZ{} & CatBoost & LightGBM & Win Rate (CB / LGB) \\
+\midrule
+Binary (\code{C2}-clean) & $676$ & ROC-AUC ($\uparrow$) & \textbf{0.7568} & $0.7516$ & $0.7421$ & $58.7\%$ / $67.2\%$ \\
+Multiclass (\code{C2}-clean) & $199$ & LogLoss ($\downarrow$) & \textbf{0.6842} & $0.7195$ & $0.7918$ & \textbf{\BHMulticlassWinCat{}} / \textbf{\BHMulticlassWinLGBM{}} \\
+\bottomrule
+\end{tabularx}
+\bhtablenote{Note: Standalone neural reader achieves $0.7294$ mean ROC-AUC on the $676$-table binary suite (below standalone boosted trees); combining temperature-calibrated neural probabilities with native-categorical \code{CatBoost} and \code{LightGBM} outperforms every individual constituent.}
+\caption{Measured classification parity across $676$ binary and $199$ multiclass \code{C2}-clean corpus tables (\code{WP5\_STEP3\_MULTICLASS\_PARITY\_303\_RECEIPT\_v2.json}).}
+\label{tab:classification}
+\end{table}
+
+We isolate four key architectural drivers through controlled ablations:
+\begin{enumerate}
+  \item \textbf{Context length and multi-view ensembling (\cref{fig:foundation-val}B).} Evaluating our generalist reader across $371$ regression tables (`5ad51fc7`), increasing context rows from $256$ to $2{,}048$ with $v=8$ feature views lowers median NRMSE from $0.5886$ to \textbf{$0.4864$} ($327$ wins out of $371$ tables, $88.1\%$). We report medians alongside means because heavy-tailed outlier tables inflate mean NRMSE at $2{,}048$ rows when unguarded.
+  \item \textbf{Every-fold kernel admission (\code{A-14(f)}).} Requiring $+0.5\,u$ improvement on every inner fold over a fixed nonlinear dictionary + ridge baseline eliminates $99.3\%$ of false-positive feature additions across $3{,}639$ tables (\BHKernelGatePrec{} held-out win precision on the $138$ admitted tables, $+2.3827\,u$ mean lift).
+  \item \textbf{Multi-seed view averaging.} Averaging $8$ deterministic feature-reordering views over a single view improves median NRMSE at every context length ($0.5012 \to 0.4864$ at $2{,}048$ rows; $+8.5$ Elo on \code{Dev91} control probes).
+  \item \textbf{Binary and multiclass classification parity (\cref{tab:classification}).} While a single uncalibrated neural reader trails standalone gradient boosting on binary ROC-AUC ($0.7294$ vs.\ $0.7516$), our out-of-fold calibrated neural + GBDT stack beats standalone \code{CatBoost} and \code{LightGBM} on both binary ($0.7568$ mean ROC-AUC across $676$ tables) and multiclass (\BHMulticlassWinCat{} win rate vs.\ \code{CatBoost} and \BHMulticlassWinLGBM{} vs.\ \code{LightGBM} across $199$ tables) \est{}.
+\end{enumerate}

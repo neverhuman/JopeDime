@@ -1,0 +1,6 @@
+# Measured A-14(c) ICL context-length & multi-view scaling on 371 tables (5ad51fc7..., in-corpus)
+ctx_rows,median_nrmse_v1,median_nrmse_v4,median_nrmse_v8,mean_nrmse_v1,mean_nrmse_v8
+256,0.5885,0.580818,0.579562,0.562482,0.556954
+512,0.550362,0.53904,0.537993,0.541337,0.537504
+1024,0.506737,0.504433,0.503185,0.521097,0.516354
+2048,0.485658,0.486594,0.485329,0.652399,0.63983

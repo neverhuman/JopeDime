@@ -1,0 +1,4 @@
+# Measured overlap screen da7e57808b7f8a9f against training banks R4/R5
+benchmark,task_type,total_tasks,public_unseen,public_in_corpus,sealed_held
+TabArena v0.1,regression,13,1,7,5
+BeyondArena 2026,regression,44,27,9,8

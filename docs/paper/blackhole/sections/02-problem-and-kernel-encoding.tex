@@ -1,0 +1,27 @@
+\section{Problem Encoding and Kernel Solution Embeddings}
+\label{sec:encodings}
+
+\input{figures/fig-encodings}
+
+A central architectural principle of \EZ{} is that tabular learning algorithms interact through two continuous geometric spaces rather than brittle dataset-specific heuristics (\cref{fig:encodings}). Let a tabular task provide a training-side context $D_{\mathrm{ctx}} = (X_{\mathrm{ctx}}, y_{\mathrm{ctx}})$ with $n$ rows and $d$ heterogeneous columns, together with $m$ unlabeled query rows $X_{\mathrm{q}}$.
+
+\begin{definition}{Problem Encoding $\zp$}
+The problem encoder $\PhiP$ maps any variable-dimension context $(X_{\mathrm{ctx}}, y_{\mathrm{ctx}})$ into a fixed-dimensional vector $\zp = \PhiP(X_{\mathrm{ctx}}, y_{\mathrm{ctx}}) \in \mathbb{R}^{d_p}$ ($d_p = 2{,}048$) that is invariant to row order and equivariant/pooled across column permutations. In \EZ{}, $\zp$ concatenates marginal quantile moments, rank-copula target associations, missingness co-occurrence summaries, and residual geometry relative to a ridge/tree baseline.
+\end{definition}
+
+\begin{definition}{Kernel Solution Embedding $\zs$}
+Let $\mathcal{S}$ denote the space of executable, domain-guarded tabular feature and residual maps $s : \mathbb{R}^d \to \mathbb{R}^k$ fitted solely on training-side folds. The solution encoder $\PsiK : \mathcal{S} \to \mathbb{R}^{d_s}$ maps each verified solution $s$ into a unit-norm \emph{kernel embedding} $\zs = \PsiK(s)$ endowed with a symmetric positive-definite similarity kernel
+\begin{equation}
+  \Kk(s, s') \;=\; \langle \PsiK(s), \PsiK(s') \rangle_{\mathcal{H}},
+  \label{eq:kernel}
+\end{equation}
+such that functionally aligned transformations on standardized probe distributions lie nearby in $\mathcal{H}$ regardless of algebraic spelling, while orthogonal residual directions exhibit small inner product $\Kk(s, s') \approx 0$.
+\end{definition}
+
+\paragraph{Why a kernel embedding matters.}
+Representing candidate solutions through $(\PsiK, \Kk)$ solves three bottlenecks simultaneously:
+\begin{enumerate}
+  \item \textbf{Amortized retrieval and proposal.} Given a new table's problem encoding $\zp$, a learned compatibility map $v_{\psi}(\zp, \zs)$ scores candidate embeddings in $\mathcal{H}$ before expensive multi-fold cross-validation is spent.
+  \item \textbf{Diversity-preserving portfolio construction.} Selecting $r$ complementary transformations reduces to determinant or ridge-leverage maximization on the $r \times r$ Gram matrix $G_{ij} = \Kk(s_i, s_j)$, preventing collinearity in downstream stacking.
+  \item \textbf{Strict referee gating.} No candidate embedding enters the prediction stack on training loss alone. Under our pre-registered inner cross-validation referee (\code{A-14(f)}), a candidate augmentation must beat a fixed nonlinear dictionary + ridge baseline by at least $+0.5\,u$ on \emph{every} inner fold. Across $3{,}639$ corpus tables, unconditional admission wins only $56.22\%$ of held-out splits (mean $-0.0641\,u$), naive positive-mean inner-CV wins $65.47\%$, and the every-fold $+0.5\,u$ kernel referee achieves \textbf{\BHKernelGatePrec{} held-out precision} ($137/138$ admitted tables, mean $+2.3827\,u$ lift) \est{}.
+\end{enumerate}

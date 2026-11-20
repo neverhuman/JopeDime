@@ -1,0 +1,16 @@
+# Measured LimiX-2 (limix_2.v1, stable-ai/LimiX-2@de07b679, ckpt ed01f7a0, repo db592af4, reg_default_noretrieval_v2 32 pipelines) once-score on dev91-audit-v1
+# Disclosure (#648): release checkpoint ed01f7a0 (HF de07b679); upstream found it contaminated with benchmark data (autogluon/tabarena#648; makers' audit 2026-11-11); TabArena dropped it 2026-11-16 for LimiX-2-1016
+# READ_RECEIPT ed91a3ad1c11982c, FITS_RECEIPT 4abed343, scores/limix_2.v1.jsonl be943010, S3 campaign h465-limix-dev91-20261116 (COMMIT ce03e115)
+# Note: GEN2A row in paper_field_35 is absorbed (not a generalisation comparison); shared-card run at 0.20 VRAM cap beside training arms on xbabe2 RTX 3090
+fit,rank,entrant_id,display_name,regime,elo,ci95_lo,ci95_hi,family_mean_u,limix_fam_wtl,limix_ctx_wtl,limix_gain_u,signflip_p
+board_34,1,kumo_tabular_large_e8.v1,Kumo-Tabular-Large (e8),external,2057.6,1882.5,2322.2,1.9356,12-0-7,52-1-38,-0.0087,0.5744
+board_34,2,limix_2.v1,LimiX-2 (406.2M; 32 pipelines),external,2035.1,1823.1,2362.3,1.9268,---,---,0.0000,1.0
+board_34,3,tabfm_ensemble.v1,TabFM-1.0 Ensemble,external,1902.0,1738.2,2124.5,1.7675,17-0-2,78-0-13,+0.1593,0.006187
+board_34,4,kumo_tabular_small_e8.v1,Kumo-Tabular-Small (e8),external,1890.9,1736.9,2115.7,1.7855,16-0-3,74-0-17,+0.1413,0.0191
+board_34,5,tabfm.v1,TabFM-1.0 Single,external,1877.2,1714.9,2097.8,1.7202,16-0-3,76-0-15,+0.2066,0.0005817
+board_34,6,tabpfn_v3p5.v1,TabPFN-3.5 (e8),external,1847.5,1676.1,2097.2,1.6411,15-0-4,67-0-24,+0.2857,0.01184
+board_34,7,tabpfn_v3p5_e1.v1,TabPFN-3.5 Single,external,1828.4,1648.6,2074.7,1.5887,16-0-3,71-0-20,+0.3381,0.00002289
+board_34,8,h448.APEX_FAIR_CHAMPION,EurekaZero-Fair Registered (0% Dev91),fair,1813.6,1688.1,1985.3,1.6737,18-0-1,77-0-14,+0.2531,0.002508
+paper_field_35,1,h465.GEN2A_PER_CONTEXT_RECALL91,EurekaZero GEN2A (absorbed: not generalisation),recall,2396.1,2219.0,2754.0,3.0977,3-0-16,12-0-79,-1.1709,0.9998
+paper_field_35,2,kumo_tabular_large_e8.v1,Kumo-Tabular-Large (e8),external,2059.1,1883.0,2321.0,1.9356,12-0-7,52-1-38,-0.0087,0.5744
+paper_field_35,3,limix_2.v1,LimiX-2 (406.2M; 32 pipelines),external,2036.4,1825.3,2355.7,1.9268,---,---,0.0000,1.0

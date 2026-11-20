@@ -1,0 +1,28 @@
+# Measured Dev91 head-to-head W-T-L across 19 families and 91 contexts (ea4a14700e13cd6d)
+opponent,system,regime,fam_w,fam_t,fam_l,ctx_w,ctx_t,ctx_l
+AutoGluon (300s BestQuality),stack+specialists,recall,19,0,0,91,0,0
+CatBoost,stack+specialists,recall,19,0,0,91,0,0
+Kumo-Tabular-Large (e8),stack+specialists,recall,16,0,3,74,0,17
+Kumo-Tabular-Small (e8),stack+specialists,recall,19,0,0,83,0,8
+LightGBM,stack+specialists,recall,19,0,0,91,0,0
+Mitra-v2 Zero-Shot,stack+specialists,recall,19,0,0,89,0,2
+TabDPT-1.3,stack+specialists,recall,19,0,0,90,0,1
+TabFM-1.0 Single,stack+specialists,recall,17,0,2,81,0,10
+TabFM-1.0 Ensemble,stack+specialists,recall,17,0,2,82,0,9
+TabICL-v2,stack+specialists,recall,19,0,0,91,0,0
+TabPFN-3.0,stack+specialists,recall,19,0,0,88,0,3
+TabPFN-3.5 (e8),stack+specialists,recall,18,0,1,86,0,5
+XGBoost,stack+specialists,recall,19,0,0,91,0,0
+AutoGluon (300s BestQuality),stack alone,in-corpus,18,0,1,86,0,5
+CatBoost,stack alone,in-corpus,19,0,0,85,0,6
+Kumo-Tabular-Large (e8),stack alone,in-corpus,1,0,18,14,0,77
+Kumo-Tabular-Small (e8),stack alone,in-corpus,4,0,15,31,0,60
+LightGBM,stack alone,in-corpus,19,0,0,87,0,4
+Mitra-v2 Zero-Shot,stack alone,in-corpus,11,0,8,55,0,36
+TabDPT-1.3,stack alone,in-corpus,13,0,6,59,0,32
+TabFM-1.0 Single,stack alone,in-corpus,6,0,13,36,0,55
+TabFM-1.0 Ensemble,stack alone,in-corpus,5,0,14,32,0,59
+TabICL-v2,stack alone,in-corpus,14,0,5,62,1,28
+TabPFN-3.0,stack alone,in-corpus,10,0,9,50,0,41
+TabPFN-3.5 (e8),stack alone,in-corpus,4,0,15,32,0,59
+XGBoost,stack alone,in-corpus,19,0,0,87,0,4

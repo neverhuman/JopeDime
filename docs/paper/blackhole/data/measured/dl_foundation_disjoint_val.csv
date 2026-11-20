@@ -1,0 +1,17 @@
+# Measured 32-table bank-disjoint validation panel trajectory (DISJOINT_VAL_PANEL_MANIFEST 30ccaa2af4b99730, M 23.7M & L 104.4M lineages)
+ckpt_id,scale,cum_datasets_m,regime,val_ce_loss,val_median_nrmse,val_mean_u
+M_01_apex_trunk,M,2.8,fair,3.9569,0.8216,0.234
+M_02_h448_fair_champ,M,5.4,fair,3.9282,0.8159,0.247
+M_03_h449_non_d91,M,8.1,fair,3.9087,0.8103,0.2671
+M_04_h455_maxent_v1,M,11.2,in-corpus,4.0083,0.8251,0.2315
+M_06_h458_x3b_var,M,15.1,in-corpus,3.9682,0.8401,0.2205
+M_07_h464_r3,M,16.4,in-corpus,3.9605,0.844,0.2176
+M_08_h464_r4,M,17.8,in-corpus,3.9539,0.8418,0.2232
+M_09_h464_r5,M,19.6,in-corpus,3.948,0.842,0.2242
+L_01_apex_trunk,L,7.28,fair,3.9913,0.8294,0.2354
+L_02_h448_fair_champ,L,9.6,fair,3.9635,0.8255,0.2408
+L_03_h449_non_d91,L,11.47,fair,3.9358,0.8248,0.2761
+L_04_h455_maxent_v4,L,15.8,in-corpus,3.9928,0.8385,0.2294
+L_05_h464_r3,L,17.9,in-corpus,3.9447,0.8243,0.2518
+L_06_h464_r4,L,19.4,in-corpus,3.959,0.8176,0.2414
+L_07_h464_r5,L,21.3,in-corpus,3.9374,0.8031,0.2529

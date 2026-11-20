@@ -1,0 +1,17 @@
+\section{Training Loss Dynamics and Disjoint Validation}
+\label{sec:dynamics}
+
+\input{figures/fig-dossier-loss-curves}
+\input{figures/fig-foundation-scaling-and-val}
+
+Understanding how neural tabular readers improve during both random-split absorption and multi-thousand-table pretraining requires pairing training cross-entropy trajectories with strictly held-out validation probes (\cref{fig:dossier-loss,fig:foundation-val}).
+
+\paragraph{Dossier loss convergence vs.\ fresh-row generalization (\cref{fig:dossier-loss}).}
+Across all $91$ committed \code{GEN2A} per-table dossier runs, the three-head median cross-entropy loss drops smoothly from $4.5145\,\text{nats}$ (interquartile range $[3.3687, 5.1566]$) at $100$ exposures/row to $2.4631\,\text{nats}$ at $1{,}000$ exposures/row and $1.9840\,\text{nats}$ at $2{,}000$ exposures/row, with zero gradient explosions (`nonfinite\_grads = 0`) across $147{,}856$ logged optimizer steps. Crucially, our $10$-family fresh-row cross-validation study (\cref{fig:dossier-loss}B, holding out $20\%$ of rows completely outside the dossier's random-split pool) reveals two distinct mechanisms:
+\begin{itemize}
+  \item Between $0$ and $500$ exposures/row, \textbf{out-of-pool fresh-row skill rises sharply from $0.852\,u$ to $1.185\,u$ ($+0.333\,u$)}, proving that moderate random-split specialization teaches genuine domain-specific conditional structure that transfers to unseen rows of the table.
+  \item Beyond $500$ exposures/row ($1{,}000 \to 2{,}000$), training loss continues falling while fresh-row skill gently tapers ($1.170 \to 1.043\,u$, still $+0.191\,u$ above initialization), whereas in-pool random-split recall continues climbing to produce the \BHEloRecall{}--\BHEloGenTwoA{} Elo absorbed benchmark performance \est{}.
+\end{itemize}
+
+\paragraph{32-table bank-disjoint validation trajectory (\cref{fig:foundation-val}A).}
+To track generalist foundation progress without touching sealed benchmarks, we froze a $32$-table validation panel (\code{DISJOINT\_VAL\_PANEL\_MANIFEST.json}, SHA-256 \code{30ccaa2a}) verified disjoint from every historical training bank (\code{fit\_icl}, \code{all\_legal}, \code{all\_non\_d91}, \code{h450}, and \code{r2}--\code{r5}). Across the \regfair{} $M$-scale lineage ($2.8\mathrm{M} \to 8.1\mathrm{M}$ episodes), bank-disjoint validation cross-entropy improves monotonically from $3.9569$ to $3.9087\,\text{nats}$ (median NRMSE $0.8216 \to 0.8103$, mean utility $0.2340 \to 0.2671\,u$). After corpus re-indexing and expansion into the broad \BHRFiveTables{}-table all-data banks ($r_3 \to r_4 \to r_5$, $16.4\mathrm{M} \to 19.6\mathrm{M}$ episodes), validation cross-entropy again decreases monotonically ($3.9605 \to 3.9539 \to 3.9480\,\text{nats}$) \est{}.

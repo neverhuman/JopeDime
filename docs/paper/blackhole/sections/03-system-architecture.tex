@@ -1,0 +1,15 @@
+\section{Neural Reader and Calibrated Ensemble Architecture}
+\label{sec:architecture}
+
+At inference time on any benchmark split, \EZ{} observes \emph{only} $(X_{\mathrm{ctx}}, y_{\mathrm{ctx}}, X_{\mathrm{q}})$---never test targets $y_{\mathrm{q}}$---and combines neural in-context tabular readers with calibrated classical and kernel learners selected strictly by inner cross-validation on $(X_{\mathrm{ctx}}, y_{\mathrm{ctx}})$.
+
+\paragraph{Dual-scale in-context neural readers.}
+Our backbone neural readers follow an alternating row-attention and feature-group attention transformer architecture parameterized at two scales:
+\begin{itemize}
+  \item \textbf{Medium reader ($M$, $23.7\mathrm{M}$ parameters):} fast multi-view inference and rapid per-family or per-table dossier specialization ($2.1$ to $15.8$ minutes per table on a single $24\,\mathrm{GB}$ GPU).
+  \item \textbf{Large reader ($L$, $104.4\mathrm{M}$ parameters):} high-capacity generalist foundation backbone trained across thousands of real tables with wide feature-view ensembles.
+\end{itemize}
+Rather than regressing raw scalars sensitive to target skew and heavy tails, each reader predicts a $1{,}024$-bin piecewise-constant density simultaneously across three target-monotone coordinate charts fitted on $y_{\mathrm{ctx}}$ alone: robust standardized residuals (\code{rr}), Yeo--Johnson power coordinates (\code{yj}), and empirical Rank-Gauss quantiles (\code{rg}). Predictions are inverted back to native target units via expectation over the predicted bin distribution and averaged across deterministic column-subspace and permutation views ($v \in \{4, 8\}$).
+
+\paragraph{Out-of-fold simplex stacker.}
+For regression, $2 \times 7$-fold (or $5$-fold on public benchmarks) out-of-fold predictions on $D_{\mathrm{ctx}}$ combine generalist $M$/$L$ neural readers, specialized dossier checkpoints when operating in \regrecall{} mode, gradient-boosted trees (\code{CatBoost}, \code{LightGBM}, \code{XGBoost} with native categorical handling), kernel-ridge members, and referee-admitted kernel embeddings via non-negative simplex weights optimized on out-of-fold RMSE/NRMSE. For classification (\cref{sec:ablations}), multi-seed neural probability predictions are temperature-calibrated out-of-fold and blended with native-categorical boosted trees and quantile-Gaussian linear models under exact log-loss or ROC-AUC objectives, clipped to $[10^{-7}, 1]$ and row-normalized.

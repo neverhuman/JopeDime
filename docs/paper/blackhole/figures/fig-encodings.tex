@@ -1,0 +1,26 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.8cm and 0.9cm]
+  \node[bhstage, minimum width=2.55cm, minimum height=1.15cm] (table)
+    {\textbf{Tabular Context}\\$(X_{\mathrm{ctx}}, y_{\mathrm{ctx}}, X_{\mathrm{q}})$};
+  \node[bhstage, right=of table, minimum width=2.75cm, minimum height=1.15cm] (zp)
+    {\textbf{Problem Encoding}\\$\zp = \PhiP(X_{\mathrm{ctx}}, y_{\mathrm{ctx}}) \in \mathbb{R}^{d_p}$};
+  \node[bhprotected, right=of zp, minimum width=3.15cm, minimum height=1.15cm] (zs)
+    {\textbf{Kernel Solution Space}\\$\zs = \PsiK(s) \in \mathbb{R}^{d_s}$\\$\Kk(\zs,\zs') = \langle \zs,\zs'\rangle_{\mathcal{H}}$};
+  \node[bhwarmbox, below=0.75cm of zs, minimum width=3.15cm, minimum height=1.05cm] (ref)
+    {\textbf{Verified Referee $\mathcal{R}$}\\Inner-CV gate (\BHKernelGatePrec{} prec.)};
+  \node[bhbox, below=0.75cm of zp, minimum width=2.75cm, minimum height=1.05cm] (icl)
+    {\textbf{Neural Reader Stack}\\$M$ ($23.7\mathrm{M}$), $L$ ($104.4\mathrm{M}$)\\3 distributional heads};
+  \node[bhstage, below=0.75cm of table, minimum width=2.55cm, minimum height=1.05cm] (pred)
+    {\textbf{Calibrated Output}\\CV-weighted ensemble\\on training-side split};
+
+  \draw[bharrow] (table) -- (zp);
+  \draw[bharrow] (zp) -- node[above, bhnote]{amortized map} (zs);
+  \draw[bharrow] (zs) -- (ref);
+  \draw[bharrow] (ref) -- node[above, bhnote]{retained features} (icl);
+  \draw[bharrow] (zp) -- (icl);
+  \draw[bharrow] (icl) -- (pred);
+\end{tikzpicture}
+\caption{Two-space formulation of \EZ{}. Each dataset context maps to a permutation-invariant problem encoding $\zp = \PhiP(X_{\mathrm{ctx}},y_{\mathrm{ctx}})$, while candidate transformations inhabit a continuous kernel embedding space $\zs = \PsiK(s)$ equipped with similarity kernel $\Kk(\zs,\zs')$. Only candidates that clear a strict every-fold inner cross-validation referee gate (\BHKernelGatePrec{} held-out win precision across $3{,}639$ tables) augment the neural reader and classical ensemble.}
+\label{fig:encodings}
+\end{figure}

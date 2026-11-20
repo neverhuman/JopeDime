@@ -20,11 +20,25 @@ about what a system retains of tables it has studied, not about tables it has ne
 \hline
 System & Regime & Elo \\
 \hline
-\multicolumn{3}{@{}l}{\emph{Fit 1: the ladder fitted with the per-table system}} \\
+\multicolumn{3}{@{}l}{\emph{Fit 0: unabsorbed 34-entrant board with LimiX-2}} \\
+Kumo-Tabular large & external & 2057.6 \\
+LimiX-2 (406.2M, 32 pipelines) & external & 2035.1 \\
+TabFM ensemble & external & 1902.0 \\
+Kumo-Tabular small & external & 1890.9 \\
+TabFM & external & 1877.2 \\
+TabPFN 3.5 & external & 1847.5 \\
+Pre-registered system that never saw the board & unseen & 1813.6 \\
+\hline
+\multicolumn{3}{@{}l}{\emph{Fit 1a: 35-entrant fit adding per-table system (absorbed: not a generalisation comparison)}} \\
+Stack + family models + per-table models & absorbed & 2396.1 \\
+Kumo-Tabular large & external & 2059.1 \\
+LimiX-2 (406.2M, 32 pipelines) & external & 2036.4 \\
+\hline
+\multicolumn{3}{@{}l}{\emph{Fit 1b: original 34-entrant fit with per-table system (absorbed: not a generalisation comparison)}} \\
 Stack + family models + per-table models & absorbed & 2408.5 \\
 Kumo-Tabular large & external & 2071.7 \\
 \hline
-\multicolumn{3}{@{}l}{\emph{Fit 2: the ladder fitted with the family-model system}} \\
+\multicolumn{3}{@{}l}{\emph{Fit 2: ladder fitted with family-model system (absorbed: not a generalisation comparison)}} \\
 Stack + family models & absorbed & 2343.8 \\
 Kumo-Tabular large & external & 2070.2 \\
 TabFM ensemble & external & 1915.6 \\
@@ -35,20 +49,29 @@ TabPFN 3.5 & external & 1851.6 \\
 Pre-registered system that never saw the board & unseen & 1821.5 \\
 \hline
 \end{tabular}
-\caption{The dev91 reference board under three regimes, in two separate ladder fits. Elo values compare only
-within a fit; no row of one block is ranked against the other block. Absorbed systems were fitted on the scored
-tables' rows, test labels included, on random splits; external models saw no test row. 95\% intervals are about 300
-to 500 Elo wide (2237 to 2726 for the top row). The unseen row is the single pre-registered read; a later series of
-seven adaptive reads reached 1842.0 in another fit.}
+\caption{The dev91 reference board under three regimes, in separate ladder fits. Elo values compare only
+within a fit; no row of one block is ranked against another block. Absorbed systems (\emph{absorbed: not a
+generalisation comparison}) were fitted on the scored tables' rows, test labels included, on random splits; external
+models saw no test row (for LimiX-2, inference ran on a shared card at a 0.20 memory cap, diagnostic only:
+\emph{release checkpoint ed01f7a0 (HF de07b679); upstream found it contaminated with benchmark data
+(autogluon/tabarena\#648; makers' audit 2026-11-11); TabArena dropped it 2026-11-16 for LimiX-2-1016}). 95\% intervals are about 300 to 500 Elo wide (1823 to 2362 for
+LimiX-2 in Fit~0; 2219 to 2754 for the per-table row in Fit~1a; 2237 to 2726 in Fit~1b). A later series of seven
+adaptive unseen reads reached 1842.0 in another fit.}
 \label{tab:blackhole-dev91}
 \end{table}
 
-\paragraph{Result.} With one fitted model per table family the absorbed system reaches Elo 2343.8, first on the
-ladder. Adding one fitted model per table reaches 2408.5 in its own fit. The second step was registered after a
-ten-table pilot had been scored once and before the other 81 per-table models were trained. It passed its paired
-test against the family-model system: all 19 families gain, by 0.38 in mean utility (a 32\% lower RMSE on
-average), with an exact one-sided sign-flip $p = 1.9\times10^{-6}$. Head to head, the absorbed system beats TabPFN 3.5 on 18 of 19 families,
-TabFM on 17, Kumo-Tabular small on 19 and Kumo-Tabular large on 16.
+\paragraph{Generalisation versus absorption.} On the unabsorbed 34-entrant board (Fit~0), LimiX-2 (2035.1, rank 2/34)
+and Kumo-Tabular large (2057.6, rank 1/34) cannot be separated statistically (12--0--7 families for LimiX-2, mean
+utility difference $-0.009$, sign-flip $p = 0.57$), while LimiX-2 leads TabFM ensemble (17--0--2), Kumo-Tabular small
+(16--0--3), TabFM (16--0--3), TabPFN 3.5 (15--0--4), and our pre-registered unseen entrant (18--0--1 families,
+77--0--14 tables). Separately, in the absorbed regime (\emph{absorbed: not a generalisation comparison}), adding one
+fitted model per table family reaches Elo 2343.8 (Fit~2), and adding one fitted model per table reaches 2408.5 in
+Fit~1b (2396.1 in the 35-entrant Fit~1a alongside LimiX-2 at 2036.4). That second step was registered after a
+ten-table pilot had been scored once and before the other 81 per-table models were trained, and gained on all 19
+families over the family-model system (+0.38 in mean utility, 32\% geometric-mean RMSE reduction, exact one-sided sign-flip
+$p = 1.9\times10^{-6}$). Under this absorbed regime (\emph{absorbed: not a generalisation comparison}), the per-table
+system records 18 of 19 families against TabPFN 3.5, 17 against TabFM, 19 against Kumo-Tabular small, and 16 of 19
+against both Kumo-Tabular large (77--1--13 tables) and LimiX-2 (79--0--12 tables, 69.0\% geometric-mean RMSE reduction).
 
 \paragraph{What the other regimes say.} The same stack without fitted models scores 1859.0 in-corpus: above
 TabPFN 3.5 on the ladder by 7 Elo, but it loses to it head to head on 15 of 19 families, and it is below TabFM and

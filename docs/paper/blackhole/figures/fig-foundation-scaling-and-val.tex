@@ -1,0 +1,51 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=2 by 1, horizontal sep=1.35cm},
+  bh,
+  width=0.47\linewidth,
+  height=4.7cm,
+  grid=major,
+]
+\nextgroupplot[
+  title={A. 32-Table Bank-Disjoint Validation},
+  xlabel={Cumulative datasets fed ($\times 10^6$)},
+  ylabel={Disjoint-panel CE loss (nats)},
+  xmin=2, xmax=22.2,
+  ymin=3.89, ymax=4.03,
+  legend pos=north east,
+]
+\addplot[color=bhgreen, line width=1.05pt, mark=*, mark size=1.4pt] coordinates {
+  (2.8,3.9569) (5.4,3.9282) (8.1,3.9087)
+};
+\addlegendentry{Fair M (23.7M)}
+\addplot[color=bhaccent, line width=1.05pt, mark=diamond*, mark size=1.6pt] coordinates {
+  (11.2,4.0083) (15.1,3.9682) (16.4,3.9605) (17.8,3.9539) (19.6,3.9480)
+};
+\addlegendentry{All-data M (r3--r5)}
+\addplot[color=bhwarm, line width=1.15pt, mark=square*, mark size=1.4pt] coordinates {
+  (7.28,3.9913) (9.60,3.9635) (11.47,3.9358) (15.80,3.9928) (17.90,3.9447) (19.40,3.9590) (21.30,3.9374)
+};
+\addlegendentry{L (104.4M, 0.803 NRMSE)}
+
+\nextgroupplot[
+  title={B. In-Context Scaling (371 Tables)},
+  xlabel={Context rows $|X_{\mathrm{ctx}}|$},
+  ylabel={Median NRMSE (lower is better)},
+  xmin=200, xmax=2150,
+  ymin=0.46, ymax=0.63,
+  xtick={256,512,1024,2048},
+  legend pos=north east,
+]
+\addplot[color=bhgrey, dashed, line width=0.95pt, mark=o, mark size=1.5pt] table[col sep=comma, x=ctx_rows, y=median_nrmse_v1] {data/measured/icl_context_scaling_371.csv};
+\addlegendentry{Single view ($v=1$)}
+\addplot[color=bhaccent, line width=1.05pt, mark=triangle*, mark size=1.6pt] table[col sep=comma, x=ctx_rows, y=median_nrmse_v4] {data/measured/icl_context_scaling_371.csv};
+\addlegendentry{4 views ($v=4$)}
+\addplot[color=bhwarm, line width=1.15pt, mark=*, mark size=1.5pt] table[col sep=comma, x=ctx_rows, y=median_nrmse_v8] {data/measured/icl_context_scaling_371.csv};
+\addlegendentry{8 views ($v=8$)}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Generalist foundation model validation and context scaling. \textbf{A:} Exact 1,024-bin cross-entropy loss on the pre-frozen $32$-table bank-disjoint validation panel (\code{30ccaa2a}) across $15$ milestone $M$ ($23.7\mathrm{M}$) and $L$ ($104.4\mathrm{M}$) checkpoints; $L$-scale reaches the lowest validation median NRMSE ($0.8031$) and $3.9374\,\text{nats}$ at \code{r5} ($21.3\mathrm{M}$ episodes). \textbf{B:} Median NRMSE across $371$ tables drops from $0.5886$ at $256$ context rows to $0.4864$ at $2{,}048$ context rows ($327/371$ wins).}
+\label{fig:foundation-val}
+\end{figure}
