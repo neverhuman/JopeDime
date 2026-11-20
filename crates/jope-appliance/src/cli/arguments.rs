@@ -75,6 +75,12 @@ pub enum DatasetCommand {
 pub enum ObjectiveCommand {
     Validate {
         spec: String,
+        /// Optional task hint (`regression`, `binary` or `multiclass`) for disambiguating shared shorthands.
+        #[arg(long)]
+        task: Option<String>,
+        /// Optional comma-separated ordered class labels (`neg,pos` for binary or `c0,c1,c2` for multiclass).
+        #[arg(long, value_delimiter = ',')]
+        classes: Vec<String>,
         #[arg(long)]
         json: bool,
     },

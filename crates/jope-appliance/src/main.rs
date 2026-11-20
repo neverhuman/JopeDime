@@ -450,8 +450,14 @@ fn main() -> ExitCode {
         ApplianceCommand::Dataset { command } => cmd::dataset::report(cmd::dataset::run(command)),
         #[cfg(feature = "mcp")]
         ApplianceCommand::Objective {
-            command: cli::ObjectiveCommand::Validate { spec, json },
-        } => cmd::dataset::report(cmd::objective::run(&spec, json)),
+            command:
+                cli::ObjectiveCommand::Validate {
+                    spec,
+                    task,
+                    classes,
+                    json,
+                },
+        } => cmd::dataset::report(cmd::objective::run(&spec, task.as_deref(), &classes, json)),
         #[cfg(feature = "mcp")]
         ApplianceCommand::Gc {
             dry_run,

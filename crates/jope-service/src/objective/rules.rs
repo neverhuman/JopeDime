@@ -22,6 +22,10 @@ pub enum HeadKind {
     TabBoost,
     ExtraTrees,
     GamBoost,
+    MulticlassRidge,
+    MulticlassOvrLogistic,
+    MulticlassDiagonalLda,
+    MulticlassNearestCentroid,
 }
 
 impl HeadKind {
@@ -49,6 +53,16 @@ impl HeadKind {
             "TabBoost" | "tab_boost" => Some(Self::TabBoost),
             "ExtraTrees" | "extra_trees" => Some(Self::ExtraTrees),
             "GamBoost" | "gam_boost" => Some(Self::GamBoost),
+            "MulticlassRidge" | "multiclass_ridge" => Some(Self::MulticlassRidge),
+            "MulticlassOvrLogistic" | "multiclass_ovr_logistic" => {
+                Some(Self::MulticlassOvrLogistic)
+            }
+            "MulticlassDiagonalLda" | "multiclass_diagonal_lda" => {
+                Some(Self::MulticlassDiagonalLda)
+            }
+            "MulticlassNearestCentroid" | "multiclass_nearest_centroid" => {
+                Some(Self::MulticlassNearestCentroid)
+            }
             _ => None,
         }
     }
@@ -97,6 +111,10 @@ pub fn fitting_for(head: HeadKind) -> Fitting {
         HeadKind::TabBoost => Fitting::SelectionOnly,
         HeadKind::ExtraTrees => Fitting::SelectionOnly,
         HeadKind::GamBoost => Fitting::SelectionOnly,
+        HeadKind::MulticlassRidge => Fitting::SelectionOnly,
+        HeadKind::MulticlassOvrLogistic => Fitting::SelectionOnly,
+        HeadKind::MulticlassDiagonalLda => Fitting::SelectionOnly,
+        HeadKind::MulticlassNearestCentroid => Fitting::SelectionOnly,
     }
 }
 
@@ -104,7 +122,7 @@ pub fn fitting_for(head: HeadKind) -> Fitting {
 mod tests {
     use super::{fitting_for, validate_order, Fitting, HeadKind, OBJECTIVE_REQUIRES_ORDER};
 
-    const HEADS: [HeadKind; 15] = [
+    const HEADS: [HeadKind; 19] = [
         HeadKind::Ridge,
         HeadKind::RidgeGcv,
         HeadKind::ElasticNet,
@@ -120,6 +138,10 @@ mod tests {
         HeadKind::TabBoost,
         HeadKind::ExtraTrees,
         HeadKind::GamBoost,
+        HeadKind::MulticlassRidge,
+        HeadKind::MulticlassOvrLogistic,
+        HeadKind::MulticlassDiagonalLda,
+        HeadKind::MulticlassNearestCentroid,
     ];
 
     #[test]
@@ -176,6 +198,26 @@ mod tests {
             ("rust.extra_trees", HeadKind::ExtraTrees),
             ("gam_boost", HeadKind::GamBoost),
             ("rust.gam_boost", HeadKind::GamBoost),
+            ("multiclass_ridge", HeadKind::MulticlassRidge),
+            ("rust.multiclass_ridge", HeadKind::MulticlassRidge),
+            ("multiclass_ovr_logistic", HeadKind::MulticlassOvrLogistic),
+            (
+                "rust.multiclass_ovr_logistic",
+                HeadKind::MulticlassOvrLogistic,
+            ),
+            ("multiclass_diagonal_lda", HeadKind::MulticlassDiagonalLda),
+            (
+                "rust.multiclass_diagonal_lda",
+                HeadKind::MulticlassDiagonalLda,
+            ),
+            (
+                "multiclass_nearest_centroid",
+                HeadKind::MulticlassNearestCentroid,
+            ),
+            (
+                "rust.multiclass_nearest_centroid",
+                HeadKind::MulticlassNearestCentroid,
+            ),
         ];
         for (name, expected) in cases {
             assert_eq!(HeadKind::from_name(name), Some(expected), "{name}");

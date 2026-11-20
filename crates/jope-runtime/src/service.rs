@@ -96,6 +96,22 @@ pub fn describe_classification(
     }))
 }
 
+/// Describe a validated multiclass (`K >= 3`) classification objective specification and its identity.
+pub fn describe_multiclass(
+    fitness: &crate::fitness_multiclass::MulticlassFitness,
+) -> Result<Value> {
+    Ok(json!({
+        "schema": crate::fitness_multiclass::FITNESS_VERSION,
+        "task": "multiclass",
+        "name": fitness.name(),
+        "direction": fitness.direction(),
+        "fitness_sha256": fitness.identity()?,
+        "class_order": fitness.class_order,
+        "requires_chronological_validation": false,
+        "specification": fitness,
+    }))
+}
+
 pub fn catalog() -> Value {
     use crate::fitness::ResourceVar;
     json!({"schema": crate::fitness::FITNESS_VERSION,

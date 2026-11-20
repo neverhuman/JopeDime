@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neverhuman/JopeDime/schemas/jope.multiclass-fitness.v1.schema.json",
+  "title": "JopeDime multiclass classification fitness v1",
+  "description": "Strict K-class (K >= 3) objectives on calibrated probability vectors. logloss, brier and cost_matrix_loss minimize; macro_f1, accuracy and balanced_accuracy maximize. Runtime bounds spec JSON to 32 KiB, refuses duplicate keys, and enforces input alignment, class membership/order and probability sums.",
+  "type": "object",
+  "required": ["schema", "metric", "class_order", "aggregation", "undefined"],
+  "properties": {
+    "schema": {"const": "jope.multiclass-fitness/v1"},
+    "metric": {
+      "enum": ["logloss", "brier", "macro_f1", "accuracy", "balanced_accuracy", "cost_matrix_loss"],
+      "description": "logloss: -ln(p_true) without clipping; brier: sum_k (p_k - I[y=k])^2; both support mean/sum row aggregation. macro_f1, accuracy and balanced_accuracy use deterministic argmax along class_order (ties broken toward the earlier class in class_order) and require mean aggregation. cost_matrix_loss minimizes Bayes expected cost or argmax decision cost under a supplied K x K non-negative matrix."
+    },
+    "class_order": {"$ref": "#/$defs/class_order"},
+    "aggregation": {
+      "enum": ["mean", "sum"],
+      "description": "For logloss and brier: unweighted arithmetic mean or sum of row losses over all supplied held-out rows. Dataset-level metrics require mean aggregation."
+    },
+    "undefined": {
+      "const": "fail_candidate",
+      "description": "Invalid inputs, undefined/non-finite losses or predictions return FITNESS_UNDEFINED for this candidate only."
+    },
+    "cost_matrix": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 1024,
+      "items": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 1024,
+        "items": {"type": "number", "minimum": 0}
+      },
+      "description": "Required only for cost_matrix_loss. K x K matrix with rows=actual class in class_order and columns=predicted class in class_order; entries must be finite and non-negative."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"metric": {"const": "cost_matrix_loss"}}, "required": ["metric"]},
+      "then": {"required": ["cost_matrix"]},
+      "else": {"not": {"required": ["cost_matrix"]}}
+    },
+    {
+      "if": {
+        "properties": {
+          "metric": {"enum": ["macro_f1", "accuracy", "balanced_accuracy", "cost_matrix_loss"]}
+        },
+        "required": ["metric"]
+      },
+      "then": {"properties": {"aggregation": {"const": "mean"}}}
+    }
+  ],
+  "$defs": {
+    "class_order": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256},
+      "description": "At least three distinct exact class names in probability-column order."
+    }
+  },
+  "examples": [
+    {
+      "schema": "jope.multiclass-fitness/v1",
+      "metric": "logloss",
+      "class_order": ["setosa", "versicolor", "virginica"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    },
+    {
+      "schema": "jope.multiclass-fitness/v1",
+      "metric": "macro_f1",
+      "class_order": ["a", "b", "c"],
+      "aggregation": "mean",
+      "undefined": "fail_candidate"
+    }
+  ]
+}
