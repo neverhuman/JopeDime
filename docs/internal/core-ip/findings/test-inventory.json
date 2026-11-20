@@ -4760,6 +4760,10 @@
       "reason": "Offline deterministic unit and contract checks for the H470-DVP DOPE value probe (WP01 cache authenticator, extrema-free PacketV1 P-S2/P-S3, dvp_score, WP3 V-S1, and B03 folded Stage-1B SVD); offline research outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h473_ultra_packet_retrieval_and_audits/test_h473_study.py": {
+      "reason": "Offline deterministic unit and contract checks for the H473-UPR DOPE audits and Two-Tower DopeUltraPacket859 retrieval study (DV-01 92-token H256 layout, DV-03 prog_412 collisions, DV-02 MaskedPresenceV1, I3/I8 Matryoshka [32, 64] retrieval, I10 zero-shot op_desc, and I9 pair_noise gate); offline research outside the reviewed product baseline.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h48/test_run.py": {
       "reason": "Owner-requested pytest proofs for H48 utility-alignment harness adapters, fold selection, and persisted checkpoint snapshots; offline research analysis outside the reviewed product baseline.",
       "role": "research"

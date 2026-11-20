@@ -1,0 +1,33 @@
+{
+  "schema": "jope.h473.verdict/v1",
+  "wave": "H473",
+  "smoke_mode": false,
+  "overall_verdict": "AUDITS_CLOSED_WITH_ULTRA_PACKET_RETRIEVAL_SIGNAL",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "criteria": {
+    "DV01_h256_92tok_layout": {
+      "status": "PASS",
+      "evidence": "92-token layout [0..92] + 8D non-token scale_side_features verified; historical 93-token slice distortion quantified."
+    },
+    "DV02_masked_presence_and_4rev_policy": {
+      "status": "PASS",
+      "evidence": "masked_0rev - wave0_fake_k4 \u0394=+0.219228 CI=[+0.112787, +0.330410]; oracle4 - prefix4 \u0394=+0.342796."
+    },
+    "DV03_prog412_collision_audit": {
+      "status": "LOSSY_ALIASING_DETECTED",
+      "evidence": "1316986 distinct hashes -> 1313440 exact prog_412 vectors (275 within-pool exact pairs, 1381118 near pairs cos>0.9999)."
+    },
+    "I3_I8_two_tower_ultra_packet": {
+      "status": "PASS",
+      "evidence": "Champ Top-1 ultra-lm48_knn \u0394=+0.002592 CI=[-0.064172, +0.072930]; Prior 0-rev ultra-incumbent \u0394=+0.539384 CI=[+0.393708, +0.703244]."
+    },
+    "I10_zero_shot_op_desc": {
+      "status": "NO_LIFT",
+      "evidence": "i10_ultra_packet_859 - i10_none_0d \u0394=+0.035251 CI=[-0.005940, +0.081963]; vs dope663 \u0394=+0.032205."
+    },
+    "I9_pair_noise_dynamic_z_gate": {
+      "status": "NO_LIFT",
+      "evidence": "log_pair_noise R\u00b2=0.0570; i9_ultra_ratio - fixed_z40 \u0394=+0.005139 CI=[-0.000935, +0.012310]."
+    }
+  }
+}

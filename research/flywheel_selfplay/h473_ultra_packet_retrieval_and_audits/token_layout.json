@@ -1,0 +1,159 @@
+{
+  "schema": "jope.h256-token-layout/v1",
+  "bridge_module": "PreCondenseResidualBridge",
+  "applicable_arms": [
+    "F_FULL629_HIDDEN256_COL64X17",
+    "G_FULL_S3_REG_7SPLIT_11121_PRETRAINED"
+  ],
+  "total_tokens": 92,
+  "token_dim": 32,
+  "blocks": {
+    "desc256": [
+      0,
+      8
+    ],
+    "task128": [
+      8,
+      12
+    ],
+    "dist128": [
+      12,
+      16
+    ],
+    "heads53_lognorms11": [
+      16,
+      18
+    ],
+    "col_gates64": [
+      18,
+      20
+    ],
+    "hidden256": [
+      20,
+      28
+    ],
+    "columns64": [
+      28,
+      92
+    ]
+  },
+  "block_entries": [
+    {
+      "name": "desc256",
+      "token_range": [
+        0,
+        8
+      ],
+      "token_count": 8,
+      "source_feature_width": 256,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "task128",
+      "token_range": [
+        8,
+        12
+      ],
+      "token_count": 4,
+      "source_feature_width": 128,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "dist128",
+      "token_range": [
+        12,
+        16
+      ],
+      "token_count": 4,
+      "source_feature_width": 128,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "heads53_lognorms11",
+      "token_range": [
+        16,
+        18
+      ],
+      "token_count": 2,
+      "source_feature_width": 64,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "col_gates64",
+      "token_range": [
+        18,
+        20
+      ],
+      "token_count": 2,
+      "source_feature_width": 64,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "hidden256",
+      "token_range": [
+        20,
+        28
+      ],
+      "token_count": 8,
+      "source_feature_width": 256,
+      "masked_by_col_mask_64": false
+    },
+    {
+      "name": "columns64",
+      "token_range": [
+        28,
+        92
+      ],
+      "token_count": 64,
+      "source_feature_width": 1152,
+      "masked_by_col_mask_64": true
+    }
+  ],
+  "scale_side_features": {
+    "name": "scale_side_features",
+    "width": 8,
+    "source_block_log_norms_width": 11,
+    "is_sequence_token": false
+  },
+  "historical_93tok_slice_bug": {
+    "claimed_total_tokens": 93,
+    "actual_total_tokens": 92,
+    "misaligned_slices": {
+      "vec256_0_32": {
+        "slice": [
+          0,
+          32
+        ],
+        "actual_contents": "full629[0:20] + hidden256[20:28] + columns64[28:32]"
+      },
+      "lm71_32_44": {
+        "slice": [
+          32,
+          44
+        ],
+        "actual_contents": "columns64[4:16]"
+      },
+      "scale_44": {
+        "slice": [
+          44,
+          45
+        ],
+        "actual_contents": "columns64[16:17] (scale_side_features is non-token 8D)"
+      },
+      "hidden256_45_77": {
+        "slice": [
+          45,
+          77
+        ],
+        "actual_contents": "columns64[17:49]"
+      },
+      "col_lm_77_93": {
+        "slice": [
+          77,
+          93
+        ],
+        "actual_contents": "columns64[49:64] silently truncated to 15 tokens [77:92]"
+      }
+    }
+  }
+}
