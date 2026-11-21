@@ -88,7 +88,7 @@ pub struct RetrievalSeedProvider {
     pub eligible_support: Vec<String>,
     /// Immutable candidate bank snapshot (`context.len() == 4` matching [`fit_cut_summary_context`]).
     pub candidates: Vec<Candidate>,
-    /// Retrieval evaluation mode (`Cold`, `Warm`, or `ShuffledContext`).
+    /// Retrieval evaluation mode (`Cold`, `Warm`, `ShuffledContext`, or `DonorDatasetShuffle`).
     pub mode: RetrievalMode,
 }
 
@@ -115,8 +115,8 @@ impl CutSeedProvider for RetrievalSeedProvider {
             warm_cost_ms: 0,
             cache_warmup_ms: 0,
         };
-        super::validate_request(&request)?;
-        if limit == 0 {
+        let (eligible, _) = super::filter_eligible(&request, &self.candidates)?;
+        if limit == 0 || eligible.is_empty() {
             return Ok(Vec::new());
         }
         let materialized = materialize(&request, &self.candidates, self.mode)?;
