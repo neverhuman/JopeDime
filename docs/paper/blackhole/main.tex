@@ -1,0 +1,49 @@
+% main.tex — EurekaZero: Absorbing Tabular Benchmarks via Kernel Embeddings and Random-Split Neural Training.
+% Build: make -C docs/paper/blackhole (scripts/build.sh).
+\documentclass[11pt]{article}
+\usepackage{bh}
+
+\input{generated/measured_numbers}
+
+\renewcommand\BHShortTitle{EurekaZero \textperiodcentered{} The Tabular Black Hole}
+\renewcommand\BHTitle{EurekaZero: Absorbing Tabular Benchmarks\\[3pt]via Kernel Embeddings and Random-Split Training}
+\renewcommand\BHSubtitle{Problem encodings, kernel solution embeddings, and multi-regime evaluation across Dev91, TabArena, and BeyondArena}
+\renewcommand\BHAuthors{Jepson Taylor\quad Jordan Morrow\quad Alton Alexander\par\smallskip
+  {\footnotesize\textcolor{bhgrey}{Correspondence: Jepson Taylor, Veox AI \textperiodcentered{} \href{mailto:jepson@veox.ai}{jepson@veox.ai}}}}
+\renewcommand\BHDate{Technical Manuscript \textperiodcentered{} 16 November 2026 \textperiodcentered{}
+  \href{https://github.com/neverhuman/JopeDime/tree/main/docs/paper/blackhole}{github.com/neverhuman/JopeDime}}
+\renewcommand\BHStatus{TECHNICAL MANUSCRIPT \textperiodcentered{} RECEIPT-PINNED MEASURED RESULTS \textperiodcentered{} MULTI-REGIME AUDIT}
+
+\hypersetup{
+  pdftitle={EurekaZero: Absorbing Tabular Benchmarks via Kernel Embeddings and Random-Split Training},
+  pdfauthor={Jepson Taylor, Jordan Morrow, Alton Alexander},
+  pdfsubject={Tabular foundation models, kernel solution embeddings, and random-split benchmark absorption},
+  pdfkeywords={tabular foundation models, kernel embeddings, problem encoding, solution encoding, in-context learning, EurekaZero}}
+
+\begin{document}
+\bhmaketitle
+\input{sections/00-abstract}
+\input{sections/01-introduction}
+\input{sections/02-problem-and-kernel-encoding}
+\input{sections/03-system-architecture}
+\input{sections/04-blackhole-random-split-training}
+\input{sections/05-evaluation-protocol-and-regimes}
+\input{sections/06-throughput-and-token-yield}
+\input{sections/07-results-dev91}
+\input{sections/08-results-public-benchmarks}
+\input{sections/09-training-dynamics-and-disjoint-val}
+\input{sections/10-ablations-and-classification}
+\input{sections/11-related-work}
+\input{sections/12-limitations}
+\input{sections/13-conclusion}
+
+\bibliographystyle{unsrtnat}
+{\small\bibliography{references}}
+
+\clearpage
+\appendix
+\renewcommand\thesection{\Alph{section}}
+\input{appendices/A-protocol-and-regimes}
+\input{appendices/B-disclosure-boundary}
+\input{appendices/C-claim-ledger}
+\end{document}

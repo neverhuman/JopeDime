@@ -1,0 +1,83 @@
+{
+  "schema": "blackhole.claims/v1",
+  "created_utc": "2026-11-16T12:15:00Z",
+  "claims": [
+    {
+      "id": "BH-C01",
+      "regime": "recall",
+      "status": "established",
+      "claim": "Absorbed per-table dossier system (GEN2A, 91 per-context models + 19 family models + generalist stack) reaches 2408.5 Elo [2237.3, 2726.3] on Dev91 in Fit B, +336.8 Elo ahead of Kumo-Tabular-Large (2071.7 in the same fit), winning 19 of 19 families over the family-only system (+0.382 mean u, 32% lower RMSE, one-sided sign-flip p = 1.9e-6).",
+      "evidence": "research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/look/run_b/SCORE.json (sha256 e7ffd5c0002d08a5) and RULES.json (606333454ad2bd0d)"
+    },
+    {
+      "id": "BH-C02",
+      "regime": "recall",
+      "status": "established",
+      "claim": "Absorbed 19-family specialist system (Look 2) reaches 2343.8 Elo [2181.2, 2619.2] (rev20 ladder fit [2195.4, 2612.5]) on Dev91, ahead of Kumo-Tabular-Large (2070.2), TabFM-1.0 Ensemble (1915.6), Kumo-Tabular-Small (1900.2), TabFM-1.0 Single (1888.1), and TabPFN-3.5 (1851.6).",
+      "evidence": "research/flywheel_selfplay/h458_test_informed_flywheel/evidence/h465_gen2a/paper_data/look2_dev91_export_20261116/ladder_look2_rev20.csv (SHA256SUMS ea4a14700e13cd6d)"
+    },
+    {
+      "id": "BH-C03",
+      "regime": "in-corpus",
+      "status": "established",
+      "claim": "Generalist stack without per-family or per-table dossiers scores 1859.0 Elo in-corpus on Dev91 (+7.4 Elo above TabPFN-3.5 on the 35-entrant Fit A ladder, 4W-0T-15L head-to-head across 19 families), proving the +484.8 Elo separation within Fit A (to 2343.8, absorbed: not a generalization comparison) comes from random-split dossier absorption.",
+      "evidence": "ladder_look2_rev20.csv (h458d.RECALL_CANON_E2000_ALL91__NO_RECALL = 1858.96) and wtl_vs_field_look2.csv"
+    },
+    {
+      "id": "BH-C04",
+      "regime": "fair",
+      "status": "established",
+      "claim": "Pre-registered system trained with 0% Dev91 exposure scores 1821.5 Elo [1697, 1990] on its single pre-registered read; a subsequent seven-read adaptive series reaches 1842.0 Elo in its separate fit.",
+      "evidence": "ladder_look2_rev20.csv (h448.APEX_FAIR_CHAMPION = 1821.45) and docs/research/waves/h458-h465-black-hole-20261116/context.md"
+    },
+    {
+      "id": "BH-C05",
+      "regime": "protocol",
+      "status": "established",
+      "claim": "Exact ledger replay across all 61,814 family-specialist training episodes and all 155,937 GEN2A per-table training episodes confirms 0 official-split partition hits on 91 of 91 Dev91 contexts (maximum observed SEARCH row share in any episode: 82.33%).",
+      "evidence": "PAPER_NON_OFFICIAL_SPLIT_AUDIT_RECEIPT_v2.json (family 61,814 episodes) and GEN2A 91/91 audit receipt ee7e4be4"
+    },
+    {
+      "id": "BH-C06",
+      "regime": "disjoint-val",
+      "status": "established",
+      "claim": "On the pre-frozen 32-table bank-disjoint validation panel, M-scale (23.7M) cross-entropy loss improves monotonically across fair checkpoints (3.9569 -> 3.9087) and across all-data r3 -> r4 -> r5 checkpoints (3.9605 -> 3.9539 -> 3.9480), while fresh-row cross-fitted specialist probe skill peaks at 500 exposures/row (+1.185 u vs 0.852 u init).",
+      "evidence": "DISJOINT_VAL_PANEL_MANIFEST.json (30ccaa2af4b99730) and data/measured/dl_foundation_disjoint_val.csv"
+    },
+    {
+      "id": "BH-C07",
+      "regime": "in-corpus",
+      "status": "established",
+      "claim": "Strict inner-CV kernel admission (requiring >= +0.5 u gain on every inner fold over a fixed nonlinear dictionary + ridge baseline) raises held-out win precision across 3,639 tables from 56.22% (unconditional) to 99.28% (137/138 admitted tables, mean +2.3827 u).",
+      "evidence": "A14F_EVERYFOLD_ADMISSION_AND_A14G_DICT_RIDGE_3877_RECEIPT.json and data/measured/kernel_gate_precision_3639.csv"
+    },
+    {
+      "id": "BH-C08",
+      "regime": "in-corpus",
+      "status": "established",
+      "claim": "Calibrated neural + boosted-tree classification stack outperforms standalone CatBoost and LightGBM on 676 binary tables (mean ROC-AUC 0.7568 vs 0.7516 and 0.7421) and 199 multiclass tables (81.41% win rate vs CatBoost, 95.48% vs LightGBM on LogLoss).",
+      "evidence": "WP5_STEP3_MULTICLASS_PARITY_303_RECEIPT_v2.json and data/measured/classification_parity.csv"
+    },
+    {
+      "id": "BH-C09",
+      "regime": "protocol",
+      "status": "pre-registered",
+      "claim": "Public benchmark evaluation on TabArena v0.1 (8 regression + 35 classification tasks) and BeyondArena 2026 (36 regression + 94 classification tasks) is pre-registered per regime (unseen vs in-corpus before absorption, then absorbed after pre-reads lock) anchored at RF (default) = 1000 Elo.",
+      "evidence": "LOOK_LEDGER.jsonl lines 43--54, A13_PUBLIC_FIELD_DEFINITION_v3.json (908d9202), and A13_WAVE_B_CLS_FIELD_DEFINITION_v2_1.json (d7e7c7de)"
+    },
+    {
+      "id": "BH-C10",
+      "regime": "protocol",
+      "status": "established",
+      "claim": "Sandboxed once-score evaluation of LimiX-2 (406.2M, reg_default_noretrieval_v2.json, 32 pipelines; release checkpoint ed01f7a0, HF de07b679; upstream found it contaminated with benchmark data, autogluon/tabarena#648, makers' audit 2026-11-11; TabArena dropped it 2026-11-16 for LimiX-2-1016) on all 91 Dev91 contexts ranks #2/34 at 2035.1 Elo [1823.1, 2362.3] on board_34 (tied with Kumo-Tabular-Large 2057.6 at 12W-0T-7L families, p = 0.57), and #3/35 at 2036.4 Elo [1825.3, 2355.7] in paper_field_35 alongside absorbed GEN2A (2396.1 Elo; absorbed: not a generalization comparison, 16W-0T-3L families and 79W-0T-12L tables).",
+      "evidence": "LOOK_LEDGER.jsonl lines 51, 52, 55, 58; limix_2.v1.jsonl (be943010); READ_RECEIPT.json (ed91a3ad); FITS_RECEIPT.json (4abed343); S3 campaign h465-limix-dev91-20261116 (3ba5acda)"
+    },
+    {
+      "id": "BH-C11",
+      "regime": "protocol",
+      "status": "established",
+      "claim": "Published-only official data.tabarena.ai R2 refresh through 2026-11-12 (NOT a Wave A read; Ours and local external runs not included; RF (default) = 1000, 1,000 bootstrap rounds, seed 0) scores all 44 public regression tasks (2,132 non-imputed fold-0 rows across 119 sources): on BeyondArena all_36 (40 methods), TA-KUMO-TABULAR leads at 1666.3 Elo [1523.6, 1871.2] ahead of TA-TABPFN-3.5 (1519.0 [1403.4, 1670.8]); on BeyondArena common_28 (42 methods), TA-KUMO-TABULAR (1740.4) and TabArena's retrained TA-LIMIX-2-1016 (1729.8, never merged with local LIMIX_2) lead TA-TABPFN-3.5 (1589.1) and TA-TABFM (1483.8).",
+      "evidence": "LOOK_LEDGER.jsonl line 60 (19909ab2); UPSTREAM_R2_REFRESH_SCOREBOARD.json (f9af8e90); S3 campaign h465-a13-upstream-r2-refresh-20261116 (COMMIT.439f289b7d7f2cf0)"
+    }
+  ]
+}

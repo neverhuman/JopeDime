@@ -1,0 +1,31 @@
+\section{Cell-Token Throughput, Fit Cost, and Token Yield}
+\label{sec:throughput}
+
+A foundation or absorption architecture is practical only if its training and inference costs scale predictably with table size. We define one \emph{cell token} as a single scalar table entry $(i, j)$ processed by the neural reader's input projection across context and query rows, and report directly measured hardware rates from committed logs and timing receipts.
+
+\begin{table}[t]
+\centering
+\sffamily\footnotesize\lining
+\setlength\tabcolsep{4.5pt}
+\begin{tabularx}{\linewidth}{@{}Llrrl@{}}
+\toprule
+Stage / Workload & Scale & Throughput & Wall-Clock & Receipt \\
+\midrule
+Generalist trainer ($M$, 1 GPU) & $23.7\mathrm{M}$ & ${\sim}99\;\text{ds/s}$ ($0.49\mathrm{M}$ cells/s) & Continuous & \code{fleet\_r5} \\
+Generalist trainer ($L$, 1 GPU) & $104.4\mathrm{M}$ & $45$--$62\;\text{ds/s}$ ($0.74\mathrm{M}$ cells/s) & Continuous & \code{fleet\_r5} \\
+5-host generalist fleet (\code{r5}) & $3L + 2M$ & $212$--$350\;\text{ds/s}$ & \BHTotalDatasetsFed{} fed & \code{MANIFEST} \\
+Per-table dossier fit (\code{GEN2A}) & $23.7\mathrm{M}$ & $7{,}366.6\;\text{qrows/s}$ (med.) & $2.1$--$15.8\;\text{m}$ & $91\;\text{logs}$ \\
+81-table \code{GEN2A} batch (4 GPUs) & $81\times 23.7\mathrm{M}$ & $0$ failed, $0$ dup splits & $3.22\;\text{h}$ & \code{HANDOVER\_91} \\
+Reader block inference (18 tables) & $23.7\mathrm{M}$ & \BHInferGpuCellsPerSec{} cells/GPU-s & $0.56\;\text{s}$ GPU & \code{INFER\_BENCH} \\
+\bottomrule
+\end{tabularx}
+\caption{Measured training throughput, per-table dossier specialization cost, and inference speed. In the $18$-table inference microbenchmark on a shared host, GPU forward passes account for just $2.0\%$ ($0.56\,\mathrm{s}$ of $28.1\,\mathrm{s}$) of reader-block wall time ($2\times 7$-fold CV plus full-context refit across three heads); CPU array preparation accounts for the remainder.}
+\label{tab:throughput}
+\end{table}
+
+\paragraph{Token yield.}
+We measure \emph{token yield} as verified downstream utility or Elo gained per unit of random-split compute (\cref{tab:throughput}):
+\begin{itemize}
+  \item \textbf{Family dossier yield (Look 2):} Training $19$ family dossiers to $2{,}000$ exposures/row ($61{,}814$ episodes total) lifts \code{Dev91} board mean utility by $+1.035\,u$ over the \regincorpus{} generalist stack ($1.681 \to 2.716\,u$, or \BHEloInCorpus{} $\to$ \BHEloRecall{} Elo, $+484.8$ Elo).
+  \item \textbf{Per-table dossier yield (\code{GEN2A}):} Specializing one $23.7\mathrm{M}$ dossier per table ($2.1$ to $15.8$ minutes on one $24\,\mathrm{GB}$ GPU; $3.22$ hours across four GPU slots for all $81$ new tables, median $7{,}366.6$ query rows/s) lifts board mean utility by a further $+0.382\,u$ ($2.716 \to 3.098\,u$, $32\%$ lower RMSE, \BHEloGenTwoA{} Elo in Fit~B). Across all $91$ runs, \code{dup\_splits = 0} in every final record and zero runs failed or required retry \est{}.
+\end{itemize}

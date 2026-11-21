@@ -1,0 +1,28 @@
+\section{Multi-Regime Evaluation Protocol}
+\label{sec:protocol}
+
+\begin{table}[t]
+\centering
+\tablesf
+\begin{tabularx}{\linewidth}{@{}llLX@{}}
+\toprule
+Badge & Regime Name & Training Exposure to Scored Table & Scientific Question Answered \\
+\midrule
+\regfair{} & Unseen / Fair ($0\%$) & $0\%$ of rows or family siblings in any neural checkpoint or hyperparameter choice & Out-of-distribution generalization to unseen tabular domains \\
+\regincorpus{} & In-Corpus Generalist & Scored table present in multi-thousand-table foundation bank under random splits; zero per-table fitting & Zero-shot retention of a single shared foundation model across its corpus \\
+\regrecall{} & Absorbed Dossier & Per-family or per-table neural dossier fitted on table rows under audited random non-official splits & Ceiling consolidation of verified search and random-split study in model weights \\
+\regmem{} & Direct Lookup (Appendix) & Non-parametric row lookup including test targets (diagnostic control only; never headlined) & Upper-bound memorization diagnostic (excluded from all main ladders) \\
+\bottomrule
+\end{tabularx}
+\caption{Mandatory data-exposure regime taxonomy enforced across every table, figure, and claim in this paper. Numbers from distinct regimes or distinct Bradley--Terry/MLE Elo fits are never pooled into an unlabeled ranking.}
+\label{tab:regimes}
+\end{table}
+
+Because an absorbed model has studied random partitions of the scored tables (including test rows during offline random-split training) whereas external foundation models (\code{TabPFN-3.5}, \code{TabFM-1.0}, \code{Kumo-Tabular-Large}, \code{Kumo-Tabular-Small}) saw zero test rows, comparing them without explicit regime labels would be scientifically misleading. We enforce four methodological rules across all suites (\cref{tab:regimes}):
+
+\begin{enumerate}
+  \item \textbf{Append-only pre-registration ledger (\code{LOOK\_LEDGER.jsonl}).} Every benchmark read is preceded by a mode-\code{0444}, SHA-256-pinned \code{PRE} specification committed to an append-only ledger before any test target $y_{\mathrm{test}}$ is opened.
+  \item \textbf{Single-regime headline ladders.} On public suites containing both tables absent from \code{Bank r4/r5} (\emph{unseen}) and tables present in \code{Bank r4/r5} (\emph{in-corpus}), Elo ladders and win-tie-loss (W-T-L) records are computed separately per task regime; combined benchmark slices carry explicit \emph{``mixed: $n$ unseen $+ m$ in-corpus''} labels.
+  \item \textbf{Identical failure accounting (\S5.6) and stronger-of external fairness.} Any model producing non-finite or mis-shaped predictions on an eligible task receives a loss on that task (`failed\_*`), whereas tasks outside a model's native class or size scope (such as $K > 10$ classes for \code{TabPFN-3.5} and \code{TabFM-1.0}) are recorded as \emph{no battle} rather than free wins. Where an external baseline has both a published leaderboard score and a local offline run by us, we additionally report head-to-head results against $\min(\text{published error}, \text{local error})$ per task so local row/feature caps never disadvantage an external baseline.
+  \item \textbf{Paired sign-flip and 1,000-round bootstrap inference.} Board utility on regression context $c$ is $u_c = -\ln(\max(\mathrm{NRMSE}_c, 10^{-6}))$, aggregated within families before paired exact sign-flip testing across the $19$ \code{Dev91} families; Elo ladders use maximum-likelihood Bradley--Terry estimation with $1{,}000$-round task-level bootstrap $95\%$ confidence intervals.
+\end{enumerate}

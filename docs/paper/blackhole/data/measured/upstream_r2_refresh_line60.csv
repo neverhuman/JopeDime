@@ -1,0 +1,18 @@
+# LOOK_LEDGER line 60 (19909ab2) official data.tabarena.ai R2 refresh published-only scoreboard (UPSTREAM_R2_REFRESH_SCOREBOARD.json f9af8e90, S3 COMMIT.439f289b7d7f2cf0)
+# Label: published methods only (official data.tabarena.ai R2 refresh through 2026-11-12); field Elo computed by us on fold 0 over the 44 PUBLIC regression tasks of TASKS_44 (36 BeyondArena + 8 TabArena); this is NOT a Wave A read (Ours and local external runs not included)
+# TA-LIMIX-2-1016 (default) is TabArena's upstream run of a different, retrained checkpoint replacing #648-dropped TA-LIMIX-2 (default) (release checkpoint ed01f7a0, HF de07b679); never merged with local LIMIX_2
+fit,n_tasks,n_methods,rank,method,elo,ci95_lo,ci95_hi
+BeyondArena/all_36_full_coverage,36,40,1,TA-KUMO-TABULAR (default),1666.34,1523.62,1871.21
+BeyondArena/all_36_full_coverage,36,40,2,TA-KUMO-TABULAR-MEDIUM (default),1591.31,1470.32,1769.93
+BeyondArena/all_36_full_coverage,36,40,3,TA-KUMO-TABULAR-SMALL (default),1544.73,1428.82,1694.74
+BeyondArena/all_36_full_coverage,36,40,4,TA-TABPFN-3.5 (default),1519.01,1403.40,1670.85
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,1,TA-KUMO-TABULAR (default),1740.44,1574.90,2012.81
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,2,TA-LIMIX-2-1016 (default),1729.84,1545.49,2051.69
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,3,TA-KUMO-TABULAR-MEDIUM (default),1654.24,1492.81,1911.89
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,4,TA-KUMO-TABULAR-SMALL (default),1625.43,1492.92,1824.42
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,5,TA-TABPFN-3.5 (default),1589.13,1433.60,1809.71
+BeyondArena/common_28_all_4_fm_families_clean_no648,28,42,11,TA-TABFM (default),1483.83,1365.25,1672.84
+TabArena/all_8_clean_no648,8,75,1,TA-LIMIX-2-1016 (default),2684.87,2353.01,5800.77
+TabArena/all_8_clean_no648,8,75,2,TA-KUMO-TABULAR (default),2684.87,2460.56,3622.15
+TabArena/all_8_clean_no648,8,75,6,TA-TABPFN-3.5 (default),2347.72,2165.11,3011.79
+TabArena/all_8_clean_no648,8,75,8,TA-TABFM (default),2255.74,2070.46,2919.07

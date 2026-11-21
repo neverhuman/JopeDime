@@ -1,0 +1,5 @@
+# Measured A-14(f) inner-CV admission gate precision vs fixed dictionary+ridge across 3639 tables
+gate_policy,admitted_tables,total_tables,heldout_precision_pct,mean_heldout_delta_u
+Unconditional (admit all),3639,3639,56.22,0.1255
+Mean inner-CV > 0,1758,3639,70.71,0.3362
+Every inner-CV fold >= +0.5u,138,3639,99.28,3.0037

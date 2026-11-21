@@ -1,0 +1,8 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Self-play and amortized search.}
+Closed-loop coupling between verified search and neural policy/value networks underpins mastery in board games \citep{silver2016alphago,silver2017zero,silver2018alphazero,schrittwieser2020muzero}, tensor decomposition and low-level algorithm synthesis \citep{fawzi2022alphatensor,mankowitz2023alphadev}, and program-level mathematical or systems discovery \citep{romeraparedes2024funsearch,novikov2025alphaevolve,anthony2017exit}. \EZ{} adapts expert iteration \citep{anthony2017exit} and discrete latent program representations \citep{ellis2021dreamcoder,balog2017deepcoder,hong2021latent} to heterogeneous tabular distributions by projecting verified transformations into a continuous kernel embedding space $(\PsiK, \Kk)$ gated by exact inner cross-validation.
+
+\paragraph{Tabular foundation models and ensembles.}
+Prior-data fitted networks such as \code{TabPFN} \citep{hollmann2025tabpfn}, contextual mechanism networks such as \code{LimiX-2} \citep{zhang2026limix2}, and scalable column-row transformers such as \code{TabICL} \citep{qu2025tabicl} and \code{HyperFast} \citep{bonet2024hyperfast} demonstrate strong zero-shot tabular inference, complementing gradient-boosted trees \citep{chen2016xgboost,ke2017lightgbm,prokhorenkova2018catboost,grinsztajn2022trees} and living benchmarks such as \code{TabArena} \citep{erickson2025tabarena}. Unlike static synthetic-prior models, \EZ{} explicitly separates unseen zero-shot transfer (\regfair{}), multi-thousand-table generalist pretraining (\regincorpus{}), and random-split per-domain weight absorption (\regrecall{}).

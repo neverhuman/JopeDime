@@ -1,0 +1,20 @@
+\section{The Tabular Black Hole: All-Data Random-Split Training}
+\label{sec:blackhole}
+
+Standard foundation-model pretraining treats benchmark corpora as off-limits forever, while operational enterprise deployments face the exact opposite requirement: when a company owns a fleet of recurring tables, every historical row should strengthen the model's weights. We formalize this consolidation setting as the \emph{tabular black-hole} training regime, governed by three hard invariants:
+
+\begin{enumerate}
+  \item \textbf{Sealed holdouts remain physically outside the input closure.} Sealed evaluation cohorts (\code{CONFIRM}, \code{HOLDOUT}, \code{SEALED} public tasks, \code{FMGAP B/C}, and the $32$-table bank-disjoint validation panel \code{30ccaa2a}) are excluded by content hash before any bank assembly.
+  \item \textbf{All training episodes use random non-official partitions.} When a table of $N$ rows enters an absorption pool (whether in the generalist foundation bank or in a per-family/per-table dossier), each training episode draws a fresh pseudorandom support/query split $(\pi_{\mathrm{sup}}, \pi_{\mathrm{q}})$ with random feature-subspace views, random row subsampling, and target-monotone coordinate jitter. Official benchmark train/test partition indices are never passed to the trainer.
+  \item \textbf{Scoring remains strictly inductive on official splits.} At evaluation time on an official split $(I_{\mathrm{train}}, I_{\mathrm{test}})$, all normalization statistics, target charts, out-of-fold stack weights, and context tokens are computed exclusively from $I_{\mathrm{train}}$; $y_{I_{\mathrm{test}}}$ is mechanically blocked by a Python runtime \code{sys.addaudithook} guard during prediction generation.
+\end{enumerate}
+
+\paragraph{Generalist all-data corpus scale.}
+Our live 5-host training fleet (\code{xbabe1}--\code{xbabe4} plus dedicated CPU harvester) trains five concurrent $M$ ($23.7\mathrm{M}$) and $L$ ($104.4\mathrm{M}$) generalist checkpoints on \code{Bank r5} (digest \code{41c8aafb}, comprising \BHRFiveTables{} real tables across \BHRFiveFamilies{} families). As of 16 November 2026, the fleet has processed \textbf{\BHTotalDatasetsFed{} cumulative dataset episodes} (\textbf{\BHAllDataDatasetsFed{} episodes} under the post-ruling all-data random-split policy) at a sustained throughput of $233$--$350$ datasets/s across five nodes, preparing the expanded \BHRFSixTargetTables{}-table \code{Bank r6} corpus paired with $59{,}849+$ multi-split zero-loser teacher realizations.
+
+\paragraph{Cryptographic audit of non-official splits.}
+To verify that random-split absorption never accidentally trained on an official \code{Dev91} test partition, we executed deterministic PRNG ledger replay across every committed dossier run:
+\begin{itemize}
+  \item \textbf{19-family dossier suite (Look 2, \BHEloRecall{} Elo):} Replaying all \textbf{\BHSpecialistCommits{} training episodes} across all $19$ family models confirmed \textbf{$0$ official-split hits} on all $91$ contexts (\code{PAPER\_NON\_OFFICIAL\_SPLIT\_AUDIT\_RECEIPT\_v2.json}) \est{}.
+  \item \textbf{91-table per-context dossier suite (\code{GEN2A}, \BHEloGenTwoA{} Elo):} Replaying all \textbf{\BHGenTwoAEpisodes{} training episodes} across all $91$ per-table models confirmed \textbf{$0$ exact partition hits} on $91$ of $91$ contexts ($67$ contexts verified by exact index-set inequality at equal row count; $24$ contexts structurally impossible due to $1$--$178$ deduplicated/filtered rows, and verified by row-content hash overlap to have a maximum observed training-side SEARCH row share of \textbf{$82.33\%$} on context \code{k2\_f8fd51f3}, well below $100\%$; receipt \code{ee7e4be4}) \est{}.
+\end{itemize}

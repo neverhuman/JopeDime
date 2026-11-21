@@ -1,0 +1,9 @@
+\section{Pre-Registration Ledger, Elo Calibration, and Audit Details}
+\label{app:protocol}
+
+Every benchmark evaluation in the \code{H458}--\code{H465} program is governed by \code{LOOK\_LEDGER.jsonl}:
+\begin{itemize}
+  \item \textbf{Ledger line 23:} Initial $10$-table per-context pilot (\code{WP1a}), motivating full-board per-context specialization.
+  \item \textbf{Ledger line 26:} Pre-registration of \code{GEN2A} (\code{SPEC\_DEV91\_GEN2A\_PER\_CONTEXT\_DOSSIERS.txt}) prior to training the remaining $81$ per-table dossiers; specifies all five acceptance gates (mean lift, clipped mean lift, family median, leave-one-family-out minimum, and exact one-sided sign-flip $p$-value).
+  \item \textbf{Ledger lines 43--48:} Pre-registration of Wave~A ($44$ public regression tasks across \code{TabArena v0.1} and \code{BeyondArena 2026}), pinning \code{A13\_PUBLIC\_FIELD\_DEFINITION\_v3.json} (\code{908d9202}), per-model immutable receipts (\code{R\_K}, \code{R\_P}, \code{R\_F}), \code{RF (default) = 1000} Elo anchoring, and the \code{T9-A} post-pre-read dossier freeze (\code{056ff1f2}).
+\end{itemize}

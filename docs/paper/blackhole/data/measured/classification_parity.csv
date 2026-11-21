@@ -1,0 +1,4 @@
+# Measured WP5 C2-clean binary (676 tables) and multiclass (199 tables) stack parity
+suite,n_tables,metric,stack_val,catboost_val,lightgbm_val,neural_alone_val,win_pct_vs_catboost,win_pct_vs_lightgbm
+Binary (C2-clean),676,ROC-AUC (higher better),0.7568,0.7516,0.7421,0.7294,58.7,67.2
+Multiclass (C2-clean),199,LogLoss (lower better),0.6257,0.6602,0.7977,0.7805,81.41,95.48

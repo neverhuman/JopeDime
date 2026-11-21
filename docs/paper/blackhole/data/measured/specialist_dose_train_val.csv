@@ -1,0 +1,12 @@
+# Measured specialist training cross-entropy loss (19 Look-2 families) vs fresh-row cross-fit skill u (10 families)
+exposures_per_row,train_loss_rr,train_loss_yj,train_loss_rg,train_loss_mean3,fresh_row_val_u
+0,4.9145,3.8362,4.0598,4.2702,0.852
+125,4.8162,3.4863,3.7029,4.0018,nan
+250,4.6546,3.2197,3.4087,3.761,nan
+500,4.4914,2.8179,3.0211,3.4435,1.185
+750,4.3909,2.5463,2.7417,3.2263,nan
+1000,4.3007,2.2496,2.4429,2.9977,1.17
+1250,4.2485,2.0507,2.2562,2.8518,nan
+1500,4.1866,1.9209,2.1231,2.7435,nan
+1750,4.1438,1.8034,2.0125,2.6532,nan
+2000,4.0855,1.7838,1.9904,2.6199,1.043

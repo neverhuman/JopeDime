@@ -1,0 +1,53 @@
+\section{Public Benchmarks: \code{TabArena v0.1} and \code{BeyondArena 2026}}
+\label{sec:results-public}
+
+To evaluate \EZ{} beyond \code{Dev91} against published community leaderboards and identical local foundation-model baselines (\code{TabPFN-3.5}, \code{TabFM-1.0 Single}, \code{LimiX-2} \citep{zhang2026limix2}, \code{Kumo-Tabular-Large}, and \code{Kumo-Tabular-Small}) with zero paid API usage, we pre-registered a two-wave evaluation across \code{TabArena v0.1} \citep{erickson2025tabarena} and \code{BeyondArena} (\code{2ecfe882}) at official repeat~0, fold~0 (\code{LOOK\_LEDGER.jsonl} lines 43--54):
+
+\begin{table}[t]
+\centering
+\sffamily\footnotesize\lining
+\setlength\tabcolsep{4.5pt}
+\begin{tabularx}{\linewidth}{@{}llrrrrL@{}}
+\toprule
+Wave & Suite & Public & Unseen & In-Corpus & Held Out & Headline Single-Regime Slice \\
+\midrule
+Wave A (Reg.) & \code{BeyondArena} & $36$ & $27$ & $9$ & $8$ & $20$ full-TEST unseen ($+7$ sub8k) \\
+Wave A (Reg.) & \code{TabArena v0.1} & $8$ & $1$ & $7$ & $5$ & $7$ full-TEST in-corpus \\
+Wave B (Cls.) & \code{BeyondArena} & $94$ & $32$ & $62$ & $4$ & $32$ full-TEST unseen \\
+Wave B (Cls.) & \code{TabArena v0.1} & $35$ & $3$ & $32$ & $3$ & $32$ full-TEST in-corpus \\
+\bottomrule
+\end{tabularx}
+\caption{Pre-registered public-benchmark task decomposition after cryptographic SHA/schema overlap screening (\code{da7e5780}) against \code{Bank r4/r5}. Sealed tasks (\code{CONFIRM}/\code{HOLDOUT} overlaps) and unreviewed tasks stay completely outside all waves and training banks.}
+\label{tab:public-suites}
+\end{table}
+
+\begin{table}[t]
+\centering
+\sffamily\footnotesize\lining
+\setlength\tabcolsep{4.0pt}
+\begin{tabularx}{\linewidth}{@{}LlrrrL@{}}
+\toprule
+Slice / Method & Suite / Source & Rank & Elo & 95\% CI & Head-to-Head / Coverage Note \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Line 60 R2 Refresh (\code{BeyondArena/common\_28\_all\_4\_fm\_families\_clean\_no648}, 28 tasks, 42 methods; \code{f9af8e90})}} \\
+TA-KUMO-TABULAR (default)$^{\ddagger}$ & published R2 & $1/42$ & $1740.4$ & $[1574.9, 2012.8]$ & $24$--$0$--$4$ vs.\ TabPFN-3.5; $12$--$0$--$16$ vs.\ LimiX-2-1016 \\
+TA-LIMIX-2-1016 (default)$^{\S}$ & published R2 & $2/42$ & $1729.8$ & $[1545.5, 2051.7]$ & $22$--$0$--$6$ vs.\ TabPFN-3.5 ($28/36$ upstream tasks) \\
+TA-KUMO-TABULAR-MEDIUM (default)$^{\ddagger}$ & published R2 & $3/42$ & $1654.2$ & $[1492.8, 1911.9]$ & Full $36/36$ upstream coverage ($1591.3$ on \code{all\_36}) \\
+TA-KUMO-TABULAR-SMALL (default)$^{\ddagger}$ & published R2 & $4/42$ & $1625.4$ & $[1492.9, 1824.4]$ & Full $36/36$ upstream coverage ($1544.7$ on \code{all\_36}) \\
+TA-TABPFN-3.5 (default) & published R2 & $5/42$ & $1589.1$ & $[1433.6, 1809.7]$ & $19$--$0$--$9$ vs.\ TabFM ($1519.0$, $\#4/40$ on \code{all\_36}) \\
+TA-TABFM (default) & published R2 & $11/42$ & $1483.8$ & $[1365.3, 1672.8]$ & $28/36$ upstream tasks ($8$ large tasks unrun upstream) \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Line 48 Local Kumo Read vs.\ Pre-Refresh Baseline (29 BeyondArena tasks, 31 methods; \code{b2728e4c})}} \\
+\textbf{Kumo-Tabular-Large} & local (\code{R\_K}) & $1/31$ & \textbf{1702.7} & $[1539.8, 1965.6]$ & $22$--$0$--$7$ vs.\ TabPFN-3.5; $20$--$0$--$9$ vs.\ CAUSILO \\
+\textbf{Kumo-Tabular-Small} & local (\code{R\_K}) & $2/31$ & \textbf{1624.1} & $[1489.7, 1843.7]$ & $16$--$0$--$13$ vs.\ CAUSILO; $13$--$0$--$16$ vs.\ TabPFN-3.5 \\
+TA-CAUSILO (default) & published v3 & $3/31$ & $1599.0$ & --- & Top pre-refresh published method on $29$-task slice \\
+TA-TABPFN-3.5 (default) & published v3 & $4/31$ & $1588.4$ & --- & Stronger-of w/ local (\code{R\_P}): $1615.6$ ($\#3$) \\
+\bottomrule
+\end{tabularx}
+\bhtablenote{Top block (\code{LOOK\_LEDGER} line 60, \code{f9af8e90}, S3 \code{COMMIT.439f289b7d7f2cf0}): \emph{published methods only (official \code{data.tabarena.ai} R2 refresh through 2026-11-12); field Elo computed by us on fold~0 over the 44 PUBLIC regression tasks of \code{TASKS\_44} (36 BeyondArena + 8 TabArena); this is NOT a Wave~A read (Ours and local external runs not included)}. Anchored at \code{RF (default) = 1000} ($1{,}000$ bootstrap rounds, seed~$0$). $^{\ddagger}$\code{Kumo-Tabular} carries \code{metadata.yaml} \code{verified=false} (2026-10-06 upload) and \code{autogluon/tabarena@9f985c0f} \code{verified=true}. $^{\S}$\code{TA-LIMIX-2-1016 (default)} is \code{TabArena}'s upstream run of a different, retrained checkpoint replacing \code{TA-LIMIX-2 (default)} (release checkpoint \code{ed01f7a0}, HF \code{de07b679}; upstream found it contaminated with benchmark data, \code{autogluon/tabarena\#648}, makers' audit 2026-11-11; \code{TabArena} dropped it 2026-11-16 for \code{LimiX-2-1016}); it was not run by us and is never merged with our local \code{LIMIX\_2}. Bottom block (\code{LOOK\_LEDGER} line 48): \emph{external only; Ours not yet scored; TabFM not yet scored}.}
+\caption{Published-only R2 refresh reference field (top, line 60; no \EZ{} comparison) and locked Wave~A local Kumo calibration (bottom, line 48, $88/88$ cells completed, receipt \code{f63ff1ce}).}
+\label{tab:wave-a-kumo}
+\end{table}
+
+\paragraph{Published R2 reference field and Wave~A external baseline calibration (\cref{tab:wave-a-kumo}).}
+To separate upstream published results from our local sandboxed harness before scoring \EZ{}, \code{LOOK\_LEDGER} line~60 scores all $44$ public regression tasks strictly from official \code{data.tabarena.ai} R2 artifacts through 2026-11-12 (\code{f9af8e90}; \emph{NOT a Wave~A read: Ours and local external runs not included}, so no number from line~60 is compared against \EZ{}) \est{}. Across all $36$ \code{BeyondArena} public regression tasks (\code{all\_36\_full\_coverage}, $40$ methods), \code{TA-KUMO-TABULAR} ($1666.3$ Elo $[1523.6, 1871.2]$) leads \code{TA-KUMO-TABULAR-MEDIUM} ($1591.3$), \code{TA-KUMO-TABULAR-SMALL} ($1544.7$), and \code{TA-TABPFN-3.5} ($1519.0$ $[1403.4, 1670.8]$); on the $28$ \code{BeyondArena} tasks where all four foundation-model families published rows (\code{common\_28}, $42$ methods), \code{TA-KUMO-TABULAR} ($1740.4$ $[1574.9, 2012.8]$) and \code{TabArena}'s retrained \code{TA-LIMIX-2-1016} ($1729.8$ $[1545.5, 2051.7]$) lead \code{TA-TABPFN-3.5} ($1589.1$) and \code{TA-TABFM} ($1483.8$), while on the $8$-task \code{TabArena} slice ($75$ methods, wide intervals) \code{TA-LIMIX-2-1016} ($2684.9$ $[2353.0, 5800.8]$) and \code{TA-KUMO-TABULAR} ($2684.9$ $[2460.6, 3622.2]$) tie at $\#1$ ahead of \code{TA-TABPFN-3.5} ($2347.7$ $[2165.1, 3011.8]$) and \code{TA-TABFM} ($2255.7$ $[2070.5, 2919.1]$; in the earlier 2026-09-22 snapshot \code{b2728e4c}, withdrawn \code{TA-LIMIX-2 (default)}, release checkpoint \code{ed01f7a0}, HF \code{de07b679}, which upstream found contaminated with benchmark data, \code{autogluon/tabarena\#648}, makers' audit 2026-11-11, and \code{TabArena} dropped 2026-11-16 for \code{LimiX-2-1016}, had scored $2453.9$). Independently, our locked offline Wave~A run (\code{R\_K} \code{f63ff1ce}, $88/88$ completed tasks) calibrates our local harness ($1702.7$ and $1624.1$ Elo on the $29$-task pre-refresh slice; $5$--$0$--$2$ on the $7$ \code{sub8192} tasks) \est{}. Once local \code{LimiX-2} (\code{R\_L}, lines 56--57), \code{TabFM-1.0 Single} (\code{R\_F}, line 54), \code{TabPFN-3.5} ($44/44$, line 61), and our unabsorbed/absorbed runs complete under \code{v3.6} (\code{Rule R-c}), all \EZ{} comparisons are fitted strictly per regime \pre{}.

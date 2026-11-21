@@ -1,0 +1,37 @@
+# Measured Dev91 35-entrant Look-2 rev20 ladder (source SHA256SUMS ea4a14700e13cd6d)
+rank,entrant_id,display_name,ours,regime,elo,ci95_lo,ci95_hi,family_mean_u
+1,h458d.RECALL_CANON_E2000_ALL91,EurekaZero-Recall (Stack + 19 Specialists),True,recall,2343.77,2195.4,2612.5,2.7156
+2,kumo_tabular_large_e8.v1,Kumo-Tabular-Large (e8),False,external,2070.15,1892.5,2335.7,1.9356
+3,tabfm_ensemble.v1,TabFM-1.0 Ensemble,False,external,1915.59,1752.0,2134.8,1.7675
+4,kumo_tabular_small_e8.v1,Kumo-Tabular-Small (e8),False,external,1900.24,1745.3,2124.5,1.7855
+5,tabfm.v1,TabFM-1.0 Single,False,external,1888.13,1726.9,2103.1,1.7202
+6,h458d.RECALL_CANON_E2000_ALL91__NO_RECALL,EurekaZero-Generalist Stack (No Specialists),True,in-corpus,1858.96,1723.4,2038.0,1.6807
+7,tabpfn_v3p5.v1,TabPFN-3.5 (e8),False,external,1851.59,1681.2,2096.9,1.6411
+8,tabpfn_v3p5_e1.v1,TabPFN-3.5 Single,False,external,1834.71,1657.0,2077.2,1.5887
+9,h448.APEX_FAIR_CHAMPION,EurekaZero-Fair Registered (0% Dev91),True,fair,1821.45,1697.0,1989.8,1.6737
+10,tabpfn_v3.v1,TabPFN-3.0,False,external,1789.76,1658.6,1959.9,1.6427
+11,h416.SXB,EurekaZero-SXB (0% Dev91),True,fair,1761.14,1657.2,1906.7,1.6217
+12,mitra_v2_zeroshot.v1,Mitra-v2 Zero-Shot,False,external,1722.56,1567.3,1921.6,1.5596
+13,tabicl_v2.v1,TabICL-v2,False,external,1702.78,1555.7,1889.8,1.4878
+14,h364.XSTACK_2L,EurekaZero-XStack-2L (0% Dev91),True,fair,1698.96,1614.2,1816.8,1.5607
+15,tabdpt_1p3.v1,TabDPT-1.3,False,external,1689.46,1529.6,1890.0,1.5179
+16,h335.H335_AGG,h335.H335_AGG,True,fair,1683.17,1603.0,1795.1,1.5592
+17,h335.OLD_MATCHED_CV3,h335.OLD_MATCHED_CV3,True,fair,1612.5,1556.5,1688.8,1.4607
+18,h335.Opus5p5_Extra,h335.Opus5p5_Extra,False,external,1562.28,1443.1,1685.7,1.2943
+19,h335.OLD_MATCHED,h335.OLD_MATCHED,True,fair,1525.43,1477.4,1584.4,1.4465
+20,h335.H317_BASE,h335.H317_BASE,True,fair,1523.6,1488.9,1560.2,1.4073
+21,h335.Gemini4_argon_high,h335.Gemini4_argon_high,False,external,1518.26,1409.5,1630.7,1.3587
+22,h335.GPT6p1_Sol_Max,h335.GPT6p1_Sol_Max,False,external,1504.31,1426.5,1587.6,1.3543
+23,autogluon_300s.v1,AutoGluon (300s BestQuality),False,external,1504.0,1383.1,1619.8,1.2524
+24,h335.H257_REPLICA,h335.H257_REPLICA,True,fair,1500.0,1500.0,1500.0,1.3703
+25,catboost.v1,CatBoost,False,external,1468.26,1346.5,1584.3,1.1886
+26,h335.BANK_NN8_PORTFOLIO,h335.BANK_NN8_PORTFOLIO,True,fair,1456.57,1391.3,1525.8,1.2715
+27,h335.BANK_NN8_PICK,h335.BANK_NN8_PICK,True,fair,1427.94,1371.4,1484.2,1.2636
+28,h414.kimik3p1_max,h414.kimik3p1_max,False,external,1411.63,1307.8,1507.4,1.1509
+29,xgboost.v1,XGBoost,False,external,1370.66,1256.3,1480.1,1.0742
+30,random_forest.v1,Random Forest,False,external,1361.82,1237.6,1469.1,1.1245
+31,h335.GPT6_Astra_Max,h335.GPT6_Astra_Max,False,external,1312.98,1189.1,1423.6,1.0215
+32,lightgbm.v1,LightGBM,False,external,1312.59,1182.9,1420.7,1.0492
+33,ridge.v1,Ridge,False,external,1253.41,1031.6,1390.7,0.9208
+34,h335.BANK_NN1,h335.BANK_NN1,True,fair,1194.19,1082.1,1281.1,0.9031
+35,h412.grok4p7_xhigh,h412.grok4p7_xhigh,False,external,1123.33,990.6,1224.3,0.8639

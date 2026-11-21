@@ -1,0 +1,74 @@
+\section{Results on the \code{Dev91} Reference Board}
+\label{sec:results-dev91}
+
+\input{figures/fig-dev91-ladder}
+
+The \code{Dev91} reference board comprises $91$ regression contexts grouped into $19$ domain families, scored against external entrants including \code{Kumo-Tabular-Large}, \code{LimiX-2} \citep{zhang2026limix2}, \code{Kumo-Tabular-Small}, \code{TabFM-1.0} (single and ensemble), \code{TabPFN-3.5}, \code{TabPFN-3.0}, \code{Mitra-v2}, \code{TabICL-v2}, \code{TabDPT-1.3}, \code{AutoGluon} ($300\,\mathrm{s}$ BestQuality), \code{CatBoost}, \code{XGBoost}, and \code{LightGBM}. Following \cref{sec:protocol}, \cref{tab:dev91-fits} reports separate Bradley--Terry fit blocks so Elo ratings from distinct fits and exposure regimes are never conflated: Fit~C (\code{board\_34}, the unabsorbed $34$-entrant generalization ladder including \code{LimiX-2}), Fit~D (\code{paper\_field\_35}, the $35$-entrant ladder adding absorbed \code{GEN2A}), Fit~B (the original $34$-entrant \code{GEN2A} per-table look), and Fit~A (the Look-2 \code{rev20} ladder).
+
+\begin{table}[t]
+\centering
+\tablesf
+\begin{tabularx}{\linewidth}{@{}Lllrr@{}}
+\toprule
+System & Exposure Regime & Fit & Elo & 95\% Bootstrap CI \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Fit C (\code{board\_34}): Unabsorbed 34-entrant generalization ladder with \code{LimiX-2} (receipt \code{4abed343})}} \\
+Kumo-Tabular-Large (e8) & external ($0\%$ test in run) & Fit C & $2057.6$ & $[1882.5, 2322.2]$ \\
+\textbf{LimiX-2 (406.2M, 32 pipelines)} & external ($0\%$ test in run)$^{\dagger}$ & Fit C & \textbf{\BHEloLimiXBoard{}} & $[\BHEloLimiXBoardCILo{}, \BHEloLimiXBoardCIHi{}]$ \\
+TabFM-1.0 Ensemble & external ($0\%$ test in run) & Fit C & $1902.0$ & $[1738.2, 2124.5]$ \\
+Kumo-Tabular-Small (e8) & external ($0\%$ test in run) & Fit C & $1890.9$ & $[1736.9, 2115.7]$ \\
+TabFM-1.0 Single & external ($0\%$ test in run) & Fit C & $1877.2$ & $[1714.9, 2097.8]$ \\
+TabPFN-3.5 (e8) & external ($0\%$ test in run) & Fit C & $1847.5$ & $[1676.1, 2097.2]$ \\
+\textbf{\EZ{} Pre-registered Champion ($0\%$ Dev91)} & \regfair{} unseen & Fit C & $1813.6$ & $[1688.1, 1985.3]$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Fit D (\code{paper\_field\_35}): 35-entrant ladder adding absorbed \code{GEN2A} (not a generalization comparison)}} \\
+\textbf{\EZ{} Stack + 19 Family + 91 Table Dossiers} & \regrecall{} absorbed$^{\ast}$ & Fit D & \textbf{\BHEloGenTwoAJoint{}} & $[2218.8, 2754.2]$ \\
+Kumo-Tabular-Large (e8) & external ($0\%$ test in run) & Fit D & $2059.1$ & $[1883.3, 2320.7]$ \\
+\textbf{LimiX-2 (406.2M, 32 pipelines)} & external ($0\%$ test in run)$^{\dagger}$ & Fit D & \textbf{\BHEloLimiXJoint{}} & $[\BHEloLimiXJointCILo{}, \BHEloLimiXJointCIHi{}]$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Fit B: Original 34-entrant per-table absorbed dossier look (\code{GEN2A}, receipt \code{e7ffd5c0})}} \\
+\textbf{\EZ{} Stack + 19 Family + 91 Table Dossiers} & \regrecall{} absorbed$^{\ast}$ & Fit B & \textbf{\BHEloGenTwoA{}} & $[\BHEloGenTwoACILo{}, \BHEloGenTwoACIHi{}]$ \\
+Kumo-Tabular-Large (e8) & external ($0\%$ test in run) & Fit B & \BHEloKumoLargeFitB{} & $[1892.7, 2337.7]$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Fit A: Family-specialist \& multi-regime ladder (Look 2 \code{rev20}, receipt \code{ea4a1470})}} \\
+\textbf{\EZ{} Stack + 19 Family Dossiers} & \regrecall{} absorbed$^{\ast}$ & Fit A & \textbf{\BHEloRecall{}} & $[\BHEloRecallLadderCILo{}, \BHEloRecallLadderCIHi{}]$ \\
+Kumo-Tabular-Large (e8) & external ($0\%$ test in run) & Fit A & \BHEloKumoLarge{} & $[1892.2, 2335.6]$ \\
+TabFM-1.0 Ensemble & external ($0\%$ test in run) & Fit A & \BHEloTabFMEns{} & $[1747.0, 2152.0]$ \\
+Kumo-Tabular-Small (e8) & external ($0\%$ test in run) & Fit A & \BHEloKumoSmall{} & $[1735.0, 2135.0]$ \\
+TabFM-1.0 Single & external ($0\%$ test in run) & Fit A & \BHEloTabFMSingle{} & $[1726.0, 2117.0]$ \\
+\textbf{\EZ{} Generalist Stack (no dossiers)} & \regincorpus{} generalist & Fit A & \textbf{\BHEloInCorpus{}} & $[1707.0, 2078.0]$ \\
+TabPFN-3.5 (e8) & external ($0\%$ test in run) & Fit A & \BHEloTabPFN{} & $[1681.0, 2097.0]$ \\
+\textbf{\EZ{} Pre-registered Champion ($0\%$ Dev91)} & \regfair{} unseen & Fit A & \BHEloFairReg{} & $[1697.0, 1990.0]$ \\
+\bottomrule
+\end{tabularx}
+\bhtablenote{$^{\ast}$Absorbed: not a generalization comparison (dossiers trained on random non-official partitions across all rows; test-time scoring sees only training-side rows). $^{\dagger}$\code{LimiX-2} (\code{limix\_2.v1}, evaluation-only sandbox, $91/91$ completed with zero caps; shared-GPU $0.20$ VRAM cap; per-arm $2{,}000$-draw CI $[\BHEloLimiXPerArmCILo{}, \BHEloLimiXPerArmCIHi{}]$): release checkpoint \code{ed01f7a0} (HF \code{de07b679}); upstream found it contaminated with benchmark data (\code{autogluon/tabarena\#648}; makers' audit 2026-11-11); \code{TabArena} dropped it 2026-11-16 for \code{LimiX-2-1016} (marked \code{diagnostic\_only} in S3). Elo values compare strictly within each fit block; a separate $7$-read adaptive \regfair{} series reached \BHEloFairAdaptive{} Elo in its own fit.}
+\caption{\code{Dev91} Elo results across separated exposure regimes and fit blocks (\cref{fig:dev91-ladder}).}
+\label{tab:dev91-fits}
+\end{table}
+
+\begin{table}[t]
+\centering
+\tablesf
+\begin{tabularx}{\linewidth}{@{}Lcccc@{}}
+\toprule
+External Foundation Opponent & Same-Fit / Ref.\ Elo & \code{GEN2A}$^{\ast}$ Families & \code{GEN2A}$^{\ast}$ Tables & Look-2$^{\ast}$ Families \\
+\midrule
+Kumo-Tabular-Large (e8) & $2059.1$ (Fit D) / \BHEloKumoLargeFitB{} (B) & \textbf{16--0--3} & \textbf{77--1--13} & 15--0--4 \\
+LimiX-2 (406.2M, 32 pipelines)$^{\dagger}$ & \BHEloLimiXJoint{} (Fit D) / \BHEloLimiXBoard{} (C) & \textbf{16--0--3} & \textbf{79--0--12} & 16--0--3 \\
+TabFM-1.0 Ensemble & \BHEloTabFMEns{} (Fit A) & \textbf{18--0--1} & \textbf{83--0--8} & 17--0--2 \\
+Kumo-Tabular-Small (e8) & \BHEloKumoSmall{} (Fit A) & \textbf{19--0--0} & \textbf{86--0--5} & 18--0--1 \\
+TabFM-1.0 Single & \BHEloTabFMSingle{} (Fit A) & \textbf{17--0--2} & \textbf{83--0--8} & 17--0--2 \\
+TabPFN-3.5 (e8) & \BHEloTabPFN{} (Fit A) & \textbf{18--0--1} & \textbf{88--0--3} & 18--0--1 \\
+\bottomrule
+\end{tabularx}
+\bhtablenote{$^{\ast}$Absorbed: not a generalization comparison. Every row compares an absorbed \EZ{} dossier system (\regrecall{} \code{GEN2A} at \BHEloGenTwoAJoint{} Elo in Fit~D / \BHEloGenTwoA{} in Fit~B; Look-2 at \BHEloRecall{} in Fit~A) against external models that saw no \code{Dev91} test row in our runs. $^{\dagger}$Release checkpoint \code{ed01f7a0} (HF \code{de07b679}); upstream found it contaminated with benchmark data (\code{autogluon/tabarena\#648}; makers' audit 2026-11-11); \code{TabArena} dropped it 2026-11-16 for \code{LimiX-2-1016}. In Fit~C, \code{LimiX-2}$^{\dagger}$ (\BHEloLimiXBoard{}) is statistically tied with \code{Kumo-Tabular-Large} ($2057.6$; $12$--$0$--$7$ families, $\Delta u = -0.009$, $p = 0.57$) and leads \code{TabFM-1.0 Ensemble} ($17$--$0$--$2$), \code{Kumo-Tabular-Small} ($16$--$0$--$3$), \code{TabFM-1.0 Single} ($16$--$0$--$3$), \code{TabPFN-3.5} ($15$--$0$--$4$), and our unabsorbed \regfair{} champion \code{h448} ($18$--$0$--$1$ families, $77$--$0$--$14$ contexts).}
+\caption{Paired win--tie--loss records of absorbed \EZ{} systems (\emph{absorbed: not a generalization comparison}) against external foundation models across $19$ families and $91$ contexts of \code{Dev91}.}
+\label{tab:dev91-wtl}
+\end{table}
+
+\paragraph{Key findings across regimes.}
+\begin{enumerate}
+  \item \textbf{External baseline (\code{board\_34}, Fit~C).} Among entrants that saw no \code{Dev91} test row in our runs, \code{Kumo-Tabular-Large} ($2057.6$ Elo) and \code{LimiX-2}$^{\dagger}$ (\BHEloLimiXBoard{} Elo, rank $\#2/34$, family-mean $u = 1.9268$; release checkpoint \code{ed01f7a0}, HF \code{de07b679}, which upstream found contaminated with benchmark data, \code{autogluon/tabarena\#648}, makers' audit 2026-11-11, and \code{TabArena} dropped 2026-11-16 for \code{LimiX-2-1016}) are statistically indistinguishable ($12$--$0$--$7$ families and $52$--$1$--$38$ tables in favor of \code{LimiX-2}$^{\dagger}$, family-mean $\Delta u = -0.0087$, one-sided sign-flip $p = 0.574$), while \code{LimiX-2}$^{\dagger}$ outperforms \code{TabFM-1.0 Ensemble} ($17$--$0$--$2$ families, $14.7\%$ geometric-mean RMSE ratio reduction, $p = 0.0062$), \code{Kumo-Tabular-Small} ($16$--$0$--$3$, $p = 0.019$), \code{TabFM-1.0 Single} ($16$--$0$--$3$, $p = 5.8\times 10^{-4}$), \code{TabPFN-3.5} ($15$--$0$--$4$, $p = 0.012$), and our unabsorbed \regfair{} champion \code{h448} ($1813.6$ Elo; $18$--$0$--$1$ families, $77$--$0$--$14$ tables, $p = 0.0025$) \est{}.
+  \item \textbf{Per-table random-split absorption (\emph{absorbed: not a generalization comparison}).} Registered after a $10$-table pilot (\code{WP1a}, ledger line 23) had been scored once and before the remaining $81$ per-table models were trained (ledger line 26), \code{GEN2A} reaches \BHEloGenTwoA{} Elo in Fit~B (\BHEloGenTwoAJoint{} in the $35$-entrant Fit~D alongside \code{LimiX-2} at \BHEloLimiXJoint{}) and improves over the $19$-family system on \textbf{all $19$ of $19$ families} ($+0.382$ mean utility, $+0.271$ clipped mean, $+0.305$ family median, $+0.258$ leave-one-family-out minimum, $32\%$ geometric-mean RMSE reduction, exact one-sided sign-flip $p = 2^{-19} = 1.9\times 10^{-6}$). Under this absorbed regime (\emph{absorbed: not a generalization comparison}), \code{GEN2A} records $88$--$0$--$3$ tables against \code{TabPFN-3.5}, $86$--$0$--$5$ against \code{Kumo-Tabular-Small}, $83$--$0$--$8$ against \code{TabFM-1.0 Single}, $79$--$0$--$12$ ($16$--$0$--$3$ families, $+1.171$ mean $u$, $69.0\%$ geometric-mean RMSE reduction) against \code{LimiX-2}, and $77$--$1$--$13$ ($16$--$0$--$3$ families) against \code{Kumo-Tabular-Large} (\cref{tab:dev91-wtl}) \est{}.
+  \item \textbf{Separating absorption from unseen transfer.} Without per-family or per-table dossiers, the generalist stack scores \BHEloInCorpus{} Elo (\regincorpus{} in Fit~A), sitting $7.4$ Elo above \code{TabPFN-3.5} on the Look-2 ladder while trailing \code{TabPFN-3.5} $4$--$15$ head-to-head on families and sitting below \code{TabFM-1.0} and both \code{Kumo-Tabular} models in that same Fit~A ladder. The single pre-registered system that never saw \code{Dev91} scores \BHEloFairReg{} Elo in Fit~A ($1813.6$ in Fit~C). Thus, the $+484.8$ Elo separation within Fit~A (\code{ea4a1470}) between the unabsorbed stack (\BHEloInCorpus{}) and family dossier consolidation (\BHEloRecall{}, \emph{absorbed: not a generalization comparison}), followed by the paired $19/19$-family gain ($+0.382\,u$, $p = 1.9\times 10^{-6}$) of per-table dossiers over family dossiers, isolates what random-split weight consolidation captures \est{}.
+\end{enumerate}

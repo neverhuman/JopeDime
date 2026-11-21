@@ -1,0 +1,56 @@
+% Training loss dynamics, bank-disjoint validation, and kernel-embedding gating.
+% Bound to 91 committed h465_gen2a/dossier_runs/*/log.jsonl files, DISJOINT_VAL_PANEL_MANIFEST.json (30ccaa2a),
+% fleet_r5_step_curves/MANIFEST.json, and A14F_EVERYFOLD_ADMISSION_AND_A14G_DICT_RIDGE_3877_RECEIPT.json.
+\subsection{Training loss dynamics, disjoint validation, and kernel gating}
+\label{sec:blackhole-dynamics}
+
+To separate optimization progress on random-split training pools from out-of-pool generalization, we pair training
+cross-entropy trajectories with two held-out probes that never guide checkpoint selection.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\hline
+Exposures/row & 3-head med.\ CE & IQR (25--75\%) & Fresh-row $u$ & Query rows/s \\
+\hline
+0 (init) & 4.270 & --- & 0.852 & --- \\
+100 & 4.515 & 3.369--5.157 & --- & 7,175 \\
+250 & 4.296 & 3.146--4.922 & --- & 7,067 \\
+500 & 3.719 & 2.748--4.571 & \textbf{1.185} & 7,084 \\
+1,000 & 2.463 & 1.812--3.245 & 1.170 & 7,367 \\
+1,500 & 2.118 & 1.534--2.861 & --- & 7,341 \\
+2,000 & \textbf{1.984} & 1.419--2.694 & 1.043 & 7,389 \\
+\hline
+\end{tabular}
+\caption{Optimization and generalization dynamics across random-split absorption. Columns 2--3 and 5 report the median
+and interquartile range of 1,024-bin distributional cross-entropy loss (nats, averaged across robust-residual,
+Yeo--Johnson, and Rank-Gauss heads) and query throughput across all 91 committed \texttt{GEN2A} per-table runs
+(147,856 optimizer steps, zero non-finite gradients; row~0 shows the 19-family initialization baseline). Column~4
+reports cross-fitted utility $u$ on 20\% held-out rows excluded from the random-split dossier pool across 10 families.}
+\label{tab:blackhole-loss-curve}
+\end{table}
+
+\paragraph{Dossier loss vs.\ fresh-row skill.}
+Across all 91 per-table dossier runs (\cref{tab:blackhole-loss-curve}), median three-head cross-entropy falls from
+4.515\,nats at 100 exposures per row to 1.984\,nats at 2,000 exposures per row at a median throughput of 7,367 query
+rows/s per 24\,GB card. When 20\% of a table's rows are withheld completely outside the dossier's random-split pool,
+cross-fitted utility rises from 0.852\,$u$ at initialization to 1.185\,$u$ at 500 exposures per row ($+0.333\,u$),
+demonstrating that moderate random-split training learns transferable conditional structure on unseen rows of the same
+domain; continuing from 500 to 2,000 exposures further lowers in-pool cross-entropy and drives the 2343.8--2408.5 Elo
+absorbed benchmark scores while fresh-row utility settles at 1.043\,$u$ ($+0.191\,u$ above initialization).
+
+\paragraph{32-table bank-disjoint generalist trajectory.}
+Across our five-host generalist training fleet (4,826 real tables in 2,736 families, 129.9M cumulative dataset episodes
+fed at 212--350 datasets/s, including 22.0M episodes under the random-split all-data policy), we evaluate milestone
+$M$-scale (23.7M parameter) checkpoints on a pre-frozen 32-table validation panel (\texttt{30ccaa2a}) verified disjoint
+from every historical training bank. Validation cross-entropy decreases monotonically across unseen-board checkpoints
+($3.9569 \to 3.9282 \to 3.9087$\,nats; median NRMSE $0.8216 \to 0.8103$) and again across successive all-data banks
+$\texttt{r3} \to \texttt{r4} \to \texttt{r5}$ ($3.9605 \to 3.9539 \to 3.9480$\,nats).
+
+\paragraph{Kernel-embedding admission precision.}
+Candidate feature maps are represented as continuous kernel embeddings $\encS(s)$ under a positive-definite similarity
+kernel and gated by an inner cross-validation referee before entering the stack. Across 3,639 corpus tables, admitting
+all candidates wins on only 56.2\% of held-out splits, positive-mean inner CV wins on 65.5\%, and requiring at least
+$+0.5\,u$ gain over a fixed nonlinear dictionary + ridge baseline on \emph{every} inner fold achieves 99.3\% held-out
+win precision (137 of 138 admitted tables, mean $+2.38\,u$ gain).

@@ -1,0 +1,8 @@
+# Measured GEN2A (2408.5 Elo in Fit B / 2396.1 in paper_field_35; absorbed: not a generalisation comparison) head-to-head W-T-L across 19 families and 91 contexts (SCORE e7ffd5c0002d08a5; FITS_RECEIPT 4abed343; * = Look-2 fit Elo ref)
+opponent,ref_elo,elo_note,fam_w,fam_t,fam_l,ctx_w,ctx_t,ctx_l
+Kumo-Tabular-Large (e8),2071.7,+336.8 (Fit B),16,0,3,77,1,13
+LimiX-2 (406.2M; 32 pipelines),2036.4,+359.7 (35-fit; 2035.1 in 34-fit),16,0,3,79,0,12
+TabFM-1.0 Ensemble,1915.6,+492.9*,18,0,1,83,0,8
+Kumo-Tabular-Small (e8),1900.2,+508.3*,19,0,0,86,0,5
+TabFM-1.0 Single,1888.1,+520.4*,17,0,2,83,0,8
+TabPFN-3.5 (e8),1851.6,+556.9*,18,0,1,88,0,3

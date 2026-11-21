@@ -1,0 +1,52 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  bh,
+  xbar,
+  width=0.70\linewidth,
+  height=6.8cm,
+  xmin=1630, xmax=2840,
+  ymin=0.3, ymax=11.7,
+  xlabel={Dev91 Elo rating (95\% bootstrap CI; Fit D top three bars, Fit A lower eight bars)},
+  ytick={1,2,3,4,5,6,7,8,9,10,11},
+  yticklabels={
+    {\EZ{} Pre-reg (\regfair{})},
+    {TabPFN-3.5 (external)},
+    {\EZ{} Stack (\regincorpus{})},
+    {TabFM-1.0 Single (external)},
+    {Kumo-Tabular-Small (external)},
+    {TabFM-1.0 Ensemble (external)},
+    {Kumo-Tabular-Large (Fit A)},
+    {\EZ{} 19-Family (absorbed$^{\ast}$)},
+    {LimiX-2 (Fit D, diag.$^{\dagger}$)},
+    {Kumo-Tabular-Large (Fit D)},
+    {\EZ{} 91-Table (absorbed$^{\ast}$)}
+  },
+  bar width=6.0pt,
+  xmajorgrids=true,
+  ymajorgrids=false,
+  nodes near coords,
+  nodes near coords align={horizontal},
+  every node near coord/.append style={font=\sffamily\scriptsize\lining, anchor=west, xshift=2pt},
+  point meta=explicit symbolic,
+]
+\addplot[fill=bhaccent!25, draw=bhaccent, error bars/.cd, x dir=both, x explicit] coordinates {
+  (1821.5,1) -= (124.5,0) += (168.5,0) [1821.5]
+  (1851.6,2) -= (170.6,0) += (245.4,0) [1851.6]
+  (1859.0,3) -= (152.0,0) += (219.0,0) [1859.0]
+  (1888.1,4) -= (162.1,0) += (228.9,0) [1888.1]
+  (1900.2,5) -= (165.2,0) += (234.8,0) [1900.2]
+  (1915.6,6) -= (168.6,0) += (236.4,0) [1915.6]
+  (2070.2,7) -= (178.2,0) += (265.8,0) [2070.2]
+  (2343.8,8) -= (148.4,0) += (268.7,0) [2343.8]
+  (2036.4,9) -= (211.1,0) += (319.3,0) [2036.4]
+  (2059.1,10) -= (175.8,0) += (261.6,0) [2059.1]
+  (2396.1,11) -= (177.3,0) += (358.1,0) [2396.1]
+};
+\draw[dashed, color=bhwarm, line width=0.65pt] (axis cs:1630,8.5) -- (axis cs:2840,8.5);
+\end{axis}
+\end{tikzpicture}
+\caption{Measured Elo ratings on the $91$-context ($19$-family) \code{Dev91} reference board across separated exposure regimes. Dashed line separates Fit~D (\code{paper\_field\_35}: absorbed \code{GEN2A} at \BHEloGenTwoAJoint{}, \emph{absorbed: not a generalization comparison}$^{\ast}$, alongside Kumo-Tabular-Large at $2059.1$ and LimiX-2$^{\dagger}$ at \BHEloLimiXJoint{}; in \code{board\_34} Fit~C, LimiX-2$^{\dagger}$ scores \BHEloLimiXBoard{} vs.\ Kumo-Tabular-Large $2057.6$ and GEN2A scores \BHEloGenTwoA{} in Fit~B) from Fit~A (Look-2 \code{rev20} ladder, where the $19$-family bar is also \emph{absorbed: not a generalization comparison}$^{\ast}$). $^{\dagger}$Release checkpoint \code{ed01f7a0} (HF \code{de07b679}); upstream found it contaminated with benchmark data (\code{autogluon/tabarena\#648}; makers' audit 2026-11-11); \code{TabArena} dropped it 2026-11-16 for \code{LimiX-2-1016}.}
+\label{fig:dev91-ladder}
+\end{figure}

@@ -1,0 +1,11 @@
+\section{Limitations and Scope}
+\label{sec:limitations}
+
+We highlight five explicit limitations so every claim is interpreted within its verified scope:
+\begin{enumerate}
+  \item \textbf{Absorbed Elo is not unseen zero-shot Elo.} Our \BHEloGenTwoA{} and \BHEloRecall{} scores on \code{Dev91} reflect \regrecall{} systems whose dossiers studied all rows of the scored tables (test labels included) across random non-official partitions, whereas external baselines saw zero test rows. On unseen \code{Dev91} tables (\regfair{}), our pre-registered system scores \BHEloFairReg{} Elo (\BHEloFairAdaptive{} adaptive), below \code{TabPFN-3.5}, \code{TabFM-1.0}, and \code{Kumo-Tabular}.
+  \item \textbf{Wide bootstrap confidence intervals.} With $91$ correlated contexts across $19$ families, $95\%$ bootstrap Elo intervals span roughly $300$ to $500$ Elo ($[2237.3, 2726.3]$ for \BHEloGenTwoA{}). Paired family-level utility tests ($19/19$ positive, one-sided $p = 1.9\times 10^{-6}$ for \code{GEN2A} vs.\ Look~2) carry much higher statistical power than standalone Elo intervals.
+  \item \textbf{Maximum row overlap under random splits.} While our replay audit proves zero exact official-split matches across all $61{,}814$ family episodes and $155{,}937$ per-table episodes, independent random partitions of finite tables inevitably share subsets of training and test rows (up to $82.33\%$ observed SEARCH row overlap on the smallest context). Fresh-row probes (\cref{fig:dossier-loss}B) directly quantify how much skill transfers to rows never placed in the dossier pool ($+0.333\,u$ at $500$ exposures/row).
+  \item \textbf{Historical generalist split provenance.} Exact per-episode split ledgers exist for all committed \code{H458} and \code{H465} dossiers and \code{r5} manifests, whereas earlier ancestral generalist checkpoints (\code{h450}--\code{h455}) retain corpus-membership manifests rather than episode-by-episode split logs.
+  \item \textbf{Inference timing scope.} The $28.1\,\mathrm{s}$ ($0.56\,\mathrm{s}$ GPU) timing receipt measures producing one three-head neural reader block across $18$ tables on a busy host; CPU-bound classical stacker columns take additional wall time depending on table row count.
+\end{enumerate}

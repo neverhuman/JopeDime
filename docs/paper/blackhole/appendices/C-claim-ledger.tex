@@ -1,0 +1,12 @@
+\section{Receipt-Bound Claim Ledger}
+\label{app:claims}
+
+Every headline empirical statement in this manuscript maps to an entry in \code{evidence/claims.json}, rendered automatically below at build time with its exposure regime and immutable receipt path.
+
+\newcommand\claimentry[5]{%
+  \noindent\textbf{\sffamily\small #1}\quad
+  \texttt{\footnotesize [#2 | #3]}\par\nopagebreak
+  \noindent #4\par\nopagebreak
+  {\footnotesize\color{bhgrey}\emph{Evidence:} \code{#5}\par}\medskip}
+
+\input{claim-ledger}
