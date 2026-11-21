@@ -1,0 +1,124 @@
+{
+ "wave": "H474",
+ "status": "RUNNING",
+ "script_sha256": "ed16df01dc0e5fb602dca3aba854d28fc4b3e485f0691707f1e130bd54b2d09d",
+ "harness_parent": "h473_trainfold_cv.py sha256 432dd13a736570ea251e2b833da1ddffede519ef4e96cce39a182ae63479976f",
+ "arms": [
+  "pairnf_z40",
+  "pgap_z40",
+  "pgap2_z40",
+  "pgapa2_z40"
+ ],
+ "control": "pairnf_z40",
+ "reference": "pgap_z40",
+ "arm_definitions": {
+  "pairnf_z40": "control: BT vs incumbent pick, every passing better/worse pair weight 1 (pair_nf); CV cells copied from H473 (= H472/H471 cells)",
+  "pgap_z40": "H473 reference: pair weight gap^1, gap = |t_j - t_inc| / spread_c, renormalized to mean 1 per context; CV cells copied from H473",
+  "pgap2_z40": "dose: pair weight gap^2 (pgap = 2.0), renormalized to mean 1 per context",
+  "pgapa2_z40": "stack: pgap = 1.0 + 2 x 1,024-context gradient accumulation (accum = 2; extra micro-batch on the H467 acc2 keyed streams); 2x per-step compute",
+  "shared": "16 steps, lr 3e-4, slate 192, keep 48, same pointwise/listwise/hinge terms, z >= 0.40 gate, rng_arm = pairnf (all random streams shared)"
+ },
+ "motivation_h473": {
+  "pgap_vs_control_per_seed": [
+   0.0035,
+   0.0013,
+   0.0044
+  ],
+  "pgap_vs_control_cross_seed": [
+   0.0031,
+   -0.0012,
+   0.0095
+  ],
+  "pgap_floor_recoveries": [
+   7,
+   6,
+   9
+  ],
+  "control_floor_recoveries": [
+   3,
+   5,
+   4
+  ],
+  "pgap_nonfloor_vs_control_cross_seed": [
+   0.0001,
+   -0.0019,
+   0.0016
+  ],
+  "pgap_extras_nonfloor_WL": [
+   67,
+   38
+  ],
+  "pgap_drops_nonfloor_ctrl_WL": [
+   30,
+   25
+  ],
+  "h467_acc2_paired_seed1": [
+   0.0025,
+   0.0002,
+   0.007
+  ],
+  "h468_acc4_paired_seed1": [
+   0.0025,
+   0.0001,
+   0.0069
+  ]
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "partitions": [
+  "h452a/",
+  "h452b/"
+ ],
+ "folds": 5,
+ "primary_metric": "median over seeds of pooled OOF Elo vs incumbent with 95% family-bootstrap CI; non-floor Elo co-primary",
+ "selection": "max mean non-floor OOF Elo over partitions (tie: pooled gain)",
+ "strict": "pooled gain > 0.002 and CI low > 0; Elo > 0 and CI low > 0; non-floor Elo CI low > 0; Elo > 0 per partition; paired family-bootstrap arm-control CI low > 0; ties never win",
+ "lift_rule": "a non-control arm passes strict and beats the control (paired CI low > 0) on every seed, val91 not_worse on every seed, median val91 gain with cross-seed family-bootstrap CI low > 0, clean red-team; otherwise NO_LIFT",
+ "secondary": "paired comparison vs pgap_z40 (aggregator re-run with CTRL=pgap_z40): a new arm that beats the control but not pgap is reported as pgap-equivalent, not as a new lever",
+ "redteam_prereg": [
+  "floor-recovery split: report gain with and without -2.0 floor recoveries; a paired NON-FLOOR gain CI > 0 vs control is the mechanism test (val91 has 0 incumbent floors, so a floor-only edge cannot reach LIFT)",
+  "dose-response: pgap2 vs pgap vs control floor recoveries and non-floor gain; non-monotone => no dose evidence",
+  "stacking: pgapa2 vs pgap and vs H467 acc2 (control-relative) effect sizes; additive, sub-additive or none",
+  "mechanism: non-floor W/L of each arm's extra kept changes and of the control changes it drops",
+  "kept < 0.5x control => gate-starved; kept > 2x control => z-inflated; gap^2 concentrates weight on a few pairs per context (report kept counts and median |z|)",
+  "compute confound: pgapa2 does 2x per-step work; a win must be checked against the control-relative acc2 effect from H467",
+  "control and pgap CV cells copied from H473 fold_sig (sha256 lists); fresh re-check in smoke (control 8d5ac793, pgap 1afa7d46 for h452a fold 0 seed 1) and probe (control full sha 5f3acc50, pgap 4c2e17f9)",
+  "ties never win; val91 gain ~0 with >= 85/91 ties is not evidence; report single-context val91 drivers (H472/H473: idx 41)",
+  "equal pooled Elo with equal W-L = arithmetic coincidence once adapters differ",
+  "pair weights use training-fold fitness only; val91 read once per seed for the selected arm only"
+ ],
+ "checkpoint_sha256_prefix": "1d6ea900ebed8d2a",
+ "incumbent_val_utility": 1.1389572403748425,
+ "dope_pin": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "host": "xbabe2",
+ "device": "cpu",
+ "sealed_or_holdout_reads": 0,
+ "verdict": null,
+ "control_cells_reused_from_h473": {
+  "n_per_seed": 10,
+  "n_total": 30,
+  "sha256_list": "control_fold_sig_from_h473.sha256 (in scratch dir; hashes identical to H473 control_fold_sig_from_h472.sha256)",
+  "verified": true
+ },
+ "pgap_cells_reused_from_h473": {
+  "n_per_seed": 10,
+  "n_total": 30,
+  "sha256_list": "pgap_fold_sig_from_h473.sha256 (in scratch dir)",
+  "verified": true
+ },
+ "scratch": "xbabe2:~/jope-data/hwave-h474",
+ "launch": {
+  "order": "probe + smoke together (launch_probe_smoke.sh) -> chain_waiter.sh (waits for the smoke pid; launches waiter.sh only if smoke.log has 4 arm CV lines and no Traceback/Error) -> waiter.sh",
+  "waiter": "SEEDS='1 2 3' MEMGATE=30 MAXALIVE=2",
+  "own_guard": "abort at MemAvailable < 15 GB; waiter relaunches (max 5 per seed), resume-safe via results/fold_sig"
+ },
+ "expected_cost": {
+  "pgap2_fold_min": 14,
+  "pgapa2_fold_min": 28,
+  "per_seed_h": 7.5,
+  "total_h_after_launch": "~16 (seed 3 waits for a free slot)"
+ }
+}
