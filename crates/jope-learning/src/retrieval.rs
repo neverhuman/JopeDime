@@ -70,8 +70,11 @@ pub enum RetrievalMode {
     Cold,
     /// The `Warm` case of `RetrievalMode`.
     Warm,
-    /// The `ShuffledContext` case of `RetrievalMode`.
+    /// The `ShuffledContext` case of `RetrievalMode` (historical 1-coordinate context rotation).
     ShuffledContext,
+    /// True donor-dataset context permutation control: queries using an unrotated context vector
+    /// sampled deterministically from a distinct eligible donor dataset family.
+    DonorDatasetShuffle,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -142,13 +145,10 @@ pub(super) fn validate_request(request: &RetrievalRequest) -> Result<()> {
     Ok(())
 }
 
-/// Select only complete, TRAIN, ancestry-disjoint candidates. Candidate IDs must be in the
-/// caller-frozen support roster, so cold/warm/shuffled arms share the same eligible support.
-pub fn materialize(
+pub(super) fn filter_eligible<'a>(
     request: &RetrievalRequest,
-    candidates: &[Candidate],
-    mode: RetrievalMode,
-) -> Result<RetrievalResult> {
+    candidates: &'a [Candidate],
+) -> Result<(Vec<&'a Candidate>, CandidateCounts)> {
     validate_request(request)?;
     let support: BTreeSet<_> = request.eligible_support.iter().collect();
     let own_parents: BTreeSet<_> = request.own_parent_families.iter().collect();
@@ -204,6 +204,54 @@ pub fn materialize(
         eligible.push(candidate);
     }
     counts.eligible = eligible.len();
+    Ok((eligible, counts))
+}
+
+fn donor_dataset_query(
+    request: &RetrievalRequest,
+    eligible: &[&Candidate],
+    support_digest: &str,
+) -> Result<Vec<f64>> {
+    let distinct_families: BTreeSet<&str> = eligible
+        .iter()
+        .flat_map(|c| c.dataset_families.iter().map(String::as_str))
+        .collect();
+    ensure!(
+        distinct_families.len() >= 2,
+        "donor_dataset_shuffle requires at least two distinct donor dataset families"
+    );
+    let mut donors: Vec<&Candidate> = eligible.to_vec();
+    donors.sort_by(|a, b| a.candidate_id.cmp(&b.candidate_id));
+    let non_identical: Vec<&Candidate> = donors
+        .iter()
+        .copied()
+        .filter(|c| distance(&c.context, &request.context) > 1e-24)
+        .collect();
+    let pool = if non_identical.is_empty() {
+        &donors
+    } else {
+        &non_identical
+    };
+    let seed_hex = sha256_hex(
+        format!(
+            "donor-dataset-shuffle:{}:{}:{}",
+            request.request_id, request.snapshot_sha256, support_digest
+        )
+        .as_bytes(),
+    );
+    let seed_u64 = u64::from_str_radix(&seed_hex[..16], 16).unwrap_or(0);
+    let idx = (seed_u64 as usize) % pool.len();
+    Ok(pool[idx].context.clone())
+}
+
+/// Select only complete, TRAIN, ancestry-disjoint candidates. Candidate IDs must be in the
+/// caller-frozen support roster, so cold/warm/shuffled arms share the same eligible support.
+pub fn materialize(
+    request: &RetrievalRequest,
+    candidates: &[Candidate],
+    mode: RetrievalMode,
+) -> Result<RetrievalResult> {
+    let (mut eligible, counts) = filter_eligible(request, candidates)?;
     let eligible_ids: BTreeSet<_> = eligible.iter().map(|c| c.candidate_id.as_str()).collect();
     let support_digest = sha256_hex(serde_json::to_vec(&eligible_ids)?.as_slice());
     let query = match mode {
@@ -214,6 +262,9 @@ pub fn materialize(
             .chain(request.context.iter().take(1))
             .copied()
             .collect::<Vec<_>>(),
+        RetrievalMode::DonorDatasetShuffle => {
+            donor_dataset_query(request, &eligible, &support_digest)?
+        }
         _ => request.context.clone(),
     };
     eligible.sort_by(|a, b| {

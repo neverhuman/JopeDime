@@ -365,3 +365,165 @@ fn retrieval_seed_provider_validates_at_zero_limit_and_does_not_starve_past_dupl
     assert_eq!(selected[0].genome, g_dup_a);
     assert_eq!(selected[1].genome, g_second);
 }
+
+#[test]
+fn retrieval_seed_provider_handles_empty_eligible_pool_under_auto_and_require_policies() {
+    let tmp = tempfile::tempdir().unwrap();
+    let resolved = dataset::resolve(&committed_dataset()).unwrap();
+    let rows = dataset::training_rows(&resolved).unwrap();
+    let prep = prepare::partition(
+        &rows,
+        &resolved.row.dataset_hash,
+        jope_pipeline::DEFAULT_SEED,
+        1,
+    )
+    .unwrap()
+    .write(&tmp.path().join("prep-empty"))
+    .unwrap();
+    let views = FitCutView::from_preparation(&prep, &resolved.row.dataset_hash);
+    let ctx = fit_cut_summary_context(&views);
+    let role_sha = "e".repeat(64);
+    let snap_sha = "f".repeat(64);
+
+    // Every candidate is filtered out (same family or non-train role).
+    let empty_provider = RetrievalSeedProvider {
+        request_id: "req-empty".into(),
+        own_parent_families: vec!["p-own".into()],
+        own_dataset_families: vec!["pmlb-229".into()],
+        own_program_sha256: Vec::new(),
+        role_manifest_sha256: role_sha.clone(),
+        snapshot_sha256: snap_sha,
+        eligible_support: vec!["c-own".into(), "c-val".into()],
+        candidates: vec![
+            candidate(
+                "c-own",
+                "(pipe X (standardize) (ridge))",
+                "p-other",
+                "pmlb-229",
+                "train",
+                ctx,
+                &role_sha,
+            ),
+            candidate(
+                "c-val",
+                "(pipe X (rank) (ridge))",
+                "p-other-2",
+                "other-fam",
+                "val",
+                ctx,
+                &role_sha,
+            ),
+        ],
+        mode: RetrievalMode::Cold,
+    };
+
+    assert!(empty_provider.propose_seeds(&views, 4).unwrap().is_empty());
+
+    let mk_opts = |policy: Policy, out: &std::path::Path| RunOptions {
+        budget: Budget {
+            evaluations: 12,
+            seconds: 300,
+        },
+        rng_seed: 19,
+        cuts: 1,
+        languages: vec![Language::Rust],
+        policy,
+        source_commit: Some("6c7ec97a497d9686e966549c61bfd20e99773c65".into()),
+        ..RunOptions::new(committed_dataset(), out)
+    };
+
+    let auto_receipt = run_with_seed_provider(
+        &mk_opts(Policy::Auto, &tmp.path().join("auto-empty")),
+        Some(&empty_provider),
+    )
+    .unwrap();
+    let auto_seeding = auto_receipt.search.seeding.as_ref().unwrap();
+    assert_eq!(auto_seeding.offered, 0);
+    assert!(auto_seeding.seeds.is_empty());
+
+    let req_err = run_with_seed_provider(
+        &mk_opts(Policy::Require, &tmp.path().join("require-empty")),
+        Some(&empty_provider),
+    );
+    assert!(req_err.is_err());
+}
+
+#[test]
+fn donor_dataset_shuffle_permutes_across_distinct_donor_families_without_rotating_coordinates() {
+    let role_sha = "1".repeat(64);
+    let snap_sha = "2".repeat(64);
+    let query_ctx = [10.0, 0.0, 0.0, 0.0];
+
+    let req = super::RetrievalRequest {
+        request_id: "req-donor-shuffle".into(),
+        own_parent_families: vec!["p-own".into()],
+        own_dataset_families: vec!["d-own".into()],
+        own_program_sha256: Vec::new(),
+        role_manifest_sha256: role_sha.clone(),
+        context: query_ctx.to_vec(),
+        eligible_support: vec!["c-a".into(), "c-b".into(), "c-c".into()],
+        cap: 1,
+        requested_by_source: std::collections::BTreeMap::from([(
+            jope_pipeline::seeds::SeedSourceV2::OtherLineageRetrieval,
+            1,
+        )]),
+        snapshot_sha256: snap_sha,
+        cold_cost_ms: 5,
+        warm_cost_ms: 1,
+        cache_warmup_ms: 2,
+    };
+
+    // c-a matches query_ctx; c-b matches 1-coord rotated [0,0,0,10]; c-c is a distinct donor family.
+    let candidates = vec![
+        candidate(
+            "c-a",
+            "(pipe X (standardize) (ridge))",
+            "p-a",
+            "fam-a",
+            "train",
+            query_ctx,
+            &role_sha,
+        ),
+        candidate(
+            "c-b",
+            "(pipe X (rank) (ridge))",
+            "p-b",
+            "fam-b",
+            "train",
+            [0.0, 0.0, 0.0, 10.0],
+            &role_sha,
+        ),
+        candidate(
+            "c-c",
+            "(pipe X (robust_scale) (ridge))",
+            "p-c",
+            "fam-c",
+            "train",
+            [0.0, 5.0, 5.0, 0.0],
+            &role_sha,
+        ),
+    ];
+
+    let cold = super::materialize(&req, &candidates, RetrievalMode::Cold).unwrap();
+    let rotated = super::materialize(&req, &candidates, RetrievalMode::ShuffledContext).unwrap();
+    let donor = super::materialize(&req, &candidates, RetrievalMode::DonorDatasetShuffle).unwrap();
+    let donor_repeat =
+        super::materialize(&req, &candidates, RetrievalMode::DonorDatasetShuffle).unwrap();
+
+    assert_eq!(cold.selected_candidate_ids, vec!["c-a"]);
+    assert_eq!(rotated.selected_candidate_ids, vec!["c-b"]);
+    assert_eq!(
+        donor.selected_candidate_ids,
+        donor_repeat.selected_candidate_ids
+    );
+    assert_ne!(donor.selected_candidate_ids, vec!["c-a"]);
+    assert_eq!(donor.mode, RetrievalMode::DonorDatasetShuffle);
+    assert_eq!(
+        serde_json::to_string(&RetrievalMode::DonorDatasetShuffle).unwrap(),
+        "\"donor_dataset_shuffle\""
+    );
+
+    // Refuses when fewer than 2 distinct donor dataset families exist.
+    let single_family = vec![candidates[0].clone()];
+    assert!(super::materialize(&req, &single_family, RetrievalMode::DonorDatasetShuffle).is_err());
+}
